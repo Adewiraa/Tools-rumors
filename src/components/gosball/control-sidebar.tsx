@@ -1,0 +1,1209 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  BadgePercent,
+  Download,
+  ImagePlus,
+  MapPin,
+  Shield,
+  SlidersHorizontal,
+  UsersRound,
+} from "lucide-react";
+import { FlagBadge } from "@/components/gosball/flag-badge";
+import { countryOptions, type CountryOption } from "@/lib/countries";
+import { formationOptions } from "@/lib/gosball-fixtures";
+import { indonesianClubs } from "@/lib/indonesian-clubs";
+import type {
+  CanvasAspectRatio,
+  FormationName,
+  MatchdayLineupData,
+  Player,
+  RumorStatus,
+  TeamLineup,
+  ToolMode,
+  TransferRumorData,
+} from "@/types/gosball";
+
+interface ControlSidebarProps {
+  mode: ToolMode;
+  aspectRatio: CanvasAspectRatio;
+  lineupData: MatchdayLineupData;
+  rumorData: TransferRumorData;
+  isExporting: boolean;
+  onModeChange: (mode: ToolMode) => void;
+  onAspectRatioChange: (aspectRatio: CanvasAspectRatio) => void;
+  onLineupChange: (data: MatchdayLineupData) => void;
+  onRumorChange: (data: TransferRumorData) => void;
+  onFormationChange: (
+    teamKey: "homeTeam" | "awayTeam",
+    formation: FormationName,
+  ) => void;
+  onDownload: () => void;
+}
+
+interface ILeagueImportResponse {
+  teamName: string;
+  shortName: string;
+  coachName: string;
+  players: Array<{
+    id: string;
+    name: string;
+    shirtNumber: number;
+    nationality: string;
+    countryCode: string;
+  }>;
+}
+
+interface CountriesSearchResponse {
+  countries: CountryOption[];
+  error?: string;
+}
+
+interface ClubOption {
+  id: string;
+  name: string;
+  shortName: string;
+  slug: string;
+  ileagueSlug: string | null;
+  ileagueUrl: string | null;
+  primaryColor: string;
+  logoUrl: string | null;
+  city: string | null;
+}
+
+interface ClubsResponse {
+  clubs: ClubOption[];
+  source: "local" | "supabase";
+  error?: string;
+}
+
+interface RosterSearchResponse {
+  players: Array<{
+    roster_id: string;
+    player_id: string;
+    full_name: string;
+    display_name: string | null;
+    country_code: string;
+    country_name: string | null;
+    country_flag_url: string | null;
+    shirt_number: number | null;
+    position: string;
+  }>;
+  source: "local" | "supabase";
+  error?: string;
+}
+
+const rumorStatuses: RumorStatus[] = ["Rumor", "Advanced Talks", "Here We Go"];
+const teamColorOptions = [
+  "#2563eb",
+  "#1d4ed8",
+  "#0f52ba",
+  "#0891b2",
+  "#06b6d4",
+  "#0f766e",
+  "#dc2626",
+  "#b91c1c",
+  "#ef4444",
+  "#f97316",
+  "#16a34a",
+  "#15803d",
+  "#22c55e",
+  "#f59e0b",
+  "#facc15",
+  "#eab308",
+  "#7c3aed",
+  "#6d28d9",
+  "#a855f7",
+  "#db2777",
+  "#be123c",
+  "#f43f5e",
+  "#f3efe2",
+  "#ffffff",
+  "#a3a3a3",
+  "#525252",
+  "#111827",
+  "#020617",
+  "#b7ff5a",
+  "#84cc16",
+  "#000000",
+];
+
+export function ControlSidebar({
+  mode,
+  aspectRatio,
+  lineupData,
+  rumorData,
+  isExporting,
+  onModeChange,
+  onAspectRatioChange,
+  onLineupChange,
+  onRumorChange,
+  onFormationChange,
+  onDownload,
+}: ControlSidebarProps) {
+  const activeSponsor =
+    mode === "lineup" ? lineupData.sponsor : rumorData.sponsor;
+  const [availableClubs, setAvailableClubs] = useState<ClubOption[]>(
+    indonesianClubs.map((club) => ({
+      id: club.slug,
+      name: club.name,
+      shortName: club.shortName,
+      slug: club.slug,
+      ileagueSlug: club.ileagueSlug,
+      ileagueUrl: club.ileagueUrl,
+      primaryColor: club.primaryColor,
+      logoUrl: null,
+      city: null,
+    })),
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/clubs")
+      .then((response) => response.json())
+      .then((payload: ClubsResponse) => {
+        if (isMounted && Array.isArray(payload.clubs) && payload.clubs.length) {
+          setAvailableClubs(payload.clubs);
+        }
+      })
+      .catch(() => {
+        // Keep local club fallback.
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const updateSponsor = (enabled: boolean) => {
+    if (mode === "lineup") {
+      onLineupChange({
+        ...lineupData,
+        sponsor: { ...lineupData.sponsor, enabled },
+      });
+      return;
+    }
+
+    onRumorChange({
+      ...rumorData,
+      sponsor: { ...rumorData.sponsor, enabled },
+    });
+  };
+
+  return (
+    <aside className="order-2 flex flex-col border-t border-[#f3efe2]/10 bg-[#10130f]/95 shadow-2xl shadow-black/40 backdrop-blur lg:order-1 lg:max-h-screen lg:border-r lg:border-t-0">
+      <div className="relative overflow-hidden border-b border-[#f3efe2]/10 p-4 sm:p-6">
+        <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full border border-[#b7ff5a]/20" />
+        <div className="mb-5 flex items-start justify-between gap-4 sm:mb-6">
+          <div>
+            <p className="studio-label text-[#b7ff5a]">
+              Studio desk
+            </p>
+            <h1 className="display-type mt-2 text-3xl font-black uppercase leading-none tracking-[-0.06em] text-[#f3efe2]">
+              Media Tools
+            </h1>
+          </div>
+          <div className="glass-edge rounded-[1rem] p-3 text-[#b7ff5a]">
+            <Shield className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 rounded-[1.2rem] border border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] p-1">
+          <TabButton
+            active={mode === "lineup"}
+            label="Matchday Line-Up"
+            icon={<UsersRound className="h-4 w-4" />}
+            onClick={() => onModeChange("lineup")}
+          />
+          <TabButton
+            active={mode === "rumor"}
+            label="Rumor Transfer"
+            icon={<BadgePercent className="h-4 w-4" />}
+            onClick={() => onModeChange("rumor")}
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-5 overflow-visible p-4 sm:space-y-6 sm:p-6 lg:overflow-y-auto">
+        <Panel title="Canvas Ratio" icon={<SlidersHorizontal className="h-4 w-4" />}>
+          <div className="grid grid-cols-2 gap-3">
+            <RadioCard
+              active={aspectRatio === "1:1"}
+              title="1:1"
+              subtitle="Feed Post"
+              onClick={() => onAspectRatioChange("1:1")}
+            />
+            <RadioCard
+              active={aspectRatio === "9:16"}
+              title="9:16"
+              subtitle="IG Story"
+              onClick={() => onAspectRatioChange("9:16")}
+            />
+          </div>
+        </Panel>
+
+        {mode === "lineup" ? (
+          <LineupControls
+            lineupData={lineupData}
+            clubs={availableClubs}
+            onLineupChange={onLineupChange}
+            onFormationChange={onFormationChange}
+          />
+        ) : (
+          <RumorControls rumorData={rumorData} onRumorChange={onRumorChange} />
+        )}
+
+        <Panel title="Sponsor Slot" icon={<ImagePlus className="h-4 w-4" />}>
+          <label className="flex items-center justify-between rounded-[1rem] border border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] px-4 py-3">
+            <span>
+              <span className="block text-sm font-semibold text-[#f3efe2]">
+                Tampilkan sponsor
+              </span>
+              <span className="text-xs text-[#9d9a90]">
+                Presented by {activeSponsor.brandName}
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={activeSponsor.enabled}
+              onChange={(event) => updateSponsor(event.target.checked)}
+              className="h-5 w-5 accent-[#b7ff5a]"
+            />
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            className="mt-3 w-full rounded-xl border border-dashed border-[#f3efe2]/15 bg-[#f3efe2]/[0.035] px-3 py-3 text-xs text-[#9d9a90] file:mr-3 file:rounded-lg file:border-0 file:bg-[#b7ff5a] file:px-3 file:py-2 file:text-xs file:font-bold file:text-[#10130f]"
+          />
+        </Panel>
+      </div>
+
+      <div className="border-t border-white/10 p-6">
+        <button
+          type="button"
+          onClick={onDownload}
+          disabled={isExporting}
+          className="pressable flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#b7ff5a] px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-[#10130f] shadow-[0_18px_50px_rgba(183,255,90,0.16)] disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          <Download className="h-5 w-5" />
+          {isExporting ? "Exporting..." : "Download PNG HD"}
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function LineupControls({
+  lineupData,
+  clubs,
+  onLineupChange,
+  onFormationChange,
+}: {
+  lineupData: MatchdayLineupData;
+  clubs: ClubOption[];
+  onLineupChange: (data: MatchdayLineupData) => void;
+  onFormationChange: (
+    teamKey: "homeTeam" | "awayTeam",
+    formation: FormationName,
+  ) => void;
+}) {
+  const updateTeam = (
+    teamKey: "homeTeam" | "awayTeam",
+    teamUpdate: Partial<TeamLineup>,
+  ) => {
+    onLineupChange({
+      ...lineupData,
+      [teamKey]: {
+        ...lineupData[teamKey],
+        ...teamUpdate,
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <Panel title="Match Setup" icon={<MapPin className="h-4 w-4" />}>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Kompetisi">
+            <input
+              value={lineupData.competitionName}
+              onChange={(event) =>
+                onLineupChange({
+                  ...lineupData,
+                  competitionName: event.target.value,
+                })
+              }
+              className="control-input"
+            />
+          </Field>
+          <Field label="Matchday">
+            <input
+              value={lineupData.matchLabel}
+              onChange={(event) =>
+                onLineupChange({
+                  ...lineupData,
+                  matchLabel: event.target.value,
+                })
+              }
+              className="control-input"
+            />
+          </Field>
+        </div>
+        <Field label="Venue">
+          <input
+            value={lineupData.venue ?? ""}
+            onChange={(event) =>
+              onLineupChange({
+                ...lineupData,
+                venue: event.target.value,
+              })
+            }
+            className="control-input"
+          />
+        </Field>
+      </Panel>
+
+      <TeamControls
+        title="Home Team"
+        teamKey="homeTeam"
+        team={lineupData.homeTeam}
+        clubs={clubs}
+        opponentPlayers={lineupData.awayTeam.starters}
+        onTeamChange={updateTeam}
+        onFormationChange={onFormationChange}
+      />
+
+      <TeamControls
+        title="Away Team"
+        teamKey="awayTeam"
+        team={lineupData.awayTeam}
+        clubs={clubs}
+        opponentPlayers={lineupData.homeTeam.starters}
+        onTeamChange={updateTeam}
+        onFormationChange={onFormationChange}
+      />
+    </div>
+  );
+}
+
+function TeamControls({
+  title,
+  teamKey,
+  team,
+  clubs,
+  opponentPlayers,
+  onTeamChange,
+  onFormationChange,
+}: {
+  title: string;
+  teamKey: "homeTeam" | "awayTeam";
+  team: TeamLineup;
+  clubs: ClubOption[];
+  opponentPlayers: TeamLineup["starters"];
+  onTeamChange: (
+    teamKey: "homeTeam" | "awayTeam",
+    teamUpdate: Partial<TeamLineup>,
+  ) => void;
+  onFormationChange: (
+    teamKey: "homeTeam" | "awayTeam",
+    formation: FormationName,
+  ) => void;
+}) {
+  const [selectedClubSlug, setSelectedClubSlug] = useState("");
+  const [rosterSuggestions, setRosterSuggestions] = useState<Player[]>([]);
+  const [importStatus, setImportStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+
+  const updateStarter = (
+    index: number,
+    field: "name",
+    value: string,
+  ) => {
+    onTeamChange(teamKey, {
+      starters: team.starters.map((player, playerIndex) =>
+        playerIndex === index
+          ? {
+              ...player,
+              [field]: value,
+            }
+          : player,
+      ),
+    });
+  };
+
+  const updateSubstitute = (
+    index: number,
+    field: "name",
+    value: string,
+  ) => {
+    onTeamChange(teamKey, {
+      substitutes: team.substitutes.map((player, playerIndex) =>
+        playerIndex === index
+          ? {
+              ...player,
+              [field]: value,
+            }
+          : player,
+      ),
+    });
+  };
+
+  const updateStarterCountry = (index: number, country: CountryOption) => {
+    onTeamChange(teamKey, {
+      starters: team.starters.map((player, playerIndex) =>
+        playerIndex === index
+          ? {
+              ...player,
+              countryCode: country.code,
+              countryFlagUrl: country.flagSvgUrl ?? country.flagPngUrl,
+              nationality: country.name,
+              isForeign: country.code !== "ID",
+            }
+          : player,
+      ),
+    });
+  };
+
+  const updateSubstituteCountry = (index: number, country: CountryOption) => {
+    onTeamChange(teamKey, {
+      substitutes: team.substitutes.map((player, playerIndex) =>
+        playerIndex === index
+          ? {
+              ...player,
+              countryCode: country.code,
+              countryFlagUrl: country.flagSvgUrl ?? country.flagPngUrl,
+              nationality: country.name,
+              isForeign: country.code !== "ID",
+            }
+          : player,
+      ),
+    });
+  };
+
+  const suggestionId = `${team.id}-player-suggestions`;
+
+  const selectClub = (clubSlug: string) => {
+    const selectedClub = clubs.find((club) => club.slug === clubSlug);
+
+    setSelectedClubSlug(clubSlug);
+    setRosterSuggestions([]);
+    setImportStatus("idle");
+
+    if (!selectedClub) {
+      return;
+    }
+
+    onTeamChange(teamKey, {
+      name: selectedClub.name,
+      shortName: selectedClub.shortName,
+      primaryColor: selectedClub.primaryColor,
+      logoUrl: selectedClub.logoUrl ?? undefined,
+    });
+  };
+
+  const importSelectedClubRoster = async () => {
+    const selectedClub = clubs.find((club) => club.slug === selectedClubSlug);
+
+    if (!selectedClub) {
+      setImportStatus("error");
+      return;
+    }
+
+    try {
+      setImportStatus("loading");
+      const rosterResponse = await fetch(`/api/clubs/${selectedClub.slug}/roster`);
+      const rosterPayload =
+        (await rosterResponse.json()) as RosterSearchResponse | { error: string };
+
+      if (
+        rosterResponse.ok &&
+        !("error" in rosterPayload) &&
+        rosterPayload.players.length > 0
+      ) {
+        const databasePlayers = rosterPayload.players.map(
+          (player, index): Player => {
+            const existingPlayer =
+              team.starters[index] ?? team.substitutes[index - 11];
+
+            return {
+              id: player.player_id,
+              name: player.display_name ?? player.full_name,
+              position: existingPlayer?.position ?? "Unknown",
+              shirtNumber: player.shirt_number ?? index + 1,
+              nationality: player.country_name ?? player.country_code,
+              countryCode: player.country_code,
+              countryFlagUrl: player.country_flag_url ?? undefined,
+              isForeign: player.country_code !== "ID",
+            };
+          },
+        );
+
+        onTeamChange(teamKey, {
+          name: selectedClub.name,
+          shortName: selectedClub.shortName,
+          primaryColor: selectedClub.primaryColor,
+          logoUrl: selectedClub.logoUrl ?? undefined,
+          starters: databasePlayers.slice(0, 11).map((player, index) => ({
+            ...player,
+            position: team.starters[index]?.position ?? player.position,
+          })),
+          substitutes: databasePlayers.slice(11, 21).map((player, index) => ({
+            ...player,
+            position: team.substitutes[index]?.position ?? player.position,
+          })),
+        });
+        setRosterSuggestions(databasePlayers);
+        setImportStatus("success");
+        return;
+      }
+
+      if (!selectedClub.ileagueUrl) {
+        onTeamChange(teamKey, {
+          name: selectedClub.name,
+          shortName: selectedClub.shortName,
+          primaryColor: selectedClub.primaryColor,
+          logoUrl: selectedClub.logoUrl ?? undefined,
+        });
+        setImportStatus("error");
+        return;
+      }
+
+      const response = await fetch(
+        `/api/ileague/club?url=${encodeURIComponent(selectedClub.ileagueUrl)}`,
+      );
+      const payload = (await response.json()) as
+        | ILeagueImportResponse
+        | { error: string };
+
+      if (!response.ok || "error" in payload) {
+        throw new Error("error" in payload ? payload.error : "Import gagal");
+      }
+
+      if (payload.players.length === 0) {
+        onTeamChange(teamKey, {
+          name: selectedClub.name,
+          shortName: selectedClub.shortName,
+          primaryColor: selectedClub.primaryColor,
+          logoUrl: selectedClub.logoUrl ?? undefined,
+        });
+        setImportStatus("error");
+        return;
+      }
+
+      const importedPlayers = payload.players.map((player, index): Player => {
+        const existingPlayer = team.starters[index] ?? team.substitutes[index - 11];
+
+        return {
+          id: player.id,
+          name: player.name,
+          position: existingPlayer?.position ?? "Unknown",
+          shirtNumber: player.shirtNumber,
+          nationality: player.nationality,
+          countryCode: player.countryCode,
+          isForeign: player.countryCode !== "ID",
+        };
+      });
+      setRosterSuggestions(importedPlayers);
+
+      onTeamChange(teamKey, {
+        name: payload.teamName || selectedClub.name,
+        shortName: payload.shortName || selectedClub.shortName,
+        primaryColor: selectedClub.primaryColor,
+        logoUrl: selectedClub.logoUrl ?? undefined,
+        starters: importedPlayers.slice(0, 11).map((player, index) => ({
+          ...player,
+          position: team.starters[index]?.position ?? player.position,
+        })),
+        substitutes: importedPlayers.slice(11, 21).map((player, index) => ({
+          ...player,
+          position: team.substitutes[index]?.position ?? player.position,
+        })),
+        coach: {
+          ...team.coach,
+          name: payload.coachName,
+        },
+      });
+      setImportStatus("success");
+    } catch {
+      setImportStatus("error");
+    }
+  };
+
+  const findRosterPlayerByName = (name: string) => {
+    const normalizedName = name.trim().toLowerCase();
+
+    return rosterSuggestions.find(
+      (player) => player.name.trim().toLowerCase() === normalizedName,
+    );
+  };
+
+  const applyRosterPlayerToStarter = (index: number, name: string) => {
+    const rosterPlayer = findRosterPlayerByName(name);
+
+    if (!rosterPlayer) {
+      return;
+    }
+
+    onTeamChange(teamKey, {
+      starters: team.starters.map((player, playerIndex) =>
+        playerIndex === index
+          ? {
+              ...player,
+              ...rosterPlayer,
+              position: player.position,
+            }
+          : player,
+      ),
+    });
+  };
+
+  const applyRosterPlayerToSubstitute = (index: number, name: string) => {
+    const rosterPlayer = findRosterPlayerByName(name);
+
+    if (!rosterPlayer) {
+      return;
+    }
+
+    onTeamChange(teamKey, {
+      substitutes: team.substitutes.map((player, playerIndex) =>
+        playerIndex === index
+          ? {
+              ...player,
+              ...rosterPlayer,
+              position: player.position,
+            }
+          : player,
+      ),
+    });
+  };
+
+  return (
+    <Panel title={title} icon={<UsersRound className="h-4 w-4" />}>
+      <div className="grid gap-2 rounded-[1rem] border border-[#f3efe2]/10 bg-black/15 p-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_5.25rem]">
+          <select
+            value={selectedClubSlug}
+            onChange={(event) => selectClub(event.target.value)}
+            className="control-input h-10 min-w-0 truncate pr-8 text-xs"
+            title={
+              clubs.find((club) => club.slug === selectedClubSlug)
+                ?.name ?? "Pilih klub Liga"
+            }
+          >
+            <option value="">Pilih klub Liga...</option>
+            {clubs.map((club) => (
+              <option key={club.slug} value={club.slug}>
+                {club.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={importSelectedClubRoster}
+            disabled={importStatus === "loading"}
+            className="pressable h-10 rounded-[0.7rem] bg-[#b7ff5a] px-3 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#10130f] disabled:opacity-60"
+          >
+            {importStatus === "loading" ? "..." : "Muat"}
+          </button>
+        </div>
+        <p className="text-[0.58rem] font-bold text-[#9d9a90]">
+          {importStatus === "success"
+            ? "Roster klub berhasil dimuat."
+            : importStatus === "error"
+              ? "Klub dimuat. Roster database belum tersedia, isi pemain manual dulu."
+              : "Pilih klub, lalu muat roster dari database."}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Nama klub">
+          <input
+            value={team.name}
+            onChange={(event) => onTeamChange(teamKey, { name: event.target.value })}
+            className="control-input"
+          />
+        </Field>
+        <Field label="Short name">
+          <input
+            value={team.shortName}
+            onChange={(event) =>
+              onTeamChange(teamKey, { shortName: event.target.value })
+            }
+            className="control-input"
+          />
+        </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Formasi">
+          <select
+            value={team.formation}
+            onChange={(event) =>
+              onFormationChange(teamKey, event.target.value as FormationName)
+            }
+            className="control-input"
+          >
+            {formationOptions.map((formation) => (
+              <option key={formation} value={formation}>
+                {formation}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Warna klub">
+          <ColorPresetPicker
+            value={team.primaryColor}
+            onChange={(primaryColor) => onTeamChange(teamKey, { primaryColor })}
+          />
+        </Field>
+      </div>
+
+      <Field label="Pelatih">
+        <input
+          value={team.coach.name}
+          onChange={(event) =>
+            onTeamChange(teamKey, {
+              coach: { ...team.coach, name: event.target.value },
+            })
+          }
+          className="control-input"
+        />
+      </Field>
+
+      <div className="space-y-3">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+          Starting XI
+        </p>
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+          {team.starters.map((player, index) => (
+            <div key={player.id} className="grid grid-cols-[1fr_3rem] gap-2">
+              <Field label={`${index + 1}. ${player.position}`}>
+                <input
+                  list={suggestionId}
+                  value={player.name}
+                  onChange={(event) =>
+                    updateStarter(index, "name", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    applyRosterPlayerToStarter(index, event.target.value)
+                  }
+                  className="control-input"
+                />
+              </Field>
+              <Field label="Flag">
+                <CountryPicker
+                  value={player.countryCode}
+                  onChange={(country) => updateStarterCountry(index, country)}
+                />
+              </Field>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+          Cadangan
+        </p>
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+          {team.substitutes.map((player, index) => (
+            <div key={player.id} className="grid grid-cols-[1fr_3rem] gap-2">
+              <Field label={`Sub ${index + 1}`}>
+                <input
+                  list={suggestionId}
+                  value={player.name}
+                  onChange={(event) =>
+                    updateSubstitute(index, "name", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    applyRosterPlayerToSubstitute(index, event.target.value)
+                  }
+                  className="control-input"
+                />
+              </Field>
+              <Field label="Flag">
+                <CountryPicker
+                  value={player.countryCode}
+                  onChange={(country) => updateSubstituteCountry(index, country)}
+                />
+              </Field>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <datalist id={suggestionId}>
+        {[
+          ...rosterSuggestions,
+          ...team.starters,
+          ...team.substitutes,
+          ...opponentPlayers,
+        ].map((player, index) => (
+          <option
+            key={`${team.id}-${player.id}-${index}`}
+            value={player.name}
+          />
+        ))}
+      </datalist>
+    </Panel>
+  );
+}
+
+function ColorPresetPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-1.5 rounded-[0.7rem] border border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] p-1.5">
+      <div className="grid grid-cols-8 gap-1.5">
+      {teamColorOptions.map((color) => (
+        <button
+          key={color}
+          type="button"
+          onClick={() => onChange(color)}
+          className={`h-8 rounded-md border transition ${
+            value.toLowerCase() === color.toLowerCase()
+              ? "border-[#f3efe2] ring-2 ring-[#b7ff5a]/45"
+              : "border-white/15 hover:border-white/45"
+          }`}
+          style={{ backgroundColor: color }}
+          aria-label={`Pilih warna ${color}`}
+        />
+      ))}
+      </div>
+      <label className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-[#f3efe2]/10 bg-black/20 px-2 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[#9d9a90]">
+        Custom
+        <input
+          type="color"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-7 w-10 cursor-pointer rounded border border-white/15 bg-transparent p-0"
+        />
+      </label>
+    </div>
+  );
+}
+
+function CountryPicker({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange: (country: CountryOption) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [remoteCountries, setRemoteCountries] = useState<CountryOption[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const selectedCountry = countryOptions.find(
+    (country) => country.code === value,
+  ) ?? remoteCountries.find((country) => country.code === value);
+  const filteredCountries = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return countryOptions;
+    }
+
+    const localMatches = countryOptions
+      .filter(
+        (country) =>
+          country.name.toLowerCase().includes(normalizedQuery) ||
+          country.code.toLowerCase().includes(normalizedQuery) ||
+          country.region.toLowerCase().includes(normalizedQuery),
+      )
+      .slice(0, 40);
+
+    const mergedCountries = [...remoteCountries, ...localMatches];
+    const seenCodes = new Set<string>();
+
+    return mergedCountries.filter((country) => {
+      if (seenCodes.has(country.code)) {
+        return false;
+      }
+
+      seenCodes.add(country.code);
+      return true;
+    }).slice(0, 50);
+  }, [query, remoteCountries]);
+
+  useEffect(() => {
+    const normalizedQuery = query.trim();
+
+    if (normalizedQuery.length < 2) {
+      setRemoteCountries([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        const response = await fetch(
+          `/api/countries?query=${encodeURIComponent(normalizedQuery)}`,
+          { signal: controller.signal },
+        );
+        const payload = (await response.json()) as CountriesSearchResponse;
+
+        if (response.ok && Array.isArray(payload.countries)) {
+          setRemoteCountries(payload.countries);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setRemoteCountries([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSearching(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [query]);
+
+  return (
+    <details className="group relative">
+      <summary className="control-input flex h-[43px] cursor-pointer list-none items-center justify-center p-0 [&::-webkit-details-marker]:hidden">
+        <FlagBadge
+          code={selectedCountry?.code ?? value}
+          label={selectedCountry?.name}
+          flagUrl={selectedCountry?.flagSvgUrl ?? selectedCountry?.flagPngUrl}
+        />
+      </summary>
+      <div className="absolute right-0 z-30 mt-2 w-64 rounded-[1rem] border border-[#f3efe2]/10 bg-[#10130f] p-2 shadow-2xl shadow-black/50">
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Cari negara..."
+          className="control-input mb-2 h-9 text-xs"
+        />
+        <div className="grid max-h-72 gap-1 overflow-y-auto">
+          {isSearching ? (
+            <p className="px-2 py-2 text-xs font-bold text-[#9d9a90]">
+              Mencari negara...
+            </p>
+          ) : null}
+          {filteredCountries.map((country) => (
+            <button
+              key={country.code}
+              type="button"
+              onClick={(event) => {
+                onChange(country);
+                setQuery("");
+                event.currentTarget
+                  .closest("details")
+                  ?.removeAttribute("open");
+              }}
+              className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-bold text-[#f3efe2] hover:bg-[#f3efe2]/10"
+            >
+              <FlagBadge
+                code={country.code}
+                label={country.name}
+                flagUrl={country.flagSvgUrl ?? country.flagPngUrl}
+              />
+              <span className="min-w-0 flex-1 truncate">{country.name}</span>
+              <span className="text-[0.58rem] text-[#9d9a90]">
+                {country.code}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function RumorControls({
+  rumorData,
+  onRumorChange,
+}: {
+  rumorData: TransferRumorData;
+  onRumorChange: (data: TransferRumorData) => void;
+}) {
+  return (
+    <Panel title="Rumor Transfer" icon={<BadgePercent className="h-4 w-4" />}>
+      <Field label="Cari pemain">
+        <input
+          list="transfermarkt-player-suggestions"
+          value={rumorData.player?.name ?? ""}
+          onChange={(event) =>
+            onRumorChange({
+              ...rumorData,
+              player: rumorData.player
+                ? { ...rumorData.player, name: event.target.value }
+                : {
+                    id: "manual-player",
+                    name: event.target.value,
+                    position: "Unknown",
+                  },
+            })
+          }
+          placeholder="Ketik nama pemain..."
+          className="control-input"
+        />
+      </Field>
+      <datalist id="transfermarkt-player-suggestions">
+        <option value="Marselino Ferdinan" />
+        <option value="Sandy Walsh" />
+        <option value="Rafael Struick" />
+      </datalist>
+
+      <Field label={`Rumor Meter: ${rumorData.percentage}%`}>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={rumorData.percentage}
+          onChange={(event) =>
+            onRumorChange({
+              ...rumorData,
+              percentage: Number(event.target.value),
+            })
+          }
+          className="w-full accent-[#b7ff5a]"
+        />
+      </Field>
+
+      <Field label="Status">
+        <select
+          value={rumorData.status}
+          onChange={(event) =>
+            onRumorChange({
+              ...rumorData,
+              status: event.target.value as RumorStatus,
+            })
+          }
+          className="control-input"
+        >
+          {rumorStatuses.map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Klub asal">
+          <input
+            value={rumorData.fromClub}
+            onChange={(event) =>
+              onRumorChange({ ...rumorData, fromClub: event.target.value })
+            }
+            className="control-input"
+          />
+        </Field>
+        <Field label="Klub tujuan">
+          <input
+            value={rumorData.toClub}
+            onChange={(event) =>
+              onRumorChange({ ...rumorData, toClub: event.target.value })
+            }
+            className="control-input"
+          />
+        </Field>
+      </div>
+    </Panel>
+  );
+}
+
+function Panel({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="glass-edge space-y-4 rounded-[1.35rem] p-4">
+      <div className="studio-label flex items-center gap-2 text-[#c8c2b2]">
+        <span className="text-[#b7ff5a]">{icon}</span>
+        {title}
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block space-y-2">
+      <span className="studio-label text-[#777469]">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function TabButton({
+  active,
+  label,
+  icon,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`pressable flex items-center justify-center gap-2 rounded-[0.9rem] px-3 py-3 text-xs font-black uppercase tracking-[0.12em] ${
+        active
+          ? "bg-[#b7ff5a] text-[#10130f] shadow-[0_14px_42px_rgba(183,255,90,0.14)]"
+          : "text-[#9d9a90] hover:bg-[#f3efe2]/[0.07] hover:text-[#f3efe2]"
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function RadioCard({
+  active,
+  title,
+  subtitle,
+  onClick,
+}: {
+  active: boolean;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`pressable rounded-[1rem] border p-4 text-left ${
+        active
+          ? "border-[#b7ff5a]/70 bg-[#b7ff5a]/10 text-[#f3efe2]"
+          : "border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] text-[#9d9a90] hover:border-[#f3efe2]/25"
+      }`}
+    >
+      <span className="block text-lg font-black">{title}</span>
+      <span className="text-xs uppercase tracking-[0.18em]">{subtitle}</span>
+    </button>
+  );
+}
