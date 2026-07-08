@@ -14,6 +14,7 @@ import { FlagBadge } from "@/components/gosball/flag-badge";
 import { countryOptions, type CountryOption } from "@/lib/countries";
 import { formationOptions } from "@/lib/gosball-fixtures";
 import { indonesianClubs } from "@/lib/indonesian-clubs";
+import { getRumorCategory } from "@/lib/rumor-categories";
 import type {
   CanvasAspectRatio,
   FormationName,
@@ -193,24 +194,24 @@ export function ControlSidebar({
   };
 
   return (
-    <aside className="order-2 flex flex-col border-t border-[#f3efe2]/10 bg-[#10130f]/95 shadow-2xl shadow-black/40 backdrop-blur lg:order-1 lg:max-h-screen lg:border-r lg:border-t-0">
-      <div className="relative overflow-hidden border-b border-[#f3efe2]/10 p-4 sm:p-6">
-        <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full border border-[#b7ff5a]/20" />
+    <aside className="order-2 flex flex-col border-t border-[#D4DEE9] bg-white/92 shadow-[0_1px_2px_rgba(0,0,0,0.04)] lg:order-1 lg:max-h-screen lg:border-r lg:border-t-0">
+      <div className="relative overflow-hidden border-b border-[#D4DEE9] p-4 sm:p-6">
+        <div className="absolute -right-14 -top-14 h-36 w-36 rounded-[32px] bg-[linear-gradient(135deg,rgba(83,58,253,0.12),rgba(255,97,24,0.08))]" />
         <div className="mb-5 flex items-start justify-between gap-4 sm:mb-6">
           <div>
-            <p className="studio-label text-[#b7ff5a]">
+            <p className="studio-label text-[#533AFD]">
               Studio desk
             </p>
-            <h1 className="display-type mt-2 text-3xl font-black uppercase leading-none tracking-[-0.06em] text-[#f3efe2]">
+            <h1 className="display-type mt-2 text-3xl leading-none tracking-[-0.04em] text-[#061B31]">
               Media Tools
             </h1>
           </div>
-          <div className="glass-edge rounded-[1rem] p-3 text-[#b7ff5a]">
+          <div className="rounded-[5px] border border-[#D4DEE9] bg-white p-3 text-[#533AFD]">
             <Shield className="h-5 w-5" />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-[1.2rem] border border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] p-1">
+        <div className="grid grid-cols-2 gap-2 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-1">
           <TabButton
             active={mode === "lineup"}
             label="Matchday Line-Up"
@@ -256,12 +257,12 @@ export function ControlSidebar({
         )}
 
         <Panel title="Sponsor Slot" icon={<ImagePlus className="h-4 w-4" />}>
-          <label className="flex items-center justify-between rounded-[1rem] border border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] px-4 py-3">
+          <label className="flex items-center justify-between rounded-[5px] border border-[#D4DEE9] bg-white px-4 py-3">
             <span>
-              <span className="block text-sm font-semibold text-[#f3efe2]">
+              <span className="block text-sm text-[#061B31]">
                 Tampilkan sponsor
               </span>
-              <span className="text-xs text-[#9d9a90]">
+              <span className="text-xs text-[#64748D]">
                 Presented by {activeSponsor.brandName}
               </span>
             </span>
@@ -269,23 +270,23 @@ export function ControlSidebar({
               type="checkbox"
               checked={activeSponsor.enabled}
               onChange={(event) => updateSponsor(event.target.checked)}
-              className="h-5 w-5 accent-[#b7ff5a]"
+              className="h-5 w-5 accent-[#533AFD]"
             />
           </label>
           <input
             type="file"
             accept="image/*"
-            className="mt-3 w-full rounded-xl border border-dashed border-[#f3efe2]/15 bg-[#f3efe2]/[0.035] px-3 py-3 text-xs text-[#9d9a90] file:mr-3 file:rounded-lg file:border-0 file:bg-[#b7ff5a] file:px-3 file:py-2 file:text-xs file:font-bold file:text-[#10130f]"
+            className="mt-3 w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-3 text-xs text-[#64748D] file:mr-3 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-3 file:py-2 file:text-xs file:text-white"
           />
         </Panel>
       </div>
 
-      <div className="border-t border-white/10 p-6">
+      <div className="border-t border-[#D4DEE9] p-6">
         <button
           type="button"
           onClick={onDownload}
           disabled={isExporting}
-          className="pressable flex w-full items-center justify-center gap-2 rounded-[1rem] bg-[#b7ff5a] px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-[#10130f] shadow-[0_18px_50px_rgba(183,255,90,0.16)] disabled:cursor-not-allowed disabled:opacity-70"
+          className="pressable flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#533AFD] px-5 py-4 text-sm text-white shadow-[0_14px_32px_rgba(83,58,253,0.20)] disabled:cursor-not-allowed disabled:opacity-70"
         >
           <Download className="h-5 w-5" />
           {isExporting ? "Exporting..." : "Download PNG HD"}
@@ -682,7 +683,7 @@ function TeamControls({
 
   return (
     <Panel title={title} icon={<UsersRound className="h-4 w-4" />}>
-      <div className="grid gap-2 rounded-[1rem] border border-[#f3efe2]/10 bg-black/15 p-2">
+      <div className="grid gap-2 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-2">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_5.25rem]">
           <select
             value={selectedClubSlug}
@@ -704,12 +705,12 @@ function TeamControls({
             type="button"
             onClick={importSelectedClubRoster}
             disabled={importStatus === "loading"}
-            className="pressable h-10 rounded-[0.7rem] bg-[#b7ff5a] px-3 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#10130f] disabled:opacity-60"
+            className="pressable h-10 rounded-[4px] bg-[#533AFD] px-3 text-[0.7rem] text-white disabled:opacity-60"
           >
             {importStatus === "loading" ? "..." : "Muat"}
           </button>
         </div>
-        <p className="text-[0.58rem] font-bold text-[#9d9a90]">
+        <p className="text-[0.68rem] text-[#64748D]">
           {importStatus === "success"
             ? "Roster klub berhasil dimuat."
             : importStatus === "error"
@@ -774,7 +775,7 @@ function TeamControls({
       </Field>
 
       <div className="space-y-3">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+        <p className="text-xs text-[#533AFD]">
           Starting XI
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
@@ -805,7 +806,7 @@ function TeamControls({
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+        <p className="text-xs text-[#533AFD]">
           Cadangan
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
@@ -860,7 +861,7 @@ function ColorPresetPicker({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="grid gap-1.5 rounded-[0.7rem] border border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] p-1.5">
+    <div className="grid gap-1.5 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-1.5">
       <div className="grid grid-cols-8 gap-1.5">
       {teamColorOptions.map((color) => (
         <button
@@ -869,21 +870,21 @@ function ColorPresetPicker({
           onClick={() => onChange(color)}
           className={`h-8 rounded-md border transition ${
             value.toLowerCase() === color.toLowerCase()
-              ? "border-[#f3efe2] ring-2 ring-[#b7ff5a]/45"
-              : "border-white/15 hover:border-white/45"
+              ? "border-[#061B31] ring-2 ring-[#533AFD]/35"
+              : "border-[#D4DEE9] hover:border-[#533AFD]"
           }`}
           style={{ backgroundColor: color }}
           aria-label={`Pilih warna ${color}`}
         />
       ))}
       </div>
-      <label className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border border-[#f3efe2]/10 bg-black/20 px-2 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[#9d9a90]">
+      <label className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-[4px] border border-[#D4DEE9] bg-white px-2 py-1 text-[0.68rem] text-[#64748D]">
         Custom
         <input
           type="color"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-7 w-10 cursor-pointer rounded border border-white/15 bg-transparent p-0"
+          className="h-7 w-10 cursor-pointer rounded border border-[#D4DEE9] bg-transparent p-0"
         />
       </label>
     </div>
@@ -980,7 +981,7 @@ function CountryPicker({
           flagUrl={selectedCountry?.flagSvgUrl ?? selectedCountry?.flagPngUrl}
         />
       </summary>
-      <div className="absolute right-0 z-30 mt-2 w-64 rounded-[1rem] border border-[#f3efe2]/10 bg-[#10130f] p-2 shadow-2xl shadow-black/50">
+      <div className="absolute right-0 z-30 mt-2 w-64 rounded-[6px] border border-[#D4DEE9] bg-white p-2 shadow-[0_10px_40px_rgba(6,27,49,0.12)]">
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -989,7 +990,7 @@ function CountryPicker({
         />
         <div className="grid max-h-72 gap-1 overflow-y-auto">
           {isSearching ? (
-            <p className="px-2 py-2 text-xs font-bold text-[#9d9a90]">
+            <p className="px-2 py-2 text-xs text-[#64748D]">
               Mencari negara...
             </p>
           ) : null}
@@ -1004,7 +1005,7 @@ function CountryPicker({
                   .closest("details")
                   ?.removeAttribute("open");
               }}
-              className="flex items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-bold text-[#f3efe2] hover:bg-[#f3efe2]/10"
+              className="flex items-center gap-2 rounded-[4px] px-2 py-2 text-left text-xs text-[#061B31] hover:bg-[#F6F9FC]"
             >
               <FlagBadge
                 code={country.code}
@@ -1012,7 +1013,7 @@ function CountryPicker({
                 flagUrl={country.flagSvgUrl ?? country.flagPngUrl}
               />
               <span className="min-w-0 flex-1 truncate">{country.name}</span>
-              <span className="text-[0.58rem] text-[#9d9a90]">
+              <span className="text-[0.58rem] text-[#64748D]">
                 {country.code}
               </span>
             </button>
@@ -1030,6 +1031,8 @@ function RumorControls({
   rumorData: TransferRumorData;
   onRumorChange: (data: TransferRumorData) => void;
 }) {
+  const category = getRumorCategory(rumorData.percentage);
+
   return (
     <Panel title="Rumor Transfer" icon={<BadgePercent className="h-4 w-4" />}>
       <Field label="Cari pemain">
@@ -1059,19 +1062,28 @@ function RumorControls({
       </datalist>
 
       <Field label={`Rumor Meter: ${rumorData.percentage}%`}>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={rumorData.percentage}
-          onChange={(event) =>
-            onRumorChange({
-              ...rumorData,
-              percentage: Number(event.target.value),
-            })
-          }
-          className="w-full accent-[#b7ff5a]"
-        />
+        <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={rumorData.percentage}
+            onChange={(event) =>
+              onRumorChange({
+                ...rumorData,
+                percentage: Number(event.target.value),
+              })
+            }
+            className="w-full accent-[#533AFD]"
+          />
+          <div className="mt-2 flex items-start justify-between gap-3 text-xs">
+            <span className="text-[#061B31]">{category.label}</span>
+            <span className="text-right text-[#64748D]">{category.range}</span>
+          </div>
+          <p className="mt-1 text-xs text-[#64748D]">
+            {category.description}
+          </p>
+        </div>
       </Field>
 
       <Field label="Status">
@@ -1127,9 +1139,9 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="glass-edge space-y-4 rounded-[1.35rem] p-4">
-      <div className="studio-label flex items-center gap-2 text-[#c8c2b2]">
-        <span className="text-[#b7ff5a]">{icon}</span>
+    <section className="glass-edge space-y-4 rounded-[5px] p-4">
+      <div className="studio-label flex items-center gap-2 text-[#273951]">
+        <span className="text-[#533AFD]">{icon}</span>
         {title}
       </div>
       <div className="space-y-4">{children}</div>
@@ -1146,7 +1158,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="studio-label text-[#777469]">
+      <span className="studio-label text-[#64748D]">
         {label}
       </span>
       {children}
@@ -1169,10 +1181,10 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`pressable flex items-center justify-center gap-2 rounded-[0.9rem] px-3 py-3 text-xs font-black uppercase tracking-[0.12em] ${
+      className={`pressable flex items-center justify-center gap-2 rounded-[4px] px-3 py-3 text-xs ${
         active
-          ? "bg-[#b7ff5a] text-[#10130f] shadow-[0_14px_42px_rgba(183,255,90,0.14)]"
-          : "text-[#9d9a90] hover:bg-[#f3efe2]/[0.07] hover:text-[#f3efe2]"
+          ? "bg-[#533AFD] text-white shadow-[0_10px_28px_rgba(83,58,253,0.18)]"
+          : "text-[#64748D] hover:bg-white hover:text-[#533AFD]"
       }`}
     >
       {icon}
@@ -1196,14 +1208,14 @@ function RadioCard({
     <button
       type="button"
       onClick={onClick}
-      className={`pressable rounded-[1rem] border p-4 text-left ${
+      className={`pressable rounded-[5px] border p-4 text-left ${
         active
-          ? "border-[#b7ff5a]/70 bg-[#b7ff5a]/10 text-[#f3efe2]"
-          : "border-[#f3efe2]/10 bg-[#f3efe2]/[0.035] text-[#9d9a90] hover:border-[#f3efe2]/25"
+          ? "border-[#533AFD] bg-[#E8E9FF] text-[#061B31]"
+          : "border-[#D4DEE9] bg-white text-[#64748D] hover:border-[#533AFD]"
       }`}
     >
-      <span className="block text-lg font-black">{title}</span>
-      <span className="text-xs uppercase tracking-[0.18em]">{subtitle}</span>
+      <span className="block text-lg">{title}</span>
+      <span className="text-xs">{subtitle}</span>
     </button>
   );
 }

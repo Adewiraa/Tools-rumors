@@ -22,7 +22,7 @@ export function FlagBadge({
     return (
       <span
         title={label ?? normalizedCode}
-        className={`relative shrink-0 overflow-hidden rounded-[0.18rem] border border-white/25 bg-[#2a2e25] shadow-sm shadow-black/30 ${sizeClass}`}
+        className={`relative shrink-0 overflow-hidden rounded-[0.18rem] border border-[#D4DEE9] bg-white shadow-sm ${sizeClass}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -38,7 +38,7 @@ export function FlagBadge({
   if (!styleClass) {
     return (
       <span
-        className={`grid shrink-0 place-items-center rounded-sm border border-white/20 bg-[#2a2e25] text-[0.38rem] font-black text-white ${sizeClass}`}
+        className={`grid shrink-0 place-items-center rounded-sm border border-[#D4DEE9] bg-[#F6F9FC] text-[0.38rem] text-[#64748D] ${sizeClass}`}
       >
         {normalizedCode || "?"}
       </span>
@@ -48,7 +48,7 @@ export function FlagBadge({
   return (
     <span
       title={label ?? normalizedCode}
-      className={`relative shrink-0 overflow-hidden rounded-[0.18rem] border border-white/25 shadow-sm shadow-black/30 ${styleClass} ${sizeClass}`}
+      className={`relative shrink-0 overflow-hidden rounded-[0.18rem] border border-[#D4DEE9] shadow-sm ${styleClass} ${sizeClass}`}
     />
   );
 }

@@ -57,7 +57,7 @@ export function GosballMediaTools() {
       const dataUrl = await toPng(canvasRef.current, {
         cacheBust: true,
         pixelRatio: 3,
-        backgroundColor: "#05070a",
+        backgroundColor: "#f6f9fc",
       });
       const link = document.createElement("a");
       link.download = `gosball-${mode}-${aspectRatio.replace(":", "x")}.png`;
@@ -72,7 +72,7 @@ export function GosballMediaTools() {
   };
 
   return (
-    <main className="min-h-dvh overflow-x-hidden bg-[#0b0d0b] text-[#f3efe2]">
+    <main className="gosball-stripe min-h-dvh overflow-x-hidden bg-[#f6f9fc] text-[#061B31]">
       <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(360px,34%)_1fr]">
         <ControlSidebar
           mode={mode}
@@ -87,7 +87,7 @@ export function GosballMediaTools() {
           onFormationChange={handleFormationChange}
           onDownload={handleDownload}
         />
-        <section className="order-1 flex min-h-[540px] items-center justify-center bg-[radial-gradient(circle_at_28%_4%,rgba(183,255,90,0.13),transparent_30rem),radial-gradient(circle_at_90%_24%,rgba(243,239,226,0.08),transparent_22rem),linear-gradient(135deg,#11140f,#0b0d0b_48%,#151811)] p-3 sm:p-5 lg:order-2 lg:min-h-[720px] lg:p-8">
+        <section className="order-1 flex min-h-[540px] items-center justify-center bg-[radial-gradient(circle_at_24%_0%,rgba(83,58,253,0.12),transparent_28rem),radial-gradient(circle_at_88%_16%,rgba(255,97,24,0.10),transparent_22rem),#f6f9fc] p-3 sm:p-5 lg:order-2 lg:min-h-[720px] lg:p-8">
           <CanvasPreview
             ref={canvasRef}
             mode={mode}
