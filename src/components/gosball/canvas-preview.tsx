@@ -327,8 +327,8 @@ function RosterColumn({
 }) {
   const isStory = variant === "story";
   const rowClass = isStory
-    ? "grid min-w-0 grid-cols-[1rem_1fr] items-center gap-1 border-b border-white/10 py-[1px] last:border-b-0"
-    : "grid min-w-0 grid-cols-[1.1rem_1fr] items-center gap-1 border-b border-white/10 py-[2px] last:border-b-0";
+    ? "grid min-w-0 grid-cols-[0.72rem_1fr] items-center gap-1 border-b border-white/10 py-[1px] last:border-b-0"
+    : "grid min-w-0 grid-cols-[0.86rem_1fr] items-center gap-1.5 border-b border-white/10 py-[2px] last:border-b-0";
 
   return (
     <div className="min-h-0 overflow-hidden">
@@ -347,14 +347,11 @@ function RosterColumn({
           return (
             <div key={player.id} className={rowClass}>
               <span
-                className={`grid place-items-center rounded-full text-white ${
+                className={`tabular-nums text-[#A7B2C5] ${
                   isStory
-                    ? "h-3.5 w-3.5 text-[0.34rem]"
-                    : "h-4 w-4 text-[0.4rem]"
+                    ? "text-[0.36rem]"
+                    : "text-[0.44rem]"
                 }`}
-                style={{
-                  backgroundColor: bench ? stripe.muted : teamColor,
-                }}
               >
                 {player.shirtNumber}
               </span>
