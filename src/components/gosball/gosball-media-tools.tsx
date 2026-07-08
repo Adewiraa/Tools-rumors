@@ -52,6 +52,8 @@ export function GosballMediaTools() {
 
     try {
       setIsExporting(true);
+      canvasRef.current.dataset.exporting = "true";
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       const dataUrl = await toPng(canvasRef.current, {
         cacheBust: true,
         pixelRatio: 3,
@@ -62,6 +64,9 @@ export function GosballMediaTools() {
       link.href = dataUrl;
       link.click();
     } finally {
+      if (canvasRef.current) {
+        delete canvasRef.current.dataset.exporting;
+      }
       setIsExporting(false);
     }
   };

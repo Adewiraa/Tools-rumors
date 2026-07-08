@@ -124,7 +124,7 @@ function LineupHeader({
           className={`display-type mt-2 font-black uppercase leading-[0.86] tracking-[-0.075em] [overflow-wrap:anywhere] ${
             compact
               ? "text-[clamp(1.65rem,9vw,2.7rem)]"
-              : "text-[clamp(2.5rem,6vw,4.8rem)]"
+              : "text-[clamp(2.15rem,5.2vw,4.1rem)]"
           }`}
         >
           {lineupData.homeTeam.shortName}
