@@ -209,8 +209,8 @@ function TeamCard({
         <div
           className={
             isStory
-              ? "mt-2 grid min-h-0 flex-1 grid-cols-[36%_1fr] gap-2"
-              : "mt-3 grid min-h-0 flex-1 grid-rows-[36%_1fr] gap-3"
+              ? "mt-2 grid min-h-0 flex-1 grid-cols-[39%_1fr] gap-2"
+              : "mt-3 grid min-h-0 flex-1 grid-cols-[38%_1fr] gap-3"
           }
         >
           <TacticalPitch team={team} side={side} compact={isStory} />
@@ -237,10 +237,14 @@ function TacticalPitch({
       : formation.coordinates.map(mirrorCoordinate);
 
   return (
-    <div className="relative min-h-0 overflow-hidden rounded-[5px] border border-white/15 bg-[#061B31]/72">
+    <div className="relative h-full min-h-0 overflow-hidden rounded-[5px] border border-white/15 bg-[#061B31]/72">
       <div className="absolute inset-2 rounded-[5px] border border-white/12" />
       <div className="absolute left-1/2 top-0 h-full w-px bg-white/12" />
-      <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12" />
+      <div
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12 ${
+          compact ? "h-10 w-10" : "h-16 w-16"
+        }`}
+      />
       {coordinates.map((coordinate, index) => {
         const player = team.starters[index];
 
