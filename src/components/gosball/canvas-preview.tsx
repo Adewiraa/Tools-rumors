@@ -327,8 +327,8 @@ function RosterColumn({
 }) {
   const isStory = variant === "story";
   const rowClass = isStory
-    ? "grid min-w-0 grid-cols-[1rem_0.92rem_1fr] items-center gap-1 border-b border-white/10 py-[1px] last:border-b-0"
-    : "grid min-w-0 grid-cols-[1.1rem_1rem_1fr] items-center gap-1 border-b border-white/10 py-[2px] last:border-b-0";
+    ? "grid min-w-0 grid-cols-[1rem_1fr] items-center gap-1 border-b border-white/10 py-[1px] last:border-b-0"
+    : "grid min-w-0 grid-cols-[1.1rem_1fr] items-center gap-1 border-b border-white/10 py-[2px] last:border-b-0";
 
   return (
     <div className="min-h-0 overflow-hidden">
@@ -340,33 +340,44 @@ function RosterColumn({
         {title}
       </p>
       <div className="grid min-h-0 gap-0 overflow-hidden">
-        {players.map((player) => (
-          <div key={player.id} className={rowClass}>
-            <span
-              className={`grid place-items-center rounded-full text-white ${
-                isStory ? "h-3.5 w-3.5 text-[0.34rem]" : "h-4 w-4 text-[0.4rem]"
-              }`}
-              style={{
-                backgroundColor: bench ? stripe.muted : teamColor,
-              }}
-            >
-              {player.shirtNumber}
-            </span>
-            <FlagBadge
-              code={player.countryCode}
-              label={player.nationality}
-              flagUrl={player.countryFlagUrl}
-              tiny
-            />
-            <span
-              className={`min-w-0 truncate text-[#E5EDF5] ${
-                isStory ? "text-[0.39rem]" : "text-[0.48rem]"
-              }`}
-            >
-              {player.name}
-            </span>
-          </div>
-        ))}
+        {players.map((player) => {
+          const isForeignPlayer =
+            (player.countryCode ?? "ID").toUpperCase() !== "ID";
+
+          return (
+            <div key={player.id} className={rowClass}>
+              <span
+                className={`grid place-items-center rounded-full text-white ${
+                  isStory
+                    ? "h-3.5 w-3.5 text-[0.34rem]"
+                    : "h-4 w-4 text-[0.4rem]"
+                }`}
+                style={{
+                  backgroundColor: bench ? stripe.muted : teamColor,
+                }}
+              >
+                {player.shirtNumber}
+              </span>
+              <span className="flex min-w-0 items-center gap-1">
+                {isForeignPlayer ? (
+                  <FlagBadge
+                    code={player.countryCode}
+                    label={player.nationality}
+                    flagUrl={player.countryFlagUrl}
+                    tiny
+                  />
+                ) : null}
+                <span
+                  className={`roster-name min-w-0 truncate text-white ${
+                    isStory ? "text-[0.43rem]" : "text-[0.54rem]"
+                  }`}
+                >
+                  {player.name}
+                </span>
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
