@@ -24,10 +24,10 @@ interface CanvasPreviewProps {
 
 const stripe = {
   navy: "#061B31",
-  slate: "#273951",
-  muted: "#64748D",
-  line: "#D4DEE9",
-  soft: "#E5EDF5",
+  slate: "#1A2C44",
+  muted: "#A7B2C5",
+  line: "rgba(229,237,245,0.16)",
+  soft: "#0D1738",
   purple: "#533AFD",
   orange: "#FF6118",
   lavender: "#E8E9FF",
@@ -44,7 +44,7 @@ export const CanvasPreview = forwardRef<HTMLDivElement, CanvasPreviewProps>(
       <div className="flex w-full items-center justify-center">
         <div
           ref={ref}
-          className={`gosball-canvas relative overflow-hidden rounded-[5px] border bg-white text-[#061B31] shadow-[0_24px_70px_rgba(6,27,49,0.14)] ${canvasSizeClass}`}
+          className={`gosball-canvas relative overflow-hidden rounded-[5px] border bg-[#05070A] text-white shadow-[0_24px_70px_rgba(0,0,0,0.32)] ${canvasSizeClass}`}
           style={{ borderColor: stripe.line }}
         >
           <CanvasBackground />
@@ -62,10 +62,11 @@ export const CanvasPreview = forwardRef<HTMLDivElement, CanvasPreviewProps>(
 function CanvasBackground() {
   return (
     <>
-      <div className="absolute inset-0 bg-[#F6F9FC]" />
-      <div className="absolute -right-[18%] -top-[24%] h-[48%] w-[58%] rotate-[-12deg] rounded-[32px] bg-[linear-gradient(135deg,rgba(83,58,253,0.20),rgba(255,97,24,0.13))]" />
-      <div className="absolute -left-[20%] bottom-[10%] h-[38%] w-[58%] rotate-[-12deg] rounded-[28px] bg-[rgba(83,58,253,0.08)]" />
-      <div className="absolute inset-0 opacity-[0.42] [background-image:linear-gradient(rgba(6,27,49,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(6,27,49,0.05)_1px,transparent_1px)] [background-size:34px_34px]" />
+      <div className="absolute inset-0 bg-[#05070A]" />
+      <div className="absolute -right-[18%] -top-[24%] h-[48%] w-[58%] rotate-[-12deg] rounded-[32px] bg-[linear-gradient(135deg,rgba(83,58,253,0.32),rgba(255,97,24,0.18))]" />
+      <div className="absolute -left-[20%] bottom-[10%] h-[38%] w-[58%] rotate-[-12deg] rounded-[28px] bg-[rgba(83,58,253,0.12)]" />
+      <div className="absolute inset-0 opacity-[0.28] [background-image:linear-gradient(rgba(229,237,245,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.08)_1px,transparent_1px)] [background-size:34px_34px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.08),transparent_24rem)]" />
     </>
   );
 }
@@ -121,21 +122,21 @@ function LineupHeader({
   return (
     <header className="grid grid-cols-[1fr_auto] items-start gap-3">
       <div className="min-w-0">
-        <p className="studio-label text-[#533AFD]">Gosball match sheet</p>
+        <p className="studio-label text-[#A78BFA]">Gosball match sheet</p>
         <h2
-          className={`display-type mt-1 leading-[0.95] tracking-[-0.055em] text-[#061B31] [overflow-wrap:anywhere] ${
+          className={`display-type mt-1 leading-[0.95] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
             compact
               ? "text-[clamp(2.2rem,11vw,3.3rem)]"
               : "text-[clamp(3.1rem,6.4vw,5.4rem)]"
           }`}
         >
           {lineupData.homeTeam.shortName}
-          <span className="mx-2 text-[#533AFD]">/</span>
+          <span className="mx-2 text-[#FF6118]">/</span>
           <wbr />
           {lineupData.awayTeam.shortName}
         </h2>
         <div
-          className={`mt-2 flex flex-wrap items-center gap-2 text-[#64748D] ${
+          className={`mt-2 flex flex-wrap items-center gap-2 text-[#A7B2C5] ${
             compact ? "text-[0.58rem]" : "text-[0.72rem]"
           }`}
         >
@@ -151,9 +152,9 @@ function LineupHeader({
         </div>
       </div>
 
-      <div className="rounded-[5px] border border-[#D4DEE9] bg-white/88 px-3 py-2 text-right">
-        <ScanLine className="ml-auto h-4 w-4 text-[#533AFD]" />
-        <p className="mt-1 text-[0.55rem] text-[#64748D]">XI</p>
+      <div className="rounded-[5px] border border-white/15 bg-white/[0.06] px-3 py-2 text-right">
+        <ScanLine className="ml-auto h-4 w-4 text-[#A78BFA]" />
+        <p className="mt-1 text-[0.55rem] text-[#A7B2C5]">XI</p>
         <p className={compact ? "text-xl leading-none" : "text-2xl leading-none"}>
           22
         </p>
@@ -174,7 +175,7 @@ function TeamCard({
   const isStory = variant === "story";
 
   return (
-    <section className="relative min-h-0 overflow-hidden rounded-[6px] border border-[#D4DEE9] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <section className="relative min-h-0 overflow-hidden rounded-[6px] border border-white/15 bg-[#0B1020]/92 shadow-[0_1px_2px_rgba(0,0,0,0.28)]">
       <div
         className="absolute inset-x-0 top-0 h-[3px]"
         style={{
@@ -186,21 +187,21 @@ function TeamCard({
           <TeamLogo team={team} compact={isStory} />
           <div className="min-w-0">
             <h3
-              className={`truncate text-[#061B31] ${
+              className={`truncate text-white ${
                 isStory ? "text-[0.82rem]" : "text-[1rem]"
               }`}
             >
               {team.name}
             </h3>
             <p
-              className={`truncate text-[#64748D] ${
+              className={`truncate text-[#A7B2C5] ${
                 isStory ? "text-[0.54rem]" : "text-[0.66rem]"
               }`}
             >
               {team.formation} / coach {team.coach.name}
             </p>
           </div>
-          <span className="rounded-[4px] border border-[#D4DEE9] bg-[#F6F9FC] px-2 py-1 text-[0.56rem] text-[#64748D]">
+          <span className="rounded-[4px] border border-white/15 bg-white/[0.05] px-2 py-1 text-[0.56rem] text-[#A7B2C5]">
             {side === "home" ? "Home" : "Away"}
           </span>
         </div>
@@ -236,10 +237,10 @@ function TacticalPitch({
       : formation.coordinates.map(mirrorCoordinate);
 
   return (
-    <div className="relative min-h-0 overflow-hidden rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC]">
-      <div className="absolute inset-2 rounded-[5px] border border-[#D4DEE9]" />
-      <div className="absolute left-1/2 top-0 h-full w-px bg-[#D4DEE9]" />
-      <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#D4DEE9]" />
+    <div className="relative min-h-0 overflow-hidden rounded-[5px] border border-white/15 bg-[#061B31]/72">
+      <div className="absolute inset-2 rounded-[5px] border border-white/12" />
+      <div className="absolute left-1/2 top-0 h-full w-px bg-white/12" />
+      <div className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12" />
       {coordinates.map((coordinate, index) => {
         const player = team.starters[index];
 
@@ -326,13 +327,13 @@ function RosterColumn({
 }) {
   const isStory = variant === "story";
   const rowClass = isStory
-    ? "grid min-w-0 grid-cols-[1rem_0.92rem_1fr] items-center gap-1 border-b border-[#E5EDF5] py-[1px] last:border-b-0"
-    : "grid min-w-0 grid-cols-[1.1rem_1rem_1fr] items-center gap-1 border-b border-[#E5EDF5] py-[2px] last:border-b-0";
+    ? "grid min-w-0 grid-cols-[1rem_0.92rem_1fr] items-center gap-1 border-b border-white/10 py-[1px] last:border-b-0"
+    : "grid min-w-0 grid-cols-[1.1rem_1rem_1fr] items-center gap-1 border-b border-white/10 py-[2px] last:border-b-0";
 
   return (
     <div className="min-h-0 overflow-hidden">
       <p
-        className={`mb-1 text-[#533AFD] ${
+        className={`mb-1 text-[#A78BFA] ${
           isStory ? "text-[0.46rem]" : "text-[0.55rem]"
         }`}
       >
@@ -358,7 +359,7 @@ function RosterColumn({
               tiny
             />
             <span
-              className={`min-w-0 truncate text-[#273951] ${
+              className={`min-w-0 truncate text-[#E5EDF5] ${
                 isStory ? "text-[0.39rem]" : "text-[0.48rem]"
               }`}
             >
@@ -380,19 +381,19 @@ function LineupFooter({
 }) {
   return (
     <footer
-      className={`relative mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[#64748D] ${
+      className={`relative mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[#A7B2C5] ${
         compact ? "text-[0.5rem]" : "text-[0.62rem]"
       }`}
     >
-      <div className="h-px bg-[#D4DEE9]" />
-      <p className="rounded-[4px] border border-[#D4DEE9] bg-white px-4 py-1.5 text-[#061B31]">
+      <div className="h-px bg-white/15" />
+      <p className="rounded-[4px] border border-white/15 bg-white/[0.06] px-4 py-1.5 text-white">
         Gosball
       </p>
-      <div className="h-px bg-[#D4DEE9]" />
+      <div className="h-px bg-white/15" />
       {lineupData.sponsor.enabled ? (
         <p className="absolute inset-x-0 -bottom-3 text-center">
           Presented by{" "}
-          <span className="text-[#533AFD]">{lineupData.sponsor.brandName}</span>
+          <span className="text-[#A78BFA]">{lineupData.sponsor.brandName}</span>
         </p>
       ) : null}
     </footer>
@@ -411,7 +412,7 @@ function TeamLogo({
   if (team.logoUrl) {
     return (
       <div
-        className={`grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-[#D4DEE9] bg-white ${
+        className={`grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-white/15 bg-white ${
           compact ? "h-8 w-8" : "h-10 w-10"
         }`}
       >
@@ -459,17 +460,17 @@ function RumorPoster({
       }`}
     >
       <header className="flex items-center justify-between gap-3">
-        <p className="studio-label text-[#533AFD]">Gosball transfer desk</p>
+        <p className="studio-label text-[#A78BFA]">Gosball transfer desk</p>
         <RumorBadge label={category.label} />
       </header>
 
       <section className="my-auto grid gap-4">
-        <div className="rounded-[6px] border border-[#D4DEE9] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <p className="text-[0.72rem] text-[#64748D]">
+        <div className="rounded-[6px] border border-white/15 bg-[#0B1020]/92 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.28)]">
+          <p className="text-[0.72rem] text-[#A7B2C5]">
             {rumorData.status} / {category.range}
           </p>
           <h2
-            className={`display-type mt-2 leading-[0.98] tracking-[-0.055em] text-[#061B31] [overflow-wrap:anywhere] ${
+            className={`display-type mt-2 leading-[0.98] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
               isStory
                 ? "text-[clamp(3rem,15vw,5.8rem)]"
                 : "text-[clamp(4rem,9vw,7rem)]"
@@ -479,32 +480,32 @@ function RumorPoster({
           </h2>
         </div>
 
-        <div className="grid gap-3 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-4">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[#273951]">
+        <div className="grid gap-3 rounded-[6px] border border-white/15 bg-[#061B31]/72 p-4">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[#E5EDF5]">
             <span className="truncate">{rumorData.fromClub}</span>
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E8E9FF] text-[#533AFD]">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.08] text-[#A78BFA]">
               <ArrowRight className="h-4 w-4" />
             </span>
-            <span className="truncate text-right text-[#061B31]">
+            <span className="truncate text-right text-white">
               {rumorData.toClub}
             </span>
           </div>
 
           <div className="grid grid-cols-[auto_1fr] items-end gap-4">
             <div>
-              <p className="text-[0.68rem] text-[#64748D]">Rumor meter</p>
-              <p className="text-5xl tracking-[-0.08em] text-[#061B31]">
+              <p className="text-[0.68rem] text-[#A7B2C5]">Rumor meter</p>
+              <p className="text-5xl tracking-[-0.08em] text-white">
                 {rumorData.percentage}%
               </p>
             </div>
             <div className="pb-2">
-              <div className="h-2 overflow-hidden rounded-full bg-[#D4DEE9]">
+              <div className="h-2 overflow-hidden rounded-full bg-white/15">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#533AFD,#FF6118)]"
                   style={{ width: `${rumorData.percentage}%` }}
                 />
               </div>
-              <p className="mt-2 text-right text-[0.68rem] text-[#64748D]">
+              <p className="mt-2 text-right text-[0.68rem] text-[#A7B2C5]">
                 {category.description}
               </p>
             </div>
@@ -512,12 +513,12 @@ function RumorPoster({
         </div>
       </section>
 
-      <footer className="flex items-center justify-between gap-4 border-t border-[#D4DEE9] pt-4 text-[0.68rem] text-[#64748D]">
-        <span className="text-[#061B31]">Gosball</span>
+      <footer className="flex items-center justify-between gap-4 border-t border-white/15 pt-4 text-[0.68rem] text-[#A7B2C5]">
+        <span className="text-white">Gosball</span>
         {rumorData.sponsor.enabled ? (
           <p className="text-right">
             Presented by{" "}
-            <span className="text-[#533AFD]">{rumorData.sponsor.brandName}</span>
+            <span className="text-[#A78BFA]">{rumorData.sponsor.brandName}</span>
           </p>
         ) : null}
       </footer>
@@ -527,8 +528,8 @@ function RumorPoster({
 
 function RumorBadge({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-[4px] border border-[#D4DEE9] bg-white px-3 py-2 text-[0.66rem] text-[#273951]">
-      <BadgeCheck className="h-4 w-4 text-[#533AFD]" />
+    <div className="flex items-center gap-2 rounded-[4px] border border-white/15 bg-white/[0.06] px-3 py-2 text-[0.66rem] text-[#E5EDF5]">
+      <BadgeCheck className="h-4 w-4 text-[#A78BFA]" />
       {label}
     </div>
   );

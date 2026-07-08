@@ -57,7 +57,7 @@ export function GosballMediaTools() {
       const dataUrl = await toPng(canvasRef.current, {
         cacheBust: true,
         pixelRatio: 3,
-        backgroundColor: "#f6f9fc",
+        backgroundColor: "#05070A",
       });
       const link = document.createElement("a");
       link.download = `gosball-${mode}-${aspectRatio.replace(":", "x")}.png`;
@@ -87,7 +87,7 @@ export function GosballMediaTools() {
           onFormationChange={handleFormationChange}
           onDownload={handleDownload}
         />
-        <section className="order-1 flex min-h-[540px] items-center justify-center bg-[radial-gradient(circle_at_24%_0%,rgba(83,58,253,0.12),transparent_28rem),radial-gradient(circle_at_88%_16%,rgba(255,97,24,0.10),transparent_22rem),#f6f9fc] p-3 sm:p-5 lg:order-2 lg:min-h-[720px] lg:p-8">
+        <section className="order-1 flex min-h-[540px] items-center justify-center bg-[radial-gradient(circle_at_24%_0%,rgba(83,58,253,0.20),transparent_28rem),radial-gradient(circle_at_88%_16%,rgba(255,97,24,0.14),transparent_22rem),#05070A] p-3 sm:p-5 lg:order-2 lg:min-h-[720px] lg:p-8">
           <CanvasPreview
             ref={canvasRef}
             mode={mode}
