@@ -29,7 +29,7 @@ export function GosballMediaTools() {
 
   const handleModeChange = (nextMode: ToolMode) => {
     setMode(nextMode);
-    setAspectRatio(nextMode === "lineup" ? "1:1" : "9:16");
+    setAspectRatio(nextMode === "rumor" ? "9:16" : "1:1");
   };
 
   const handleFormationChange = (

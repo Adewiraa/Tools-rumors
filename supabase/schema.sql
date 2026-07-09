@@ -67,6 +67,12 @@ create table if not exists public.club_rosters (
   unique (club_season_id, player_id)
 );
 
+alter table public.players
+drop constraint if exists players_full_name_country_code_key;
+
+alter table public.players
+add constraint players_full_name_country_code_key unique (full_name, country_code);
+
 create index if not exists clubs_ileague_slug_idx on public.clubs (ileague_slug);
 create index if not exists club_rosters_club_season_idx on public.club_rosters (club_season_id);
 create index if not exists players_country_code_idx on public.players (country_code);

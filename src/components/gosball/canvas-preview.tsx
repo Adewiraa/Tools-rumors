@@ -50,8 +50,10 @@ export const CanvasPreview = forwardRef<HTMLDivElement, CanvasPreviewProps>(
           <CanvasBackground />
           {mode === "lineup" ? (
             <LineupPoster aspectRatio={aspectRatio} lineupData={lineupData} />
-          ) : (
+          ) : mode === "rumor" ? (
             <RumorPoster aspectRatio={aspectRatio} rumorData={rumorData} />
+          ) : (
+            <MasterPreview />
           )}
         </div>
       </div>
@@ -68,6 +70,23 @@ function CanvasBackground() {
       <div className="absolute inset-0 opacity-[0.28] [background-image:linear-gradient(rgba(229,237,245,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.08)_1px,transparent_1px)] [background-size:34px_34px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.08),transparent_24rem)]" />
     </>
+  );
+}
+
+function MasterPreview() {
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center p-[7%]">
+      <section className="max-w-md rounded-[6px] border border-white/15 bg-[#0B1020]/92 p-6 text-center shadow-[0_1px_2px_rgba(0,0,0,0.28)]">
+        <p className="studio-label text-[#A78BFA]">Gosball database</p>
+        <h2 className="display-type mt-3 text-5xl leading-none tracking-[-0.05em] text-white">
+          Master Data
+        </h2>
+        <p className="mt-4 text-sm leading-6 text-[#A7B2C5]">
+          Tambahkan klub, logo, warna, dan pemain per klub. Data pemain asing
+          akan membawa negara otomatis ke lineup.
+        </p>
+      </section>
+    </div>
   );
 }
 

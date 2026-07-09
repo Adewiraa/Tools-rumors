@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   BadgePercent,
+  Database,
   Download,
   ImagePlus,
   MapPin,
+  Plus,
   Shield,
   SlidersHorizontal,
   UsersRound,
@@ -94,6 +96,8 @@ interface RosterSearchResponse {
   source: "local" | "supabase";
   error?: string;
 }
+
+type SaveStatus = "idle" | "saving" | "success" | "error";
 
 const rumorStatuses: RumorStatus[] = ["Rumor", "Advanced Talks", "Here We Go"];
 const teamColorOptions = [
@@ -211,7 +215,7 @@ export function ControlSidebar({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-1">
+        <div className="grid grid-cols-3 gap-2 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-1">
           <TabButton
             active={mode === "lineup"}
             label="Matchday Line-Up"
@@ -224,26 +228,34 @@ export function ControlSidebar({
             icon={<BadgePercent className="h-4 w-4" />}
             onClick={() => onModeChange("rumor")}
           />
+          <TabButton
+            active={mode === "master"}
+            label="Master Data"
+            icon={<Database className="h-4 w-4" />}
+            onClick={() => onModeChange("master")}
+          />
         </div>
       </div>
 
       <div className="flex-1 space-y-5 overflow-visible p-4 sm:space-y-6 sm:p-6 lg:overflow-y-auto">
-        <Panel title="Canvas Ratio" icon={<SlidersHorizontal className="h-4 w-4" />}>
-          <div className="grid grid-cols-2 gap-3">
-            <RadioCard
-              active={aspectRatio === "1:1"}
-              title="1:1"
-              subtitle="Feed Post"
-              onClick={() => onAspectRatioChange("1:1")}
-            />
-            <RadioCard
-              active={aspectRatio === "9:16"}
-              title="9:16"
-              subtitle="IG Story"
-              onClick={() => onAspectRatioChange("9:16")}
-            />
-          </div>
-        </Panel>
+        {mode !== "master" ? (
+          <Panel title="Canvas Ratio" icon={<SlidersHorizontal className="h-4 w-4" />}>
+            <div className="grid grid-cols-2 gap-3">
+              <RadioCard
+                active={aspectRatio === "1:1"}
+                title="1:1"
+                subtitle="Feed Post"
+                onClick={() => onAspectRatioChange("1:1")}
+              />
+              <RadioCard
+                active={aspectRatio === "9:16"}
+                title="9:16"
+                subtitle="IG Story"
+                onClick={() => onAspectRatioChange("9:16")}
+              />
+            </div>
+          </Panel>
+        ) : null}
 
         {mode === "lineup" ? (
           <LineupControls
@@ -252,10 +264,26 @@ export function ControlSidebar({
             onLineupChange={onLineupChange}
             onFormationChange={onFormationChange}
           />
-        ) : (
+        ) : mode === "rumor" ? (
           <RumorControls rumorData={rumorData} onRumorChange={onRumorChange} />
+        ) : (
+          <MasterDataControls
+            clubs={availableClubs}
+            onClubSaved={(club) =>
+              setAvailableClubs((current) => {
+                const withoutExisting = current.filter(
+                  (item) => item.slug !== club.slug,
+                );
+
+                return [...withoutExisting, club].sort((first, second) =>
+                  first.name.localeCompare(second.name),
+                );
+              })
+            }
+          />
         )}
 
+        {mode !== "master" ? (
         <Panel title="Sponsor Slot" icon={<ImagePlus className="h-4 w-4" />}>
           <label className="flex items-center justify-between rounded-[5px] border border-[#D4DEE9] bg-white px-4 py-3">
             <span>
@@ -279,10 +307,12 @@ export function ControlSidebar({
             className="mt-3 w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-3 text-xs text-[#64748D] file:mr-3 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-3 file:py-2 file:text-xs file:text-white"
           />
         </Panel>
+        ) : null}
       </div>
 
       <div className="border-t border-[#D4DEE9] p-6">
-        <button
+        {mode !== "master" ? (
+          <button
           type="button"
           onClick={onDownload}
           disabled={isExporting}
@@ -290,7 +320,12 @@ export function ControlSidebar({
         >
           <Download className="h-5 w-5" />
           {isExporting ? "Exporting..." : "Download PNG HD"}
-        </button>
+          </button>
+        ) : (
+          <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] px-4 py-3 text-xs text-[#64748D]">
+            Master Data tersimpan ke Supabase lewat server route.
+          </div>
+        )}
       </div>
     </aside>
   );
@@ -853,6 +888,390 @@ function TeamControls({
   );
 }
 
+function MasterDataControls({
+  clubs,
+  onClubSaved,
+}: {
+  clubs: ClubOption[];
+  onClubSaved: (club: ClubOption) => void;
+}) {
+  const [clubForm, setClubForm] = useState({
+    name: "",
+    shortName: "",
+    slug: "",
+    city: "",
+    ileagueSlug: "",
+    ileagueUrl: "",
+    logoPublicUrl: "",
+    primaryColor: "#533AFD",
+    secondaryColor: "#E5EDF5",
+  });
+  const [playerForm, setPlayerForm] = useState({
+    clubSlug: "",
+    seasonCode: "BRI_SUPER_LEAGUE_2025-26",
+    fullName: "",
+    displayName: "",
+    shirtNumber: "",
+    position: "Unknown" as Player["position"],
+    sourceUrl: "",
+    country: countryOptions.find((country) => country.code === "ID"),
+  });
+  const [clubStatus, setClubStatus] = useState<SaveStatus>("idle");
+  const [clubMessage, setClubMessage] = useState("");
+  const [playerStatus, setPlayerStatus] = useState<SaveStatus>("idle");
+  const [playerMessage, setPlayerMessage] = useState("");
+
+  const saveClub = async () => {
+    try {
+      setClubStatus("saving");
+      setClubMessage("");
+
+      const response = await fetch("/api/master/clubs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clubForm),
+      });
+      const payload = (await response.json()) as {
+        club?: ClubOption;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.club) {
+        throw new Error(payload.error ?? "Gagal menyimpan klub.");
+      }
+
+      onClubSaved(payload.club);
+      setPlayerForm((current) => ({
+        ...current,
+        clubSlug: payload.club?.slug ?? current.clubSlug,
+      }));
+      setClubStatus("success");
+      setClubMessage("Klub berhasil disimpan.");
+    } catch (error) {
+      setClubStatus("error");
+      setClubMessage(
+        error instanceof Error ? error.message : "Gagal menyimpan klub.",
+      );
+    }
+  };
+
+  const savePlayer = async () => {
+    try {
+      setPlayerStatus("saving");
+      setPlayerMessage("");
+
+      const response = await fetch("/api/master/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clubSlug: playerForm.clubSlug,
+          seasonCode: playerForm.seasonCode,
+          fullName: playerForm.fullName,
+          displayName: playerForm.displayName,
+          shirtNumber: playerForm.shirtNumber,
+          position: playerForm.position,
+          sourceUrl: playerForm.sourceUrl,
+          countryCode: playerForm.country?.code ?? "ID",
+          countryName: playerForm.country?.name ?? "Indonesia",
+          countryFlagUrl:
+            playerForm.country?.flagSvgUrl ?? playerForm.country?.flagPngUrl,
+        }),
+      });
+      const payload = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Gagal menyimpan pemain.");
+      }
+
+      setPlayerStatus("success");
+      setPlayerMessage("Pemain berhasil ditambahkan ke roster klub.");
+      setPlayerForm((current) => ({
+        ...current,
+        fullName: "",
+        displayName: "",
+        shirtNumber: "",
+        sourceUrl: "",
+      }));
+    } catch (error) {
+      setPlayerStatus("error");
+      setPlayerMessage(
+        error instanceof Error ? error.message : "Gagal menyimpan pemain.",
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Panel title="Master Klub" icon={<Database className="h-4 w-4" />}>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Nama klub">
+            <input
+              value={clubForm.name}
+              onChange={(event) =>
+                setClubForm((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
+              }
+              placeholder="Persib Bandung"
+              className="control-input"
+            />
+          </Field>
+          <Field label="Short name">
+            <input
+              value={clubForm.shortName}
+              onChange={(event) =>
+                setClubForm((current) => ({
+                  ...current,
+                  shortName: event.target.value,
+                }))
+              }
+              placeholder="PERSIB"
+              className="control-input"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Slug">
+            <input
+              value={clubForm.slug}
+              onChange={(event) =>
+                setClubForm((current) => ({
+                  ...current,
+                  slug: event.target.value,
+                }))
+              }
+              placeholder="persib-bandung"
+              className="control-input"
+            />
+          </Field>
+          <Field label="Kota">
+            <input
+              value={clubForm.city}
+              onChange={(event) =>
+                setClubForm((current) => ({
+                  ...current,
+                  city: event.target.value,
+                }))
+              }
+              placeholder="Bandung"
+              className="control-input"
+            />
+          </Field>
+        </div>
+
+        <Field label="Logo public URL">
+          <input
+            value={clubForm.logoPublicUrl}
+            onChange={(event) =>
+              setClubForm((current) => ({
+                ...current,
+                logoPublicUrl: event.target.value,
+              }))
+            }
+            placeholder="https://..."
+            className="control-input"
+          />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Warna utama">
+            <ColorPresetPicker
+              value={clubForm.primaryColor}
+              onChange={(primaryColor) =>
+                setClubForm((current) => ({ ...current, primaryColor }))
+              }
+            />
+          </Field>
+          <Field label="Warna kedua">
+            <input
+              type="color"
+              value={clubForm.secondaryColor}
+              onChange={(event) =>
+                setClubForm((current) => ({
+                  ...current,
+                  secondaryColor: event.target.value,
+                }))
+              }
+              className="control-input h-10 p-1"
+            />
+          </Field>
+        </div>
+
+        <details className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+          <summary className="cursor-pointer text-xs text-[#64748D]">
+            Opsional iLeague
+          </summary>
+          <div className="mt-3 grid gap-3">
+            <Field label="iLeague slug">
+              <input
+                value={clubForm.ileagueSlug}
+                onChange={(event) =>
+                  setClubForm((current) => ({
+                    ...current,
+                    ileagueSlug: event.target.value,
+                  }))
+                }
+                placeholder="PERSIB_BANDUNG"
+                className="control-input"
+              />
+            </Field>
+            <Field label="iLeague URL">
+              <input
+                value={clubForm.ileagueUrl}
+                onChange={(event) =>
+                  setClubForm((current) => ({
+                    ...current,
+                    ileagueUrl: event.target.value,
+                  }))
+                }
+                placeholder="https://ileague.id/..."
+                className="control-input"
+              />
+            </Field>
+          </div>
+        </details>
+
+        <SaveButton
+          label="Simpan Klub"
+          saving={clubStatus === "saving"}
+          onClick={saveClub}
+        />
+        <StatusMessage status={clubStatus} message={clubMessage} />
+      </Panel>
+
+      <Panel title="Master Pemain" icon={<Plus className="h-4 w-4" />}>
+        <Field label="Klub">
+          <select
+            value={playerForm.clubSlug}
+            onChange={(event) =>
+              setPlayerForm((current) => ({
+                ...current,
+                clubSlug: event.target.value,
+              }))
+            }
+            className="control-input"
+          >
+            <option value="">Pilih klub...</option>
+            {clubs.map((club) => (
+              <option key={club.slug} value={club.slug}>
+                {club.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Nama lengkap">
+            <input
+              value={playerForm.fullName}
+              onChange={(event) =>
+                setPlayerForm((current) => ({
+                  ...current,
+                  fullName: event.target.value,
+                }))
+              }
+              placeholder="Nama pemain"
+              className="control-input"
+            />
+          </Field>
+          <Field label="Nama tampil">
+            <input
+              value={playerForm.displayName}
+              onChange={(event) =>
+                setPlayerForm((current) => ({
+                  ...current,
+                  displayName: event.target.value,
+                }))
+              }
+              placeholder="Opsional"
+              className="control-input"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <Field label="No">
+            <input
+              value={playerForm.shirtNumber}
+              onChange={(event) =>
+                setPlayerForm((current) => ({
+                  ...current,
+                  shirtNumber: event.target.value,
+                }))
+              }
+              inputMode="numeric"
+              className="control-input"
+            />
+          </Field>
+          <Field label="Posisi">
+            <select
+              value={playerForm.position}
+              onChange={(event) =>
+                setPlayerForm((current) => ({
+                  ...current,
+                  position: event.target.value as Player["position"],
+                }))
+              }
+              className="control-input"
+            >
+              {["GK", "DF", "MF", "FW", "Unknown"].map((position) => (
+                <option key={position} value={position}>
+                  {position}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Negara">
+            <CountryPicker
+              value={playerForm.country?.code}
+              onChange={(country) =>
+                setPlayerForm((current) => ({ ...current, country }))
+              }
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Season">
+            <input
+              value={playerForm.seasonCode}
+              onChange={(event) =>
+                setPlayerForm((current) => ({
+                  ...current,
+                  seasonCode: event.target.value,
+                }))
+              }
+              className="control-input"
+            />
+          </Field>
+          <Field label="Source URL">
+            <input
+              value={playerForm.sourceUrl}
+              onChange={(event) =>
+                setPlayerForm((current) => ({
+                  ...current,
+                  sourceUrl: event.target.value,
+                }))
+              }
+              placeholder="Opsional"
+              className="control-input"
+            />
+          </Field>
+        </div>
+
+        <SaveButton
+          label="Tambah Pemain"
+          saving={playerStatus === "saving"}
+          onClick={savePlayer}
+        />
+        <StatusMessage status={playerStatus} message={playerMessage} />
+      </Panel>
+    </div>
+  );
+}
+
 function ColorPresetPicker({
   value,
   onChange,
@@ -1163,6 +1582,52 @@ function Field({
       </span>
       {children}
     </label>
+  );
+}
+
+function SaveButton({
+  label,
+  saving,
+  onClick,
+}: {
+  label: string;
+  saving: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={saving}
+      className="pressable flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#533AFD] px-4 py-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-70"
+    >
+      <Plus className="h-4 w-4" />
+      {saving ? "Menyimpan..." : label}
+    </button>
+  );
+}
+
+function StatusMessage({
+  status,
+  message,
+}: {
+  status: SaveStatus;
+  message: string;
+}) {
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <p
+      className={`rounded-[5px] border px-3 py-2 text-xs ${
+        status === "success"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-red-200 bg-red-50 text-red-700"
+      }`}
+    >
+      {message}
+    </p>
   );
 }
 

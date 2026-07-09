@@ -1,4 +1,4 @@
-export type ToolMode = "lineup" | "rumor";
+export type ToolMode = "lineup" | "rumor" | "master";
 
 export type CanvasAspectRatio = "1:1" | "9:16";
 
