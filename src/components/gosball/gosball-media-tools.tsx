@@ -73,7 +73,7 @@ export function GosballMediaTools() {
 
   return (
     <main className="gosball-stripe min-h-dvh overflow-x-hidden bg-[#f6f9fc] text-[#061B31]">
-      <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(360px,34%)_1fr]">
+      <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[minmax(380px,35%)_1fr]">
         <ControlSidebar
           mode={mode}
           aspectRatio={aspectRatio}
@@ -87,7 +87,7 @@ export function GosballMediaTools() {
           onFormationChange={handleFormationChange}
           onDownload={handleDownload}
         />
-        <section className="order-1 flex min-h-[540px] items-center justify-center bg-[radial-gradient(circle_at_24%_0%,rgba(83,58,253,0.20),transparent_28rem),radial-gradient(circle_at_88%_16%,rgba(255,97,24,0.14),transparent_22rem),#05070A] p-1 sm:p-5 lg:order-2 lg:min-h-[720px] lg:p-8">
+        <section className="order-1 flex min-h-[min(100svh,680px)] items-center justify-center bg-[radial-gradient(circle_at_24%_0%,rgba(83,58,253,0.20),transparent_28rem),radial-gradient(circle_at_88%_16%,rgba(255,97,24,0.14),transparent_22rem),#05070A] p-2 sm:p-5 lg:sticky lg:top-0 lg:order-2 lg:h-dvh lg:min-h-0 lg:p-8">
           <CanvasPreview
             ref={canvasRef}
             mode={mode}

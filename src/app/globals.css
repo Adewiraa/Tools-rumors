@@ -61,6 +61,15 @@ select {
   font: inherit;
 }
 
+button,
+select,
+summary,
+input[type="checkbox"],
+input[type="range"],
+input[type="color"] {
+  touch-action: manipulation;
+}
+
 @layer components {
   .display-type {
     font-family: var(--font-display);
@@ -135,14 +144,14 @@ select {
 
   .control-input {
     width: 100%;
-    min-height: 48px;
+    min-height: 52px;
     border-radius: 4px;
     border: 1px solid var(--line);
     background: #ffffff;
     padding: 0.75rem 1rem;
     color: var(--foreground);
     outline: none;
-    font-size: 0.86rem;
+    font-size: 1rem;
     line-height: 1.35;
     transition:
       border-color 150ms ease,
@@ -151,10 +160,11 @@ select {
   }
 
   select.control-input {
-    height: 48px;
+    height: 52px;
     padding-top: 0;
     padding-bottom: 0;
-    line-height: 48px;
+    line-height: 52px;
+    text-overflow: ellipsis;
   }
 
   .control-input:focus {
@@ -170,5 +180,17 @@ select {
   .control-input option {
     background: #ffffff;
     color: var(--foreground);
+  }
+
+  @media (min-width: 640px) {
+    .control-input {
+      min-height: 48px;
+      font-size: 0.86rem;
+    }
+
+    select.control-input {
+      height: 48px;
+      line-height: 48px;
+    }
   }
 }

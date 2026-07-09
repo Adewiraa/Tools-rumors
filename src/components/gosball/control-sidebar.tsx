@@ -225,15 +225,15 @@ export function ControlSidebar({
   };
 
   return (
-    <aside className="order-2 flex flex-col border-t border-[#D4DEE9] bg-white/92 shadow-[0_1px_2px_rgba(0,0,0,0.04)] lg:order-1 lg:max-h-screen lg:border-r lg:border-t-0">
-      <div className="relative overflow-hidden border-b border-[#D4DEE9] p-4 sm:p-6">
+    <aside className="order-2 flex flex-col border-t border-[#D4DEE9] bg-white/92 pb-[env(safe-area-inset-bottom)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] lg:order-1 lg:h-dvh lg:border-r lg:border-t-0 lg:pb-0">
+      <div className="relative overflow-hidden border-b border-[#D4DEE9] p-3 sm:p-6">
         <div className="absolute -right-14 -top-14 h-36 w-36 rounded-[32px] bg-[linear-gradient(135deg,rgba(83,58,253,0.12),rgba(255,97,24,0.08))]" />
         <div className="mb-5 flex items-start justify-between gap-4 sm:mb-6">
           <div>
             <p className="studio-label text-[#533AFD]">
               Studio desk
             </p>
-            <h1 className="display-type mt-2 text-3xl leading-none tracking-[-0.04em] text-[#061B31]">
+            <h1 className="display-type mt-2 text-2xl leading-none tracking-[-0.04em] text-[#061B31] sm:text-3xl">
               Media Tools
             </h1>
           </div>
@@ -242,7 +242,7 @@ export function ControlSidebar({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-1">
+        <div className="grid grid-cols-3 gap-1.5 rounded-[6px] sm:gap-2 border border-[#D4DEE9] bg-[#F6F9FC] p-1">
           <TabButton
             active={mode === "lineup"}
             label="Matchday Line-Up"
@@ -264,10 +264,10 @@ export function ControlSidebar({
         </div>
       </div>
 
-      <div className="flex-1 space-y-5 overflow-visible p-4 sm:space-y-6 sm:p-6 lg:overflow-y-auto">
+      <div className="flex-1 space-y-4 overflow-visible p-3 sm:space-y-6 sm:p-6 lg:overflow-y-auto">
         {mode !== "master" ? (
           <Panel title="Canvas Ratio" icon={<SlidersHorizontal className="h-4 w-4" />}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <RadioCard
                 active={aspectRatio === "1:1"}
                 title="1:1"
@@ -338,13 +338,13 @@ export function ControlSidebar({
         ) : null}
       </div>
 
-      <div className="border-t border-[#D4DEE9] p-6">
+      <div className="sticky bottom-0 z-40 border-t border-[#D4DEE9] bg-white/95 p-3 shadow-[0_-10px_30px_rgba(6,27,49,0.08)] backdrop-blur lg:static lg:p-6 lg:shadow-none">
         {mode !== "master" ? (
           <button
           type="button"
           onClick={onDownload}
           disabled={isExporting}
-          className="pressable flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#533AFD] px-5 py-4 text-sm text-white shadow-[0_14px_32px_rgba(83,58,253,0.20)] disabled:cursor-not-allowed disabled:opacity-70"
+          className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-[4px] bg-[#533AFD] px-5 py-3 text-sm text-white shadow-[0_14px_32px_rgba(83,58,253,0.20)] disabled:cursor-not-allowed disabled:opacity-70 sm:py-4"
         >
           <Download className="h-5 w-5" />
           {isExporting ? "Exporting..." : "Download PNG HD"}
@@ -389,7 +389,7 @@ function LineupControls({
   return (
     <div className="space-y-6">
       <Panel title="Match Setup" icon={<MapPin className="h-4 w-4" />}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Kompetisi">
             <input
               value={lineupData.competitionName}
@@ -782,7 +782,7 @@ function TeamControls({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Nama klub">
           <input
             value={team.name}
@@ -801,7 +801,7 @@ function TeamControls({
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Formasi">
           <select
             value={team.formation}
@@ -1148,7 +1148,7 @@ function MasterDataControls({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-2 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-1">
+      <div className="grid grid-cols-2 gap-1.5 rounded-[6px] sm:gap-2 border border-[#D4DEE9] bg-[#F6F9FC] p-1">
         <button
           type="button"
           onClick={() => setMasterView("clubs")}
@@ -1192,7 +1192,7 @@ function MasterDataControls({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Nama klub">
             <input
               value={clubForm.name}
@@ -1221,7 +1221,7 @@ function MasterDataControls({
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Slug">
             <input
               value={clubForm.slug}
@@ -1264,7 +1264,7 @@ function MasterDataControls({
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Warna utama">
             <ColorPresetPicker
               value={clubForm.primaryColor}
@@ -1371,7 +1371,7 @@ function MasterDataControls({
           </select>
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Nama lengkap">
             <input
               value={playerForm.fullName}
@@ -1400,7 +1400,7 @@ function MasterDataControls({
           </Field>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Field label="No">
             <input
               value={playerForm.shirtNumber}
@@ -1442,7 +1442,7 @@ function MasterDataControls({
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Season">
             <input
               value={playerForm.seasonCode}
@@ -1850,7 +1850,7 @@ function RumorControls({
         </select>
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Klub asal">
           <input
             value={rumorData.fromClub}
@@ -1884,12 +1884,12 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="glass-edge space-y-4 rounded-[5px] p-4">
+    <section className="glass-edge space-y-3 rounded-[5px] p-3 sm:space-y-4 sm:p-4">
       <div className="studio-label flex items-center gap-2 text-[#273951]">
         <span className="text-[#533AFD]">{icon}</span>
         {title}
       </div>
-      <div className="space-y-4">{children}</div>
+      <div className="space-y-3 sm:space-y-4">{children}</div>
     </section>
   );
 }
@@ -1902,7 +1902,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-2">
+    <label className="block space-y-1.5 sm:space-y-2">
       <span className="studio-label text-[#64748D]">
         {label}
       </span>
@@ -1925,7 +1925,7 @@ function SaveButton({
       type="button"
       onClick={onClick}
       disabled={saving}
-      className="pressable flex w-full items-center justify-center gap-2 rounded-[4px] bg-[#533AFD] px-4 py-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-70"
+      className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-[4px] bg-[#533AFD] px-4 py-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-70"
     >
       <Plus className="h-4 w-4" />
       {saving ? "Menyimpan..." : label}
@@ -1972,7 +1972,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`pressable flex items-center justify-center gap-2 rounded-[4px] px-3 py-3 text-xs ${
+      className={`pressable flex min-h-14 flex-col items-center justify-center gap-1 rounded-[4px] px-2 py-2 text-center text-[0.68rem] leading-tight sm:min-h-12 sm:flex-row sm:gap-2 sm:px-3 sm:py-3 sm:text-xs ${
         active
           ? "bg-[#533AFD] text-white shadow-[0_10px_28px_rgba(83,58,253,0.18)]"
           : "text-[#64748D] hover:bg-white hover:text-[#533AFD]"
@@ -1999,7 +1999,7 @@ function RadioCard({
     <button
       type="button"
       onClick={onClick}
-      className={`pressable rounded-[5px] border p-4 text-left ${
+      className={`pressable min-h-16 rounded-[5px] border p-3 text-left sm:p-4 ${
         active
           ? "border-[#533AFD] bg-[#E8E9FF] text-[#061B31]"
           : "border-[#D4DEE9] bg-white text-[#64748D] hover:border-[#533AFD]"
@@ -2010,3 +2010,4 @@ function RadioCard({
     </button>
   );
 }
+

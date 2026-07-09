@@ -38,7 +38,7 @@ export const CanvasPreview = forwardRef<HTMLDivElement, CanvasPreviewProps>(
     const canvasSizeClass =
       aspectRatio === "1:1"
         ? "aspect-square w-full max-w-[780px]"
-        : "aspect-[9/16] w-full max-w-[430px]";
+        : "aspect-[9/16] w-full max-w-[min(430px,calc(100svw-1rem))] lg:max-h-[calc(100dvh-4rem)]";
 
     return (
       <div className="flex w-full items-center justify-center">
