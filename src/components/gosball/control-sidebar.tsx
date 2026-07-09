@@ -100,6 +100,22 @@ interface RosterSearchResponse {
 type SaveStatus = "idle" | "saving" | "success" | "error";
 type MasterView = "clubs" | "players";
 
+const defaultClubForm = {
+  name: "",
+  shortName: "",
+  slug: "",
+  city: "",
+  ileagueSlug: "",
+  ileagueUrl: "",
+  logoPublicUrl: "",
+  primaryColor: "#533AFD",
+  secondaryColor: "#E5EDF5",
+};
+
+const defaultPlayerCountry = countryOptions.find(
+  (country) => country.code === "ID",
+);
+
 const rumorStatuses: RumorStatus[] = ["Rumor", "Advanced Talks", "Here We Go"];
 const teamColorOptions = [
   "#2563eb",
@@ -910,17 +926,7 @@ function MasterDataControls({
   onRefreshClubs: () => Promise<void>;
 }) {
   const [masterView, setMasterView] = useState<MasterView>("clubs");
-  const [clubForm, setClubForm] = useState({
-    name: "",
-    shortName: "",
-    slug: "",
-    city: "",
-    ileagueSlug: "",
-    ileagueUrl: "",
-    logoPublicUrl: "",
-    primaryColor: "#533AFD",
-    secondaryColor: "#E5EDF5",
-  });
+  const [clubForm, setClubForm] = useState(defaultClubForm);
   const [playerForm, setPlayerForm] = useState({
     clubSlug: "",
     seasonCode: "BRI_SUPER_LEAGUE_2025-26",
@@ -929,7 +935,7 @@ function MasterDataControls({
     shirtNumber: "",
     position: "Unknown" as Player["position"],
     sourceUrl: "",
-    country: countryOptions.find((country) => country.code === "ID"),
+    country: defaultPlayerCountry,
   });
   const [clubStatus, setClubStatus] = useState<SaveStatus>("idle");
   const [clubMessage, setClubMessage] = useState("");
@@ -1018,6 +1024,26 @@ function MasterDataControls({
       logoPublicUrl: club.logoUrl ?? "",
       primaryColor: club.primaryColor,
     }));
+  };
+
+  const resetClubForm = () => {
+    setClubForm(defaultClubForm);
+    setClubStatus("idle");
+    setClubMessage("");
+  };
+
+  const resetPlayerForm = () => {
+    setPlayerForm((current) => ({
+      ...current,
+      fullName: "",
+      displayName: "",
+      shirtNumber: "",
+      position: "Unknown",
+      sourceUrl: "",
+      country: defaultPlayerCountry,
+    }));
+    setPlayerStatus("idle");
+    setPlayerMessage("");
   };
 
   const saveClub = async () => {
@@ -1150,6 +1176,21 @@ function MasterDataControls({
       {masterView === "clubs" ? (
       <Panel title="Master Klub" icon={<Database className="h-4 w-4" />}>
         <MasterClubList clubs={clubs} onSelect={editClub} />
+
+        <div className="flex items-center justify-between gap-3 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] px-3 py-2">
+          <p className="text-xs text-[#64748D]">
+            {clubForm.slug
+              ? `Mode edit: ${clubForm.name || clubForm.slug}`
+              : "Mode tambah klub baru"}
+          </p>
+          <button
+            type="button"
+            onClick={resetClubForm}
+            className="rounded-[4px] border border-[#D4DEE9] bg-white px-3 py-2 text-xs text-[#061B31] transition hover:border-[#533AFD] hover:text-[#533AFD]"
+          >
+            Reset
+          </button>
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Nama klub">
@@ -1291,12 +1332,23 @@ function MasterDataControls({
       ) : (
       <Panel title="Master Pemain" icon={<Plus className="h-4 w-4" />}>
         <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
-          <p className="studio-label text-[#533AFD]">Roster tersimpan</p>
-          <p className="mt-1 text-sm text-[#64748D]">
-            {selectedPlayerClub
-              ? `${selectedPlayerClub.name} / ${playerForm.seasonCode}`
-              : "Pilih klub untuk melihat pemain."}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <span>
+              <p className="studio-label text-[#533AFD]">Roster tersimpan</p>
+              <p className="mt-1 text-sm text-[#64748D]">
+                {selectedPlayerClub
+                  ? `${selectedPlayerClub.name} / ${playerForm.seasonCode}`
+                  : "Pilih klub untuk melihat pemain."}
+              </p>
+            </span>
+            <button
+              type="button"
+              onClick={resetPlayerForm}
+              className="rounded-[4px] border border-[#D4DEE9] bg-white px-3 py-2 text-xs text-[#061B31] transition hover:border-[#533AFD] hover:text-[#533AFD]"
+            >
+              Reset
+            </button>
+          </div>
         </div>
 
         <Field label="Klub">
