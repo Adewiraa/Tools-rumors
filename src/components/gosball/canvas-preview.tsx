@@ -104,12 +104,12 @@ function LineupPoster({
   }
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col p-[4.6%]">
+    <div className="absolute inset-0 z-10 flex flex-col p-[3.8%]">
       <LineupHeader lineupData={lineupData} compact />
 
       <FaceoffPitch lineupData={lineupData} story />
 
-      <div className="mt-2 grid min-h-0 flex-1 grid-rows-2 gap-1.5">
+      <div className="mt-1.5 grid min-h-0 flex-1 grid-rows-2 gap-1.5">
         <StoryRosterBoard team={lineupData.homeTeam} side="home" />
         <StoryRosterBoard team={lineupData.awayTeam} side="away" />
       </div>
@@ -146,13 +146,13 @@ function LineupHeader({
   return (
     <header className="grid grid-cols-[1fr_auto] items-start gap-3">
       <div className="min-w-0">
-        <p className={`studio-label text-[#A78BFA] ${compact ? "text-[0.58rem]" : ""}`}>
+        <p className={`studio-label text-[#A78BFA] ${compact ? "text-[0.52rem]" : ""}`}>
           Gosball match sheet
         </p>
         <h2
           className={`display-type mt-1 leading-[0.95] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
             compact
-              ? "text-[clamp(1.8rem,9vw,2.45rem)]"
+              ? "text-[clamp(1.65rem,8.4vw,2.25rem)]"
               : "text-[clamp(3.1rem,6.4vw,5.4rem)]"
           }`}
         >
@@ -162,8 +162,8 @@ function LineupHeader({
           {lineupData.awayTeam.shortName}
         </h2>
         <div
-          className={`mt-2 flex flex-wrap items-center gap-2 text-[#A7B2C5] ${
-            compact ? "text-[0.58rem]" : "text-[0.72rem]"
+          className={`flex flex-wrap items-center gap-2 text-[#A7B2C5] ${
+            compact ? "mt-1 text-[0.52rem]" : "mt-2 text-[0.72rem]"
           }`}
         >
           <span>{lineupData.competitionName}</span>
@@ -178,9 +178,9 @@ function LineupHeader({
         </div>
       </div>
 
-      <div className="rounded-[5px] border border-white/15 bg-white/[0.06] px-3 py-2 text-right">
+      <div className={compact ? "rounded-[5px] border border-white/15 bg-white/[0.06] px-2 py-1.5 text-right" : "rounded-[5px] border border-white/15 bg-white/[0.06] px-3 py-2 text-right"}>
         <ScanLine className="ml-auto h-4 w-4 text-[#A78BFA]" />
-        <p className="mt-1 text-[0.55rem] text-[#A7B2C5]">XI</p>
+        <p className={compact ? "mt-0.5 text-[0.45rem] text-[#A7B2C5]" : "mt-1 text-[0.55rem] text-[#A7B2C5]"}>XI</p>
         <p className={compact ? "text-xl leading-none" : "text-2xl leading-none"}>
           22
         </p>
@@ -199,18 +199,18 @@ function FaceoffPitch({
   return (
     <section
       className={`relative overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72 ${
-        story ? "mt-2.5 h-[20%] min-h-[132px]" : "mt-4 h-[28%] min-h-[180px]"
+        story ? "mt-2 h-[17%] min-h-[112px]" : "mt-4 h-[28%] min-h-[180px]"
       }`}
     >
       <div className={story ? "absolute inset-2 rounded-[5px] border border-white/12" : "absolute inset-3 rounded-[5px] border border-white/12"} />
       <div className={story ? "absolute left-1/2 top-2 h-[calc(100%-1rem)] w-px bg-white/12" : "absolute left-1/2 top-3 h-[calc(100%-1.5rem)] w-px bg-white/12"} />
       <div
         className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12 ${
-          story ? "h-12 w-12" : "h-20 w-20"
+          story ? "h-10 w-10" : "h-20 w-20"
         }`}
       />
-      <div className={story ? "absolute left-2 top-1/2 h-14 w-7 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
-      <div className={story ? "absolute right-2 top-1/2 h-14 w-7 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
+      <div className={story ? "absolute left-2 top-1/2 h-12 w-6 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
+      <div className={story ? "absolute right-2 top-1/2 h-12 w-6 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
 
       {lineupData.homeTeam.starters.map((player, index) => {
         const coordinate = formationTemplates[lineupData.homeTeam.formation].coordinates[index];
@@ -296,10 +296,10 @@ function StoryRosterBoard({
       />
       <div className="flex h-full min-h-0 flex-col p-2">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          <TeamLogo team={team} compact />
+          <TeamLogo team={team} micro />
           <div className="min-w-0">
-            <h3 className="truncate text-[0.72rem] leading-tight text-white">{team.name}</h3>
-            <p className="truncate text-[0.44rem] leading-tight text-[#A7B2C5]">
+            <h3 className="truncate text-[0.8rem] leading-tight text-white">{team.name}</h3>
+            <p className="truncate text-[0.48rem] leading-tight text-[#A7B2C5]">
               {team.formation} / coach {team.coach.name}
             </p>
           </div>
@@ -307,7 +307,7 @@ function StoryRosterBoard({
             {side === "home" ? "Home" : "Away"}
           </span>
         </div>
-        <div className="mt-1 min-h-0 flex-1">
+        <div className="mt-1.5 min-h-0 flex-1">
           <RosterGrid team={team} variant="story" />
         </div>
       </div>
@@ -485,14 +485,14 @@ function RosterColumn({
 }) {
   const isStory = variant === "story";
   const rowClass = isStory
-    ? "grid min-w-0 grid-cols-[0.72rem_1fr] items-center gap-1.5 border-b border-white/10 py-[1px] leading-none last:border-b-0"
+    ? "grid min-w-0 grid-cols-[0.78rem_1fr] items-center gap-1.5 border-b border-white/10 py-[1px] leading-none last:border-b-0"
     : "grid min-w-0 grid-cols-[0.86rem_1fr] items-center gap-1.5 border-b border-white/10 py-[2px] last:border-b-0";
 
   return (
     <div className="min-h-0 overflow-hidden">
       <p
         className={`mb-1 text-[#A78BFA] ${
-          isStory ? "text-[0.48rem]" : "text-[0.55rem]"
+          isStory ? "text-[0.5rem]" : "text-[0.55rem]"
         }`}
       >
         {title}
@@ -507,7 +507,7 @@ function RosterColumn({
               <span
                 className={`tabular-nums text-[#A7B2C5] ${
                   isStory
-                    ? "text-[0.42rem]"
+                    ? "text-[0.44rem]"
                     : "text-[0.44rem]"
                 }`}
               >
@@ -524,7 +524,7 @@ function RosterColumn({
                 ) : null}
                 <span
                   className={`roster-name min-w-0 truncate text-white ${
-                    isStory ? "text-[0.54rem] leading-[1.2]" : "text-[0.54rem]"
+                    isStory ? "text-[0.58rem] leading-[1.15]" : "text-[0.54rem]"
                   }`}
                 >
                   {player.name}
@@ -547,17 +547,17 @@ function LineupFooter({
 }) {
   return (
     <footer
-      className={`relative mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[#A7B2C5] ${
-        compact ? "text-[0.5rem]" : "text-[0.62rem]"
+      className={`relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[#A7B2C5] ${
+        compact ? "mt-1.5 text-[0.46rem]" : "mt-3 text-[0.62rem]"
       }`}
     >
       <div className="h-px bg-white/15" />
-      <p className="rounded-[4px] border border-white/15 bg-white/[0.06] px-4 py-1.5 text-white">
+      <p className={compact ? "rounded-[4px] border border-white/15 bg-white/[0.06] px-3 py-1 text-white" : "rounded-[4px] border border-white/15 bg-white/[0.06] px-4 py-1.5 text-white"}>
         Gosball
       </p>
       <div className="h-px bg-white/15" />
       {lineupData.sponsor.enabled ? (
-        <p className="absolute inset-x-0 -bottom-3 text-center">
+        <p className={compact ? "absolute inset-x-0 -bottom-2.5 text-center" : "absolute inset-x-0 -bottom-3 text-center"}>
           Presented by{" "}
           <span className="text-[#A78BFA]">{lineupData.sponsor.brandName}</span>
         </p>
@@ -569,17 +569,24 @@ function LineupFooter({
 function TeamLogo({
   team,
   compact = false,
+  micro = false,
 }: {
   team: TeamLineup;
   compact?: boolean;
+  micro?: boolean;
 }) {
   const initials = team.shortName.slice(0, 3);
+  const sizeClass = micro
+    ? "h-7 w-7 text-[0.48rem]"
+    : compact
+      ? "h-8 w-8 text-[0.54rem]"
+      : "h-10 w-10 text-[0.65rem]";
 
   if (team.logoUrl) {
     return (
       <div
         className={`grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-white/15 bg-white ${
-          compact ? "h-8 w-8" : "h-10 w-10"
+          micro ? "h-7 w-7" : compact ? "h-8 w-8" : "h-10 w-10"
         }`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -590,9 +597,7 @@ function TeamLogo({
 
   return (
     <div
-      className={`grid shrink-0 place-items-center rounded-[5px] text-white ${
-        compact ? "h-8 w-8 text-[0.54rem]" : "h-10 w-10 text-[0.65rem]"
-      }`}
+      className={`grid shrink-0 place-items-center rounded-[5px] text-white ${sizeClass}`}
       style={{ backgroundColor: team.primaryColor }}
     >
       {initials}
