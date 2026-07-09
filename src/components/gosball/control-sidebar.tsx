@@ -98,6 +98,7 @@ interface RosterSearchResponse {
 }
 
 type SaveStatus = "idle" | "saving" | "success" | "error";
+type MasterView = "clubs" | "players";
 
 const rumorStatuses: RumorStatus[] = ["Rumor", "Advanced Talks", "Here We Go"];
 const teamColorOptions = [
@@ -908,6 +909,7 @@ function MasterDataControls({
   onClubSaved: (club: ClubOption) => void;
   onRefreshClubs: () => Promise<void>;
 }) {
+  const [masterView, setMasterView] = useState<MasterView>("clubs");
   const [clubForm, setClubForm] = useState({
     name: "",
     shortName: "",
@@ -933,6 +935,90 @@ function MasterDataControls({
   const [clubMessage, setClubMessage] = useState("");
   const [playerStatus, setPlayerStatus] = useState<SaveStatus>("idle");
   const [playerMessage, setPlayerMessage] = useState("");
+  const [rosterPlayers, setRosterPlayers] = useState<
+    RosterSearchResponse["players"]
+  >([]);
+  const [rosterStatus, setRosterStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [rosterMessage, setRosterMessage] = useState("");
+
+  const selectedPlayerClub = clubs.find(
+    (club) => club.slug === playerForm.clubSlug,
+  );
+
+  const loadRosterPlayers = useCallback(
+    async (clubSlug = playerForm.clubSlug) => {
+      if (!clubSlug) {
+        setRosterPlayers([]);
+        setRosterStatus("idle");
+        setRosterMessage("Pilih klub untuk melihat daftar pemain.");
+        return;
+      }
+
+      setRosterStatus("loading");
+      setRosterMessage("");
+
+      const response = await fetch(
+        `/api/clubs/${clubSlug}/roster?season=${encodeURIComponent(
+          playerForm.seasonCode,
+        )}`,
+        { cache: "no-store" },
+      );
+      const payload = (await response.json()) as RosterSearchResponse;
+
+      if (!response.ok || !Array.isArray(payload.players)) {
+        throw new Error(payload.error ?? "Gagal memuat pemain klub.");
+      }
+
+      setRosterPlayers(payload.players);
+      setRosterStatus("success");
+      setRosterMessage(
+        payload.players.length
+          ? `${payload.players.length} pemain tersimpan.`
+          : "Belum ada pemain untuk klub ini.",
+      );
+    },
+    [playerForm.clubSlug, playerForm.seasonCode],
+  );
+
+  useEffect(() => {
+    if (playerForm.clubSlug || clubs.length === 0) {
+      return;
+    }
+
+    setPlayerForm((current) => ({
+      ...current,
+      clubSlug: current.clubSlug || clubs[0]?.slug || "",
+    }));
+  }, [clubs, playerForm.clubSlug]);
+
+  useEffect(() => {
+    if (masterView !== "players") {
+      return;
+    }
+
+    loadRosterPlayers().catch((error) => {
+      setRosterStatus("error");
+      setRosterMessage(
+        error instanceof Error ? error.message : "Gagal memuat pemain klub.",
+      );
+    });
+  }, [loadRosterPlayers, masterView]);
+
+  const editClub = (club: ClubOption) => {
+    setClubForm((current) => ({
+      ...current,
+      name: club.name,
+      shortName: club.shortName,
+      slug: club.slug,
+      city: club.city ?? "",
+      ileagueSlug: club.ileagueSlug ?? "",
+      ileagueUrl: club.ileagueUrl ?? "",
+      logoPublicUrl: club.logoUrl ?? "",
+      primaryColor: club.primaryColor,
+    }));
+  };
 
   const saveClub = async () => {
     try {
@@ -970,6 +1056,7 @@ function MasterDataControls({
           ? "Klub berhasil disimpan dan daftar klub diperbarui."
           : "Klub berhasil disimpan, tapi daftar penuh belum bisa direfresh.",
       );
+      setMasterView("clubs");
     } catch (error) {
       setClubStatus("error");
       setClubMessage(
@@ -1006,8 +1093,18 @@ function MasterDataControls({
         throw new Error(payload.error ?? "Gagal menyimpan pemain.");
       }
 
+      let didRefreshPlayers = true;
+      try {
+        await loadRosterPlayers(playerForm.clubSlug);
+      } catch {
+        didRefreshPlayers = false;
+      }
       setPlayerStatus("success");
-      setPlayerMessage("Pemain berhasil ditambahkan ke roster klub.");
+      setPlayerMessage(
+        didRefreshPlayers
+          ? "Pemain berhasil ditambahkan dan daftar roster diperbarui."
+          : "Pemain berhasil ditambahkan, tapi daftar roster belum bisa direfresh.",
+      );
       setPlayerForm((current) => ({
         ...current,
         fullName: "",
@@ -1025,7 +1122,35 @@ function MasterDataControls({
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-2 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-1">
+        <button
+          type="button"
+          onClick={() => setMasterView("clubs")}
+          className={`rounded-[5px] px-3 py-3 text-sm transition ${
+            masterView === "clubs"
+              ? "bg-[#533AFD] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+              : "text-[#64748D] hover:bg-white"
+          }`}
+        >
+          Master Klub
+        </button>
+        <button
+          type="button"
+          onClick={() => setMasterView("players")}
+          className={`rounded-[5px] px-3 py-3 text-sm transition ${
+            masterView === "players"
+              ? "bg-[#533AFD] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+              : "text-[#64748D] hover:bg-white"
+          }`}
+        >
+          Master Pemain
+        </button>
+      </div>
+
+      {masterView === "clubs" ? (
       <Panel title="Master Klub" icon={<Database className="h-4 w-4" />}>
+        <MasterClubList clubs={clubs} onSelect={editClub} />
+
         <div className="grid grid-cols-2 gap-3">
           <Field label="Nama klub">
             <input
@@ -1163,8 +1288,17 @@ function MasterDataControls({
         />
         <StatusMessage status={clubStatus} message={clubMessage} />
       </Panel>
-
+      ) : (
       <Panel title="Master Pemain" icon={<Plus className="h-4 w-4" />}>
+        <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+          <p className="studio-label text-[#533AFD]">Roster tersimpan</p>
+          <p className="mt-1 text-sm text-[#64748D]">
+            {selectedPlayerClub
+              ? `${selectedPlayerClub.name} / ${playerForm.seasonCode}`
+              : "Pilih klub untuk melihat pemain."}
+          </p>
+        </div>
+
         <Field label="Klub">
           <select
             value={playerForm.clubSlug}
@@ -1290,7 +1424,124 @@ function MasterDataControls({
           onClick={savePlayer}
         />
         <StatusMessage status={playerStatus} message={playerMessage} />
+        <MasterPlayerList
+          players={rosterPlayers}
+          status={rosterStatus}
+          message={rosterMessage}
+        />
       </Panel>
+      )}
+    </div>
+  );
+}
+
+function MasterClubList({
+  clubs,
+  onSelect,
+}: {
+  clubs: ClubOption[];
+  onSelect: (club: ClubOption) => void;
+}) {
+  return (
+    <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="studio-label text-[#533AFD]">Klub tersimpan</p>
+        <span className="rounded-full bg-white px-2 py-1 text-[0.68rem] text-[#64748D]">
+          {clubs.length} klub
+        </span>
+      </div>
+      <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+        {clubs.length ? (
+          clubs.map((club) => (
+            <button
+              key={club.slug}
+              type="button"
+              onClick={() => onSelect(club)}
+              className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[5px] border border-[#D4DEE9] bg-white px-3 py-2 text-left transition hover:border-[#533AFD]"
+            >
+              <span
+                className="h-8 w-8 rounded-[5px] border border-[#D4DEE9]"
+                style={{ backgroundColor: club.primaryColor }}
+              />
+              <span className="min-w-0">
+                <span className="block truncate text-sm text-[#061B31]">
+                  {club.name}
+                </span>
+                <span className="block truncate text-[0.68rem] text-[#64748D]">
+                  {club.shortName} {club.city ? `/ ${club.city}` : ""}
+                </span>
+              </span>
+              <span className="text-[0.68rem] text-[#64748D]">Edit</span>
+            </button>
+          ))
+        ) : (
+          <p className="rounded-[5px] border border-dashed border-[#D4DEE9] bg-white p-3 text-sm text-[#64748D]">
+            Belum ada klub tersimpan.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MasterPlayerList({
+  players,
+  status,
+  message,
+}: {
+  players: RosterSearchResponse["players"];
+  status: "idle" | "loading" | "success" | "error";
+  message: string;
+}) {
+  return (
+    <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="studio-label text-[#533AFD]">Pemain klub</p>
+        <span className="rounded-full bg-white px-2 py-1 text-[0.68rem] text-[#64748D]">
+          {status === "loading" ? "Memuat..." : `${players.length} pemain`}
+        </span>
+      </div>
+      {message ? (
+        <p
+          className={`mb-3 rounded-[5px] border px-3 py-2 text-xs ${
+            status === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-[#D4DEE9] bg-white text-[#64748D]"
+          }`}
+        >
+          {message}
+        </p>
+      ) : null}
+      <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
+        {players.map((player) => (
+          <div
+            key={player.roster_id}
+            className="grid grid-cols-[2.4rem_1fr_auto] items-center gap-2 rounded-[5px] border border-[#D4DEE9] bg-white px-3 py-2"
+          >
+            <span className="text-xs text-[#64748D]">
+              {player.shirt_number ?? "-"}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm text-[#061B31]">
+                {player.display_name || player.full_name}
+              </span>
+              <span className="block truncate text-[0.68rem] text-[#64748D]">
+                {player.position} / {player.country_name || player.country_code}
+              </span>
+            </span>
+            <FlagBadge
+              code={player.country_code}
+              label={player.country_name ?? player.country_code}
+              flagUrl={player.country_flag_url ?? undefined}
+            />
+          </div>
+        ))}
+        {status !== "loading" && players.length === 0 ? (
+          <p className="rounded-[5px] border border-dashed border-[#D4DEE9] bg-white p-3 text-sm text-[#64748D]">
+            Belum ada pemain tersimpan untuk klub ini.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
