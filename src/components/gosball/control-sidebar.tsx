@@ -723,7 +723,7 @@ function TeamControls({
           <select
             value={selectedClubSlug}
             onChange={(event) => selectClub(event.target.value)}
-            className="control-input h-10 min-w-0 truncate pr-8 text-xs"
+            className="control-input min-w-0 truncate pr-8 text-xs"
             title={
               clubs.find((club) => club.slug === selectedClubSlug)
                 ?.name ?? "Pilih klub Liga"
@@ -740,7 +740,7 @@ function TeamControls({
             type="button"
             onClick={importSelectedClubRoster}
             disabled={importStatus === "loading"}
-            className="pressable h-10 rounded-[4px] bg-[#533AFD] px-3 text-[0.7rem] text-white disabled:opacity-60"
+            className="pressable min-h-12 rounded-[4px] bg-[#533AFD] px-3 text-[0.7rem] text-white disabled:opacity-60"
           >
             {importStatus === "loading" ? "..." : "Muat"}
           </button>
@@ -1094,7 +1094,7 @@ function MasterDataControls({
                   secondaryColor: event.target.value,
                 }))
               }
-              className="control-input h-10 p-1"
+              className="control-input p-1"
             />
           </Field>
         </div>
@@ -1393,7 +1393,7 @@ function CountryPicker({
 
   return (
     <details className="group relative">
-      <summary className="control-input flex h-[43px] cursor-pointer list-none items-center justify-center p-0 [&::-webkit-details-marker]:hidden">
+      <summary className="control-input flex cursor-pointer list-none items-center justify-center p-0 [&::-webkit-details-marker]:hidden">
         <FlagBadge
           code={selectedCountry?.code ?? value}
           label={selectedCountry?.name}
@@ -1405,7 +1405,7 @@ function CountryPicker({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Cari negara..."
-          className="control-input mb-2 h-9 text-xs"
+          className="control-input mb-2 text-xs"
         />
         <div className="grid max-h-72 gap-1 overflow-y-auto">
           {isSearching ? (

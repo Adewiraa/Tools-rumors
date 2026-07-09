@@ -107,17 +107,11 @@ function LineupPoster({
     <div className="absolute inset-0 z-10 flex flex-col p-[5.6%]">
       <LineupHeader lineupData={lineupData} compact />
 
-      <div className="mt-3 grid min-h-0 flex-1 grid-rows-2 gap-2.5">
-        <TeamCard
-          team={lineupData.homeTeam}
-          side="home"
-          variant="story"
-        />
-        <TeamCard
-          team={lineupData.awayTeam}
-          side="away"
-          variant="story"
-        />
+      <FaceoffPitch lineupData={lineupData} story />
+
+      <div className="mt-2 grid min-h-0 flex-1 grid-rows-2 gap-2">
+        <StoryRosterBoard team={lineupData.homeTeam} side="home" />
+        <StoryRosterBoard team={lineupData.awayTeam} side="away" />
       </div>
 
       <LineupFooter lineupData={lineupData} compact />
@@ -193,14 +187,28 @@ function LineupHeader({
   );
 }
 
-function FaceoffPitch({ lineupData }: { lineupData: MatchdayLineupData }) {
+function FaceoffPitch({
+  lineupData,
+  story = false,
+}: {
+  lineupData: MatchdayLineupData;
+  story?: boolean;
+}) {
   return (
-    <section className="relative mt-4 h-[28%] min-h-[180px] overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72">
-      <div className="absolute inset-3 rounded-[5px] border border-white/12" />
-      <div className="absolute left-1/2 top-3 h-[calc(100%-1.5rem)] w-px bg-white/12" />
-      <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12" />
-      <div className="absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" />
-      <div className="absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" />
+    <section
+      className={`relative mt-4 overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72 ${
+        story ? "h-[32%] min-h-[210px]" : "h-[28%] min-h-[180px]"
+      }`}
+    >
+      <div className={story ? "absolute inset-2 rounded-[5px] border border-white/12" : "absolute inset-3 rounded-[5px] border border-white/12"} />
+      <div className={story ? "absolute left-1/2 top-2 h-[calc(100%-1rem)] w-px bg-white/12" : "absolute left-1/2 top-3 h-[calc(100%-1.5rem)] w-px bg-white/12"} />
+      <div
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12 ${
+          story ? "h-16 w-16" : "h-20 w-20"
+        }`}
+      />
+      <div className={story ? "absolute left-2 top-1/2 h-20 w-10 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
+      <div className={story ? "absolute right-2 top-1/2 h-20 w-10 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
 
       <PitchTeamLabel team={lineupData.homeTeam} side="left" />
       <PitchTeamLabel team={lineupData.awayTeam} side="right" />
@@ -214,7 +222,7 @@ function FaceoffPitch({ lineupData }: { lineupData: MatchdayLineupData }) {
             key={`faceoff-home-${player.id}`}
             color={lineupData.homeTeam.primaryColor}
             compact
-            coordinate={faceoffCoordinate}
+            coordinate={story ? squeezeFaceoffCoordinate(faceoffCoordinate) : faceoffCoordinate}
             label={player.shirtNumber?.toString() ?? coordinate.label}
           />
         );
@@ -229,7 +237,7 @@ function FaceoffPitch({ lineupData }: { lineupData: MatchdayLineupData }) {
             key={`faceoff-away-${player.id}`}
             color={lineupData.awayTeam.primaryColor}
             compact
-            coordinate={faceoffCoordinate}
+            coordinate={story ? squeezeFaceoffCoordinate(faceoffCoordinate) : faceoffCoordinate}
             label={player.shirtNumber?.toString() ?? coordinate.label}
           />
         );
@@ -290,6 +298,42 @@ function FeedRosterBoard({
         </div>
         <div className="mt-2 min-h-0 flex-1">
           <RosterGrid team={team} variant="feed" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StoryRosterBoard({
+  team,
+  side,
+}: {
+  team: TeamLineup;
+  side: "home" | "away";
+}) {
+  return (
+    <section className="relative min-h-0 overflow-hidden rounded-[6px] border border-white/15 bg-[#0B1020]/92">
+      <div
+        className="absolute inset-x-0 top-0 h-[3px]"
+        style={{
+          background: `linear-gradient(90deg, ${team.primaryColor}, ${stripe.purple})`,
+        }}
+      />
+      <div className="flex h-full min-h-0 flex-col p-2.5">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          <TeamLogo team={team} compact />
+          <div className="min-w-0">
+            <h3 className="truncate text-[0.82rem] text-white">{team.name}</h3>
+            <p className="truncate text-[0.52rem] text-[#A7B2C5]">
+              {team.formation} / coach {team.coach.name}
+            </p>
+          </div>
+          <span className="rounded-[4px] border border-white/15 bg-white/[0.05] px-2 py-1 text-[0.48rem] text-[#A7B2C5]">
+            {side === "home" ? "Home" : "Away"}
+          </span>
+        </div>
+        <div className="mt-1.5 min-h-0 flex-1">
+          <RosterGrid team={team} variant="story" />
         </div>
       </div>
     </section>
@@ -600,6 +644,16 @@ function toFaceoffCoordinate(
     ...coordinate,
     x: left,
     y: top,
+  };
+}
+
+function squeezeFaceoffCoordinate(
+  coordinate: FormationCoordinate,
+): FormationCoordinate {
+  return {
+    ...coordinate,
+    x: 10 + coordinate.x * 0.8,
+    y: 10 + coordinate.y * 0.8,
   };
 }
 
