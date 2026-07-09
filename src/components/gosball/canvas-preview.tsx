@@ -427,15 +427,18 @@ function PlayerNumber({
 }) {
   return (
     <div
-      className={`absolute z-10 -translate-x-1/2 -translate-y-1/2 tabular-nums leading-none ${
-        compact ? "text-[0.56rem]" : "text-[0.78rem]"
+      className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[3px] border bg-[#05070A]/72 tabular-nums leading-none text-white ${
+        compact
+          ? "min-h-[0.9rem] min-w-[1.1rem] px-1 text-[0.48rem]"
+          : "min-h-[1.18rem] min-w-[1.45rem] px-1.5 text-[0.62rem]"
       }`}
       style={{
         left: `${coordinate.x}%`,
         top: `${coordinate.y}%`,
-        color,
+        borderColor: color,
         textShadow:
-          "0 1px 2px rgba(0,0,0,0.95), 0 0 7px rgba(255,255,255,0.28)",
+          "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.75)",
+        boxShadow: `0 0 0 1px rgba(255,255,255,0.08), 0 0 12px ${color}33`,
       }}
       title={label}
     >
