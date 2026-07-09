@@ -212,9 +212,6 @@ function FaceoffPitch({
       <div className={story ? "absolute left-2 top-1/2 h-14 w-7 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
       <div className={story ? "absolute right-2 top-1/2 h-14 w-7 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
 
-      <PitchTeamLabel team={lineupData.homeTeam} side="left" />
-      <PitchTeamLabel team={lineupData.awayTeam} side="right" />
-
       {lineupData.homeTeam.starters.map((player, index) => {
         const coordinate = formationTemplates[lineupData.homeTeam.formation].coordinates[index];
 
@@ -243,28 +240,6 @@ function FaceoffPitch({
         );
       })}
     </section>
-  );
-}
-
-function PitchTeamLabel({
-  team,
-  side,
-}: {
-  team: TeamLineup;
-  side: "left" | "right";
-}) {
-  return (
-    <div
-      className={`absolute top-3 z-20 flex items-center gap-2 rounded-[4px] border border-white/15 bg-[#05070A]/80 px-2 py-1 text-[0.58rem] text-[#E5EDF5] ${
-        side === "left" ? "left-3" : "right-3"
-      }`}
-    >
-      <span
-        className="h-2 w-2 rounded-full"
-        style={{ backgroundColor: team.primaryColor }}
-      />
-      {team.shortName} · {team.formation}
-    </div>
   );
 }
 
