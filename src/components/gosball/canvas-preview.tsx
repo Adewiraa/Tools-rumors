@@ -80,34 +80,45 @@ function LineupPoster({
 }) {
   const isStory = aspectRatio === "9:16";
 
-  return (
-    <div
-      className={`absolute inset-0 z-10 flex flex-col ${
-        isStory ? "p-[5.6%]" : "p-[4.7%]"
-      }`}
-    >
-      <LineupHeader lineupData={lineupData} compact={isStory} />
+  if (!isStory) {
+    return <LineupFeedPoster lineupData={lineupData} />;
+  }
 
-      <div
-        className={
-          isStory
-            ? "mt-3 grid min-h-0 flex-1 grid-rows-2 gap-2.5"
-            : "mt-5 grid min-h-0 flex-1 grid-cols-2 gap-3"
-        }
-      >
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col p-[5.6%]">
+      <LineupHeader lineupData={lineupData} compact />
+
+      <div className="mt-3 grid min-h-0 flex-1 grid-rows-2 gap-2.5">
         <TeamCard
           team={lineupData.homeTeam}
           side="home"
-          variant={isStory ? "story" : "feed"}
+          variant="story"
         />
         <TeamCard
           team={lineupData.awayTeam}
           side="away"
-          variant={isStory ? "story" : "feed"}
+          variant="story"
         />
       </div>
 
-      <LineupFooter lineupData={lineupData} compact={isStory} />
+      <LineupFooter lineupData={lineupData} compact />
+    </div>
+  );
+}
+
+function LineupFeedPoster({ lineupData }: { lineupData: MatchdayLineupData }) {
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col p-[4.7%]">
+      <LineupHeader lineupData={lineupData} compact={false} />
+
+      <FaceoffPitch lineupData={lineupData} />
+
+      <div className="mt-3 grid min-h-0 flex-1 grid-cols-2 gap-3">
+        <FeedRosterBoard team={lineupData.homeTeam} side="home" />
+        <FeedRosterBoard team={lineupData.awayTeam} side="away" />
+      </div>
+
+      <LineupFooter lineupData={lineupData} />
     </div>
   );
 }
@@ -160,6 +171,109 @@ function LineupHeader({
         </p>
       </div>
     </header>
+  );
+}
+
+function FaceoffPitch({ lineupData }: { lineupData: MatchdayLineupData }) {
+  return (
+    <section className="relative mt-4 h-[28%] min-h-[180px] overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72">
+      <div className="absolute inset-3 rounded-[5px] border border-white/12" />
+      <div className="absolute left-1/2 top-3 h-[calc(100%-1.5rem)] w-px bg-white/12" />
+      <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12" />
+      <div className="absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" />
+      <div className="absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" />
+
+      <PitchTeamLabel team={lineupData.homeTeam} side="left" />
+      <PitchTeamLabel team={lineupData.awayTeam} side="right" />
+
+      {lineupData.homeTeam.starters.map((player, index) => {
+        const coordinate = formationTemplates[lineupData.homeTeam.formation].coordinates[index];
+        const faceoffCoordinate = toFaceoffCoordinate(coordinate, "home");
+
+        return (
+          <PlayerNumber
+            key={`faceoff-home-${player.id}`}
+            color={lineupData.homeTeam.primaryColor}
+            compact
+            coordinate={faceoffCoordinate}
+            label={player.shirtNumber?.toString() ?? coordinate.label}
+          />
+        );
+      })}
+
+      {lineupData.awayTeam.starters.map((player, index) => {
+        const coordinate = formationTemplates[lineupData.awayTeam.formation].coordinates[index];
+        const faceoffCoordinate = toFaceoffCoordinate(coordinate, "away");
+
+        return (
+          <PlayerNumber
+            key={`faceoff-away-${player.id}`}
+            color={lineupData.awayTeam.primaryColor}
+            compact
+            coordinate={faceoffCoordinate}
+            label={player.shirtNumber?.toString() ?? coordinate.label}
+          />
+        );
+      })}
+    </section>
+  );
+}
+
+function PitchTeamLabel({
+  team,
+  side,
+}: {
+  team: TeamLineup;
+  side: "left" | "right";
+}) {
+  return (
+    <div
+      className={`absolute top-3 flex items-center gap-2 rounded-[4px] border border-white/15 bg-[#05070A]/70 px-2 py-1 text-[0.58rem] text-[#E5EDF5] ${
+        side === "left" ? "left-3" : "right-3"
+      }`}
+    >
+      <span
+        className="h-2 w-2 rounded-full"
+        style={{ backgroundColor: team.primaryColor }}
+      />
+      {team.shortName} · {team.formation}
+    </div>
+  );
+}
+
+function FeedRosterBoard({
+  team,
+  side,
+}: {
+  team: TeamLineup;
+  side: "home" | "away";
+}) {
+  return (
+    <section className="relative min-h-0 overflow-hidden rounded-[6px] border border-white/15 bg-[#0B1020]/92 shadow-[0_1px_2px_rgba(0,0,0,0.28)]">
+      <div
+        className="absolute inset-x-0 top-0 h-[3px]"
+        style={{
+          background: `linear-gradient(90deg, ${team.primaryColor}, ${stripe.purple})`,
+        }}
+      />
+      <div className="flex h-full min-h-0 flex-col p-3">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          <TeamLogo team={team} />
+          <div className="min-w-0">
+            <h3 className="truncate text-[0.95rem] text-white">{team.name}</h3>
+            <p className="truncate text-[0.6rem] text-[#A7B2C5]">
+              coach {team.coach.name}
+            </p>
+          </div>
+          <span className="rounded-[4px] border border-white/15 bg-white/[0.05] px-2 py-1 text-[0.54rem] text-[#A7B2C5]">
+            {side === "home" ? "Home" : "Away"}
+          </span>
+        </div>
+        <div className="mt-2 min-h-0 flex-1">
+          <RosterGrid team={team} variant="feed" />
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -452,6 +566,21 @@ function mirrorCoordinate(
   return {
     ...coordinate,
     y: 100 - coordinate.y,
+  };
+}
+
+function toFaceoffCoordinate(
+  coordinate: FormationCoordinate,
+  side: "home" | "away",
+): FormationCoordinate {
+  const depth = 100 - coordinate.y;
+  const left = side === "home" ? 7 + depth * 0.43 : 93 - depth * 0.43;
+  const top = 12 + coordinate.x * 0.76;
+
+  return {
+    ...coordinate,
+    x: left,
+    y: top,
   };
 }
 
