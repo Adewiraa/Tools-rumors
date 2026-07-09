@@ -490,8 +490,8 @@ function RosterColumn({
 }) {
   const isStory = variant === "story";
   const rowClass = isStory
-    ? "grid min-w-0 grid-cols-[0.78rem_1fr] items-center gap-1.5 border-b border-white/10 py-[1px] leading-none last:border-b-0"
-    : "grid min-w-0 grid-cols-[0.86rem_1fr] items-center gap-1.5 border-b border-white/10 py-[2px] last:border-b-0";
+    ? "grid min-w-0 grid-cols-[0.72rem_1fr] items-center gap-1.5 rounded-[3px] px-1.5 py-[1px] leading-none odd:bg-white/[0.035]"
+    : "grid min-w-0 grid-cols-[0.82rem_1fr] items-center gap-1.5 rounded-[3px] px-1.5 py-[2px] odd:bg-white/[0.035]";
 
   return (
     <div className="min-h-0 overflow-hidden">
@@ -502,7 +502,7 @@ function RosterColumn({
       >
         {title}
       </p>
-      <div className="grid min-h-0 gap-0 overflow-hidden">
+      <div className="grid min-h-0 gap-[1px] overflow-hidden">
         {players.map((player) => {
           const isForeignPlayer =
             (player.countryCode ?? "ID").toUpperCase() !== "ID";
@@ -510,15 +510,15 @@ function RosterColumn({
           return (
             <div key={player.id} className={rowClass}>
               <span
-                className={`tabular-nums text-[#A7B2C5] ${
+                className={`tabular-nums text-[#8A96AC] ${
                   isStory
-                    ? "text-[0.44rem]"
-                    : "text-[0.44rem]"
+                    ? "text-[0.42rem]"
+                    : "text-[0.43rem]"
                 }`}
               >
                 {player.shirtNumber}
               </span>
-              <span className="flex min-w-0 items-center gap-1">
+              <span className="flex min-w-0 items-center gap-1.5">
                 {isForeignPlayer ? (
                   <FlagBadge
                     code={player.countryCode}
@@ -528,8 +528,10 @@ function RosterColumn({
                   />
                 ) : null}
                 <span
-                  className={`roster-name min-w-0 truncate text-white ${
-                    isStory ? "text-[0.58rem] leading-[1.15]" : "text-[0.54rem]"
+                  className={`roster-name min-w-0 truncate text-[#F3F7FF] ${
+                    isStory
+                      ? "text-[0.56rem] leading-[1.16]"
+                      : "text-[0.54rem] leading-[1.18]"
                   }`}
                 >
                   {player.name}
