@@ -70,10 +70,68 @@ create table if not exists public.club_rosters (
 create index if not exists clubs_ileague_slug_idx on public.clubs (ileague_slug);
 create index if not exists club_rosters_club_season_idx on public.club_rosters (club_season_id);
 create index if not exists players_country_code_idx on public.players (country_code);
+create index if not exists players_full_name_idx on public.players (full_name);
+
+alter table public.competitions enable row level security;
+alter table public.seasons enable row level security;
+alter table public.clubs enable row level security;
+alter table public.club_seasons enable row level security;
+alter table public.players enable row level security;
+alter table public.club_rosters enable row level security;
+
+drop policy if exists "Public read competitions" on public.competitions;
+create policy "Public read competitions"
+on public.competitions for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Public read seasons" on public.seasons;
+create policy "Public read seasons"
+on public.seasons for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Public read clubs" on public.clubs;
+create policy "Public read clubs"
+on public.clubs for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Public read club seasons" on public.club_seasons;
+create policy "Public read club seasons"
+on public.club_seasons for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Public read players" on public.players;
+create policy "Public read players"
+on public.players for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Public read club rosters" on public.club_rosters;
+create policy "Public read club rosters"
+on public.club_rosters for select
+to anon, authenticated
+using (true);
 
 insert into public.competitions (code, name, country_code)
 values ('BRI_SUPER_LEAGUE', 'BRI Super League', 'ID')
 on conflict (code) do nothing;
+
+insert into public.seasons (competition_id, code, name, starts_on, ends_on)
+select
+  competitions.id,
+  'BRI_SUPER_LEAGUE_2025-26',
+  'BRI Super League 2025-26',
+  '2025-08-01',
+  '2026-05-31'
+from public.competitions
+where competitions.code = 'BRI_SUPER_LEAGUE'
+on conflict (competition_id, code) do update set
+  name = excluded.name,
+  starts_on = excluded.starts_on,
+  ends_on = excluded.ends_on;
 
 insert into public.clubs
   (name, short_name, slug, ileague_slug, ileague_url, primary_color, secondary_color, city)
@@ -105,3 +163,13 @@ on conflict (slug) do update set
   primary_color = excluded.primary_color,
   secondary_color = excluded.secondary_color,
   updated_at = now();
+
+insert into public.club_seasons (club_id, season_id, head_coach)
+select clubs.id, seasons.id, null
+from public.clubs
+cross join public.seasons
+join public.competitions on competitions.id = seasons.competition_id
+where competitions.code = 'BRI_SUPER_LEAGUE'
+  and seasons.code = 'BRI_SUPER_LEAGUE_2025-26'
+  and clubs.slug in ('arema-fc', 'bali-united-fc')
+on conflict (club_id, season_id) do nothing;
