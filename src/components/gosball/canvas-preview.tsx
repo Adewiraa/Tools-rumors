@@ -217,18 +217,13 @@ function FaceoffPitch({
 
       {lineupData.homeTeam.starters.map((player, index) => {
         const coordinate = formationTemplates[lineupData.homeTeam.formation].coordinates[index];
-        const faceoffCoordinate = toFaceoffCoordinate(coordinate, "home");
 
         return (
           <PlayerNumber
             key={`faceoff-home-${player.id}`}
             color={lineupData.homeTeam.primaryColor}
             compact
-            coordinate={
-              story
-                ? toStoryFaceoffCoordinate(coordinate, "home")
-                : faceoffCoordinate
-            }
+            coordinate={toFaceoffCoordinate(coordinate, "home", story)}
             label={player.shirtNumber?.toString() ?? coordinate.label}
           />
         );
@@ -236,18 +231,13 @@ function FaceoffPitch({
 
       {lineupData.awayTeam.starters.map((player, index) => {
         const coordinate = formationTemplates[lineupData.awayTeam.formation].coordinates[index];
-        const faceoffCoordinate = toFaceoffCoordinate(coordinate, "away");
 
         return (
           <PlayerNumber
             key={`faceoff-away-${player.id}`}
             color={lineupData.awayTeam.primaryColor}
             compact
-            coordinate={
-              story
-                ? toStoryFaceoffCoordinate(coordinate, "away")
-                : faceoffCoordinate
-            }
+            coordinate={toFaceoffCoordinate(coordinate, "away", story)}
             label={player.shirtNumber?.toString() ?? coordinate.label}
           />
         );
@@ -265,7 +255,7 @@ function PitchTeamLabel({
 }) {
   return (
     <div
-      className={`absolute top-3 flex items-center gap-2 rounded-[4px] border border-white/15 bg-[#05070A]/70 px-2 py-1 text-[0.58rem] text-[#E5EDF5] ${
+      className={`absolute top-3 z-20 flex items-center gap-2 rounded-[4px] border border-white/15 bg-[#05070A]/80 px-2 py-1 text-[0.58rem] text-[#E5EDF5] ${
         side === "left" ? "left-3" : "right-3"
       }`}
     >
@@ -647,10 +637,14 @@ function mirrorCoordinate(
 function toFaceoffCoordinate(
   coordinate: FormationCoordinate,
   side: "home" | "away",
+  story = false,
 ): FormationCoordinate {
-  const depth = 100 - coordinate.y;
-  const left = side === "home" ? 8 + depth * 0.38 : 92 - depth * 0.38;
-  const top = 8 + coordinate.x * 0.84;
+  const depthProgress = clamp((88 - coordinate.y) / 72, 0, 1);
+  const goalLine = story ? 9 : 8;
+  const kickoffLine = story ? 45 : 47;
+  const horizontalDepth = goalLine + depthProgress * (kickoffLine - goalLine);
+  const left = side === "home" ? horizontalDepth : 100 - horizontalDepth;
+  const top = story ? 17 + coordinate.x * 0.66 : 15 + coordinate.x * 0.7;
 
   return {
     ...coordinate,
@@ -659,19 +653,8 @@ function toFaceoffCoordinate(
   };
 }
 
-function toStoryFaceoffCoordinate(
-  coordinate: FormationCoordinate,
-  side: "home" | "away",
-): FormationCoordinate {
-  const depth = 100 - coordinate.y;
-  const left = side === "home" ? 8 + depth * 0.33 : 92 - depth * 0.33;
-  const top = 7 + coordinate.x * 0.86;
-
-  return {
-    ...coordinate,
-    x: left,
-    y: top,
-  };
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function RumorPoster({
