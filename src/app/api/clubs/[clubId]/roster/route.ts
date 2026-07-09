@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { DatabaseRosterPlayer } from "@/types/database";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface RouteContext {
   params: Promise<{
     clubId: string;
@@ -78,8 +81,11 @@ export async function GET(request: Request, context: RouteContext) {
     };
   });
 
-  return NextResponse.json({
-    source: "supabase",
-    players,
-  });
+  return NextResponse.json(
+    {
+      source: "supabase",
+      players,
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

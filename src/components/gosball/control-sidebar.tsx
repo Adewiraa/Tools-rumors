@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BadgePercent,
   Database,
@@ -134,6 +134,18 @@ const teamColorOptions = [
   "#000000",
 ];
 
+const localClubOptions: ClubOption[] = indonesianClubs.map((club) => ({
+  id: club.slug,
+  name: club.name,
+  shortName: club.shortName,
+  slug: club.slug,
+  ileagueSlug: club.ileagueSlug,
+  ileagueUrl: club.ileagueUrl,
+  primaryColor: club.primaryColor,
+  logoUrl: null,
+  city: null,
+}));
+
 export function ControlSidebar({
   mode,
   aspectRatio,
@@ -149,38 +161,36 @@ export function ControlSidebar({
 }: ControlSidebarProps) {
   const activeSponsor =
     mode === "lineup" ? lineupData.sponsor : rumorData.sponsor;
-  const [availableClubs, setAvailableClubs] = useState<ClubOption[]>(
-    indonesianClubs.map((club) => ({
-      id: club.slug,
-      name: club.name,
-      shortName: club.shortName,
-      slug: club.slug,
-      ileagueSlug: club.ileagueSlug,
-      ileagueUrl: club.ileagueUrl,
-      primaryColor: club.primaryColor,
-      logoUrl: null,
-      city: null,
-    })),
-  );
+  const [availableClubs, setAvailableClubs] =
+    useState<ClubOption[]>(localClubOptions);
+
+  const reloadClubs = useCallback(async () => {
+    const response = await fetch("/api/clubs", { cache: "no-store" });
+    const payload = (await response.json()) as ClubsResponse;
+
+    if (!response.ok || !Array.isArray(payload.clubs)) {
+      throw new Error(payload.error ?? "Gagal memuat master klub.");
+    }
+
+    if (payload.clubs.length) {
+      setAvailableClubs(payload.clubs);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
-    fetch("/api/clubs")
-      .then((response) => response.json())
-      .then((payload: ClubsResponse) => {
-        if (isMounted && Array.isArray(payload.clubs) && payload.clubs.length) {
-          setAvailableClubs(payload.clubs);
-        }
-      })
+    reloadClubs()
       .catch(() => {
-        // Keep local club fallback.
+        if (isMounted) {
+          setAvailableClubs(localClubOptions);
+        }
       });
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [reloadClubs]);
 
   const updateSponsor = (enabled: boolean) => {
     if (mode === "lineup") {
@@ -280,6 +290,7 @@ export function ControlSidebar({
                 );
               })
             }
+            onRefreshClubs={reloadClubs}
           />
         )}
 
@@ -891,9 +902,11 @@ function TeamControls({
 function MasterDataControls({
   clubs,
   onClubSaved,
+  onRefreshClubs,
 }: {
   clubs: ClubOption[];
   onClubSaved: (club: ClubOption) => void;
+  onRefreshClubs: () => Promise<void>;
 }) {
   const [clubForm, setClubForm] = useState({
     name: "",
@@ -941,12 +954,22 @@ function MasterDataControls({
       }
 
       onClubSaved(payload.club);
+      let didRefreshClubs = true;
+      try {
+        await onRefreshClubs();
+      } catch {
+        didRefreshClubs = false;
+      }
       setPlayerForm((current) => ({
         ...current,
         clubSlug: payload.club?.slug ?? current.clubSlug,
       }));
       setClubStatus("success");
-      setClubMessage("Klub berhasil disimpan.");
+      setClubMessage(
+        didRefreshClubs
+          ? "Klub berhasil disimpan dan daftar klub diperbarui."
+          : "Klub berhasil disimpan, tapi daftar penuh belum bisa direfresh.",
+      );
     } catch (error) {
       setClubStatus("error");
       setClubMessage(

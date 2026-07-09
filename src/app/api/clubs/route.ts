@@ -3,24 +3,30 @@ import { indonesianClubs } from "@/lib/indonesian-clubs";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { DatabaseClub } from "@/types/database";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const supabase = createSupabaseServerClient();
 
   if (!supabase) {
-    return NextResponse.json({
-      source: "local",
-      clubs: indonesianClubs.map((club) => ({
-        id: club.slug,
-        name: club.name,
-        shortName: club.shortName,
-        slug: club.slug,
-        ileagueSlug: club.ileagueSlug,
-        ileagueUrl: club.ileagueUrl,
-        primaryColor: club.primaryColor,
-        logoUrl: null,
-        city: null,
-      })),
-    });
+    return NextResponse.json(
+      {
+        source: "local",
+        clubs: indonesianClubs.map((club) => ({
+          id: club.slug,
+          name: club.name,
+          shortName: club.shortName,
+          slug: club.slug,
+          ileagueSlug: club.ileagueSlug,
+          ileagueUrl: club.ileagueUrl,
+          primaryColor: club.primaryColor,
+          logoUrl: null,
+          city: null,
+        })),
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const { data, error } = await supabase
@@ -37,18 +43,21 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json({
-    source: "supabase",
-    clubs: ((data ?? []) as DatabaseClub[]).map((club) => ({
-      id: club.id,
-      name: club.name,
-      shortName: club.short_name,
-      slug: club.slug,
-      ileagueSlug: club.ileague_slug,
-      ileagueUrl: club.ileague_url,
-      primaryColor: club.primary_color,
-      logoUrl: club.logo_public_url,
-      city: club.city,
-    })),
-  });
+  return NextResponse.json(
+    {
+      source: "supabase",
+      clubs: ((data ?? []) as DatabaseClub[]).map((club) => ({
+        id: club.id,
+        name: club.name,
+        shortName: club.short_name,
+        slug: club.slug,
+        ileagueSlug: club.ileague_slug,
+        ileagueUrl: club.ileague_url,
+        primaryColor: club.primary_color,
+        logoUrl: club.logo_public_url,
+        city: club.city,
+      })),
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
