@@ -104,12 +104,12 @@ function LineupPoster({
   }
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col p-[5.6%]">
+    <div className="absolute inset-0 z-10 flex flex-col p-[4.6%]">
       <LineupHeader lineupData={lineupData} compact />
 
       <FaceoffPitch lineupData={lineupData} story />
 
-      <div className="mt-2 grid min-h-0 flex-1 grid-rows-2 gap-2">
+      <div className="mt-2 grid min-h-0 flex-1 grid-rows-2 gap-1.5">
         <StoryRosterBoard team={lineupData.homeTeam} side="home" />
         <StoryRosterBoard team={lineupData.awayTeam} side="away" />
       </div>
@@ -146,11 +146,13 @@ function LineupHeader({
   return (
     <header className="grid grid-cols-[1fr_auto] items-start gap-3">
       <div className="min-w-0">
-        <p className="studio-label text-[#A78BFA]">Gosball match sheet</p>
+        <p className={`studio-label text-[#A78BFA] ${compact ? "text-[0.58rem]" : ""}`}>
+          Gosball match sheet
+        </p>
         <h2
           className={`display-type mt-1 leading-[0.95] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
             compact
-              ? "text-[clamp(2.2rem,11vw,3.3rem)]"
+              ? "text-[clamp(1.95rem,10vw,2.8rem)]"
               : "text-[clamp(3.1rem,6.4vw,5.4rem)]"
           }`}
         >
@@ -196,8 +198,8 @@ function FaceoffPitch({
 }) {
   return (
     <section
-      className={`relative mt-4 overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72 ${
-        story ? "h-[32%] min-h-[210px]" : "h-[28%] min-h-[180px]"
+      className={`relative overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72 ${
+        story ? "mt-3 h-[25%] min-h-[168px]" : "mt-4 h-[28%] min-h-[180px]"
       }`}
     >
       <div className={story ? "absolute inset-2 rounded-[5px] border border-white/12" : "absolute inset-3 rounded-[5px] border border-white/12"} />
@@ -207,8 +209,8 @@ function FaceoffPitch({
           story ? "h-16 w-16" : "h-20 w-20"
         }`}
       />
-      <div className={story ? "absolute left-2 top-1/2 h-20 w-10 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
-      <div className={story ? "absolute right-2 top-1/2 h-20 w-10 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
+      <div className={story ? "absolute left-2 top-1/2 h-[4.5rem] w-9 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
+      <div className={story ? "absolute right-2 top-1/2 h-[4.5rem] w-9 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
 
       <PitchTeamLabel team={lineupData.homeTeam} side="left" />
       <PitchTeamLabel team={lineupData.awayTeam} side="right" />
@@ -222,7 +224,11 @@ function FaceoffPitch({
             key={`faceoff-home-${player.id}`}
             color={lineupData.homeTeam.primaryColor}
             compact
-            coordinate={story ? squeezeFaceoffCoordinate(faceoffCoordinate) : faceoffCoordinate}
+            coordinate={
+              story
+                ? toStoryFaceoffCoordinate(coordinate, "home")
+                : faceoffCoordinate
+            }
             label={player.shirtNumber?.toString() ?? coordinate.label}
           />
         );
@@ -237,7 +243,11 @@ function FaceoffPitch({
             key={`faceoff-away-${player.id}`}
             color={lineupData.awayTeam.primaryColor}
             compact
-            coordinate={story ? squeezeFaceoffCoordinate(faceoffCoordinate) : faceoffCoordinate}
+            coordinate={
+              story
+                ? toStoryFaceoffCoordinate(coordinate, "away")
+                : faceoffCoordinate
+            }
             label={player.shirtNumber?.toString() ?? coordinate.label}
           />
         );
@@ -319,20 +329,20 @@ function StoryRosterBoard({
           background: `linear-gradient(90deg, ${team.primaryColor}, ${stripe.purple})`,
         }}
       />
-      <div className="flex h-full min-h-0 flex-col p-2.5">
+      <div className="flex h-full min-h-0 flex-col p-2">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
           <TeamLogo team={team} compact />
           <div className="min-w-0">
-            <h3 className="truncate text-[0.82rem] text-white">{team.name}</h3>
-            <p className="truncate text-[0.52rem] text-[#A7B2C5]">
+            <h3 className="truncate text-[0.72rem] leading-tight text-white">{team.name}</h3>
+            <p className="truncate text-[0.44rem] leading-tight text-[#A7B2C5]">
               {team.formation} / coach {team.coach.name}
             </p>
           </div>
-          <span className="rounded-[4px] border border-white/15 bg-white/[0.05] px-2 py-1 text-[0.48rem] text-[#A7B2C5]">
+          <span className="rounded-[4px] border border-white/15 bg-white/[0.05] px-1.5 py-0.5 text-[0.42rem] text-[#A7B2C5]">
             {side === "home" ? "Home" : "Away"}
           </span>
         </div>
-        <div className="mt-1.5 min-h-0 flex-1">
+        <div className="mt-1 min-h-0 flex-1">
           <RosterGrid team={team} variant="story" />
         </div>
       </div>
@@ -475,7 +485,9 @@ function RosterGrid({
   variant: "feed" | "story";
 }) {
   return (
-    <div className="grid min-h-0 grid-cols-2 gap-2 overflow-hidden">
+    <div className={`grid min-h-0 grid-cols-2 overflow-hidden ${
+      variant === "story" ? "gap-1.5" : "gap-2"
+    }`}>
       <RosterColumn
         title="Starting XI"
         players={team.starters}
@@ -508,14 +520,14 @@ function RosterColumn({
 }) {
   const isStory = variant === "story";
   const rowClass = isStory
-    ? "grid min-w-0 grid-cols-[0.72rem_1fr] items-center gap-1 border-b border-white/10 py-[1px] last:border-b-0"
+    ? "grid min-w-0 grid-cols-[0.62rem_1fr] items-center gap-1 border-b border-white/10 py-0 leading-none last:border-b-0"
     : "grid min-w-0 grid-cols-[0.86rem_1fr] items-center gap-1.5 border-b border-white/10 py-[2px] last:border-b-0";
 
   return (
     <div className="min-h-0 overflow-hidden">
       <p
         className={`mb-1 text-[#A78BFA] ${
-          isStory ? "text-[0.46rem]" : "text-[0.55rem]"
+          isStory ? "text-[0.42rem]" : "text-[0.55rem]"
         }`}
       >
         {title}
@@ -530,7 +542,7 @@ function RosterColumn({
               <span
                 className={`tabular-nums text-[#A7B2C5] ${
                   isStory
-                    ? "text-[0.36rem]"
+                    ? "text-[0.34rem]"
                     : "text-[0.44rem]"
                 }`}
               >
@@ -547,7 +559,7 @@ function RosterColumn({
                 ) : null}
                 <span
                   className={`roster-name min-w-0 truncate text-white ${
-                    isStory ? "text-[0.43rem]" : "text-[0.54rem]"
+                    isStory ? "text-[0.42rem] leading-[1.25]" : "text-[0.54rem]"
                   }`}
                 >
                   {player.name}
@@ -637,8 +649,8 @@ function toFaceoffCoordinate(
   side: "home" | "away",
 ): FormationCoordinate {
   const depth = 100 - coordinate.y;
-  const left = side === "home" ? 7 + depth * 0.43 : 93 - depth * 0.43;
-  const top = 12 + coordinate.x * 0.76;
+  const left = side === "home" ? 8 + depth * 0.38 : 92 - depth * 0.38;
+  const top = 8 + coordinate.x * 0.84;
 
   return {
     ...coordinate,
@@ -647,13 +659,18 @@ function toFaceoffCoordinate(
   };
 }
 
-function squeezeFaceoffCoordinate(
+function toStoryFaceoffCoordinate(
   coordinate: FormationCoordinate,
+  side: "home" | "away",
 ): FormationCoordinate {
+  const depth = 100 - coordinate.y;
+  const left = side === "home" ? 8 + depth * 0.33 : 92 - depth * 0.33;
+  const top = 7 + coordinate.x * 0.86;
+
   return {
     ...coordinate,
-    x: 10 + coordinate.x * 0.8,
-    y: 10 + coordinate.y * 0.8,
+    x: left,
+    y: top,
   };
 }
 
