@@ -79,6 +79,14 @@ alter table public.club_seasons enable row level security;
 alter table public.players enable row level security;
 alter table public.club_rosters enable row level security;
 
+grant usage on schema public to anon, authenticated;
+grant select on public.competitions to anon, authenticated;
+grant select on public.seasons to anon, authenticated;
+grant select on public.clubs to anon, authenticated;
+grant select on public.club_seasons to anon, authenticated;
+grant select on public.players to anon, authenticated;
+grant select on public.club_rosters to anon, authenticated;
+
 drop policy if exists "Public read competitions" on public.competitions;
 create policy "Public read competitions"
 on public.competitions for select
