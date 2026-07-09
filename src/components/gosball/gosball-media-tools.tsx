@@ -56,7 +56,7 @@ export function GosballMediaTools() {
       await new Promise((resolve) => requestAnimationFrame(resolve));
       const dataUrl = await toPng(canvasRef.current, {
         cacheBust: true,
-        pixelRatio: 3,
+        pixelRatio: 4,
         backgroundColor: "#05070A",
       });
       const link = document.createElement("a");

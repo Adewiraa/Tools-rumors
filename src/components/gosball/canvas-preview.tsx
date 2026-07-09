@@ -152,7 +152,7 @@ function LineupHeader({
         <h2
           className={`display-type mt-1 leading-[0.95] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
             compact
-              ? "text-[clamp(1.95rem,10vw,2.8rem)]"
+              ? "text-[clamp(1.8rem,9vw,2.45rem)]"
               : "text-[clamp(3.1rem,6.4vw,5.4rem)]"
           }`}
         >
@@ -199,18 +199,18 @@ function FaceoffPitch({
   return (
     <section
       className={`relative overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72 ${
-        story ? "mt-3 h-[25%] min-h-[168px]" : "mt-4 h-[28%] min-h-[180px]"
+        story ? "mt-2.5 h-[20%] min-h-[132px]" : "mt-4 h-[28%] min-h-[180px]"
       }`}
     >
       <div className={story ? "absolute inset-2 rounded-[5px] border border-white/12" : "absolute inset-3 rounded-[5px] border border-white/12"} />
       <div className={story ? "absolute left-1/2 top-2 h-[calc(100%-1rem)] w-px bg-white/12" : "absolute left-1/2 top-3 h-[calc(100%-1.5rem)] w-px bg-white/12"} />
       <div
         className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/12 ${
-          story ? "h-16 w-16" : "h-20 w-20"
+          story ? "h-12 w-12" : "h-20 w-20"
         }`}
       />
-      <div className={story ? "absolute left-2 top-1/2 h-[4.5rem] w-9 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
-      <div className={story ? "absolute right-2 top-1/2 h-[4.5rem] w-9 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
+      <div className={story ? "absolute left-2 top-1/2 h-14 w-7 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10" : "absolute left-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-r-full border border-l-0 border-white/10"} />
+      <div className={story ? "absolute right-2 top-1/2 h-14 w-7 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10" : "absolute right-3 top-1/2 h-24 w-12 -translate-y-1/2 rounded-l-full border border-r-0 border-white/10"} />
 
       <PitchTeamLabel team={lineupData.homeTeam} side="left" />
       <PitchTeamLabel team={lineupData.awayTeam} side="right" />
@@ -453,7 +453,7 @@ function PlayerNumber({
   return (
     <div
       className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 text-white shadow-[0_6px_16px_rgba(6,27,49,0.16)] ${
-        compact ? "h-5 w-5 text-[0.48rem]" : "h-7 w-7 text-[0.58rem]"
+        compact ? "h-[1.125rem] w-[1.125rem] text-[0.42rem]" : "h-7 w-7 text-[0.58rem]"
       }`}
       style={{
         left: `${coordinate.x}%`,
@@ -475,8 +475,8 @@ function RosterGrid({
   variant: "feed" | "story";
 }) {
   return (
-    <div className={`grid min-h-0 grid-cols-2 overflow-hidden ${
-      variant === "story" ? "gap-1.5" : "gap-2"
+    <div className={`grid min-h-0 overflow-hidden ${
+      variant === "story" ? "grid-cols-[1.06fr_0.94fr] gap-2" : "grid-cols-2 gap-2"
     }`}>
       <RosterColumn
         title="Starting XI"
@@ -510,14 +510,14 @@ function RosterColumn({
 }) {
   const isStory = variant === "story";
   const rowClass = isStory
-    ? "grid min-w-0 grid-cols-[0.62rem_1fr] items-center gap-1 border-b border-white/10 py-0 leading-none last:border-b-0"
+    ? "grid min-w-0 grid-cols-[0.72rem_1fr] items-center gap-1.5 border-b border-white/10 py-[1px] leading-none last:border-b-0"
     : "grid min-w-0 grid-cols-[0.86rem_1fr] items-center gap-1.5 border-b border-white/10 py-[2px] last:border-b-0";
 
   return (
     <div className="min-h-0 overflow-hidden">
       <p
         className={`mb-1 text-[#A78BFA] ${
-          isStory ? "text-[0.42rem]" : "text-[0.55rem]"
+          isStory ? "text-[0.48rem]" : "text-[0.55rem]"
         }`}
       >
         {title}
@@ -532,7 +532,7 @@ function RosterColumn({
               <span
                 className={`tabular-nums text-[#A7B2C5] ${
                   isStory
-                    ? "text-[0.34rem]"
+                    ? "text-[0.42rem]"
                     : "text-[0.44rem]"
                 }`}
               >
@@ -549,7 +549,7 @@ function RosterColumn({
                 ) : null}
                 <span
                   className={`roster-name min-w-0 truncate text-white ${
-                    isStory ? "text-[0.42rem] leading-[1.25]" : "text-[0.54rem]"
+                    isStory ? "text-[0.54rem] leading-[1.2]" : "text-[0.54rem]"
                   }`}
                 >
                   {player.name}
