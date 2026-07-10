@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Gosball">
+  <defs>
+    <linearGradient id="gb-metal" x1="54" y1="54" x2="194" y2="202" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.48" stop-color="#f2f2f2"/>
+      <stop offset="1" stop-color="#c9c9c9"/>
+    </linearGradient>
+    <filter id="gb-shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <circle cx="128" cy="128" r="112" fill="#070A0E"/>
+  <circle cx="128" cy="128" r="102" fill="#020304" stroke="#242A33" stroke-width="8"/>
+  <circle cx="128" cy="128" r="114" fill="none" stroke="#111720" stroke-width="5"/>
+  <g filter="url(#gb-shadow)">
+    <text
+      x="128"
+      y="67"
+      text-anchor="middle"
+      fill="#F5F7FA"
+      font-family="Arial, Helvetica, sans-serif"
+      font-size="16"
+      font-weight="800"
+      letter-spacing="13"
+    >GOSBALL</text>
+    <g fill="url(#gb-metal)">
+      <path d="M62 81h64v31H94v58l32 20v-54h-20v-28h52v89l-32 18-64-39V81z"/>
+      <path d="M132 81h64v42l-31 22 35 18v38l-68 21V81zm31 31v51l18-12v-39h-18zm0 82 21-8v-24l-21-11v43z"/>
+    </g>
+    <path d="M128 209V100" stroke="#020304" stroke-width="7" stroke-linecap="square"/>
+  </g>
+</svg>
