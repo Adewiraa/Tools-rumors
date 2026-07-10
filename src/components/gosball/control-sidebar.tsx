@@ -1270,7 +1270,7 @@ function MasterDataControls({
       }));
       await onRefreshClubs();
       setClubLogoStatus("success");
-      setClubLogoMessage("Logo berhasil diupload.");
+      setClubLogoMessage("Logo PNG transparan berhasil diupload.");
     } catch (error) {
       setClubLogoStatus("error");
       setClubLogoMessage(
@@ -1466,7 +1466,7 @@ function MasterDataControls({
           <Field label="Upload logo club">
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              accept="image/png"
               onChange={(event) =>
                 void uploadClubLogo(event.currentTarget.files?.[0] ?? null)
               }

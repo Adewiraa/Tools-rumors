@@ -6,12 +6,7 @@ import {
 
 const bucketName = "club-logos";
 const maxFileSize = 2 * 1024 * 1024;
-const allowedMimeTypes = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/svg+xml",
-]);
+const allowedMimeTypes = new Set(["image/png"]);
 
 function toSlug(value: string) {
   return value
@@ -21,26 +16,8 @@ function toSlug(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function getExtension(file: File) {
-  const fromName = file.name.split(".").pop()?.toLowerCase();
-
-  if (fromName && /^[a-z0-9]+$/.test(fromName)) {
-    return fromName === "jpeg" ? "jpg" : fromName;
-  }
-
-  if (file.type === "image/png") {
-    return "png";
-  }
-
-  if (file.type === "image/jpeg") {
-    return "jpg";
-  }
-
-  if (file.type === "image/webp") {
-    return "webp";
-  }
-
-  return "svg";
+function getExtension() {
+  return "png";
 }
 
 export async function POST(request: Request) {
@@ -72,7 +49,7 @@ export async function POST(request: Request) {
 
   if (!allowedMimeTypes.has(file.type)) {
     return NextResponse.json(
-      { error: "Format logo harus PNG, JPG, WEBP, atau SVG." },
+      { error: "Format logo harus PNG transparan." },
       { status: 400 },
     );
   }
@@ -103,7 +80,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const extension = getExtension(file);
+  const extension = getExtension();
   const storagePath = `${clubSlug || "club"}/${crypto.randomUUID()}.${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const { error: uploadError } = await supabase.storage
