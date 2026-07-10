@@ -481,12 +481,13 @@ export function ControlSidebar({
 
 function GosballHeaderLogo() {
   return (
-    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#080C11] shadow-[0_10px_24px_rgba(6,27,49,0.16)] ring-1 ring-[#D4DEE9]">
+    <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#080C11] p-[3px] shadow-[0_12px_28px_rgba(6,27,49,0.18)] ring-1 ring-[#1E293B]/15">
+      <span className="absolute inset-[-4px] rounded-full border border-[#D4DEE9]/80" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/gosball.png"
         alt="Gosball"
-        className="h-12 w-12 object-contain"
+        className="relative h-full w-full rounded-full object-cover"
       />
     </div>
   );
