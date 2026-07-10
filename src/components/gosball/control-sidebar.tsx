@@ -74,6 +74,7 @@ interface ClubOption {
   primaryColor: string;
   logoUrl: string | null;
   city: string | null;
+  coachName: string | null;
 }
 
 interface ClubsResponse {
@@ -106,6 +107,7 @@ const defaultClubForm = {
   shortName: "",
   slug: "",
   city: "",
+  coachName: "",
   ileagueSlug: "",
   ileagueUrl: "",
   logoPublicUrl: "",
@@ -162,6 +164,7 @@ const localClubOptions: ClubOption[] = indonesianClubs.map((club) => ({
   primaryColor: club.primaryColor,
   logoUrl: null,
   city: null,
+  coachName: null,
 }));
 
 const emptyPlayerName = (player: Player) => player.name.trim().length === 0;
@@ -705,6 +708,10 @@ function TeamControls({
       shortName: selectedClub.shortName,
       primaryColor: selectedClub.primaryColor,
       logoUrl: selectedClub.logoUrl ?? undefined,
+      coach: {
+        ...team.coach,
+        name: selectedClub.coachName ?? "",
+      },
     });
 
     void importSelectedClubRoster(selectedClub);
@@ -749,6 +756,10 @@ function TeamControls({
           shortName: selectedClub.shortName,
           primaryColor: selectedClub.primaryColor,
           logoUrl: selectedClub.logoUrl ?? undefined,
+          coach: {
+            ...team.coach,
+            name: selectedClub.coachName ?? "",
+          },
           starters: filledSlots.starters,
           substitutes: filledSlots.substitutes,
         });
@@ -763,6 +774,10 @@ function TeamControls({
           shortName: selectedClub.shortName,
           primaryColor: selectedClub.primaryColor,
           logoUrl: selectedClub.logoUrl ?? undefined,
+          coach: {
+            ...team.coach,
+            name: selectedClub.coachName ?? "",
+          },
         });
         setImportStatus("error");
         return;
@@ -785,6 +800,10 @@ function TeamControls({
           shortName: selectedClub.shortName,
           primaryColor: selectedClub.primaryColor,
           logoUrl: selectedClub.logoUrl ?? undefined,
+          coach: {
+            ...team.coach,
+            name: selectedClub.coachName ?? "",
+          },
         });
         setImportStatus("error");
         return;
@@ -813,7 +832,7 @@ function TeamControls({
         substitutes: filledSlots.substitutes,
         coach: {
           ...team.coach,
-          name: payload.coachName,
+          name: payload.coachName || selectedClub.coachName || "",
         },
       });
       setImportStatus("success");
@@ -1105,6 +1124,7 @@ function MasterDataControls({
       ileagueUrl: club.ileagueUrl ?? "",
       logoPublicUrl: club.logoUrl ?? "",
       primaryColor: club.primaryColor,
+      coachName: club.coachName ?? "",
     }));
   };
 
@@ -1317,6 +1337,22 @@ function MasterDataControls({
               className="control-input"
             />
           </Field>
+          <Field label="Pelatih">
+            <input
+              value={clubForm.coachName}
+              onChange={(event) =>
+                setClubForm((current) => ({
+                  ...current,
+                  coachName: event.target.value,
+                }))
+              }
+              placeholder="Nama pelatih"
+              className="control-input"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Kota">
             <input
               value={clubForm.city}
@@ -1604,6 +1640,11 @@ function MasterClubList({
                 <span className="block truncate text-[0.68rem] text-[#64748D]">
                   {club.shortName} {club.city ? `/ ${club.city}` : ""}
                 </span>
+                {club.coachName ? (
+                  <span className="block truncate text-[0.68rem] text-[#64748D]">
+                    Pelatih: {club.coachName}
+                  </span>
+                ) : null}
               </span>
               <span className="text-[0.68rem] text-[#64748D]">Edit</span>
             </button>

@@ -23,6 +23,7 @@ export async function GET() {
           primaryColor: club.primaryColor,
           logoUrl: null,
           city: null,
+          coachName: null,
         })),
       },
       { headers: { "Cache-Control": "no-store" } },
@@ -32,8 +33,25 @@ export async function GET() {
   const { data, error } = await supabase
     .from("clubs")
     .select(
-      "id,name,short_name,slug,ileague_slug,ileague_url,primary_color,secondary_color,logo_storage_path,logo_public_url,city",
+      `
+      id,
+      name,
+      short_name,
+      slug,
+      ileague_slug,
+      ileague_url,
+      primary_color,
+      secondary_color,
+      logo_storage_path,
+      logo_public_url,
+      city,
+      club_seasons (
+        head_coach,
+        seasons!inner ( code )
+      )
+    `,
     )
+    .eq("club_seasons.seasons.code", "BRI_SUPER_LEAGUE_2025-26")
     .order("name", { ascending: true });
 
   if (error) {
@@ -46,17 +64,22 @@ export async function GET() {
   return NextResponse.json(
     {
       source: "supabase",
-      clubs: ((data ?? []) as DatabaseClub[]).map((club) => ({
-        id: club.id,
-        name: club.name,
-        shortName: club.short_name,
-        slug: club.slug,
-        ileagueSlug: club.ileague_slug,
-        ileagueUrl: club.ileague_url,
-        primaryColor: club.primary_color,
-        logoUrl: club.logo_public_url,
-        city: club.city,
-      })),
+      clubs: ((data ?? []) as DatabaseClub[]).map((club) => {
+        const clubSeason = club.club_seasons?.[0];
+
+        return {
+          id: club.id,
+          name: club.name,
+          shortName: club.short_name,
+          slug: club.slug,
+          ileagueSlug: club.ileague_slug,
+          ileagueUrl: club.ileague_url,
+          primaryColor: club.primary_color,
+          logoUrl: club.logo_public_url,
+          city: club.city,
+          coachName: clubSeason?.head_coach ?? null,
+        };
+      }),
     },
     { headers: { "Cache-Control": "no-store" } },
   );

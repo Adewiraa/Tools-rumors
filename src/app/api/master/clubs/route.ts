@@ -14,6 +14,7 @@ interface ClubPayload {
   primaryColor?: string;
   secondaryColor?: string;
   logoPublicUrl?: string;
+  coachName?: string;
 }
 
 function toSlug(value: string) {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
   const name = payload.name?.trim();
   const shortName = payload.shortName?.trim();
   const slug = payload.slug?.trim() ? toSlug(payload.slug) : name ? toSlug(name) : "";
+  const coachName = payload.coachName?.trim() || null;
 
   if (!name || !shortName || !slug) {
     return NextResponse.json(
@@ -81,6 +83,40 @@ export async function POST(request: Request) {
     );
   }
 
+  const { data: season, error: seasonError } = await supabase
+    .from("seasons")
+    .select("id")
+    .eq("code", "BRI_SUPER_LEAGUE_2025-26")
+    .single();
+
+  if (seasonError || !season) {
+    return NextResponse.json(
+      {
+        error:
+          "Klub tersimpan, tapi season default tidak ditemukan untuk menyimpan pelatih.",
+      },
+      { status: 500 },
+    );
+  }
+
+  const { error: clubSeasonError } = await supabase
+    .from("club_seasons")
+    .upsert(
+      {
+        club_id: data.id,
+        season_id: season.id,
+        head_coach: coachName,
+      },
+      { onConflict: "club_id,season_id" },
+    );
+
+  if (clubSeasonError) {
+    return NextResponse.json(
+      { error: `Gagal menyimpan pelatih klub: ${clubSeasonError.message}` },
+      { status: 500 },
+    );
+  }
+
   return NextResponse.json({
     club: {
       id: data.id,
@@ -92,6 +128,7 @@ export async function POST(request: Request) {
       primaryColor: data.primary_color,
       logoUrl: data.logo_public_url,
       city: data.city,
+      coachName,
     },
   });
 }

@@ -10,6 +10,9 @@ export interface DatabaseClub {
   logo_storage_path: string | null;
   logo_public_url: string | null;
   city: string | null;
+  club_seasons?: Array<{
+    head_coach: string | null;
+  }> | null;
 }
 
 export interface DatabaseRosterPlayer {
