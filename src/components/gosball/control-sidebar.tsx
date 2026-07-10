@@ -592,40 +592,6 @@ function TeamControls({
     "idle" | "loading" | "success" | "error"
   >("idle");
 
-  const updateStarter = (
-    index: number,
-    field: "name",
-    value: string,
-  ) => {
-    onTeamChange(teamKey, {
-      starters: team.starters.map((player, playerIndex) =>
-        playerIndex === index
-          ? {
-              ...player,
-              [field]: value,
-            }
-          : player,
-      ),
-    });
-  };
-
-  const updateSubstitute = (
-    index: number,
-    field: "name",
-    value: string,
-  ) => {
-    onTeamChange(teamKey, {
-      substitutes: team.substitutes.map((player, playerIndex) =>
-        playerIndex === index
-          ? {
-              ...player,
-              [field]: value,
-            }
-          : player,
-      ),
-    });
-  };
-
   const updateStarterCountry = (index: number, country: CountryOption) => {
     onTeamChange(teamKey, {
       starters: team.starters.map((player, playerIndex) =>
@@ -658,17 +624,69 @@ function TeamControls({
     });
   };
 
-  const starterSuggestionId = (index: number, position: PlayerPosition) =>
-    `${team.id}-starter-${index}-${position}-suggestions`;
-  const substituteSuggestionId = (index: number) =>
-    `${team.id}-substitute-${index}-suggestions`;
-
   const getRosterSuggestionsForPosition = (position: PlayerPosition) => {
     if (position === "Unknown") {
       return rosterSuggestions;
     }
 
     return rosterSuggestions.filter((player) => player.position === position);
+  };
+
+  const applyRosterPlayerToStarter = (index: number, playerId: string) => {
+    const rosterPlayer = rosterSuggestions.find((player) => player.id === playerId);
+
+    onTeamChange(teamKey, {
+      starters: team.starters.map((player, playerIndex) => {
+        if (playerIndex !== index) {
+          return player;
+        }
+
+        if (!rosterPlayer) {
+          return {
+            ...player,
+            id: `${team.id}-starter-${index + 1}`,
+            name: "",
+            shirtNumber: undefined,
+            nationality: "Indonesia",
+            countryCode: "ID",
+            countryFlagUrl: undefined,
+            isForeign: false,
+          };
+        }
+
+        return {
+          ...rosterPlayer,
+          position: player.position,
+        };
+      }),
+    });
+  };
+
+  const applyRosterPlayerToSubstitute = (index: number, playerId: string) => {
+    const rosterPlayer = rosterSuggestions.find((player) => player.id === playerId);
+
+    onTeamChange(teamKey, {
+      substitutes: team.substitutes.map((player, playerIndex) => {
+        if (playerIndex !== index) {
+          return player;
+        }
+
+        if (!rosterPlayer) {
+          return {
+            ...player,
+            id: `${team.id}-sub-${index + 1}`,
+            name: "",
+            shirtNumber: undefined,
+            nationality: "Indonesia",
+            countryCode: "ID",
+            countryFlagUrl: undefined,
+            isForeign: false,
+          };
+        }
+
+        return rosterPlayer;
+      }),
+    });
   };
 
   const selectClub = (clubSlug: string) => {
@@ -804,54 +822,6 @@ function TeamControls({
     }
   };
 
-  const findRosterPlayerByName = (name: string) => {
-    const normalizedName = name.trim().toLowerCase();
-
-    return rosterSuggestions.find(
-      (player) => player.name.trim().toLowerCase() === normalizedName,
-    );
-  };
-
-  const applyRosterPlayerToStarter = (index: number, name: string) => {
-    const rosterPlayer = findRosterPlayerByName(name);
-
-    if (!rosterPlayer) {
-      return;
-    }
-
-    onTeamChange(teamKey, {
-      starters: team.starters.map((player, playerIndex) =>
-        playerIndex === index
-          ? {
-              ...player,
-              ...rosterPlayer,
-              position: player.position,
-            }
-          : player,
-      ),
-    });
-  };
-
-  const applyRosterPlayerToSubstitute = (index: number, name: string) => {
-    const rosterPlayer = findRosterPlayerByName(name);
-
-    if (!rosterPlayer) {
-      return;
-    }
-
-    onTeamChange(teamKey, {
-      substitutes: team.substitutes.map((player, playerIndex) =>
-        playerIndex === index
-          ? {
-              ...player,
-              ...rosterPlayer,
-              position: player.position,
-            }
-          : player,
-      ),
-    });
-  };
-
   return (
     <Panel title={title} icon={<UsersRound className="h-4 w-4" />}>
       <div className="grid gap-2 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-2">
@@ -950,27 +920,31 @@ function TeamControls({
           Starting XI
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-          {team.starters.map((player, index) => (
-            <div key={player.id} className="grid grid-cols-[1fr_3rem] gap-2">
+          {team.starters.map((player, index) => {
+            const positionPlayers = getRosterSuggestionsForPosition(player.position);
+
+            return (
+            <div key={`${team.id}-starter-${index}`} className="grid grid-cols-[1fr_3rem] gap-2">
               <Field label={`${index + 1}. ${player.position}`}>
-                <input
-                  list={starterSuggestionId(index, player.position)}
-                  value={player.name}
+                <select
+                  value={rosterSuggestions.some((item) => item.id === player.id) ? player.id : ""}
                   onChange={(event) =>
-                    updateStarter(index, "name", event.target.value)
-                  }
-                  onBlur={(event) =>
                     applyRosterPlayerToStarter(index, event.target.value)
                   }
                   className="control-input"
-                />
-                <datalist id={starterSuggestionId(index, player.position)}>
-                  {getRosterSuggestionsForPosition(player.position).map(
-                    (suggestion) => (
-                      <option key={suggestion.id} value={suggestion.name} />
-                    ),
-                  )}
-                </datalist>
+                >
+                  <option value="">
+                    {positionPlayers.length
+                      ? `Pilih ${player.position}`
+                      : `${player.position} belum ada di roster`}
+                  </option>
+                  {positionPlayers.map((suggestion) => (
+                    <option key={suggestion.id} value={suggestion.id}>
+                      {suggestion.shirtNumber ? `${suggestion.shirtNumber} - ` : ""}
+                      {suggestion.name}
+                    </option>
+                  ))}
+                </select>
               </Field>
               <Field label="Flag">
                 <CountryPicker
@@ -979,7 +953,8 @@ function TeamControls({
                 />
               </Field>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -989,24 +964,25 @@ function TeamControls({
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           {team.substitutes.map((player, index) => (
-            <div key={player.id} className="grid grid-cols-[1fr_3rem] gap-2">
+            <div key={`${team.id}-substitute-${index}`} className="grid grid-cols-[1fr_3rem] gap-2">
               <Field label={`Sub ${index + 1}`}>
-                <input
-                  list={substituteSuggestionId(index)}
-                  value={player.name}
+                <select
+                  value={rosterSuggestions.some((item) => item.id === player.id) ? player.id : ""}
                   onChange={(event) =>
-                    updateSubstitute(index, "name", event.target.value)
-                  }
-                  onBlur={(event) =>
                     applyRosterPlayerToSubstitute(index, event.target.value)
                   }
                   className="control-input"
-                />
-                <datalist id={substituteSuggestionId(index)}>
+                >
+                  <option value="">
+                    {rosterSuggestions.length ? "Pilih pemain" : "Roster belum dimuat"}
+                  </option>
                   {rosterSuggestions.map((suggestion) => (
-                    <option key={suggestion.id} value={suggestion.name} />
+                    <option key={suggestion.id} value={suggestion.id}>
+                      {suggestion.shirtNumber ? `${suggestion.shirtNumber} - ` : ""}
+                      {suggestion.name} / {suggestion.position}
+                    </option>
                   ))}
-                </datalist>
+                </select>
               </Field>
               <Field label="Flag">
                 <CountryPicker
