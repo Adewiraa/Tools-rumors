@@ -606,13 +606,13 @@ function TeamLogo({
   if (team.logoUrl) {
     return (
       <div
-        className={`grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-white/15 bg-white ${sizeClass}`}
+        className={`grid shrink-0 place-items-center overflow-hidden ${sizeClass}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={team.logoUrl}
           alt={team.name}
-          className={`h-full w-full object-contain ${header ? "p-1.5" : "p-1"}`}
+          className="h-full w-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]"
         />
       </div>
     );

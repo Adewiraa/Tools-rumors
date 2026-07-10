@@ -6,9 +6,9 @@ export const metadata: Metadata = {
   description:
     "Matchday line-up and transfer rumor story generator for Indonesian football media.",
   icons: {
-    icon: "/gosball-logo.svg",
-    shortcut: "/gosball-logo.svg",
-    apple: "/gosball-logo.svg",
+    icon: "/gosball.png",
+    shortcut: "/gosball.png",
+    apple: "/gosball.png",
   },
 };
 

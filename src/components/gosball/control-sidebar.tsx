@@ -484,7 +484,7 @@ function GosballHeaderLogo() {
     <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#080C11] shadow-[0_10px_24px_rgba(6,27,49,0.16)] ring-1 ring-[#D4DEE9]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/gosball-logo.svg"
+        src="/gosball.png"
         alt="Gosball"
         className="h-12 w-12 object-contain"
       />
