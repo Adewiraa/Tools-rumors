@@ -1368,19 +1368,29 @@ function MasterDataControls({
           </Field>
         </div>
 
-        <Field label="Logo public URL">
-          <input
-            value={clubForm.logoPublicUrl}
-            onChange={(event) =>
-              setClubForm((current) => ({
-                ...current,
-                logoPublicUrl: event.target.value,
-              }))
-            }
-            placeholder="https://..."
-            className="control-input"
-          />
-        </Field>
+        <div className="grid grid-cols-[4.25rem_1fr] items-end gap-3">
+          <div className="rounded-[5px] border border-[#D4DEE9] bg-white p-2">
+            <ClubLogoThumb
+              logoUrl={clubForm.logoPublicUrl || null}
+              clubName={clubForm.name || "Logo klub"}
+              primaryColor={clubForm.primaryColor}
+              size="large"
+            />
+          </div>
+          <Field label="Logo club URL">
+            <input
+              value={clubForm.logoPublicUrl}
+              onChange={(event) =>
+                setClubForm((current) => ({
+                  ...current,
+                  logoPublicUrl: event.target.value,
+                }))
+              }
+              placeholder="https://..."
+              className="control-input"
+            />
+          </Field>
+        </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Warna utama">
@@ -1605,6 +1615,40 @@ function MasterDataControls({
   );
 }
 
+function ClubLogoThumb({
+  logoUrl,
+  clubName,
+  primaryColor,
+  size = "default",
+}: {
+  logoUrl: string | null;
+  clubName: string;
+  primaryColor: string;
+  size?: "default" | "large";
+}) {
+  const sizeClass = size === "large" ? "h-12 w-12" : "h-9 w-9";
+
+  return (
+    <span
+      className={`${sizeClass} flex shrink-0 items-center justify-center overflow-hidden rounded-[5px] border border-[#D4DEE9] bg-white`}
+      style={{ backgroundColor: logoUrl ? "#ffffff" : primaryColor }}
+    >
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={clubName}
+          className="h-full w-full object-contain p-1"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : (
+        <span className="h-full w-full" />
+      )}
+    </span>
+  );
+}
+
 function MasterClubList({
   clubs,
   onSelect,
@@ -1629,9 +1673,10 @@ function MasterClubList({
               onClick={() => onSelect(club)}
               className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[5px] border border-[#D4DEE9] bg-white px-3 py-2 text-left transition hover:border-[#533AFD]"
             >
-              <span
-                className="h-8 w-8 rounded-[5px] border border-[#D4DEE9]"
-                style={{ backgroundColor: club.primaryColor }}
+              <ClubLogoThumb
+                logoUrl={club.logoUrl}
+                clubName={club.name}
+                primaryColor={club.primaryColor}
               />
               <span className="min-w-0">
                 <span className="block truncate text-sm text-[#061B31]">
