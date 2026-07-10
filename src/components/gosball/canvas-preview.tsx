@@ -593,27 +593,54 @@ function TeamLogo({
   header?: boolean;
 }) {
   const initials = team.shortName.slice(0, 3);
-  const sizeClass = header
+  const shellSizeClass = header
     ? compact
-      ? "h-9 w-9 text-[0.5rem]"
-      : "h-14 w-14 text-[0.68rem]"
+      ? "h-11 w-11"
+      : "h-16 w-16"
     : micro
-      ? "h-7 w-7 text-[0.48rem]"
+      ? "h-8 w-8"
       : compact
-        ? "h-8 w-8 text-[0.54rem]"
-        : "h-10 w-10 text-[0.65rem]";
+        ? "h-9 w-9"
+        : "h-12 w-12";
+  const markSizeClass = header
+    ? compact
+      ? "h-8 w-8"
+      : "h-12 w-12"
+    : micro
+      ? "h-5 w-5"
+      : compact
+        ? "h-6 w-6"
+        : "h-8 w-8";
+  const textSizeClass = header
+    ? compact
+      ? "text-[0.48rem]"
+      : "text-[0.62rem]"
+    : micro
+      ? "text-[0.42rem]"
+      : compact
+        ? "text-[0.5rem]"
+        : "text-[0.58rem]";
 
   if (team.logoUrl) {
     return (
       <div
-        className={`grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-white/12 ${sizeClass}`}
-        style={{ backgroundColor: team.primaryColor }}
+        className={`relative grid shrink-0 place-items-center overflow-hidden rounded-[7px] border border-white/15 bg-[#05070A]/82 ${shellSizeClass}`}
+        style={{
+          boxShadow: `inset 0 0 0 1px ${team.primaryColor}88, 0 0 18px ${team.primaryColor}66, 0 10px 22px rgba(0,0,0,0.32)`,
+        }}
       >
+        <span
+          className="absolute inset-0 opacity-75"
+          style={{
+            background: `radial-gradient(circle at 50% 42%, rgba(255,255,255,0.18), transparent 42%), linear-gradient(135deg, ${team.primaryColor}CC, rgba(5,7,10,0.72) 62%)`,
+          }}
+        />
+        <span className="absolute inset-[4px] rounded-[5px] border border-white/15 bg-black/20" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={team.logoUrl}
           alt={team.name}
-          className="h-full w-full object-contain p-1 drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]"
+          className={`relative ${markSizeClass} object-contain drop-shadow-[0_3px_7px_rgba(0,0,0,0.82)]`}
         />
       </div>
     );
@@ -621,10 +648,21 @@ function TeamLogo({
 
   return (
     <div
-      className={`grid shrink-0 place-items-center rounded-[5px] text-white ${sizeClass}`}
-      style={{ backgroundColor: team.primaryColor }}
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-[7px] border border-white/15 bg-[#05070A]/82 font-semibold text-white ${shellSizeClass} ${textSizeClass}`}
+      style={{
+        boxShadow: `inset 0 0 0 1px ${team.primaryColor}88, 0 0 18px ${team.primaryColor}66, 0 10px 22px rgba(0,0,0,0.32)`,
+      }}
     >
-      {initials}
+      <span
+        className="absolute inset-0 opacity-80"
+        style={{
+          background: `radial-gradient(circle at 50% 36%, rgba(255,255,255,0.16), transparent 42%), linear-gradient(135deg, ${team.primaryColor}, rgba(5,7,10,0.76) 68%)`,
+        }}
+      />
+      <span className="absolute inset-[4px] rounded-[5px] border border-white/15 bg-black/18" />
+      <span className="relative tracking-wide drop-shadow-[0_2px_5px_rgba(0,0,0,0.75)]">
+        {initials}
+      </span>
     </div>
   );
 }
