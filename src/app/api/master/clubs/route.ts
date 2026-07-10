@@ -14,6 +14,7 @@ interface ClubPayload {
   primaryColor?: string;
   secondaryColor?: string;
   logoPublicUrl?: string;
+  logoStoragePath?: string;
   coachName?: string;
 }
 
@@ -66,13 +67,14 @@ export async function POST(request: Request) {
         ileague_url: payload.ileagueUrl?.trim() || null,
         primary_color: payload.primaryColor || "#533AFD",
         secondary_color: payload.secondaryColor || "#E5EDF5",
+        logo_storage_path: payload.logoStoragePath?.trim() || null,
         logo_public_url: payload.logoPublicUrl?.trim() || null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "slug" },
     )
     .select(
-      "id,name,short_name,slug,ileague_slug,ileague_url,primary_color,logo_public_url,city",
+      "id,name,short_name,slug,ileague_slug,ileague_url,primary_color,logo_storage_path,logo_public_url,city",
     )
     .single();
 
@@ -126,6 +128,7 @@ export async function POST(request: Request) {
       ileagueSlug: data.ileague_slug,
       ileagueUrl: data.ileague_url,
       primaryColor: data.primary_color,
+      logoStoragePath: data.logo_storage_path,
       logoUrl: data.logo_public_url,
       city: data.city,
       coachName,

@@ -72,6 +72,7 @@ interface ClubOption {
   ileagueSlug: string | null;
   ileagueUrl: string | null;
   primaryColor: string;
+  logoStoragePath: string | null;
   logoUrl: string | null;
   city: string | null;
   coachName: string | null;
@@ -110,6 +111,7 @@ const defaultClubForm = {
   coachName: "",
   ileagueSlug: "",
   ileagueUrl: "",
+  logoStoragePath: "",
   logoPublicUrl: "",
   primaryColor: "#533AFD",
   secondaryColor: "#E5EDF5",
@@ -162,6 +164,7 @@ const localClubOptions: ClubOption[] = indonesianClubs.map((club) => ({
   ileagueSlug: club.ileagueSlug,
   ileagueUrl: club.ileagueUrl,
   primaryColor: club.primaryColor,
+  logoStoragePath: null,
   logoUrl: null,
   city: null,
   coachName: null,
@@ -1040,6 +1043,8 @@ function MasterDataControls({
   });
   const [clubStatus, setClubStatus] = useState<SaveStatus>("idle");
   const [clubMessage, setClubMessage] = useState("");
+  const [clubLogoStatus, setClubLogoStatus] = useState<SaveStatus>("idle");
+  const [clubLogoMessage, setClubLogoMessage] = useState("");
   const [playerStatus, setPlayerStatus] = useState<SaveStatus>("idle");
   const [playerMessage, setPlayerMessage] = useState("");
   const [rosterPlayers, setRosterPlayers] = useState<
@@ -1122,6 +1127,7 @@ function MasterDataControls({
       city: club.city ?? "",
       ileagueSlug: club.ileagueSlug ?? "",
       ileagueUrl: club.ileagueUrl ?? "",
+      logoStoragePath: club.logoStoragePath ?? "",
       logoPublicUrl: club.logoUrl ?? "",
       primaryColor: club.primaryColor,
       coachName: club.coachName ?? "",
@@ -1132,6 +1138,8 @@ function MasterDataControls({
     setClubForm(defaultClubForm);
     setClubStatus("idle");
     setClubMessage("");
+    setClubLogoStatus("idle");
+    setClubLogoMessage("");
   };
 
   const resetPlayerForm = () => {
@@ -1189,6 +1197,51 @@ function MasterDataControls({
       setClubStatus("error");
       setClubMessage(
         error instanceof Error ? error.message : "Gagal menyimpan klub.",
+      );
+    }
+  };
+
+  const uploadClubLogo = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      setClubLogoStatus("saving");
+      setClubLogoMessage("");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append(
+        "clubSlug",
+        clubForm.slug || clubForm.name || "club-logo",
+      );
+
+      const response = await fetch("/api/master/club-logo", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json()) as {
+        publicUrl?: string;
+        storagePath?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.publicUrl) {
+        throw new Error(payload.error ?? "Gagal upload logo klub.");
+      }
+
+      setClubForm((current) => ({
+        ...current,
+        logoPublicUrl: payload.publicUrl ?? "",
+        logoStoragePath: payload.storagePath ?? "",
+      }));
+      setClubLogoStatus("success");
+      setClubLogoMessage("Logo berhasil diupload.");
+    } catch (error) {
+      setClubLogoStatus("error");
+      setClubLogoMessage(
+        error instanceof Error ? error.message : "Gagal upload logo klub.",
       );
     }
   };
@@ -1377,20 +1430,18 @@ function MasterDataControls({
               size="large"
             />
           </div>
-          <Field label="Logo club URL">
+          <Field label="Upload logo club">
             <input
-              value={clubForm.logoPublicUrl}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
               onChange={(event) =>
-                setClubForm((current) => ({
-                  ...current,
-                  logoPublicUrl: event.target.value,
-                }))
+                void uploadClubLogo(event.currentTarget.files?.[0] ?? null)
               }
-              placeholder="https://..."
-              className="control-input"
+              className="w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-3 text-xs text-[#64748D] file:mr-3 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-3 file:py-2 file:text-xs file:text-white"
             />
           </Field>
         </div>
+        <StatusMessage status={clubLogoStatus} message={clubLogoMessage} />
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Warna utama">
