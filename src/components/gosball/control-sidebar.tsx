@@ -8,7 +8,6 @@ import {
   ImagePlus,
   MapPin,
   Plus,
-  Shield,
   SlidersHorizontal,
   UsersRound,
 } from "lucide-react";
@@ -358,8 +357,8 @@ export function ControlSidebar({
               Media Tools
             </h1>
           </div>
-          <div className="rounded-[5px] border border-[#D4DEE9] bg-white p-3 text-[#533AFD]">
-            <Shield className="h-5 w-5" />
+          <div className="shrink-0">
+            <GosballHeaderLogo />
           </div>
         </div>
 
@@ -477,6 +476,40 @@ export function ControlSidebar({
         )}
       </div>
     </aside>
+  );
+}
+
+function GosballHeaderLogo() {
+  return (
+    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#080C11] shadow-[0_10px_24px_rgba(6,27,49,0.16)] ring-1 ring-[#D4DEE9]">
+      <svg
+        viewBox="0 0 120 120"
+        role="img"
+        aria-label="Gosball"
+        className="h-12 w-12"
+      >
+        <circle cx="60" cy="60" r="54" fill="#030507" />
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#202733" strokeWidth="3" />
+        <circle cx="60" cy="60" r="55" fill="none" stroke="#121821" strokeWidth="2" />
+        <text
+          x="60"
+          y="29"
+          textAnchor="middle"
+          fill="#F6F8FB"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="9"
+          fontWeight="800"
+          letterSpacing="6"
+        >
+          GOSBALL
+        </text>
+        <g fill="#F4F6F8">
+          <path d="M27 35h31v15H42v31l16 10V64H48V50h25v45L58 103 27 84V35z" />
+          <path d="M62 35h31v20L78 65l18 9v19l-34 10V35zm15 15v26l9-5V50h-9zm0 41 10-4V76l-10-5v20z" />
+        </g>
+        <path d="M60 96V48" stroke="#030507" strokeWidth="3" strokeLinecap="square" />
+      </svg>
+    </div>
   );
 }
 
