@@ -650,6 +650,24 @@ function TeamControls({
     return rosterSuggestions.filter((player) => player.position === position);
   };
 
+  const getLatestSelectedClub = async (selectedClub: ClubOption) => {
+    try {
+      const response = await fetch("/api/clubs", { cache: "no-store" });
+      const payload = (await response.json()) as ClubsResponse;
+
+      if (!response.ok || !Array.isArray(payload.clubs)) {
+        return selectedClub;
+      }
+
+      return (
+        payload.clubs.find((club) => club.slug === selectedClub.slug) ??
+        selectedClub
+      );
+    } catch {
+      return selectedClub;
+    }
+  };
+
   const applyRosterPlayerToStarter = (index: number, playerId: string) => {
     const rosterPlayer = rosterSuggestions.find((player) => player.id === playerId);
 
@@ -743,7 +761,8 @@ function TeamControls({
 
     try {
       setImportStatus("loading");
-      const rosterResponse = await fetch(`/api/clubs/${selectedClub.slug}/roster`);
+      const latestSelectedClub = await getLatestSelectedClub(selectedClub);
+      const rosterResponse = await fetch(`/api/clubs/${latestSelectedClub.slug}/roster`);
       const rosterPayload =
         (await rosterResponse.json()) as RosterSearchResponse | { error: string };
 
@@ -767,13 +786,13 @@ function TeamControls({
         const filledSlots = fillEmptyLineupSlots(team, databasePlayers);
 
         onTeamChange(teamKey, {
-          name: selectedClub.name,
-          shortName: selectedClub.shortName,
-          primaryColor: selectedClub.primaryColor,
-          logoUrl: selectedClub.logoUrl ?? undefined,
+          name: latestSelectedClub.name,
+          shortName: latestSelectedClub.shortName,
+          primaryColor: latestSelectedClub.primaryColor,
+          logoUrl: latestSelectedClub.logoUrl ?? undefined,
           coach: {
             ...team.coach,
-            name: selectedClub.coachName ?? "",
+            name: latestSelectedClub.coachName ?? "",
           },
           starters: filledSlots.starters,
           substitutes: filledSlots.substitutes,
@@ -783,15 +802,15 @@ function TeamControls({
         return;
       }
 
-      if (!selectedClub.ileagueUrl) {
+      if (!latestSelectedClub.ileagueUrl) {
         onTeamChange(teamKey, {
-          name: selectedClub.name,
-          shortName: selectedClub.shortName,
-          primaryColor: selectedClub.primaryColor,
-          logoUrl: selectedClub.logoUrl ?? undefined,
+          name: latestSelectedClub.name,
+          shortName: latestSelectedClub.shortName,
+          primaryColor: latestSelectedClub.primaryColor,
+          logoUrl: latestSelectedClub.logoUrl ?? undefined,
           coach: {
             ...team.coach,
-            name: selectedClub.coachName ?? "",
+            name: latestSelectedClub.coachName ?? "",
           },
         });
         setImportStatus("error");
@@ -799,7 +818,7 @@ function TeamControls({
       }
 
       const response = await fetch(
-        `/api/ileague/club?url=${encodeURIComponent(selectedClub.ileagueUrl)}`,
+        `/api/ileague/club?url=${encodeURIComponent(latestSelectedClub.ileagueUrl)}`,
       );
       const payload = (await response.json()) as
         | ILeagueImportResponse
@@ -811,13 +830,13 @@ function TeamControls({
 
       if (payload.players.length === 0) {
         onTeamChange(teamKey, {
-          name: selectedClub.name,
-          shortName: selectedClub.shortName,
-          primaryColor: selectedClub.primaryColor,
-          logoUrl: selectedClub.logoUrl ?? undefined,
+          name: latestSelectedClub.name,
+          shortName: latestSelectedClub.shortName,
+          primaryColor: latestSelectedClub.primaryColor,
+          logoUrl: latestSelectedClub.logoUrl ?? undefined,
           coach: {
             ...team.coach,
-            name: selectedClub.coachName ?? "",
+            name: latestSelectedClub.coachName ?? "",
           },
         });
         setImportStatus("error");
@@ -839,15 +858,15 @@ function TeamControls({
       const filledSlots = fillEmptyLineupSlots(team, importedPlayers);
 
       onTeamChange(teamKey, {
-        name: payload.teamName || selectedClub.name,
-        shortName: payload.shortName || selectedClub.shortName,
-        primaryColor: selectedClub.primaryColor,
-        logoUrl: selectedClub.logoUrl ?? undefined,
+        name: payload.teamName || latestSelectedClub.name,
+        shortName: payload.shortName || latestSelectedClub.shortName,
+        primaryColor: latestSelectedClub.primaryColor,
+        logoUrl: latestSelectedClub.logoUrl ?? undefined,
         starters: filledSlots.starters,
         substitutes: filledSlots.substitutes,
         coach: {
           ...team.coach,
-          name: payload.coachName || selectedClub.coachName || "",
+          name: payload.coachName || latestSelectedClub.coachName || "",
         },
       });
       setImportStatus("success");
@@ -1248,6 +1267,7 @@ function MasterDataControls({
         logoPublicUrl: payload.publicUrl ?? "",
         logoStoragePath: payload.storagePath ?? "",
       }));
+      await onRefreshClubs();
       setClubLogoStatus("success");
       setClubLogoMessage("Logo berhasil diupload.");
     } catch (error) {

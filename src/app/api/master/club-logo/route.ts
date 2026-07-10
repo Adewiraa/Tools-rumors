@@ -121,6 +121,21 @@ export async function POST(request: Request) {
   }
 
   const { data } = supabase.storage.from(bucketName).getPublicUrl(storagePath);
+  const { error: attachLogoError } = await supabase
+    .from("clubs")
+    .update({
+      logo_storage_path: storagePath,
+      logo_public_url: data.publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("slug", clubSlug);
+
+  if (attachLogoError) {
+    return NextResponse.json(
+      { error: `Logo terupload, tapi gagal disimpan ke klub: ${attachLogoError.message}` },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
     bucket: bucketName,
