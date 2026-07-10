@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { createSupabaseAdminClient } from "@/lib/supabase-server";
+import {
+  createSupabaseAdminClient,
+  getMissingSupabaseAdminEnvVars,
+} from "@/lib/supabase-server";
 
 interface ClubPayload {
   name?: string;
@@ -25,10 +28,13 @@ export async function POST(request: Request) {
   const supabase = createSupabaseAdminClient();
 
   if (!supabase) {
+    const missingEnvVars = getMissingSupabaseAdminEnvVars();
+
     return NextResponse.json(
       {
-        error:
-          "SUPABASE_SERVICE_ROLE_KEY belum diset. Tambahkan service role key di .env.local untuk fitur Master Data.",
+        error: `Environment Supabase admin belum lengkap: ${missingEnvVars.join(
+          ", ",
+        )}. Tambahkan variable tersebut di Vercel lalu redeploy.`,
       },
       { status: 500 },
     );

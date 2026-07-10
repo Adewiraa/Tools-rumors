@@ -7,15 +7,37 @@ import { ControlSidebar } from "@/components/gosball/control-sidebar";
 import {
   defaultLineupData,
   defaultRumorData,
+  formationTemplates,
 } from "@/lib/gosball-fixtures";
 import type {
   CanvasAspectRatio,
   FormationName,
   MatchdayLineupData,
+  Player,
   TeamLineup,
   ToolMode,
   TransferRumorData,
 } from "@/types/gosball";
+
+const createFormationStarterSlots = (
+  teamId: string,
+  formation: FormationName,
+  currentPlayers: Player[],
+) =>
+  formationTemplates[formation].coordinates.map((coordinate, index) => ({
+    id: currentPlayers[index]?.id || `${teamId}-${coordinate.id}`,
+    name: currentPlayers[index]?.name ?? "",
+    position: coordinate.position,
+    club: currentPlayers[index]?.club,
+    nationality: currentPlayers[index]?.nationality ?? "Indonesia",
+    countryCode: currentPlayers[index]?.countryCode ?? "ID",
+    countryFlagUrl: currentPlayers[index]?.countryFlagUrl,
+    flagEmoji: currentPlayers[index]?.flagEmoji,
+    isForeign: currentPlayers[index]?.isForeign ?? false,
+    shirtNumber: currentPlayers[index]?.shirtNumber,
+    photoUrl: currentPlayers[index]?.photoUrl,
+    transfermarktId: currentPlayers[index]?.transfermarktId,
+  }));
 
 export function GosballMediaTools() {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -41,6 +63,11 @@ export function GosballMediaTools() {
       [teamKey]: {
         ...current[teamKey],
         formation,
+        starters: createFormationStarterSlots(
+          current[teamKey].id,
+          formation,
+          current[teamKey].starters,
+        ),
       } satisfies TeamLineup,
     }));
   };

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { FlagBadge } from "@/components/gosball/flag-badge";
 import { countryOptions, type CountryOption } from "@/lib/countries";
-import { formationOptions } from "@/lib/gosball-fixtures";
+import { formationOptions, formationTemplates } from "@/lib/gosball-fixtures";
 import { indonesianClubs } from "@/lib/indonesian-clubs";
 import { getRumorCategory } from "@/lib/rumor-categories";
 import type {
@@ -22,6 +22,7 @@ import type {
   FormationName,
   MatchdayLineupData,
   Player,
+  PlayerPosition,
   RumorStatus,
   TeamLineup,
   ToolMode,
@@ -162,6 +163,120 @@ const localClubOptions: ClubOption[] = indonesianClubs.map((club) => ({
   logoUrl: null,
   city: null,
 }));
+
+const emptyPlayerName = (player: Player) => player.name.trim().length === 0;
+
+const normalizePlayerPosition = (position: string | null | undefined): PlayerPosition => {
+  if (
+    position === "GK" ||
+    position === "DF" ||
+    position === "MF" ||
+    position === "FW" ||
+    position === "Coach"
+  ) {
+    return position;
+  }
+
+  return "Unknown";
+};
+
+const createEmptySlotPlayer = (
+  teamId: string,
+  slotId: string,
+  position: PlayerPosition,
+): Player => ({
+  id: `${teamId}-${slotId}`,
+  name: "",
+  position,
+  nationality: "Indonesia",
+  countryCode: "ID",
+  isForeign: false,
+});
+
+const createStarterSlots = (
+  teamId: string,
+  formation: FormationName,
+  currentPlayers: Player[] = [],
+) =>
+  formationTemplates[formation].coordinates.map((coordinate, index) => ({
+    ...createEmptySlotPlayer(teamId, coordinate.id, coordinate.position),
+    ...currentPlayers[index],
+    id: currentPlayers[index]?.id || `${teamId}-${coordinate.id}`,
+    position: coordinate.position,
+  }));
+
+const createSubstituteSlots = (
+  teamId: string,
+  currentPlayers: Player[] = [],
+  count = 10,
+) =>
+  Array.from({ length: count }, (_, index) => ({
+    ...createEmptySlotPlayer(teamId, `sub-${index + 1}`, "Unknown"),
+    ...currentPlayers[index],
+    id: currentPlayers[index]?.id || `${teamId}-sub-${index + 1}`,
+    position: currentPlayers[index]?.position ?? "Unknown",
+  }));
+
+const fillEmptyLineupSlots = (
+  team: TeamLineup,
+  rosterPlayers: Player[],
+): Pick<TeamLineup, "starters" | "substitutes"> => {
+  const usedPlayerIds = new Set<string>();
+  const takeMatchingPlayer = (position: PlayerPosition) => {
+    const player = rosterPlayers.find(
+      (candidate) =>
+        !usedPlayerIds.has(candidate.id) && candidate.position === position,
+    );
+
+    if (player) {
+      usedPlayerIds.add(player.id);
+    }
+
+    return player;
+  };
+
+  const starters = createStarterSlots(team.id, team.formation, team.starters).map(
+    (slot) => {
+      if (!emptyPlayerName(slot)) {
+        usedPlayerIds.add(slot.id);
+        return slot;
+      }
+
+      const rosterPlayer = takeMatchingPlayer(slot.position);
+
+      return rosterPlayer
+        ? {
+            ...rosterPlayer,
+            position: slot.position,
+          }
+        : slot;
+    },
+  );
+
+  const substitutes = createSubstituteSlots(
+    team.id,
+    team.substitutes,
+  ).map((slot) => {
+    if (!emptyPlayerName(slot)) {
+      usedPlayerIds.add(slot.id);
+      return slot;
+    }
+
+    const rosterPlayer = rosterPlayers.find(
+      (candidate) => !usedPlayerIds.has(candidate.id),
+    );
+
+    if (!rosterPlayer) {
+      return slot;
+    }
+
+    usedPlayerIds.add(rosterPlayer.id);
+
+    return rosterPlayer;
+  });
+
+  return { starters, substitutes };
+};
 
 export function ControlSidebar({
   mode,
@@ -434,7 +549,6 @@ function LineupControls({
         teamKey="homeTeam"
         team={lineupData.homeTeam}
         clubs={clubs}
-        opponentPlayers={lineupData.awayTeam.starters}
         onTeamChange={updateTeam}
         onFormationChange={onFormationChange}
       />
@@ -444,7 +558,6 @@ function LineupControls({
         teamKey="awayTeam"
         team={lineupData.awayTeam}
         clubs={clubs}
-        opponentPlayers={lineupData.homeTeam.starters}
         onTeamChange={updateTeam}
         onFormationChange={onFormationChange}
       />
@@ -457,7 +570,6 @@ function TeamControls({
   teamKey,
   team,
   clubs,
-  opponentPlayers,
   onTeamChange,
   onFormationChange,
 }: {
@@ -465,7 +577,6 @@ function TeamControls({
   teamKey: "homeTeam" | "awayTeam";
   team: TeamLineup;
   clubs: ClubOption[];
-  opponentPlayers: TeamLineup["starters"];
   onTeamChange: (
     teamKey: "homeTeam" | "awayTeam",
     teamUpdate: Partial<TeamLineup>,
@@ -547,7 +658,18 @@ function TeamControls({
     });
   };
 
-  const suggestionId = `${team.id}-player-suggestions`;
+  const starterSuggestionId = (index: number, position: PlayerPosition) =>
+    `${team.id}-starter-${index}-${position}-suggestions`;
+  const substituteSuggestionId = (index: number) =>
+    `${team.id}-substitute-${index}-suggestions`;
+
+  const getRosterSuggestionsForPosition = (position: PlayerPosition) => {
+    if (position === "Unknown") {
+      return rosterSuggestions;
+    }
+
+    return rosterSuggestions.filter((player) => player.position === position);
+  };
 
   const selectClub = (clubSlug: string) => {
     const selectedClub = clubs.find((club) => club.slug === clubSlug);
@@ -566,10 +688,13 @@ function TeamControls({
       primaryColor: selectedClub.primaryColor,
       logoUrl: selectedClub.logoUrl ?? undefined,
     });
+
+    void importSelectedClubRoster(selectedClub);
   };
 
-  const importSelectedClubRoster = async () => {
-    const selectedClub = clubs.find((club) => club.slug === selectedClubSlug);
+  const importSelectedClubRoster = async (clubOverride?: ClubOption) => {
+    const selectedClub =
+      clubOverride ?? clubs.find((club) => club.slug === selectedClubSlug);
 
     if (!selectedClub) {
       setImportStatus("error");
@@ -588,36 +713,26 @@ function TeamControls({
         rosterPayload.players.length > 0
       ) {
         const databasePlayers = rosterPayload.players.map(
-          (player, index): Player => {
-            const existingPlayer =
-              team.starters[index] ?? team.substitutes[index - 11];
-
-            return {
-              id: player.player_id,
-              name: player.display_name ?? player.full_name,
-              position: existingPlayer?.position ?? "Unknown",
-              shirtNumber: player.shirt_number ?? index + 1,
-              nationality: player.country_name ?? player.country_code,
-              countryCode: player.country_code,
-              countryFlagUrl: player.country_flag_url ?? undefined,
-              isForeign: player.country_code !== "ID",
-            };
-          },
+          (player, index): Player => ({
+            id: player.player_id,
+            name: player.display_name ?? player.full_name,
+            position: normalizePlayerPosition(player.position),
+            shirtNumber: player.shirt_number ?? index + 1,
+            nationality: player.country_name ?? player.country_code,
+            countryCode: player.country_code,
+            countryFlagUrl: player.country_flag_url ?? undefined,
+            isForeign: player.country_code !== "ID",
+          }),
         );
+        const filledSlots = fillEmptyLineupSlots(team, databasePlayers);
 
         onTeamChange(teamKey, {
           name: selectedClub.name,
           shortName: selectedClub.shortName,
           primaryColor: selectedClub.primaryColor,
           logoUrl: selectedClub.logoUrl ?? undefined,
-          starters: databasePlayers.slice(0, 11).map((player, index) => ({
-            ...player,
-            position: team.starters[index]?.position ?? player.position,
-          })),
-          substitutes: databasePlayers.slice(11, 21).map((player, index) => ({
-            ...player,
-            position: team.substitutes[index]?.position ?? player.position,
-          })),
+          starters: filledSlots.starters,
+          substitutes: filledSlots.substitutes,
         });
         setRosterSuggestions(databasePlayers);
         setImportStatus("success");
@@ -658,12 +773,10 @@ function TeamControls({
       }
 
       const importedPlayers = payload.players.map((player, index): Player => {
-        const existingPlayer = team.starters[index] ?? team.substitutes[index - 11];
-
         return {
           id: player.id,
           name: player.name,
-          position: existingPlayer?.position ?? "Unknown",
+          position: "Unknown",
           shirtNumber: player.shirtNumber,
           nationality: player.nationality,
           countryCode: player.countryCode,
@@ -671,20 +784,15 @@ function TeamControls({
         };
       });
       setRosterSuggestions(importedPlayers);
+      const filledSlots = fillEmptyLineupSlots(team, importedPlayers);
 
       onTeamChange(teamKey, {
         name: payload.teamName || selectedClub.name,
         shortName: payload.shortName || selectedClub.shortName,
         primaryColor: selectedClub.primaryColor,
         logoUrl: selectedClub.logoUrl ?? undefined,
-        starters: importedPlayers.slice(0, 11).map((player, index) => ({
-          ...player,
-          position: team.starters[index]?.position ?? player.position,
-        })),
-        substitutes: importedPlayers.slice(11, 21).map((player, index) => ({
-          ...player,
-          position: team.substitutes[index]?.position ?? player.position,
-        })),
+        starters: filledSlots.starters,
+        substitutes: filledSlots.substitutes,
         coach: {
           ...team.coach,
           name: payload.coachName,
@@ -766,7 +874,7 @@ function TeamControls({
           </select>
           <button
             type="button"
-            onClick={importSelectedClubRoster}
+            onClick={() => importSelectedClubRoster()}
             disabled={importStatus === "loading"}
             className="pressable min-h-12 rounded-[4px] bg-[#533AFD] px-3 text-[0.7rem] text-white disabled:opacity-60"
           >
@@ -846,7 +954,7 @@ function TeamControls({
             <div key={player.id} className="grid grid-cols-[1fr_3rem] gap-2">
               <Field label={`${index + 1}. ${player.position}`}>
                 <input
-                  list={suggestionId}
+                  list={starterSuggestionId(index, player.position)}
                   value={player.name}
                   onChange={(event) =>
                     updateStarter(index, "name", event.target.value)
@@ -856,6 +964,13 @@ function TeamControls({
                   }
                   className="control-input"
                 />
+                <datalist id={starterSuggestionId(index, player.position)}>
+                  {getRosterSuggestionsForPosition(player.position).map(
+                    (suggestion) => (
+                      <option key={suggestion.id} value={suggestion.name} />
+                    ),
+                  )}
+                </datalist>
               </Field>
               <Field label="Flag">
                 <CountryPicker
@@ -877,7 +992,7 @@ function TeamControls({
             <div key={player.id} className="grid grid-cols-[1fr_3rem] gap-2">
               <Field label={`Sub ${index + 1}`}>
                 <input
-                  list={suggestionId}
+                  list={substituteSuggestionId(index)}
                   value={player.name}
                   onChange={(event) =>
                     updateSubstitute(index, "name", event.target.value)
@@ -887,6 +1002,11 @@ function TeamControls({
                   }
                   className="control-input"
                 />
+                <datalist id={substituteSuggestionId(index)}>
+                  {rosterSuggestions.map((suggestion) => (
+                    <option key={suggestion.id} value={suggestion.name} />
+                  ))}
+                </datalist>
               </Field>
               <Field label="Flag">
                 <CountryPicker
@@ -898,20 +1018,6 @@ function TeamControls({
           ))}
         </div>
       </div>
-
-      <datalist id={suggestionId}>
-        {[
-          ...rosterSuggestions,
-          ...team.starters,
-          ...team.substitutes,
-          ...opponentPlayers,
-        ].map((player, index) => (
-          <option
-            key={`${team.id}-${player.id}-${index}`}
-            value={player.name}
-          />
-        ))}
-      </datalist>
     </Panel>
   );
 }

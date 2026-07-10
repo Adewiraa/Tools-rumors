@@ -374,7 +374,37 @@ const createTeam = (
   coach: player(`${id}-coach`, 0, coachName, "Coach"),
 });
 
-export const defaultLineupData: MatchdayLineupData = {
+const emptyPlayerSlot = (id: string, position: PlayerPosition): Player => ({
+  id,
+  name: "",
+  position,
+  nationality: "Indonesia",
+  countryCode: "ID",
+  isForeign: false,
+});
+
+const createEmptyTeam = (
+  id: string,
+  name: string,
+  shortName: string,
+  formation: FormationName,
+  primaryColor: string,
+): TeamLineup => ({
+  id,
+  name,
+  shortName,
+  formation,
+  primaryColor,
+  starters: formationTemplates[formation].coordinates.map((slot) =>
+    emptyPlayerSlot(`${id}-${slot.id}`, slot.position),
+  ),
+  substitutes: Array.from({ length: 10 }, (_, index) =>
+    emptyPlayerSlot(`${id}-sub-${index + 1}`, "Unknown"),
+  ),
+  coach: emptyPlayerSlot(`${id}-coach`, "Coach"),
+});
+
+const sampleLineupData: MatchdayLineupData = {
   competitionName: "Liga 1 Indonesia",
   matchLabel: "Matchweek 18",
   venue: "GBLA Stadium",
@@ -447,6 +477,18 @@ export const defaultLineupData: MatchdayLineupData = {
   sponsor: {
     enabled: true,
     brandName: "AWE Media",
+  },
+};
+
+export const defaultLineupData: MatchdayLineupData = {
+  competitionName: "Liga 1 Indonesia",
+  matchLabel: "",
+  venue: "",
+  homeTeam: createEmptyTeam("home", "Home Team", "HOME", "4-2-3-1", "#2563eb"),
+  awayTeam: createEmptyTeam("away", "Away Team", "AWAY", "4-3-3", "#dc2626"),
+  sponsor: {
+    enabled: true,
+    brandName: sampleLineupData.sponsor.brandName,
   },
 };
 
