@@ -149,18 +149,26 @@ function LineupHeader({
         <p className={`studio-label text-[#A78BFA] ${compact ? "text-[0.52rem]" : ""}`}>
           Gosball match sheet
         </p>
-        <h2
-          className={`display-type mt-1 leading-[0.95] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
-            compact
-              ? "text-[clamp(1.65rem,8.4vw,2.25rem)]"
-              : "text-[clamp(3.1rem,6.4vw,5.4rem)]"
+        <div
+          className={`mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center ${
+            compact ? "gap-1.5" : "gap-3"
           }`}
         >
-          {lineupData.homeTeam.shortName}
-          <span className="mx-2 text-[#FF6118]">/</span>
-          <wbr />
-          {lineupData.awayTeam.shortName}
-        </h2>
+          <TeamLogo team={lineupData.homeTeam} header compact={compact} />
+          <h2
+            className={`display-type min-w-0 text-center leading-[0.95] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
+              compact
+                ? "text-[clamp(1.45rem,7.5vw,2.05rem)]"
+                : "text-[clamp(2.65rem,5.6vw,4.8rem)]"
+            }`}
+          >
+            {lineupData.homeTeam.shortName}
+            <span className="mx-2 text-[#FF6118]">/</span>
+            <wbr />
+            {lineupData.awayTeam.shortName}
+          </h2>
+          <TeamLogo team={lineupData.awayTeam} header compact={compact} />
+        </div>
         <div
           className={`flex flex-wrap items-center gap-2 text-[#A7B2C5] ${
             compact ? "mt-1 text-[0.52rem]" : "mt-2 text-[0.72rem]"
@@ -577,27 +585,35 @@ function TeamLogo({
   team,
   compact = false,
   micro = false,
+  header = false,
 }: {
   team: TeamLineup;
   compact?: boolean;
   micro?: boolean;
+  header?: boolean;
 }) {
   const initials = team.shortName.slice(0, 3);
-  const sizeClass = micro
-    ? "h-7 w-7 text-[0.48rem]"
-    : compact
-      ? "h-8 w-8 text-[0.54rem]"
-      : "h-10 w-10 text-[0.65rem]";
+  const sizeClass = header
+    ? compact
+      ? "h-9 w-9 text-[0.5rem]"
+      : "h-14 w-14 text-[0.68rem]"
+    : micro
+      ? "h-7 w-7 text-[0.48rem]"
+      : compact
+        ? "h-8 w-8 text-[0.54rem]"
+        : "h-10 w-10 text-[0.65rem]";
 
   if (team.logoUrl) {
     return (
       <div
-        className={`grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-white/15 bg-white ${
-          micro ? "h-7 w-7" : compact ? "h-8 w-8" : "h-10 w-10"
-        }`}
+        className={`grid shrink-0 place-items-center overflow-hidden rounded-[5px] border border-white/15 bg-white ${sizeClass}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={team.logoUrl} alt={team.name} className="h-full w-full object-contain p-1" />
+        <img
+          src={team.logoUrl}
+          alt={team.name}
+          className={`h-full w-full object-contain ${header ? "p-1.5" : "p-1"}`}
+        />
       </div>
     );
   }
