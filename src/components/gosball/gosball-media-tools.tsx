@@ -6,6 +6,7 @@ import { CanvasPreview } from "@/components/gosball/canvas-preview";
 import { ControlSidebar } from "@/components/gosball/control-sidebar";
 import {
   defaultLineupData,
+  defaultMatchResultData,
   defaultRumorData,
   formationTemplates,
 } from "@/lib/gosball-fixtures";
@@ -13,6 +14,7 @@ import type {
   CanvasAspectRatio,
   FormationName,
   MatchdayLineupData,
+  MatchResultData,
   Player,
   TeamLineup,
   ToolMode,
@@ -42,16 +44,18 @@ const createFormationStarterSlots = (
 export function GosballMediaTools() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<ToolMode>("lineup");
-  const [aspectRatio, setAspectRatio] = useState<CanvasAspectRatio>("1:1");
+  const [aspectRatio, setAspectRatio] = useState<CanvasAspectRatio>("9:16");
   const [lineupData, setLineupData] =
     useState<MatchdayLineupData>(defaultLineupData);
+  const [matchResultData, setMatchResultData] =
+    useState<MatchResultData>(defaultMatchResultData);
   const [rumorData, setRumorData] =
     useState<TransferRumorData>(defaultRumorData);
   const [isExporting, setIsExporting] = useState(false);
 
   const handleModeChange = (nextMode: ToolMode) => {
     setMode(nextMode);
-    setAspectRatio(nextMode === "rumor" ? "9:16" : "1:1");
+    setAspectRatio(nextMode === "matchResult" ? "4:5" : "9:16");
   };
 
   const handleFormationChange = (
@@ -105,11 +109,13 @@ export function GosballMediaTools() {
           mode={mode}
           aspectRatio={aspectRatio}
           lineupData={lineupData}
+          matchResultData={matchResultData}
           rumorData={rumorData}
           isExporting={isExporting}
           onModeChange={handleModeChange}
           onAspectRatioChange={setAspectRatio}
           onLineupChange={setLineupData}
+          onMatchResultChange={setMatchResultData}
           onRumorChange={setRumorData}
           onFormationChange={handleFormationChange}
           onDownload={handleDownload}
@@ -120,6 +126,7 @@ export function GosballMediaTools() {
             mode={mode}
             aspectRatio={aspectRatio}
             lineupData={lineupData}
+            matchResultData={matchResultData}
             rumorData={rumorData}
           />
         </section>

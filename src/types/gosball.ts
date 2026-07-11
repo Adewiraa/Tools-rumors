@@ -1,6 +1,6 @@
-export type ToolMode = "lineup" | "rumor" | "master";
+export type ToolMode = "lineup" | "matchResult" | "rumor" | "master";
 
-export type CanvasAspectRatio = "1:1" | "9:16";
+export type CanvasAspectRatio = "4:5" | "9:16";
 
 export type FormationName =
   | "4-3-3"
@@ -93,5 +93,43 @@ export interface TransferRumorData {
   status: RumorStatus;
   fromClub: string;
   toClub: string;
+  sponsor: SponsorConfig;
+}
+
+export type MatchResultStatus = "FT" | "AET" | "PEN" | "LIVE";
+
+export type GoalType = "NORMAL" | "P" | "OG" | "FK";
+
+export interface MatchResultTeam {
+  id: string;
+  name: string;
+  shortName: string;
+  logoUrl?: string;
+  primaryColor: string;
+  score: number;
+  penaltyScore?: number;
+}
+
+export interface GoalScorer {
+  id: string;
+  team: "home" | "away";
+  playerName: string;
+  minute: string;
+  type: GoalType;
+}
+
+export interface MatchResultData {
+  competitionName: string;
+  matchLabel: string;
+  venue?: string;
+  status: MatchResultStatus;
+  customStatus?: string;
+  homeTeam: MatchResultTeam;
+  awayTeam: MatchResultTeam;
+  scorers: GoalScorer[];
+  backgroundImageUrl?: string;
+  overlayOpacity: number;
+  motm?: string;
+  note?: string;
   sponsor: SponsorConfig;
 }

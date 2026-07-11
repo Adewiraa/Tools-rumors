@@ -3,6 +3,7 @@ import type {
   FormationName,
   FormationTemplate,
   MatchdayLineupData,
+  MatchResultData,
   Player,
   PlayerPosition,
   TeamLineup,
@@ -511,5 +512,34 @@ export const defaultRumorData: TransferRumorData = {
   sponsor: {
     enabled: true,
     brandName: "Gosball",
+  },
+};
+
+export const defaultMatchResultData: MatchResultData = {
+  competitionName: "Liga 1 Indonesia",
+  matchLabel: "",
+  venue: "",
+  status: "FT",
+  homeTeam: {
+    id: "home-result",
+    name: "Home Team",
+    shortName: "HOME",
+    primaryColor: "#2563eb",
+    score: 0,
+  },
+  awayTeam: {
+    id: "away-result",
+    name: "Away Team",
+    shortName: "AWAY",
+    primaryColor: "#dc2626",
+    score: 0,
+  },
+  scorers: [],
+  overlayOpacity: 58,
+  motm: "",
+  note: "",
+  sponsor: {
+    enabled: true,
+    brandName: sampleLineupData.sponsor.brandName,
   },
 };
