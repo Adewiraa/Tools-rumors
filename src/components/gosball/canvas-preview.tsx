@@ -905,11 +905,17 @@ function MatchResultPoster({
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
 
       <header className="relative flex items-start justify-between gap-3 border-b border-white/15 pb-3">
-        <div className="min-w-0">
-          <p className="studio-label" style={{ color: homeColor }}>
+        <div
+          className="min-w-0 rounded-[5px] border bg-[#05070A]/58 px-3 py-2 shadow-[0_12px_34px_rgba(0,0,0,0.26)] backdrop-blur-[2px]"
+          style={{ borderColor: colorAlpha(homeColor, 0.26) }}
+        >
+          <p
+            className="studio-label text-white"
+            style={{ textShadow: `0 0 12px ${colorAlpha(homeColor, 0.72)}` }}
+          >
             Gosball match result
           </p>
-          <p className="mt-1 truncate text-[0.68rem] text-[#A7B2C5]">
+          <p className="mt-1 truncate text-[0.68rem] text-[#D7E0EE]">
             {matchResultData.competitionName}
             {matchResultData.matchLabel ? ` / ${matchResultData.matchLabel}` : ""}
           </p>
