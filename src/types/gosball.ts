@@ -121,6 +121,7 @@ export interface GoalScorer {
 
 export interface MatchResultData {
   competitionName: string;
+  competitionLogoUrl?: string;
   matchLabel: string;
   venue?: string;
   status: MatchResultStatus;

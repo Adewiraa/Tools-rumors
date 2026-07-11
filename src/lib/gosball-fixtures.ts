@@ -517,6 +517,7 @@ export const defaultRumorData: TransferRumorData = {
 
 export const defaultMatchResultData: MatchResultData = {
   competitionName: "Liga 1 Indonesia",
+  competitionLogoUrl: "",
   matchLabel: "",
   venue: "",
   status: "FT",
