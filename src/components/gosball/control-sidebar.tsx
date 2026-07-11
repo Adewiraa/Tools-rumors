@@ -1138,59 +1138,20 @@ function TeamControls({
         starterForeignCount={starterForeignCount}
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Nama klub">
-          <input
-            value={team.name}
-            onChange={(event) => onTeamChange(teamKey, { name: event.target.value })}
-            className="control-input"
-          />
-        </Field>
-        <Field label="Short name">
-          <input
-            value={team.shortName}
-            onChange={(event) =>
-              onTeamChange(teamKey, { shortName: event.target.value })
-            }
-            className="control-input"
-          />
-        </Field>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Formasi">
-          <select
-            value={team.formation}
-            onChange={(event) =>
-              onFormationChange(teamKey, event.target.value as FormationName)
-            }
-            className="control-input"
-          >
-            {formationOptions.map((formation) => (
-              <option key={formation} value={formation}>
-                {formation}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Warna klub">
-          <ColorPresetPicker
-            value={team.primaryColor}
-            onChange={(primaryColor) => onTeamChange(teamKey, { primaryColor })}
-          />
-        </Field>
-      </div>
-
-      <Field label="Pelatih">
-        <input
-          value={team.coach.name}
+      <Field label="Formasi">
+        <select
+          value={team.formation}
           onChange={(event) =>
-            onTeamChange(teamKey, {
-              coach: { ...team.coach, name: event.target.value },
-            })
+            onFormationChange(teamKey, event.target.value as FormationName)
           }
           className="control-input"
-        />
+        >
+          {formationOptions.map((formation) => (
+            <option key={formation} value={formation}>
+              {formation}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <div className="space-y-3">
