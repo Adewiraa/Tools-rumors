@@ -772,8 +772,14 @@ function MatchResultPoster({
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div
-            className="absolute inset-0 bg-[#05070A]"
-            style={{ opacity: matchResultData.overlayOpacity / 100 }}
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(180deg, rgba(5,7,10,${
+                matchResultData.overlayOpacity / 260
+              }) 0%, rgba(5,7,10,0.04) 34%, rgba(5,7,10,${
+                matchResultData.overlayOpacity / 120
+              }) 100%)`,
+            }}
           />
         </>
       ) : (
