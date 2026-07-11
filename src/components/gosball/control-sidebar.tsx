@@ -102,6 +102,12 @@ interface RosterSearchResponse {
 type SaveStatus = "idle" | "saving" | "success" | "error";
 type MasterView = "clubs" | "players";
 
+const superLeagueForeignRules = {
+  registered: 11,
+  dsp: 9,
+  field: 7,
+};
+
 const defaultClubForm = {
   name: "",
   shortName: "",
@@ -171,6 +177,50 @@ const localClubOptions: ClubOption[] = indonesianClubs.map((club) => ({
 
 const emptyPlayerName = (player: Player) => player.name.trim().length === 0;
 
+const hasLineupPlayer = (player: Player) => !emptyPlayerName(player);
+
+const isForeignPlayer = (player: Player) => {
+  const countryCode = player.countryCode?.toUpperCase();
+
+  if (countryCode) {
+    return countryCode !== "ID";
+  }
+
+  return player.isForeign === true;
+};
+
+const countForeignPlayers = (players: Player[]) =>
+  players.filter((player) => hasLineupPlayer(player) && isForeignPlayer(player))
+    .length;
+
+const getForeignRegistration = (players: Player[]) => {
+  const foreignPlayers = players.filter(isForeignPlayer);
+  const registeredForeignPlayers = foreignPlayers.slice(
+    0,
+    superLeagueForeignRules.registered,
+  );
+  const registeredForeignIds = new Set(
+    registeredForeignPlayers.map((player) => player.id),
+  );
+  const unregisteredForeignPlayers = foreignPlayers.slice(
+    superLeagueForeignRules.registered,
+  );
+  const unregisteredForeignIds = new Set(
+    unregisteredForeignPlayers.map((player) => player.id),
+  );
+
+  return {
+    foreignPlayers,
+    registeredForeignPlayers,
+    registeredForeignIds,
+    unregisteredForeignPlayers,
+    unregisteredForeignIds,
+    eligiblePlayers: players.filter(
+      (player) => !isForeignPlayer(player) || registeredForeignIds.has(player.id),
+    ),
+  };
+};
+
 const normalizePlayerPosition = (position: string | null | undefined): PlayerPosition => {
   if (
     position === "GK" ||
@@ -226,15 +276,57 @@ const fillEmptyLineupSlots = (
   team: TeamLineup,
   rosterPlayers: Player[],
 ): Pick<TeamLineup, "starters" | "substitutes"> => {
+  const { eligiblePlayers } = getForeignRegistration(rosterPlayers);
   const usedPlayerIds = new Set<string>();
-  const takeMatchingPlayer = (position: PlayerPosition) => {
-    const player = rosterPlayers.find(
+  let starterForeignCount = 0;
+  let dspForeignCount = 0;
+
+  const canAddPlayer = (player: Player, target: "starter" | "substitute") => {
+    if (!isForeignPlayer(player)) {
+      return true;
+    }
+
+    if (dspForeignCount >= superLeagueForeignRules.dsp) {
+      return false;
+    }
+
+    if (
+      target === "starter" &&
+      starterForeignCount >= superLeagueForeignRules.field
+    ) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const markPlayerUsed = (player: Player, target: "starter" | "substitute") => {
+    usedPlayerIds.add(player.id);
+
+    if (!isForeignPlayer(player)) {
+      return;
+    }
+
+    dspForeignCount += 1;
+
+    if (target === "starter") {
+      starterForeignCount += 1;
+    }
+  };
+
+  const takeMatchingPlayer = (
+    position: PlayerPosition,
+    target: "starter" | "substitute",
+  ) => {
+    const player = eligiblePlayers.find(
       (candidate) =>
-        !usedPlayerIds.has(candidate.id) && candidate.position === position,
+        !usedPlayerIds.has(candidate.id) &&
+        candidate.position === position &&
+        canAddPlayer(candidate, target),
     );
 
     if (player) {
-      usedPlayerIds.add(player.id);
+      markPlayerUsed(player, target);
     }
 
     return player;
@@ -243,11 +335,11 @@ const fillEmptyLineupSlots = (
   const starters = createStarterSlots(team.id, team.formation, team.starters).map(
     (slot) => {
       if (!emptyPlayerName(slot)) {
-        usedPlayerIds.add(slot.id);
+        markPlayerUsed(slot, "starter");
         return slot;
       }
 
-      const rosterPlayer = takeMatchingPlayer(slot.position);
+      const rosterPlayer = takeMatchingPlayer(slot.position, "starter");
 
       return rosterPlayer
         ? {
