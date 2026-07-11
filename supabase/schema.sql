@@ -155,7 +155,7 @@ select
 from public.competitions
 join (
   values
-    ('BRI_SUPER_LEAGUE', 'BRI_SUPER_LEAGUE_2025-26', 'Super League 2025-26', '2025-08-01', '2026-05-31'),
+    ('BRI_SUPER_LEAGUE', 'BRI_SUPER_LEAGUE_2026-27', 'Super League 2026-27', '2026-08-01', '2027-05-31'),
     ('PIALA_PRESIDEN', 'PIALA_PRESIDEN_2026', 'Piala Presiden 2026', '2026-07-01', '2026-08-31'),
     ('ACL_TWO', 'ACL_TWO_2026-27', 'ACL Two 2026-27', '2026-08-01', '2027-05-31'),
     ('ACL_CHALLENGE', 'ACL_CHALLENGE_2026-27', 'ACL Challenge 2026-27', '2026-08-01', '2027-05-31')
@@ -174,7 +174,7 @@ values
     'AREMA',
     'arema-fc',
     'AREMA_FC',
-    'https://ileague.id/clubs/single/BRI_SUPER_LEAGUE_2025-26/AREMA_FC',
+    'https://ileague.id/clubs/single/BRI_SUPER_LEAGUE_2026-27/AREMA_FC',
     '#2563eb',
     '#f3efe2',
     'Malang'
@@ -184,7 +184,7 @@ values
     'BALI',
     'bali-united-fc',
     'BALI_UNITED_FC',
-    'https://ileague.id/clubs/single/BRI_SUPER_LEAGUE_2025-26/BALI_UNITED_FC',
+    'https://ileague.id/clubs/single/BRI_SUPER_LEAGUE_2026-27/BALI_UNITED_FC',
     '#dc2626',
     '#f3efe2',
     'Gianyar'
@@ -203,6 +203,6 @@ from public.clubs
 cross join public.seasons
 join public.competitions on competitions.id = seasons.competition_id
 where competitions.code = 'BRI_SUPER_LEAGUE'
-  and seasons.code = 'BRI_SUPER_LEAGUE_2025-26'
+  and seasons.code = 'BRI_SUPER_LEAGUE_2026-27'
   and clubs.slug in ('arema-fc', 'bali-united-fc')
 on conflict (club_id, season_id) do nothing;

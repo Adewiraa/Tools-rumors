@@ -11,7 +11,7 @@ export const competitionMasters: CompetitionMaster[] = [
   {
     slug: "super-league",
     code: "BRI_SUPER_LEAGUE",
-    seasonCode: "BRI_SUPER_LEAGUE_2025-26",
+    seasonCode: "BRI_SUPER_LEAGUE_2026-27",
     name: "Super League",
     shortName: "SL",
     logoUrl: "/competitions/super-league.png",
