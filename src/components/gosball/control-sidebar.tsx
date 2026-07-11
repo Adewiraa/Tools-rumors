@@ -890,9 +890,60 @@ function TeamControls({
     return ids;
   }, [team.starters, team.substitutes]);
   const outsideDspPlayers = useMemo(
-    () => rosterSuggestions.filter((player) => !selectedPlayerIds.has(player.id)),
+    () =>
+      rosterSuggestions.filter((player) => !selectedPlayerIds.has(player.id)),
     [rosterSuggestions, selectedPlayerIds],
   );
+  const outsideDspForeignPlayers = useMemo(
+    () => outsideDspPlayers.filter(isForeignPlayer),
+    [outsideDspPlayers],
+  );
+  const outsideDspForeignSignature = useMemo(
+    () =>
+      outsideDspForeignPlayers
+        .map((player) =>
+          [
+            player.id,
+            player.name,
+            player.shirtNumber ?? "",
+            player.countryCode ?? "",
+            player.countryFlagUrl ?? "",
+          ].join(":"),
+        )
+        .join("|"),
+    [outsideDspForeignPlayers],
+  );
+  const currentOutsideDspSignature = useMemo(
+    () =>
+      (team.outsideDspPlayers ?? [])
+        .map((player) =>
+          [
+            player.id,
+            player.name,
+            player.shirtNumber ?? "",
+            player.countryCode ?? "",
+            player.countryFlagUrl ?? "",
+          ].join(":"),
+        )
+        .join("|"),
+    [team.outsideDspPlayers],
+  );
+
+  useEffect(() => {
+    if (outsideDspForeignSignature === currentOutsideDspSignature) {
+      return;
+    }
+
+    onTeamChange(teamKey, {
+      outsideDspPlayers: outsideDspForeignPlayers,
+    });
+  }, [
+    currentOutsideDspSignature,
+    onTeamChange,
+    outsideDspForeignPlayers,
+    outsideDspForeignSignature,
+    teamKey,
+  ]);
 
   const getRosterOptionState = (
     suggestion: Player,

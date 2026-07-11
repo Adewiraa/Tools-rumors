@@ -75,6 +75,7 @@ export interface TeamLineup {
   primaryColor: string;
   starters: Player[];
   substitutes: Player[];
+  outsideDspPlayers?: Player[];
   coach: Player;
 }
 
