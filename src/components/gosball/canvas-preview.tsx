@@ -904,31 +904,30 @@ function MatchResultPoster({
       />
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <header className="relative flex items-start justify-between gap-3 border-b border-white/15 pb-3">
+      <header className="relative flex items-start justify-between gap-3">
+        <div className="grid justify-items-start gap-1">
+          <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-[6px] bg-white/[0.06] shadow-[0_10px_30px_rgba(0,0,0,0.26)] backdrop-blur-[2px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/gosball.png"
+              alt="Gosball"
+              className="h-11 w-11 object-contain drop-shadow-[0_3px_10px_rgba(0,0,0,0.55)]"
+            />
+          </div>
+          <p className="sr-only">Gosball match result</p>
+        </div>
         <div
-          className="min-w-0 rounded-[5px] border bg-[#05070A]/58 px-3 py-2 shadow-[0_12px_34px_rgba(0,0,0,0.26)] backdrop-blur-[2px]"
-          style={{ borderColor: colorAlpha(homeColor, 0.26) }}
+          className="min-w-0 rounded-[5px] border bg-[#05070A]/54 px-3 py-2 text-right shadow-[0_12px_34px_rgba(0,0,0,0.24)] backdrop-blur-[2px]"
+          style={{ borderColor: colorAlpha(awayColor, 0.28) }}
         >
-          <p
-            className="studio-label text-white"
-            style={{ textShadow: `0 0 12px ${colorAlpha(homeColor, 0.72)}` }}
-          >
-            Gosball match result
+          <p className="studio-label text-[0.48rem] text-white">
+            Match result
           </p>
-          <p className="mt-1 truncate text-[0.68rem] text-[#D7E0EE]">
+          <p className="mt-1 max-w-[12rem] truncate text-[0.6rem] text-[#D7E0EE]">
             {matchResultData.competitionName}
             {matchResultData.matchLabel ? ` / ${matchResultData.matchLabel}` : ""}
           </p>
         </div>
-        <span
-          className="rounded-[4px] border bg-[#05070A]/72 px-3 py-2 text-sm text-white shadow-[0_14px_30px_rgba(0,0,0,0.28)] backdrop-blur-[2px]"
-          style={{
-            borderColor: colorAlpha(awayColor, 0.48),
-            textShadow: "0 1px 8px rgba(0,0,0,0.7)",
-          }}
-        >
-          {statusLabel}
-        </span>
       </header>
 
       <section className="relative mt-auto grid gap-1.5">
