@@ -136,18 +136,31 @@ to anon, authenticated
 using (true);
 
 insert into public.competitions (code, name, country_code)
-values ('BRI_SUPER_LEAGUE', 'BRI Super League', 'ID')
-on conflict (code) do nothing;
+values
+  ('BRI_SUPER_LEAGUE', 'Super League', 'ID'),
+  ('PIALA_PRESIDEN', 'Piala Presiden', 'ID'),
+  ('ACL_TWO', 'ACL Two', 'AS'),
+  ('ACL_CHALLENGE', 'ACL Challenge', 'AS')
+on conflict (code) do update set
+  name = excluded.name,
+  country_code = excluded.country_code;
 
 insert into public.seasons (competition_id, code, name, starts_on, ends_on)
 select
   competitions.id,
-  'BRI_SUPER_LEAGUE_2025-26',
-  'BRI Super League 2025-26',
-  '2025-08-01',
-  '2026-05-31'
+  season_seed.code,
+  season_seed.name,
+  season_seed.starts_on::date,
+  season_seed.ends_on::date
 from public.competitions
-where competitions.code = 'BRI_SUPER_LEAGUE'
+join (
+  values
+    ('BRI_SUPER_LEAGUE', 'BRI_SUPER_LEAGUE_2025-26', 'Super League 2025-26', '2025-08-01', '2026-05-31'),
+    ('PIALA_PRESIDEN', 'PIALA_PRESIDEN_2026', 'Piala Presiden 2026', '2026-07-01', '2026-08-31'),
+    ('ACL_TWO', 'ACL_TWO_2026-27', 'ACL Two 2026-27', '2026-08-01', '2027-05-31'),
+    ('ACL_CHALLENGE', 'ACL_CHALLENGE_2026-27', 'ACL Challenge 2026-27', '2026-08-01', '2027-05-31')
+) as season_seed (competition_code, code, name, starts_on, ends_on)
+  on season_seed.competition_code = competitions.code
 on conflict (competition_id, code) do update set
   name = excluded.name,
   starts_on = excluded.starts_on,
