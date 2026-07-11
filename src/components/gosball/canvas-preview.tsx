@@ -946,22 +946,22 @@ function MatchResultPoster({
         />
       </header>
 
-      <section className="relative mt-auto">
+      <section className="relative mt-auto rounded-[8px] border border-white/45 bg-white/28 p-2 shadow-[0_18px_42px_rgba(0,0,0,0.18)] backdrop-blur-[3px]">
         <div className="relative grid gap-2">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+          <div className="grid grid-cols-[minmax(0,0.82fr)_minmax(0,1.26fr)_minmax(0,0.82fr)] items-end gap-2">
             <ResultCrestCard team={matchResultData.homeTeam} align="left" />
-            <div className="grid w-[11.75rem] justify-items-center">
+            <div className="grid min-w-0 justify-items-center">
               <span className="mb-1 grid min-h-8 min-w-8 place-items-center rounded-full border border-white/80 bg-white/86 px-2 text-[0.72rem] font-semibold text-[#061B31] shadow-[0_8px_24px_rgba(0,0,0,0.20)] backdrop-blur-[3px]">
                 {statusLabel}
               </span>
-              <div className="relative grid h-[5.45rem] w-full grid-cols-[1fr_1.7rem_1fr] items-center rounded-[8px] border border-white/70 bg-[#061B31]/92 px-3 text-center text-white shadow-[0_16px_36px_rgba(0,0,0,0.36)] backdrop-blur-[3px]">
-                <span className="display-type justify-self-end text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
+              <div className="relative grid h-[clamp(4rem,16vw,5.45rem)] w-full max-w-[11.75rem] grid-cols-[1fr_1.35rem_1fr] items-center rounded-[8px] border border-white/70 bg-[#061B31]/94 px-2 text-center text-white shadow-[0_16px_36px_rgba(0,0,0,0.36)] backdrop-blur-[3px]">
+                <span className="display-type justify-self-end text-[clamp(3.1rem,13vw,4.45rem)] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   {matchResultData.homeTeam.score}
                 </span>
-                <span className="justify-self-center text-3xl font-semibold text-white/88 drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
+                <span className="justify-self-center text-[clamp(1.35rem,6vw,1.875rem)] font-semibold text-white/88 drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   -
                 </span>
-                <span className="display-type justify-self-start text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
+                <span className="display-type justify-self-start text-[clamp(3.1rem,13vw,4.45rem)] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   {matchResultData.awayTeam.score}
                 </span>
               </div>
@@ -975,7 +975,7 @@ function MatchResultPoster({
             <ResultCrestCard team={matchResultData.awayTeam} align="right" />
           </div>
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(2.8rem,3.4rem)_minmax(0,1fr)] items-start gap-2">
             <GoalList
               title={matchResultData.homeTeam.shortName}
               color={matchResultData.homeTeam.primaryColor}
@@ -1034,7 +1034,7 @@ function ResultCrestCard({
       }`}
     >
       <div
-        className="relative grid h-24 w-24 place-items-center overflow-hidden rounded-[4px] border border-white/50 bg-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.20)] backdrop-blur-[3px]"
+        className="relative grid aspect-square w-full max-w-24 place-items-center overflow-hidden rounded-[4px] border border-white/50 bg-white/82 shadow-[0_18px_40px_rgba(0,0,0,0.20)] backdrop-blur-[3px]"
         style={{
           boxShadow: `inset 0 -3px 0 ${team.primaryColor}, 0 18px 40px rgba(0,0,0,0.20), 0 0 24px ${colorAlpha(team.primaryColor, 0.18)}`,
         }}
@@ -1054,7 +1054,7 @@ function ResultCrestCard({
             <img
               src={team.logoUrl}
               alt={team.name}
-              className="relative h-[4.9rem] w-[4.9rem] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+              className="relative h-[74%] w-[74%] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.72)]"
             />
           </>
         ) : (
@@ -1064,7 +1064,7 @@ function ResultCrestCard({
         )}
       </div>
       <span
-        className="h-[2px] w-24 rounded-full"
+        className="h-[2px] w-full max-w-24 rounded-full"
         style={{
           background: `linear-gradient(90deg, ${colorAlpha(
             team.primaryColor,
@@ -1072,7 +1072,7 @@ function ResultCrestCard({
           )}, ${colorAlpha(team.primaryColor, align === "right" ? 0.88 : 0.16)})`,
         }}
       />
-      <p className="max-w-24 truncate rounded-full bg-white/88 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.08em] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.16)]">
+      <p className="max-w-full truncate rounded-full bg-white/92 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.08em] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.16)]">
         {team.shortName}
       </p>
     </div>
