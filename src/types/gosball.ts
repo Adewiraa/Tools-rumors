@@ -97,7 +97,7 @@ export interface TransferRumorData {
   sponsor: SponsorConfig;
 }
 
-export type MatchResultStatus = "FT" | "AET" | "PEN" | "LIVE";
+export type MatchResultStatus = "FT" | "HT";
 
 export type GoalType = "NORMAL" | "P" | "OG" | "FK";
 

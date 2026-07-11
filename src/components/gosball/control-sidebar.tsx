@@ -135,7 +135,15 @@ const defaultPlayerCountry = countryOptions.find(
 );
 
 const rumorStatuses: RumorStatus[] = ["Rumor", "Advanced Talks", "Here We Go"];
-const matchResultStatuses: MatchResultStatus[] = ["FT", "AET", "PEN", "LIVE"];
+const matchResultStatuses: Array<{ value: MatchResultStatus; label: string }> = [
+  { value: "FT", label: "Full Time" },
+  { value: "HT", label: "Half Time" },
+];
+const matchResultExtraStatuses = [
+  { value: "", label: "Tanpa tambahan" },
+  { value: "AET", label: "Extra time" },
+  { value: "PEN", label: "Adu penalti" },
+];
 const goalTypes = ["NORMAL", "P", "OG", "FK"] as const;
 const teamColorOptions = [
   "#2563eb",
