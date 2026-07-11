@@ -932,12 +932,6 @@ function MatchResultPoster({
 
       <section className="relative mt-auto">
         <div className="absolute inset-x-[-5%] bottom-[-6%] h-[15rem] bg-gradient-to-t from-[#05070A]/90 via-[#05070A]/58 to-transparent" />
-        <div
-          className="absolute inset-x-[5%] bottom-[4.8rem] h-px"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${homeColor}, rgba(255,255,255,0.70), ${awayColor}, transparent)`,
-          }}
-        />
 
         <div className="relative grid gap-2">
           <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
