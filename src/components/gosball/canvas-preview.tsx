@@ -830,6 +830,8 @@ function MatchResultPoster({
   const awayColor = normalizeHexColor(matchResultData.awayTeam.primaryColor);
   const statusLabel =
     matchResultData.customStatus?.trim() || matchResultData.status;
+  const darkOverlayOpacity = clamp(matchResultData.overlayOpacity / 100, 0, 0.92);
+  const bottomOverlayOpacity = clamp(darkOverlayOpacity + 0.16, 0, 0.96);
   const homeScorers = matchResultData.scorers.filter(
     (scorer) => scorer.team === "home" && scorer.playerName.trim(),
   );
@@ -851,9 +853,9 @@ function MatchResultPoster({
             className="absolute inset-0"
             style={{
               background: `linear-gradient(180deg, rgba(5,7,10,${
-                matchResultData.overlayOpacity / 260
-              }) 0%, rgba(5,7,10,0.04) 34%, rgba(5,7,10,${
-                matchResultData.overlayOpacity / 120
+                darkOverlayOpacity * 0.82
+              }) 0%, rgba(5,7,10,${darkOverlayOpacity * 0.42}) 38%, rgba(5,7,10,${
+                bottomOverlayOpacity
               }) 100%)`,
             }}
           />
