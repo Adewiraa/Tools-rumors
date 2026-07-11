@@ -601,6 +601,43 @@ export function ControlSidebar({
     });
   };
 
+  const updateSponsorLogo = (logoUrl?: string) => {
+    if (mode === "lineup") {
+      onLineupChange({
+        ...lineupData,
+        sponsor: { ...lineupData.sponsor, logoUrl },
+      });
+      return;
+    }
+
+    if (mode === "matchResult") {
+      onMatchResultChange({
+        ...matchResultData,
+        sponsor: { ...matchResultData.sponsor, logoUrl },
+      });
+      return;
+    }
+
+    onRumorChange({
+      ...rumorData,
+      sponsor: { ...rumorData.sponsor, logoUrl },
+    });
+  };
+
+  const uploadSponsorLogo = (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateSponsorLogo(
+        typeof reader.result === "string" ? reader.result : undefined,
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <aside className="order-2 flex flex-col border-t border-[#D4DEE9] bg-white/92 pb-[env(safe-area-inset-bottom)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] lg:order-1 lg:h-dvh lg:border-r lg:border-t-0 lg:pb-0">
       <div className="relative overflow-hidden border-b border-[#D4DEE9] p-3 sm:p-6">
@@ -725,8 +762,22 @@ export function ControlSidebar({
           <input
             type="file"
             accept="image/*"
+            onChange={(event) =>
+              uploadSponsorLogo(event.currentTarget.files?.[0] ?? null)
+            }
             className="mt-3 w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-3 text-xs text-[#64748D] file:mr-3 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-3 file:py-2 file:text-xs file:text-white"
           />
+          {activeSponsor.logoUrl ? (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] px-3 py-2">
+              <span className="text-xs text-[#64748D]">Logo sponsor aktif</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={activeSponsor.logoUrl}
+                alt={activeSponsor.brandName}
+                className="h-8 max-w-20 object-contain"
+              />
+            </div>
+          ) : null}
         </Panel>
         ) : null}
       </div>
