@@ -837,8 +837,6 @@ function MatchResultPoster({
         ? "PEN"
         : baseStatusLabel;
   const showPenaltyShootout = statusLabel === "PEN";
-  const darkOverlayOpacity = clamp(matchResultData.overlayOpacity / 100, 0, 0.92);
-  const bottomOverlayOpacity = clamp(darkOverlayOpacity + 0.16, 0, 0.96);
   const homeScorers = matchResultData.scorers.filter(
     (scorer) => scorer.team === "home" && scorer.playerName.trim(),
   );
@@ -855,16 +853,6 @@ function MatchResultPoster({
             src={matchResultData.backgroundImageUrl}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(180deg, rgba(5,7,10,${
-                darkOverlayOpacity * 0.82
-              }) 0%, rgba(5,7,10,${darkOverlayOpacity * 0.42}) 38%, rgba(5,7,10,${
-                bottomOverlayOpacity
-              }) 100%)`,
-            }}
           />
         </>
       ) : (
@@ -911,12 +899,6 @@ function MatchResultPoster({
           )})`,
         }}
       />
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundColor: `rgba(5,7,10,${darkOverlayOpacity * 0.34})`,
-        }}
-      />
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
 
       <header className="relative flex items-start justify-between gap-3">
@@ -941,8 +923,6 @@ function MatchResultPoster({
       </header>
 
       <section className="relative mt-auto">
-        <div className="absolute inset-x-[-5%] bottom-[-6%] h-[15rem] bg-gradient-to-t from-[#05070A]/90 via-[#05070A]/58 to-transparent" />
-
         <div className="relative grid gap-2">
           <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
             <ResultCrestCard team={matchResultData.homeTeam} align="left" />
