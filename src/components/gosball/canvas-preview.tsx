@@ -930,14 +930,14 @@ function MatchResultPoster({
               <span className="mb-1 grid min-h-8 min-w-8 place-items-center rounded-full border border-white/80 bg-white/86 px-2 text-[0.72rem] font-semibold text-[#061B31] shadow-[0_8px_24px_rgba(0,0,0,0.20)] backdrop-blur-[3px]">
                 {statusLabel}
               </span>
-              <div className="relative grid grid-cols-[auto_auto_auto] items-center gap-3 rounded-[7px] bg-white/16 px-3 text-white shadow-[0_10px_30px_rgba(0,0,0,0.16)] backdrop-blur-[2px]">
-                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_12px_rgba(0,0,0,0.62)]">
+              <div className="relative grid grid-cols-[auto_auto_auto] items-center gap-3 rounded-[8px] border border-white/70 bg-[#061B31]/88 px-4 text-white shadow-[0_16px_36px_rgba(0,0,0,0.32)] backdrop-blur-[3px]">
+                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   {matchResultData.homeTeam.score}
                 </span>
-                <span className="text-3xl font-semibold text-white/90 drop-shadow-[0_3px_12px_rgba(0,0,0,0.62)]">
+                <span className="text-3xl font-semibold text-white/88 drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   -
                 </span>
-                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_12px_rgba(0,0,0,0.62)]">
+                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   {matchResultData.awayTeam.score}
                 </span>
               </div>
