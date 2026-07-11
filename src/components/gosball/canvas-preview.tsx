@@ -35,6 +35,45 @@ const stripe = {
   lavender: "#E8E9FF",
 };
 
+const normalizeHexColor = (color: string | undefined, fallback = stripe.purple) => {
+  const normalizedColor = color?.trim();
+
+  if (!normalizedColor) {
+    return fallback;
+  }
+
+  if (/^#[0-9a-f]{3}$/i.test(normalizedColor)) {
+    return `#${normalizedColor
+      .slice(1)
+      .split("")
+      .map((character) => `${character}${character}`)
+      .join("")}`;
+  }
+
+  if (/^#[0-9a-f]{6}$/i.test(normalizedColor)) {
+    return normalizedColor;
+  }
+
+  return fallback;
+};
+
+const hexToRgb = (color: string) => {
+  const normalizedColor = normalizeHexColor(color).slice(1);
+  const value = Number.parseInt(normalizedColor, 16);
+
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+};
+
+const colorAlpha = (color: string | undefined, alpha: number) => {
+  const { r, g, b } = hexToRgb(normalizeHexColor(color));
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const CanvasPreview = forwardRef<HTMLDivElement, CanvasPreviewProps>(
   function CanvasPreview(
     { mode, aspectRatio, lineupData, matchResultData, rumorData },
