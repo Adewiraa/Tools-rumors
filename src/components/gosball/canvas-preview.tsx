@@ -1074,6 +1074,12 @@ function CompetitionMark({
     .slice(0, 2)
     .map((word) => word[0]?.toUpperCase())
     .join("");
+  const visibleMatchLabel = matchLabel?.trim();
+  const formattedMatchLabel = visibleMatchLabel
+    ? /^\d+$/.test(visibleMatchLabel)
+      ? `Matchday ${visibleMatchLabel}`
+      : visibleMatchLabel
+    : "";
 
   return (
     <div className="grid justify-items-end gap-1 text-right">
@@ -1096,9 +1102,9 @@ function CompetitionMark({
           </span>
         )}
       </div>
-      {matchLabel ? (
-        <p className="max-w-[7rem] truncate rounded-full bg-white/82 px-1.5 py-0.5 text-[0.48rem] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.14)]">
-          {matchLabel}
+      {formattedMatchLabel ? (
+        <p className="max-w-[7rem] truncate rounded-full bg-white/90 px-2 py-0.5 text-[0.48rem] font-medium text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
+          {formattedMatchLabel}
         </p>
       ) : null}
     </div>
