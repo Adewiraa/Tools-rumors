@@ -916,14 +916,11 @@ function MatchResultPoster({
           </div>
           <p className="sr-only">Gosball match result</p>
         </div>
-        <div
-          className="min-w-0 rounded-[5px] border bg-[#05070A]/54 px-3 py-2 text-right shadow-[0_12px_34px_rgba(0,0,0,0.24)] backdrop-blur-[2px]"
-          style={{ borderColor: colorAlpha(awayColor, 0.28) }}
-        >
-          <p className="studio-label text-[0.48rem] text-white">
+        <div className="min-w-0 pt-1 text-right">
+          <p className="studio-label text-[0.5rem] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.72)]">
             Match result
           </p>
-          <p className="mt-1 max-w-[12rem] truncate text-[0.6rem] text-[#D7E0EE]">
+          <p className="mt-1 max-w-[12rem] truncate text-[0.62rem] text-[#D7E0EE] drop-shadow-[0_2px_10px_rgba(0,0,0,0.72)]">
             {matchResultData.competitionName}
             {matchResultData.matchLabel ? ` / ${matchResultData.matchLabel}` : ""}
           </p>
