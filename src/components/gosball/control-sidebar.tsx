@@ -438,6 +438,21 @@ export function ControlSidebar({
     });
   };
 
+  const updateSponsorBrandName = (brandName: string) => {
+    if (mode === "lineup") {
+      onLineupChange({
+        ...lineupData,
+        sponsor: { ...lineupData.sponsor, brandName },
+      });
+      return;
+    }
+
+    onRumorChange({
+      ...rumorData,
+      sponsor: { ...rumorData.sponsor, brandName },
+    });
+  };
+
   return (
     <aside className="order-2 flex flex-col border-t border-[#D4DEE9] bg-white/92 pb-[env(safe-area-inset-bottom)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] lg:order-1 lg:h-dvh lg:border-r lg:border-t-0 lg:pb-0">
       <div className="relative overflow-hidden border-b border-[#D4DEE9] p-3 sm:p-6">
@@ -543,6 +558,14 @@ export function ControlSidebar({
               className="h-5 w-5 accent-[#533AFD]"
             />
           </label>
+          <Field label="Nama sponsor">
+            <input
+              value={activeSponsor.brandName}
+              onChange={(event) => updateSponsorBrandName(event.target.value)}
+              placeholder="AWE Media"
+              className="control-input"
+            />
+          </Field>
           <input
             type="file"
             accept="image/*"
