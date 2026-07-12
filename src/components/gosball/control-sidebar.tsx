@@ -1674,6 +1674,21 @@ function MatchResultControls({
     reader.readAsDataURL(file);
   };
 
+  const uploadCompetitionLogo = (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateMatchResult({
+        competitionLogoUrl:
+          typeof reader.result === "string" ? reader.result : undefined,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-6">
       <Panel title="Match Result" icon={<Trophy className="h-4 w-4" />}>
@@ -1694,6 +1709,16 @@ function MatchResultControls({
                 updateMatchResult({ matchLabel: event.target.value })
               }
               className="control-input"
+            />
+          </Field>
+          <Field label="Logo kompetisi">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) =>
+                uploadCompetitionLogo(event.target.files?.[0] ?? null)
+              }
+              className="w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-2 text-xs text-[#64748D] file:mr-2 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-2.5 file:py-1.5 file:text-xs file:text-white"
             />
           </Field>
         </div>
