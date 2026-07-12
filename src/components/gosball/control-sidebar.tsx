@@ -221,6 +221,86 @@ const getForeignRegistration = (players: Player[]) => {
   };
 };
 
+const normalizeHexColor = (color: string | undefined) => {
+  const fallbackColor = "#533AFD";
+  const normalizedColor = color?.trim();
+
+  if (!normalizedColor) {
+    return fallbackColor;
+  }
+
+  if (/^#[0-9a-f]{3}$/i.test(normalizedColor)) {
+    return `#${normalizedColor
+      .slice(1)
+      .split("")
+      .map((character) => `${character}${character}`)
+      .join("")}`;
+  }
+
+  if (/^#[0-9a-f]{6}$/i.test(normalizedColor)) {
+    return normalizedColor;
+  }
+
+  return fallbackColor;
+};
+
+const getRgbFromHex = (color: string) => {
+  const normalizedColor = normalizeHexColor(color).slice(1);
+  const value = Number.parseInt(normalizedColor, 16);
+
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+};
+
+const getColorWithAlpha = (color: string, alpha: number) => {
+  const { r, g, b } = getRgbFromHex(color);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getReadableColor = (color: string) => {
+  const { r, g, b } = getRgbFromHex(color);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  return luminance > 0.62 ? "#061B31" : "#FFFFFF";
+};
+
+const createTeamTheme = (primaryColor: string | undefined) => {
+  const color = normalizeHexColor(primaryColor);
+  const textColor = getReadableColor(color);
+
+  return {
+    panel: {
+      borderColor: getColorWithAlpha(color, 0.34),
+      background: `linear-gradient(135deg, ${getColorWithAlpha(
+        color,
+        0.16,
+      )}, rgba(255,255,255,0.94) 64%)`,
+    },
+    button: {
+      backgroundColor: color,
+      borderColor: getColorWithAlpha(color, 0.42),
+      boxShadow: `0 10px 24px ${getColorWithAlpha(color, 0.18)}`,
+      color: textColor,
+    },
+    badge: {
+      borderColor: getColorWithAlpha(color, 0.32),
+      color,
+      backgroundColor: "#FFFFFF",
+    },
+    label: {
+      color,
+    },
+    slot: {
+      borderColor: getColorWithAlpha(color, 0.22),
+      backgroundColor: getColorWithAlpha(color, 0.08),
+    },
+  };
+};
+
 const normalizePlayerPosition = (position: string | null | undefined): PlayerPosition => {
   if (
     position === "GK" ||
@@ -727,22 +807,10 @@ function TeamControls({
   const [importStatus, setImportStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
-  const teamTheme =
-    teamKey === "homeTeam"
-      ? {
-          panel: "border-blue-200 bg-blue-50/70",
-          button: "bg-blue-600 shadow-[0_10px_24px_rgba(37,99,235,0.18)]",
-          badge: "border-blue-200 bg-white text-blue-700",
-          label: "text-blue-700",
-          slot: "rounded-[5px] border border-blue-100 bg-blue-50/45 p-2",
-        }
-      : {
-          panel: "border-orange-200 bg-orange-50/70",
-          button: "bg-orange-600 shadow-[0_10px_24px_rgba(234,88,12,0.18)]",
-          badge: "border-orange-200 bg-white text-orange-700",
-          label: "text-orange-700",
-          slot: "rounded-[5px] border border-orange-100 bg-orange-50/45 p-2",
-        };
+  const teamTheme = useMemo(
+    () => createTeamTheme(team.primaryColor),
+    [team.primaryColor],
+  );
   const foreignRegistration = useMemo(
     () => getForeignRegistration(rosterSuggestions),
     [rosterSuggestions],
@@ -1132,14 +1200,18 @@ function TeamControls({
 
   return (
     <Panel title={title} icon={<UsersRound className="h-4 w-4" />}>
-      <div className={`grid gap-2 rounded-[5px] border p-2 ${teamTheme.panel}`}>
+      <div
+        className="grid gap-2 rounded-[5px] border p-2"
+        style={teamTheme.panel}
+      >
         <div className="flex items-center justify-between gap-3">
           <span
-            className={`rounded-full border px-2 py-1 text-[0.62rem] ${teamTheme.badge}`}
+            className="rounded-full border px-2 py-1 text-[0.62rem]"
+            style={teamTheme.badge}
           >
             {teamKey === "homeTeam" ? "Pilihan Home" : "Pilihan Away"}
           </span>
-          <span className={`truncate text-xs ${teamTheme.label}`}>
+          <span className="truncate text-xs" style={teamTheme.label}>
             {team.shortName}
           </span>
         </div>
@@ -1164,7 +1236,8 @@ function TeamControls({
             type="button"
             onClick={() => importSelectedClubRoster()}
             disabled={importStatus === "loading"}
-            className={`pressable min-h-12 rounded-[4px] px-3 text-[0.7rem] text-white disabled:opacity-60 ${teamTheme.button}`}
+            className="pressable min-h-12 rounded-[4px] border px-3 text-[0.7rem] disabled:opacity-60"
+            style={teamTheme.button}
           >
             {importStatus === "loading" ? "..." : "Muat"}
           </button>
@@ -1204,7 +1277,7 @@ function TeamControls({
       </Field>
 
       <div className="space-y-3">
-        <p className={`text-xs ${teamTheme.label}`}>
+        <p className="text-xs" style={teamTheme.label}>
           Starting XI
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
@@ -1212,7 +1285,11 @@ function TeamControls({
             const positionPlayers = getRosterSuggestionsForPosition(player.position);
 
             return (
-            <div key={`${team.id}-starter-${index}`} className={`grid grid-cols-[1fr_3rem] gap-2 ${teamTheme.slot}`}>
+            <div
+              key={`${team.id}-starter-${index}`}
+              className="grid grid-cols-[1fr_3rem] gap-2 rounded-[5px] border p-2"
+              style={teamTheme.slot}
+            >
               <Field label={`${index + 1}. ${player.position}`}>
                 <select
                   value={rosterSuggestions.some((item) => item.id === player.id) ? player.id : ""}
@@ -1260,12 +1337,16 @@ function TeamControls({
       </div>
 
       <div className="space-y-3">
-        <p className={`text-xs ${teamTheme.label}`}>
+        <p className="text-xs" style={teamTheme.label}>
           Cadangan
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           {team.substitutes.map((player, index) => (
-            <div key={`${team.id}-substitute-${index}`} className={`grid grid-cols-[1fr_3rem] gap-2 ${teamTheme.slot}`}>
+            <div
+              key={`${team.id}-substitute-${index}`}
+              className="grid grid-cols-[1fr_3rem] gap-2 rounded-[5px] border p-2"
+              style={teamTheme.slot}
+            >
               <Field label={`Sub ${index + 1}`}>
                 <select
                   value={rosterSuggestions.some((item) => item.id === player.id) ? player.id : ""}
