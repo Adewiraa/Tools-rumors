@@ -8,7 +8,11 @@ import {
   ImagePlus,
   MapPin,
   Plus,
+  RotateCcw,
+  Save,
   SlidersHorizontal,
+  Trophy,
+  Trash2,
   UsersRound,
 } from "lucide-react";
 import { FlagBadge } from "@/components/gosball/flag-badge";
@@ -20,6 +24,8 @@ import type {
   CanvasAspectRatio,
   FormationName,
   MatchdayLineupData,
+  MatchResultData,
+  MatchResultStatus,
   Player,
   PlayerPosition,
   RumorStatus,
@@ -32,11 +38,13 @@ interface ControlSidebarProps {
   mode: ToolMode;
   aspectRatio: CanvasAspectRatio;
   lineupData: MatchdayLineupData;
+  matchResultData: MatchResultData;
   rumorData: TransferRumorData;
   isExporting: boolean;
   onModeChange: (mode: ToolMode) => void;
   onAspectRatioChange: (aspectRatio: CanvasAspectRatio) => void;
   onLineupChange: (data: MatchdayLineupData) => void;
+  onMatchResultChange: (data: MatchResultData) => void;
   onRumorChange: (data: TransferRumorData) => void;
   onFormationChange: (
     teamKey: "homeTeam" | "awayTeam",
@@ -127,6 +135,8 @@ const defaultPlayerCountry = countryOptions.find(
 );
 
 const rumorStatuses: RumorStatus[] = ["Rumor", "Advanced Talks", "Here We Go"];
+const matchResultStatuses: MatchResultStatus[] = ["FT", "AET", "PEN", "LIVE"];
+const goalTypes = ["NORMAL", "P", "OG", "FK"] as const;
 const teamColorOptions = [
   "#2563eb",
   "#1d4ed8",
@@ -301,6 +311,21 @@ const createTeamTheme = (primaryColor: string | undefined) => {
   };
 };
 
+const createMatchResultDraftKey = (data: MatchResultData) => {
+  const matchId = [
+    data.matchLabel,
+    data.homeTeam.shortName,
+    data.awayTeam.shortName,
+  ]
+    .map((value) => value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"))
+    .filter(Boolean)
+    .join("-");
+
+  return `gosball-match-result-draft:${matchId || "current"}`;
+};
+
+const matchResultLastDraftKey = "gosball-match-result-draft:last";
+
 const normalizePlayerPosition = (position: string | null | undefined): PlayerPosition => {
   if (
     position === "GK" ||
@@ -461,17 +486,23 @@ export function ControlSidebar({
   mode,
   aspectRatio,
   lineupData,
+  matchResultData,
   rumorData,
   isExporting,
   onModeChange,
   onAspectRatioChange,
   onLineupChange,
+  onMatchResultChange,
   onRumorChange,
   onFormationChange,
   onDownload,
 }: ControlSidebarProps) {
   const activeSponsor =
-    mode === "lineup" ? lineupData.sponsor : rumorData.sponsor;
+    mode === "lineup"
+      ? lineupData.sponsor
+      : mode === "matchResult"
+        ? matchResultData.sponsor
+        : rumorData.sponsor;
   const [availableClubs, setAvailableClubs] =
     useState<ClubOption[]>(localClubOptions);
 
@@ -512,6 +543,14 @@ export function ControlSidebar({
       return;
     }
 
+    if (mode === "matchResult") {
+      onMatchResultChange({
+        ...matchResultData,
+        sponsor: { ...matchResultData.sponsor, enabled },
+      });
+      return;
+    }
+
     onRumorChange({
       ...rumorData,
       sponsor: { ...rumorData.sponsor, enabled },
@@ -523,6 +562,14 @@ export function ControlSidebar({
       onLineupChange({
         ...lineupData,
         sponsor: { ...lineupData.sponsor, brandName },
+      });
+      return;
+    }
+
+    if (mode === "matchResult") {
+      onMatchResultChange({
+        ...matchResultData,
+        sponsor: { ...matchResultData.sponsor, brandName },
       });
       return;
     }
@@ -551,12 +598,18 @@ export function ControlSidebar({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 rounded-[6px] sm:gap-2 border border-[#D4DEE9] bg-[#F6F9FC] p-1">
+        <div className="grid grid-cols-2 gap-1.5 rounded-[6px] border border-[#D4DEE9] bg-[#F6F9FC] p-1 sm:grid-cols-4 sm:gap-2">
           <TabButton
             active={mode === "lineup"}
-            label="Matchday Line-Up"
+            label="Line-Up Story"
             icon={<UsersRound className="h-4 w-4" />}
             onClick={() => onModeChange("lineup")}
+          />
+          <TabButton
+            active={mode === "matchResult"}
+            label="Match Result"
+            icon={<Trophy className="h-4 w-4" />}
+            onClick={() => onModeChange("matchResult")}
           />
           <TabButton
             active={mode === "rumor"}
@@ -576,19 +629,15 @@ export function ControlSidebar({
       <div className="flex-1 space-y-4 overflow-visible p-3 sm:space-y-6 sm:p-6 lg:overflow-y-auto">
         {mode !== "master" ? (
           <Panel title="Canvas Ratio" icon={<SlidersHorizontal className="h-4 w-4" />}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <RadioCard
-                active={aspectRatio === "1:1"}
-                title="1:1"
-                subtitle="Feed Post"
-                onClick={() => onAspectRatioChange("1:1")}
-              />
-              <RadioCard
-                active={aspectRatio === "9:16"}
-                title="9:16"
-                subtitle="IG Story"
-                onClick={() => onAspectRatioChange("9:16")}
-              />
+            <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] px-4 py-3">
+              <p className="text-sm text-[#061B31]">
+                {mode === "matchResult" ? "4:5 Feed Post" : "9:16 IG Story"}
+              </p>
+              <p className="mt-1 text-xs text-[#64748D]">
+                {mode === "matchResult"
+                  ? "Match Result disiapkan khusus untuk feed Instagram."
+                  : "Line-Up dan Rumor disiapkan khusus untuk story."}
+              </p>
             </div>
           </Panel>
         ) : null}
@@ -599,6 +648,12 @@ export function ControlSidebar({
             clubs={availableClubs}
             onLineupChange={onLineupChange}
             onFormationChange={onFormationChange}
+          />
+        ) : mode === "matchResult" ? (
+          <MatchResultControls
+            matchResultData={matchResultData}
+            clubs={availableClubs}
+            onMatchResultChange={onMatchResultChange}
           />
         ) : mode === "rumor" ? (
           <RumorControls rumorData={rumorData} onRumorChange={onRumorChange} />
@@ -1395,6 +1450,473 @@ function TeamControls({
         unregisteredForeignIds={foreignRegistration.unregisteredForeignIds}
       />
     </Panel>
+  );
+}
+
+function MatchResultControls({
+  matchResultData,
+  clubs,
+  onMatchResultChange,
+}: {
+  matchResultData: MatchResultData;
+  clubs: ClubOption[];
+  onMatchResultChange: (data: MatchResultData) => void;
+}) {
+  const [draftMessage, setDraftMessage] = useState("");
+
+  const updateMatchResult = (update: Partial<MatchResultData>) => {
+    onMatchResultChange({
+      ...matchResultData,
+      ...update,
+    });
+  };
+
+  const updateResultTeam = (
+    side: "homeTeam" | "awayTeam",
+    update: Partial<MatchResultData["homeTeam"]>,
+  ) => {
+    onMatchResultChange({
+      ...matchResultData,
+      [side]: {
+        ...matchResultData[side],
+        ...update,
+      },
+    });
+  };
+
+  const selectResultClub = (side: "homeTeam" | "awayTeam", clubSlug: string) => {
+    const club = clubs.find((item) => item.slug === clubSlug);
+
+    if (!club) {
+      return;
+    }
+
+    updateResultTeam(side, {
+      id: club.slug,
+      name: club.name,
+      shortName: club.shortName,
+      logoUrl: club.logoUrl ?? undefined,
+      primaryColor: club.primaryColor,
+    });
+  };
+
+  const saveDraft = useCallback(
+    (message = "Draft match result tersimpan.") => {
+      const key = createMatchResultDraftKey(matchResultData);
+      window.localStorage.setItem(key, JSON.stringify(matchResultData));
+      window.localStorage.setItem(matchResultLastDraftKey, key);
+      setDraftMessage(message);
+    },
+    [matchResultData],
+  );
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      saveDraft("Autosave draft aktif.");
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [saveDraft]);
+
+  const loadDraft = () => {
+    const key = window.localStorage.getItem(matchResultLastDraftKey);
+
+    if (!key) {
+      setDraftMessage("Belum ada draft tersimpan.");
+      return;
+    }
+
+    const rawDraft = window.localStorage.getItem(key);
+
+    if (!rawDraft) {
+      setDraftMessage("Draft tidak ditemukan.");
+      return;
+    }
+
+    try {
+      onMatchResultChange(JSON.parse(rawDraft) as MatchResultData);
+      setDraftMessage("Draft terakhir dimuat.");
+    } catch {
+      setDraftMessage("Draft gagal dimuat.");
+    }
+  };
+
+  const clearDraft = () => {
+    const key = window.localStorage.getItem(matchResultLastDraftKey);
+
+    if (key) {
+      window.localStorage.removeItem(key);
+    }
+
+    window.localStorage.removeItem(matchResultLastDraftKey);
+    setDraftMessage("Draft terakhir dihapus.");
+  };
+
+  const addScorer = (team: "home" | "away") => {
+    onMatchResultChange({
+      ...matchResultData,
+      scorers: [
+        ...matchResultData.scorers,
+        {
+          id: `goal-${team}-${Date.now()}`,
+          team,
+          playerName: "",
+          minute: "",
+          type: "NORMAL",
+        },
+      ],
+    });
+  };
+
+  const updateScorer = (
+    scorerId: string,
+    update: Partial<MatchResultData["scorers"][number]>,
+  ) => {
+    onMatchResultChange({
+      ...matchResultData,
+      scorers: matchResultData.scorers.map((scorer) =>
+        scorer.id === scorerId ? { ...scorer, ...update } : scorer,
+      ),
+    });
+  };
+
+  const removeScorer = (scorerId: string) => {
+    onMatchResultChange({
+      ...matchResultData,
+      scorers: matchResultData.scorers.filter(
+        (scorer) => scorer.id !== scorerId,
+      ),
+    });
+  };
+
+  const uploadBackground = (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateMatchResult({
+        backgroundImageUrl:
+          typeof reader.result === "string" ? reader.result : undefined,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Panel title="Match Result" icon={<Trophy className="h-4 w-4" />}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Kompetisi">
+            <input
+              value={matchResultData.competitionName}
+              onChange={(event) =>
+                updateMatchResult({ competitionName: event.target.value })
+              }
+              className="control-input"
+            />
+          </Field>
+          <Field label="Matchday">
+            <input
+              value={matchResultData.matchLabel}
+              onChange={(event) =>
+                updateMatchResult({ matchLabel: event.target.value })
+              }
+              className="control-input"
+            />
+          </Field>
+        </div>
+
+        <Field label="Venue">
+          <input
+            value={matchResultData.venue ?? ""}
+            onChange={(event) => updateMatchResult({ venue: event.target.value })}
+            className="control-input"
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <ResultTeamPicker
+            label="Home Team"
+            team={matchResultData.homeTeam}
+            clubs={clubs}
+            onClubChange={(clubSlug) => selectResultClub("homeTeam", clubSlug)}
+            onScoreChange={(score) => updateResultTeam("homeTeam", { score })}
+            onPenaltyChange={(penaltyScore) =>
+              updateResultTeam("homeTeam", { penaltyScore })
+            }
+            showPenalty={matchResultData.status === "PEN"}
+          />
+          <ResultTeamPicker
+            label="Away Team"
+            team={matchResultData.awayTeam}
+            clubs={clubs}
+            onClubChange={(clubSlug) => selectResultClub("awayTeam", clubSlug)}
+            onScoreChange={(score) => updateResultTeam("awayTeam", { score })}
+            onPenaltyChange={(penaltyScore) =>
+              updateResultTeam("awayTeam", { penaltyScore })
+            }
+            showPenalty={matchResultData.status === "PEN"}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Status">
+            <select
+              value={matchResultData.status}
+              onChange={(event) =>
+                updateMatchResult({
+                  status: event.target.value as MatchResultStatus,
+                })
+              }
+              className="control-input"
+            >
+              {matchResultStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Custom status">
+            <input
+              value={matchResultData.customStatus ?? ""}
+              onChange={(event) =>
+                updateMatchResult({ customStatus: event.target.value })
+              }
+              placeholder="Opsional"
+              className="control-input"
+            />
+          </Field>
+        </div>
+      </Panel>
+
+      <Panel title="Background" icon={<ImagePlus className="h-4 w-4" />}>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(event) => uploadBackground(event.target.files?.[0] ?? null)}
+          className="w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-3 text-xs text-[#64748D] file:mr-3 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-3 file:py-2 file:text-xs file:text-white"
+        />
+        <Field label={`Overlay gelap: ${matchResultData.overlayOpacity}%`}>
+          <input
+            type="range"
+            min={25}
+            max={82}
+            value={matchResultData.overlayOpacity}
+            onChange={(event) =>
+              updateMatchResult({ overlayOpacity: Number(event.target.value) })
+            }
+            className="w-full accent-[#533AFD]"
+          />
+        </Field>
+      </Panel>
+
+      <Panel title="Pencetak Gol" icon={<Plus className="h-4 w-4" />}>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => addScorer("home")}
+            className="pressable min-h-11 rounded-[4px] border border-[#D4DEE9] bg-white px-3 text-xs text-[#061B31]"
+          >
+            + {matchResultData.homeTeam.shortName}
+          </button>
+          <button
+            type="button"
+            onClick={() => addScorer("away")}
+            className="pressable min-h-11 rounded-[4px] border border-[#D4DEE9] bg-white px-3 text-xs text-[#061B31]"
+          >
+            + {matchResultData.awayTeam.shortName}
+          </button>
+        </div>
+        <div className="space-y-2">
+          {matchResultData.scorers.map((scorer) => (
+            <div
+              key={scorer.id}
+              className="grid grid-cols-[4rem_1fr_4rem_4.5rem_auto] gap-2 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-2"
+            >
+              <select
+                value={scorer.team}
+                onChange={(event) =>
+                  updateScorer(scorer.id, {
+                    team: event.target.value as "home" | "away",
+                  })
+                }
+                className="control-input min-h-10 px-2 text-xs sm:min-h-10"
+              >
+                <option value="home">Home</option>
+                <option value="away">Away</option>
+              </select>
+              <input
+                value={scorer.playerName}
+                onChange={(event) =>
+                  updateScorer(scorer.id, { playerName: event.target.value })
+                }
+                placeholder="Nama pemain"
+                className="control-input min-h-10 px-2 text-xs sm:min-h-10"
+              />
+              <input
+                value={scorer.minute}
+                onChange={(event) =>
+                  updateScorer(scorer.id, { minute: event.target.value })
+                }
+                placeholder="90+2'"
+                className="control-input min-h-10 px-2 text-xs sm:min-h-10"
+              />
+              <select
+                value={scorer.type}
+                onChange={(event) =>
+                  updateScorer(scorer.id, {
+                    type: event.target.value as MatchResultData["scorers"][number]["type"],
+                  })
+                }
+                className="control-input min-h-10 px-2 text-xs sm:min-h-10"
+              >
+                {goalTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => removeScorer(scorer.id)}
+                className="grid h-10 w-10 place-items-center rounded-[4px] border border-red-200 bg-red-50 text-red-700"
+                aria-label="Hapus pencetak gol"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+          {matchResultData.scorers.length === 0 ? (
+            <p className="rounded-[5px] border border-dashed border-[#D4DEE9] bg-white p-3 text-sm text-[#64748D]">
+              Tambahkan pencetak gol untuk ditampilkan di poster.
+            </p>
+          ) : null}
+        </div>
+      </Panel>
+
+      <Panel title="Detail Tambahan" icon={<MapPin className="h-4 w-4" />}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="MOTM">
+            <input
+              value={matchResultData.motm ?? ""}
+              onChange={(event) => updateMatchResult({ motm: event.target.value })}
+              placeholder="Opsional"
+              className="control-input"
+            />
+          </Field>
+          <Field label="Catatan">
+            <input
+              value={matchResultData.note ?? ""}
+              onChange={(event) => updateMatchResult({ note: event.target.value })}
+              placeholder="Opsional"
+              className="control-input"
+            />
+          </Field>
+        </div>
+      </Panel>
+
+      <Panel title="Draft" icon={<Save className="h-4 w-4" />}>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => saveDraft()}
+            className="pressable flex min-h-11 items-center justify-center gap-2 rounded-[4px] bg-[#533AFD] px-3 text-xs text-white"
+          >
+            <Save className="h-4 w-4" />
+            Simpan
+          </button>
+          <button
+            type="button"
+            onClick={loadDraft}
+            className="pressable flex min-h-11 items-center justify-center gap-2 rounded-[4px] border border-[#D4DEE9] bg-white px-3 text-xs text-[#061B31]"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Load
+          </button>
+          <button
+            type="button"
+            onClick={clearDraft}
+            className="pressable flex min-h-11 items-center justify-center gap-2 rounded-[4px] border border-red-200 bg-red-50 px-3 text-xs text-red-700"
+          >
+            <Trash2 className="h-4 w-4" />
+            Hapus
+          </button>
+        </div>
+        {draftMessage ? (
+          <p className="text-xs text-[#64748D]">{draftMessage}</p>
+        ) : null}
+      </Panel>
+    </div>
+  );
+}
+
+function ResultTeamPicker({
+  label,
+  team,
+  clubs,
+  showPenalty,
+  onClubChange,
+  onScoreChange,
+  onPenaltyChange,
+}: {
+  label: string;
+  team: MatchResultData["homeTeam"];
+  clubs: ClubOption[];
+  showPenalty: boolean;
+  onClubChange: (clubSlug: string) => void;
+  onScoreChange: (score: number) => void;
+  onPenaltyChange: (score: number | undefined) => void;
+}) {
+  const selectedClub = clubs.find((club) => club.slug === team.id);
+
+  return (
+    <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+      <Field label={label}>
+        <select
+          value={selectedClub?.slug ?? ""}
+          onChange={(event) => onClubChange(event.target.value)}
+          className="control-input"
+        >
+          <option value="">Pilih klub...</option>
+          {clubs.map((club) => (
+            <option key={club.slug} value={club.slug}>
+              {club.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Field label="Skor">
+          <input
+            value={team.score}
+            onChange={(event) => onScoreChange(Number(event.target.value) || 0)}
+            inputMode="numeric"
+            className="control-input"
+          />
+        </Field>
+        {showPenalty ? (
+          <Field label="Penalti">
+            <input
+              value={team.penaltyScore ?? ""}
+              onChange={(event) =>
+                onPenaltyChange(
+                  event.target.value ? Number(event.target.value) || 0 : undefined,
+                )
+              }
+              inputMode="numeric"
+              className="control-input"
+            />
+          </Field>
+        ) : (
+          <div className="rounded-[5px] border border-[#D4DEE9] bg-white px-3 py-2 text-xs text-[#64748D]">
+            {team.shortName}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
