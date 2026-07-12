@@ -954,11 +954,11 @@ function MatchResultPoster({
         ) : null}
 
         <div
-          className="relative overflow-hidden rounded-[7px] border bg-[#05070A]/78 p-3 shadow-[0_22px_60px_rgba(0,0,0,0.38)]"
+          className="relative overflow-hidden rounded-[6px] border bg-[#05070A]/70 p-2.5 shadow-[0_16px_42px_rgba(0,0,0,0.34)]"
           style={{ borderColor: colorAlpha(homeColor, 0.28) }}
         >
           <div
-            className="absolute inset-x-0 top-0 h-[3px]"
+            className="absolute inset-x-0 top-0 h-[2px]"
             style={{
               background: `linear-gradient(90deg, ${homeColor}, ${awayColor})`,
             }}
@@ -970,24 +970,24 @@ function MatchResultPoster({
               compact
             />
             <div
-              className="grid min-w-[9.5rem] justify-items-center"
+              className="grid min-w-[7.4rem] justify-items-center"
             >
-              <p className="studio-label mb-1 text-[0.48rem]" style={{ color: colorAlpha(awayColor, 0.90) }}>
+              <p className="studio-label mb-0.5 text-[0.42rem]" style={{ color: colorAlpha(awayColor, 0.90) }}>
                 {statusLabel}
               </p>
-              <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
-                <span className="display-type text-[4.8rem] leading-none">
+              <div className="grid grid-cols-[auto_auto_auto] items-center gap-2 text-white">
+                <span className="display-type text-[3.55rem] leading-none">
                   {matchResultData.homeTeam.score}
                 </span>
-                <span className="text-3xl" style={{ color: awayColor }}>
+                <span className="text-xl" style={{ color: awayColor }}>
                   -
                 </span>
-                <span className="display-type text-[4.8rem] leading-none">
+                <span className="display-type text-[3.55rem] leading-none">
                   {matchResultData.awayTeam.score}
                 </span>
               </div>
               {matchResultData.status === "PEN" ? (
-                <p className="mt-1 rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-1 text-[0.64rem] text-[#E5EDF5]">
+                <p className="mt-0.5 rounded-[4px] border border-white/15 bg-white/[0.08] px-2 py-0.5 text-[0.52rem] text-[#E5EDF5]">
                   PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
                   {matchResultData.awayTeam.penaltyScore ?? 0}
                 </p>
