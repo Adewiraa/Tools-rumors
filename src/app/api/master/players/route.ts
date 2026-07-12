@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   const payload = (await request.json()) as PlayerPayload;
   const clubSlug = payload.clubSlug?.trim();
-  const seasonCode = payload.seasonCode?.trim() || "BRI_SUPER_LEAGUE_2025-26";
+  const seasonCode = payload.seasonCode?.trim() || "BRI_SUPER_LEAGUE_2026-27";
   const fullName = payload.fullName?.trim();
   const countryCode = (payload.countryCode?.trim() || "ID").toUpperCase();
   const shirtNumber =

@@ -78,7 +78,7 @@ export async function GET() {
           club.club_seasons?.find(
             (seasonLink) =>
               firstRelation(seasonLink.seasons)?.code ===
-              "BRI_SUPER_LEAGUE_2025-26",
+              "BRI_SUPER_LEAGUE_2026-27",
           ) ?? club.club_seasons?.[0];
         const competitionSlugs = Array.from(
           new Set(

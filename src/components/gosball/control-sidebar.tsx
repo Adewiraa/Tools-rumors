@@ -2182,7 +2182,7 @@ function MasterDataControls({
   const [clubForm, setClubForm] = useState(defaultClubForm);
   const [playerForm, setPlayerForm] = useState({
     clubSlug: "",
-    seasonCode: "BRI_SUPER_LEAGUE_2025-26",
+    seasonCode: "BRI_SUPER_LEAGUE_2026-27",
     fullName: "",
     displayName: "",
     shirtNumber: "",

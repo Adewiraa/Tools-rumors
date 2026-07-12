@@ -8,7 +8,7 @@ export interface ClubMaster {
   primaryColor: string;
 }
 
-const seasonCode = "BRI_SUPER_LEAGUE_2025-26";
+const seasonCode = "BRI_SUPER_LEAGUE_2026-27";
 const ileagueClubUrl = (slug: string) =>
   `https://ileague.id/clubs/single/${seasonCode}/${slug}`;
 

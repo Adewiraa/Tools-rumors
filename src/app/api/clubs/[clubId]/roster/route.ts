@@ -16,7 +16,7 @@ export async function GET(request: Request, context: RouteContext) {
   const { clubId } = await context.params;
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query")?.trim() ?? "";
-  const seasonCode = searchParams.get("season") ?? "BRI_SUPER_LEAGUE_2025-26";
+  const seasonCode = searchParams.get("season") ?? "BRI_SUPER_LEAGUE_2026-27";
 
   if (!supabase) {
     return NextResponse.json({

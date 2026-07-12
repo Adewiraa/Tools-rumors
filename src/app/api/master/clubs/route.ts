@@ -147,7 +147,7 @@ export async function POST(request: Request) {
       club_id: data.id,
       season_id: season.id,
       head_coach:
-        season.code === "BRI_SUPER_LEAGUE_2025-26" ? coachName : null,
+        season.code === "BRI_SUPER_LEAGUE_2026-27" ? coachName : null,
     })),
     { onConflict: "club_id,season_id" },
   );
