@@ -1051,6 +1051,15 @@ function ResultCrestCard({
           </span>
         )}
       </div>
+      <span
+        className="h-[2px] w-24 rounded-full"
+        style={{
+          background: `linear-gradient(90deg, ${colorAlpha(
+            team.primaryColor,
+            align === "right" ? 0.16 : 0.88,
+          )}, ${colorAlpha(team.primaryColor, align === "right" ? 0.88 : 0.16)})`,
+        }}
+      />
       <p className="max-w-24 truncate text-[0.48rem] uppercase tracking-[0.08em] text-[#D7E0EE] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
         {team.shortName}
       </p>
