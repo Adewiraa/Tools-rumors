@@ -750,6 +750,8 @@ function MatchResultPoster({
 }: {
   matchResultData: MatchResultData;
 }) {
+  const homeColor = normalizeHexColor(matchResultData.homeTeam.primaryColor);
+  const awayColor = normalizeHexColor(matchResultData.awayTeam.primaryColor);
   const statusLabel =
     matchResultData.customStatus?.trim() || matchResultData.status;
   const homeScorers = matchResultData.scorers.filter(
@@ -775,66 +777,132 @@ function MatchResultPoster({
           />
         </>
       ) : (
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,#061B31,#0B1020_48%,#05070A)]" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, ${colorAlpha(
+              homeColor,
+              0.78,
+            )}, #0B1020 47%, ${colorAlpha(awayColor, 0.74)})`,
+          }}
+        />
       )}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(83,58,253,0.35),transparent_18rem),radial-gradient(circle_at_88%_18%,rgba(255,97,24,0.24),transparent_16rem)]" />
-      <div className="absolute inset-0 opacity-[0.20] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 16% 0%, ${colorAlpha(
+            homeColor,
+            0.46,
+          )}, transparent 18rem), radial-gradient(circle at 88% 18%, ${colorAlpha(
+            awayColor,
+            0.40,
+          )}, transparent 16rem), linear-gradient(90deg, ${colorAlpha(
+            homeColor,
+            0.14,
+          )}, transparent 45%, ${colorAlpha(awayColor, 0.14)})`,
+        }}
+      />
+      <div
+        className="absolute -left-[18%] top-[14%] h-[46%] w-[72%] -skew-x-12 border-r border-white/12"
+        style={{
+          background: `linear-gradient(135deg, ${colorAlpha(
+            homeColor,
+            0.48,
+          )}, ${colorAlpha(homeColor, 0.08)})`,
+        }}
+      />
+      <div
+        className="absolute -right-[18%] bottom-[12%] h-[46%] w-[72%] -skew-x-12 border-l border-white/12"
+        style={{
+          background: `linear-gradient(135deg, ${colorAlpha(
+            awayColor,
+            0.10,
+          )}, ${colorAlpha(awayColor, 0.48)})`,
+        }}
+      />
+      <div className="absolute inset-0 opacity-[0.16] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <header className="relative flex items-start justify-between gap-3">
+      <header className="relative flex items-start justify-between gap-3 border-b border-white/15 pb-3">
         <div className="min-w-0">
-          <p className="studio-label text-[#A78BFA]">Gosball match result</p>
+          <p className="studio-label" style={{ color: homeColor }}>
+            Gosball match result
+          </p>
           <p className="mt-1 truncate text-[0.68rem] text-[#A7B2C5]">
             {matchResultData.competitionName}
             {matchResultData.matchLabel ? ` / ${matchResultData.matchLabel}` : ""}
           </p>
         </div>
-        <span className="rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-2 text-sm text-white">
+        <span
+          className="rounded-[4px] border bg-[#05070A]/62 px-3 py-2 text-sm text-white shadow-[0_14px_30px_rgba(0,0,0,0.22)]"
+          style={{ borderColor: colorAlpha(awayColor, 0.42) }}
+        >
           {statusLabel}
         </span>
       </header>
 
-      <section className="relative my-auto grid gap-5">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <ResultTeamBlock team={matchResultData.homeTeam} align="left" />
-          <div className="grid min-w-[8.5rem] justify-items-center">
-            <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
-              <span className="display-type text-[4.8rem] leading-none">
-                {matchResultData.homeTeam.score}
-              </span>
-              <span className="text-3xl text-[#FF6118]">-</span>
-              <span className="display-type text-[4.8rem] leading-none">
-                {matchResultData.awayTeam.score}
-              </span>
-            </div>
-            {matchResultData.status === "PEN" ? (
-              <p className="mt-1 rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-1 text-[0.64rem] text-[#E5EDF5]">
-                PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
-                {matchResultData.awayTeam.penaltyScore ?? 0}
+      <section className="relative mb-7 mt-auto grid gap-4">
+        <div className="grid gap-4">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <ResultTeamBlock team={matchResultData.homeTeam} align="left" />
+            <div
+              className="relative grid min-w-[9.5rem] justify-items-center overflow-hidden rounded-[6px] border bg-[#05070A]/76 px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.32)]"
+              style={{
+                borderColor: colorAlpha(homeColor, 0.32),
+              }}
+            >
+              <div
+                className="absolute inset-x-0 top-0 h-[3px]"
+                style={{
+                  background: `linear-gradient(90deg, ${homeColor}, ${awayColor})`,
+                }}
+              />
+              <p className="studio-label mb-1 text-[0.48rem] text-[#A7B2C5]">
+                Final score
               </p>
-            ) : null}
+              <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
+                <span className="display-type text-[5.4rem] leading-none">
+                  {matchResultData.homeTeam.score}
+                </span>
+                <span className="text-3xl" style={{ color: awayColor }}>
+                  -
+                </span>
+                <span className="display-type text-[5.4rem] leading-none">
+                  {matchResultData.awayTeam.score}
+                </span>
+              </div>
+              {matchResultData.status === "PEN" ? (
+                <p className="mt-1 rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-1 text-[0.64rem] text-[#E5EDF5]">
+                  PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
+                  {matchResultData.awayTeam.penaltyScore ?? 0}
+                </p>
+              ) : null}
+            </div>
+            <ResultTeamBlock team={matchResultData.awayTeam} align="right" />
           </div>
-          <ResultTeamBlock team={matchResultData.awayTeam} align="right" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-2">
           <GoalList
             title={matchResultData.homeTeam.shortName}
             color={matchResultData.homeTeam.primaryColor}
             scorers={homeScorers}
+            teamName={matchResultData.homeTeam.name}
           />
           <GoalList
             title={matchResultData.awayTeam.shortName}
             color={matchResultData.awayTeam.primaryColor}
             scorers={awayScorers}
+            teamName={matchResultData.awayTeam.name}
             alignRight
           />
         </div>
 
         {matchResultData.motm || matchResultData.note ? (
-          <div className="grid gap-2 rounded-[6px] border border-white/15 bg-[#0B1020]/78 p-3 text-[0.68rem] text-[#E5EDF5]">
+          <div className="grid gap-2 border-l-2 bg-[#05070A]/46 px-3 py-2 text-[0.68rem] text-[#E5EDF5]" style={{ borderColor: homeColor }}>
             {matchResultData.motm ? (
               <p>
-                MOTM <span className="text-[#A78BFA]">{matchResultData.motm}</span>
+                MOTM{" "}
+                <span style={{ color: homeColor }}>{matchResultData.motm}</span>
               </p>
             ) : null}
             {matchResultData.note ? (
@@ -844,16 +912,19 @@ function MatchResultPoster({
         ) : null}
       </section>
 
-      <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[0.62rem] text-[#A7B2C5]">
+      <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-white/15 pt-3 text-[0.62rem] text-[#A7B2C5]">
         <div className="h-px bg-white/15" />
-        <p className="rounded-[4px] border border-white/15 bg-white/[0.08] px-4 py-1.5 text-white">
+        <p
+          className="rounded-[4px] border bg-[#05070A]/62 px-4 py-1.5 text-white"
+          style={{ borderColor: colorAlpha(homeColor, 0.32) }}
+        >
           Gosball
         </p>
         <div className="h-px bg-white/15" />
         {matchResultData.sponsor.enabled ? (
           <p className="absolute inset-x-0 -bottom-4 text-center">
             Presented by{" "}
-            <span className="text-[#A78BFA]">
+            <span style={{ color: awayColor }}>
               {matchResultData.sponsor.brandName}
             </span>
           </p>
@@ -878,8 +949,12 @@ function ResultTeamBlock({
     >
       <TeamLogo team={team} header compact />
       <div className="min-w-0">
-        <h2 className="truncate text-[0.92rem] text-white">{team.name}</h2>
-        <p className="text-[0.6rem] text-[#A7B2C5]">{team.shortName}</p>
+        <h2 className="truncate text-[1.02rem] leading-tight text-white">
+          {team.name}
+        </h2>
+        <p className="mt-1 text-[0.58rem] uppercase text-[#A7B2C5]">
+          {team.shortName}
+        </p>
       </div>
     </div>
   );
@@ -889,24 +964,38 @@ function GoalList({
   title,
   color,
   scorers,
+  teamName,
   alignRight = false,
 }: {
   title: string;
   color: string;
   scorers: MatchResultData["scorers"];
+  teamName: string;
   alignRight?: boolean;
 }) {
   return (
-    <div className={`min-w-0 rounded-[6px] border border-white/15 bg-[#0B1020]/78 p-3 ${alignRight ? "text-right" : ""}`}>
-      <p className="mb-2 text-[0.58rem] text-[#A7B2C5]" style={{ color }}>
-        {title} goals
-      </p>
-      <div className="grid gap-1">
+    <div
+      className={`grid min-w-0 grid-cols-[auto_1fr] items-start gap-3 border bg-[#05070A]/54 px-3 py-2 ${
+        alignRight ? "text-right" : ""
+      }`}
+      style={{
+        borderColor: colorAlpha(color, 0.28),
+      }}
+    >
+      <span
+        className="mt-1 h-full min-h-8 w-[3px]"
+        style={{ backgroundColor: color }}
+      />
+      <div className="min-w-0">
+        <p className="truncate text-[0.58rem] uppercase text-[#A7B2C5]">
+          {title} / {teamName}
+        </p>
+        <div className="mt-1 grid gap-1">
         {scorers.length ? (
           scorers.map((scorer) => (
             <p
               key={scorer.id}
-              className="truncate text-[0.68rem] leading-tight text-[#F3F7FF]"
+              className="truncate text-[0.72rem] leading-tight text-[#F3F7FF]"
             >
               {scorer.playerName}
               {scorer.minute ? ` ${scorer.minute}` : ""}
@@ -916,6 +1005,7 @@ function GoalList({
         ) : (
           <p className="text-[0.64rem] text-[#64748D]">No goals</p>
         )}
+        </div>
       </div>
     </div>
   );
