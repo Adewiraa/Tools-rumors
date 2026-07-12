@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { competitionMasters } from "@/lib/competitions";
 import { indonesianClubs } from "@/lib/indonesian-clubs";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { DatabaseClub } from "@/types/database";
@@ -25,6 +26,7 @@ export async function GET() {
           logoUrl: null,
           city: null,
           coachName: null,
+          competitionSlugs: club.competitionSlugs ?? ["super-league"],
         })),
       },
       { headers: { "Cache-Control": "no-store" } },
@@ -48,11 +50,13 @@ export async function GET() {
       city,
       club_seasons (
         head_coach,
-        seasons!inner ( code )
+        seasons (
+          code,
+          competitions ( code )
+        )
       )
     `,
     )
-    .eq("club_seasons.seasons.code", "BRI_SUPER_LEAGUE_2025-26")
     .order("name", { ascending: true });
 
   if (error) {
@@ -66,7 +70,24 @@ export async function GET() {
     {
       source: "supabase",
       clubs: ((data ?? []) as DatabaseClub[]).map((club) => {
-        const clubSeason = club.club_seasons?.[0];
+        const clubSeason =
+          club.club_seasons?.find(
+            (seasonLink) =>
+              seasonLink.seasons?.code === "BRI_SUPER_LEAGUE_2025-26",
+          ) ?? club.club_seasons?.[0];
+        const competitionSlugs = Array.from(
+          new Set(
+            (club.club_seasons ?? [])
+              .map((seasonLink) =>
+                competitionMasters.find(
+                  (competition) =>
+                    competition.code ===
+                    seasonLink.seasons?.competitions?.code,
+                )?.slug,
+              )
+              .filter((slug): slug is string => Boolean(slug)),
+          ),
+        );
 
         return {
           id: club.id,
@@ -80,6 +101,7 @@ export async function GET() {
           logoUrl: club.logo_public_url,
           city: club.city,
           coachName: clubSeason?.head_coach ?? null,
+          competitionSlugs,
         };
       }),
     },

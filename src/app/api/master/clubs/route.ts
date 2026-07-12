@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { competitionMasters } from "@/lib/competitions";
 import {
   createSupabaseAdminClient,
   getMissingSupabaseAdminEnvVars,
@@ -16,6 +17,7 @@ interface ClubPayload {
   logoPublicUrl?: string;
   logoStoragePath?: string;
   coachName?: string;
+  competitionSlugs?: string[];
 }
 
 function toSlug(value: string) {
@@ -47,6 +49,15 @@ export async function POST(request: Request) {
   const shortName = payload.shortName?.trim();
   const slug = payload.slug?.trim() ? toSlug(payload.slug) : name ? toSlug(name) : "";
   const coachName = payload.coachName?.trim() || null;
+  const managedSeasonCodes = competitionMasters.map(
+    (competition) => competition.seasonCode,
+  );
+  const selectedCompetitions = competitionMasters.filter((competition) =>
+    (payload.competitionSlugs?.length
+      ? payload.competitionSlugs
+      : ["super-league"]
+    ).includes(competition.slug),
+  );
 
   if (!name || !shortName || !slug) {
     return NextResponse.json(
@@ -85,36 +96,65 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: season, error: seasonError } = await supabase
+  const { data: seasons, error: seasonError } = await supabase
     .from("seasons")
-    .select("id")
-    .eq("code", "BRI_SUPER_LEAGUE_2025-26")
-    .single();
+    .select("id,code")
+    .in("code", [
+      ...new Set([
+        ...managedSeasonCodes,
+        ...selectedCompetitions.map((competition) => competition.seasonCode),
+      ]),
+    ]);
+  const selectedSeasonCodes = new Set(
+    selectedCompetitions.map((competition) => competition.seasonCode),
+  );
+  const selectedSeasons =
+    seasons?.filter((season) => selectedSeasonCodes.has(season.code)) ?? [];
+  const unselectedManagedSeasonIds =
+    seasons
+      ?.filter((season) => !selectedSeasonCodes.has(season.code))
+      .map((season) => season.id) ?? [];
 
-  if (seasonError || !season) {
+  if (seasonError || selectedSeasons.length === 0) {
     return NextResponse.json(
       {
         error:
-          "Klub tersimpan, tapi season default tidak ditemukan untuk menyimpan pelatih.",
+          "Klub tersimpan, tapi season kompetisi belum ditemukan. Jalankan seed Supabase terbaru.",
       },
       { status: 500 },
     );
   }
 
-  const { error: clubSeasonError } = await supabase
-    .from("club_seasons")
-    .upsert(
-      {
-        club_id: data.id,
-        season_id: season.id,
-        head_coach: coachName,
-      },
-      { onConflict: "club_id,season_id" },
-    );
+  if (unselectedManagedSeasonIds.length > 0) {
+    const { error: cleanupSeasonError } = await supabase
+      .from("club_seasons")
+      .delete()
+      .eq("club_id", data.id)
+      .in("season_id", unselectedManagedSeasonIds);
+
+    if (cleanupSeasonError) {
+      return NextResponse.json(
+        {
+          error: `Gagal membersihkan kompetisi klub: ${cleanupSeasonError.message}`,
+        },
+        { status: 500 },
+      );
+    }
+  }
+
+  const { error: clubSeasonError } = await supabase.from("club_seasons").upsert(
+    selectedSeasons.map((season) => ({
+      club_id: data.id,
+      season_id: season.id,
+      head_coach:
+        season.code === "BRI_SUPER_LEAGUE_2025-26" ? coachName : null,
+    })),
+    { onConflict: "club_id,season_id" },
+  );
 
   if (clubSeasonError) {
     return NextResponse.json(
-      { error: `Gagal menyimpan pelatih klub: ${clubSeasonError.message}` },
+      { error: `Gagal menyimpan kompetisi klub: ${clubSeasonError.message}` },
       { status: 500 },
     );
   }
@@ -132,6 +172,9 @@ export async function POST(request: Request) {
       logoUrl: data.logo_public_url,
       city: data.city,
       coachName,
+      competitionSlugs: selectedCompetitions.map(
+        (competition) => competition.slug,
+      ),
     },
   });
 }

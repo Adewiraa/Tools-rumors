@@ -2,6 +2,7 @@ export interface ClubMaster {
   name: string;
   shortName: string;
   slug: string;
+  competitionSlugs?: string[];
   ileagueSlug: string;
   ileagueUrl: string;
   primaryColor: string;

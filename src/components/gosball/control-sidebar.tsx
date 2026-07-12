@@ -84,6 +84,7 @@ interface ClubOption {
   logoUrl: string | null;
   city: string | null;
   coachName: string | null;
+  competitionSlugs?: string[];
 }
 
 interface ClubsResponse {
@@ -123,6 +124,7 @@ const defaultClubForm = {
   slug: "",
   city: "",
   coachName: "",
+  competitionSlugs: ["super-league"],
   ileagueSlug: "",
   ileagueUrl: "",
   logoStoragePath: "",
@@ -192,6 +194,7 @@ const localClubOptions: ClubOption[] = indonesianClubs.map((club) => ({
   logoUrl: null,
   city: null,
   coachName: null,
+  competitionSlugs: club.competitionSlugs ?? ["super-league"],
 }));
 
 const emptyPlayerName = (player: Player) => player.name.trim().length === 0;
