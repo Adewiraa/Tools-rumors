@@ -334,6 +334,15 @@ const createMatchResultDraftKey = (data: MatchResultData) => {
 
 const matchResultLastDraftKey = "gosball-match-result-draft:last";
 
+const getMatchResultExtraStatus = (data: MatchResultData) => {
+  const extraStatus = data.customStatus?.trim().toUpperCase();
+
+  return extraStatus === "AET" || extraStatus === "PEN" ? extraStatus : "";
+};
+
+const hasPenaltyShootout = (data: MatchResultData) =>
+  getMatchResultExtraStatus(data) === "PEN" || (data.status as string) === "PEN";
+
 const normalizePlayerPosition = (position: string | null | undefined): PlayerPosition => {
   if (
     position === "GK" ||
@@ -1522,6 +1531,8 @@ function MatchResultControls({
   onMatchResultChange: (data: MatchResultData) => void;
 }) {
   const [draftMessage, setDraftMessage] = useState("");
+  const matchResultExtraStatus = getMatchResultExtraStatus(matchResultData);
+  const showPenaltyShootout = hasPenaltyShootout(matchResultData);
 
   const updateMatchResult = (update: Partial<MatchResultData>) => {
     onMatchResultChange({
@@ -1705,7 +1716,7 @@ function MatchResultControls({
             onPenaltyChange={(penaltyScore) =>
               updateResultTeam("homeTeam", { penaltyScore })
             }
-            showPenalty={matchResultData.status === "PEN"}
+            showPenalty={showPenaltyShootout}
           />
           <ResultTeamPicker
             label="Away Team"
@@ -1716,7 +1727,7 @@ function MatchResultControls({
             onPenaltyChange={(penaltyScore) =>
               updateResultTeam("awayTeam", { penaltyScore })
             }
-            showPenalty={matchResultData.status === "PEN"}
+            showPenalty={showPenaltyShootout}
           />
         </div>
 
@@ -1727,26 +1738,36 @@ function MatchResultControls({
               onChange={(event) =>
                 updateMatchResult({
                   status: event.target.value as MatchResultStatus,
+                  customStatus:
+                    event.target.value === "HT"
+                      ? ""
+                      : getMatchResultExtraStatus(matchResultData),
                 })
               }
               className="control-input"
             >
               {matchResultStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
+                <option key={status.value} value={status.value}>
+                  {status.label}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Custom status">
-            <input
-              value={matchResultData.customStatus ?? ""}
+          <Field label="Opsional">
+            <select
+              value={matchResultExtraStatus}
               onChange={(event) =>
                 updateMatchResult({ customStatus: event.target.value })
               }
-              placeholder="Opsional"
+              disabled={matchResultData.status === "HT"}
               className="control-input"
-            />
+            >
+              {matchResultExtraStatuses.map((status) => (
+                <option key={status.value || "none"} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
       </Panel>
