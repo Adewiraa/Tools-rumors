@@ -796,37 +796,37 @@ function MatchResultPoster({
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(circle at 16% 0%, ${colorAlpha(
+          background: `radial-gradient(circle at 12% 0%, ${colorAlpha(
             homeColor,
-            0.46,
-          )}, transparent 18rem), radial-gradient(circle at 88% 18%, ${colorAlpha(
+            0.24,
+          )}, transparent 17rem), radial-gradient(circle at 92% 6%, ${colorAlpha(
             awayColor,
-            0.40,
-          )}, transparent 16rem), linear-gradient(90deg, ${colorAlpha(
+            0.20,
+          )}, transparent 17rem), linear-gradient(90deg, ${colorAlpha(
             homeColor,
-            0.14,
+            0.08,
           )}, transparent 45%, ${colorAlpha(awayColor, 0.14)})`,
         }}
       />
       <div
-        className="absolute -left-[18%] top-[14%] h-[46%] w-[72%] -skew-x-12 border-r border-white/12"
+        className="absolute -left-[28%] top-[8%] h-[34%] w-[62%] -skew-x-12 border-r border-white/10"
         style={{
           background: `linear-gradient(135deg, ${colorAlpha(
             homeColor,
-            0.48,
-          )}, ${colorAlpha(homeColor, 0.08)})`,
+            0.20,
+          )}, transparent)`,
         }}
       />
       <div
-        className="absolute -right-[18%] bottom-[12%] h-[46%] w-[72%] -skew-x-12 border-l border-white/12"
+        className="absolute -right-[28%] top-[10%] h-[34%] w-[62%] -skew-x-12 border-l border-white/10"
         style={{
-          background: `linear-gradient(135deg, ${colorAlpha(
+          background: `linear-gradient(135deg, transparent, ${colorAlpha(
             awayColor,
-            0.10,
-          )}, ${colorAlpha(awayColor, 0.48)})`,
+            0.20,
+          )})`,
         }}
       />
-      <div className="absolute inset-0 opacity-[0.16] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
 
       <header className="relative flex items-start justify-between gap-3 border-b border-white/15 pb-3">
         <div className="min-w-0">
@@ -846,47 +846,7 @@ function MatchResultPoster({
         </span>
       </header>
 
-      <section className="relative mb-4 mt-auto grid gap-4">
-        <div className="grid gap-4">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <ResultTeamBlock team={matchResultData.homeTeam} align="left" />
-            <div
-              className="relative grid min-w-[9.5rem] justify-items-center overflow-hidden rounded-[6px] border bg-[#05070A]/76 px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.32)]"
-              style={{
-                borderColor: colorAlpha(homeColor, 0.32),
-              }}
-            >
-              <div
-                className="absolute inset-x-0 top-0 h-[3px]"
-                style={{
-                  background: `linear-gradient(90deg, ${homeColor}, ${awayColor})`,
-                }}
-              />
-              <p className="studio-label mb-1 text-[0.48rem] text-[#A7B2C5]">
-                Final score
-              </p>
-              <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
-                <span className="display-type text-[5.4rem] leading-none">
-                  {matchResultData.homeTeam.score}
-                </span>
-                <span className="text-3xl" style={{ color: awayColor }}>
-                  -
-                </span>
-                <span className="display-type text-[5.4rem] leading-none">
-                  {matchResultData.awayTeam.score}
-                </span>
-              </div>
-              {matchResultData.status === "PEN" ? (
-                <p className="mt-1 rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-1 text-[0.64rem] text-[#E5EDF5]">
-                  PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
-                  {matchResultData.awayTeam.penaltyScore ?? 0}
-                </p>
-              ) : null}
-            </div>
-            <ResultTeamBlock team={matchResultData.awayTeam} align="right" />
-          </div>
-        </div>
-
+      <section className="relative mt-auto grid gap-2">
         <div className="grid gap-2">
           <GoalList
             title={matchResultData.homeTeam.shortName}
