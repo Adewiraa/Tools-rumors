@@ -1127,16 +1127,15 @@ function GoalList({
   return (
     <div
       title={teamName}
-      className={`min-w-0 px-1.5 py-0.5 ${
+      className={`min-w-0 rounded-[6px] border border-white/55 bg-white/86 px-2.5 py-1.5 shadow-[0_8px_22px_rgba(0,0,0,0.16)] backdrop-blur-[2px] ${
         alignRight ? "text-right" : ""
       }`}
     >
       <div className="min-w-0">
         <p
-          className="truncate text-[0.45rem] uppercase tracking-[0.1em] text-[#D7E0EE]"
+          className="truncate text-[0.45rem] uppercase tracking-[0.1em]"
           style={{
             color,
-            textShadow: "0 1px 8px rgba(0,0,0,0.86)",
           }}
         >
           {title} goals
@@ -1146,10 +1145,9 @@ function GoalList({
           scorers.map((scorer) => (
             <p
               key={scorer.id}
-              className={`flex min-w-0 items-center gap-1 truncate text-[0.58rem] font-semibold uppercase leading-tight text-white ${
+              className={`flex min-w-0 items-center gap-1 truncate text-[0.58rem] font-semibold uppercase leading-tight text-[#061B31] ${
                 alignRight ? "justify-end" : ""
               }`}
-              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.72)" }}
             >
               <span className="min-w-0 truncate">
                 {scorer.minute ? `${scorer.minute} ` : ""}
@@ -1163,7 +1161,7 @@ function GoalList({
             </p>
           ))
         ) : (
-          <p className="text-[0.52rem] text-[#D7E0EE] drop-shadow-[0_1px_8px_rgba(0,0,0,0.86)]">
+          <p className="text-[0.52rem] text-[#334155]">
             No goals
           </p>
         )}
