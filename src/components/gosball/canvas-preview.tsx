@@ -1078,30 +1078,20 @@ function CompetitionMark({
   return (
     <div className="grid justify-items-end gap-1 text-right">
       <div
-        className="relative grid h-14 min-w-14 place-items-center overflow-hidden rounded-[8px] bg-[#05070A]/76 p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.34)] backdrop-blur-[3px]"
+        className="relative grid h-14 min-w-14 place-items-center"
         title={name}
       >
-        <span
-          className="absolute inset-0 rounded-[8px] border border-white/18"
-          style={{
-            boxShadow: `inset 0 -2px 0 ${colorAlpha(
-              color,
-              0.68,
-            )}, 0 0 20px ${colorAlpha(color, 0.26)}`,
-          }}
-        />
-        <span className="absolute inset-[5px] rounded-[6px] bg-white/92 shadow-[inset_0_0_0_1px_rgba(5,7,10,0.10)]" />
         {logoUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={logoUrl}
               alt={name}
-              className="relative h-10 w-10 object-contain drop-shadow-[0_2px_5px_rgba(0,0,0,0.38)]"
+              className="relative h-12 w-12 object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.58)]"
             />
           </>
         ) : (
-          <span className="relative text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-[#061B31] drop-shadow-[0_1px_3px_rgba(255,255,255,0.45)]">
+          <span className="relative rounded-full bg-white/80 px-2 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.16)]">
             {initials || "LG"}
           </span>
         )}
