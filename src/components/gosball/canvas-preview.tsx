@@ -153,9 +153,7 @@ function LineupPoster({
     <div className="absolute inset-0 z-10 flex flex-col p-[3.8%]">
       <LineupHeader lineupData={lineupData} compact />
 
-      <FaceoffPitch lineupData={lineupData} story />
-
-      <div className="mt-1.5 grid min-h-0 flex-1 grid-rows-2 gap-1.5">
+      <div className="mt-2 grid min-h-0 flex-1 grid-rows-2 gap-2">
         <StoryRosterBoard team={lineupData.homeTeam} side="home" />
         <StoryRosterBoard team={lineupData.awayTeam} side="away" />
       </div>
