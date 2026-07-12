@@ -704,6 +704,22 @@ function TeamControls({
   const [importStatus, setImportStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+  const teamTheme =
+    teamKey === "homeTeam"
+      ? {
+          panel: "border-blue-200 bg-blue-50/70",
+          button: "bg-blue-600 shadow-[0_10px_24px_rgba(37,99,235,0.18)]",
+          badge: "border-blue-200 bg-white text-blue-700",
+          label: "text-blue-700",
+          slot: "rounded-[5px] border border-blue-100 bg-blue-50/45 p-2",
+        }
+      : {
+          panel: "border-orange-200 bg-orange-50/70",
+          button: "bg-orange-600 shadow-[0_10px_24px_rgba(234,88,12,0.18)]",
+          badge: "border-orange-200 bg-white text-orange-700",
+          label: "text-orange-700",
+          slot: "rounded-[5px] border border-orange-100 bg-orange-50/45 p-2",
+        };
   const foreignRegistration = useMemo(
     () => getForeignRegistration(rosterSuggestions),
     [rosterSuggestions],
@@ -1093,7 +1109,17 @@ function TeamControls({
 
   return (
     <Panel title={title} icon={<UsersRound className="h-4 w-4" />}>
-      <div className="grid gap-2 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-2">
+      <div className={`grid gap-2 rounded-[5px] border p-2 ${teamTheme.panel}`}>
+        <div className="flex items-center justify-between gap-3">
+          <span
+            className={`rounded-full border px-2 py-1 text-[0.62rem] ${teamTheme.badge}`}
+          >
+            {teamKey === "homeTeam" ? "Pilihan Home" : "Pilihan Away"}
+          </span>
+          <span className={`truncate text-xs ${teamTheme.label}`}>
+            {team.shortName}
+          </span>
+        </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_5.25rem]">
           <select
             value={selectedClubSlug}
@@ -1115,7 +1141,7 @@ function TeamControls({
             type="button"
             onClick={() => importSelectedClubRoster()}
             disabled={importStatus === "loading"}
-            className="pressable min-h-12 rounded-[4px] bg-[#533AFD] px-3 text-[0.7rem] text-white disabled:opacity-60"
+            className={`pressable min-h-12 rounded-[4px] px-3 text-[0.7rem] text-white disabled:opacity-60 ${teamTheme.button}`}
           >
             {importStatus === "loading" ? "..." : "Muat"}
           </button>
