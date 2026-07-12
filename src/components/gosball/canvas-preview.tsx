@@ -916,11 +916,20 @@ function MatchResultPoster({
           </div>
           <p className="sr-only">Gosball match result</p>
         </div>
-        <div className="min-w-0 pt-1 text-right">
+        <div className="grid min-w-0 justify-items-end gap-1 pt-1 text-right">
           <p className="studio-label text-[0.5rem] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.72)]">
             Match result
           </p>
-          <p className="mt-1 max-w-[12rem] truncate text-[0.62rem] text-[#D7E0EE] drop-shadow-[0_2px_10px_rgba(0,0,0,0.72)]">
+          <span
+            className="h-[2px] w-16 rounded-full"
+            style={{
+              background: `linear-gradient(90deg, ${colorAlpha(
+                homeColor,
+                0.18,
+              )}, ${awayColor})`,
+            }}
+          />
+          <p className="max-w-[12rem] truncate text-[0.62rem] text-[#D7E0EE] drop-shadow-[0_2px_10px_rgba(0,0,0,0.72)]">
             {matchResultData.competitionName}
             {matchResultData.matchLabel ? ` / ${matchResultData.matchLabel}` : ""}
           </p>
