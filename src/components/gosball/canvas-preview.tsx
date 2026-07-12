@@ -1170,7 +1170,7 @@ function GoalList({
   return (
     <div
       title={teamName}
-      className={`min-w-0 rounded-[6px] border border-white/55 bg-white/86 px-2.5 py-1.5 shadow-[0_8px_22px_rgba(0,0,0,0.16)] backdrop-blur-[2px] ${
+      className={`min-h-[3.45rem] min-w-0 overflow-hidden rounded-[6px] border border-white/60 bg-white/90 px-2.5 py-1.5 shadow-[0_8px_22px_rgba(0,0,0,0.18)] backdrop-blur-[2px] ${
         alignRight ? "text-right" : ""
       }`}
     >
@@ -1183,9 +1183,9 @@ function GoalList({
         >
           {title} goals
         </p>
-        <div className="mt-1 grid gap-0.5">
+        <div className="mt-1 grid min-w-0 gap-0.5">
         {scorers.length ? (
-          scorers.map((scorer) => (
+          scorers.slice(0, 3).map((scorer) => (
             <p
               key={scorer.id}
               className={`flex min-w-0 items-center gap-1 truncate text-[0.58rem] font-semibold uppercase leading-tight text-[#061B31] ${
