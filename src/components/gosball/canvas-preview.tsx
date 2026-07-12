@@ -930,140 +930,136 @@ function MatchResultPoster({
         </div>
       </header>
 
-      <section className="relative mt-auto grid gap-1.5">
-        <div className="grid gap-1.5">
-          <GoalList
-            title={matchResultData.homeTeam.shortName}
-            color={matchResultData.homeTeam.primaryColor}
-            scorers={homeScorers}
-            teamName={matchResultData.homeTeam.name}
-          />
-          <GoalList
-            title={matchResultData.awayTeam.shortName}
-            color={matchResultData.awayTeam.primaryColor}
-            scorers={awayScorers}
-            teamName={matchResultData.awayTeam.name}
-            alignRight
-          />
-        </div>
-
-        {matchResultData.motm || matchResultData.note ? (
-          <div className="grid gap-0.5 border-l-2 bg-[#05070A]/30 px-2.5 py-1.5 text-[0.54rem] text-[#E5EDF5]" style={{ borderColor: homeColor }}>
-            {matchResultData.motm ? (
-              <p>
-                MOTM{" "}
-                <span style={{ color: homeColor }}>{matchResultData.motm}</span>
-              </p>
-            ) : null}
-            {matchResultData.note ? (
-              <p className="text-[#A7B2C5]">{matchResultData.note}</p>
-            ) : null}
-          </div>
-        ) : null}
-
+      <section className="relative mt-auto">
+        <div className="absolute inset-x-[-5%] bottom-[-6%] h-[15rem] bg-gradient-to-t from-[#05070A]/90 via-[#05070A]/58 to-transparent" />
         <div
-          className="relative overflow-hidden rounded-[6px] border bg-[#05070A]/70 p-2.5 shadow-[0_16px_42px_rgba(0,0,0,0.34)]"
-          style={{ borderColor: colorAlpha(homeColor, 0.28) }}
-        >
-          <div
-            className="absolute inset-x-0 top-0 h-[2px]"
-            style={{
-              background: `linear-gradient(90deg, ${homeColor}, ${awayColor})`,
-            }}
-          />
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <ResultTeamBlock
-              team={matchResultData.homeTeam}
-              align="left"
-              compact
-            />
-            <div
-              className="grid min-w-[7.4rem] justify-items-center"
-            >
-              <p className="studio-label mb-0.5 text-[0.42rem]" style={{ color: colorAlpha(awayColor, 0.90) }}>
+          className="absolute inset-x-[5%] bottom-[4.8rem] h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${homeColor}, rgba(255,255,255,0.70), ${awayColor}, transparent)`,
+          }}
+        />
+
+        <div className="relative grid gap-2">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+            <ResultCrestCard team={matchResultData.homeTeam} align="left" />
+            <div className="grid min-w-[9.5rem] justify-items-center">
+              <span className="mb-1 grid h-8 w-8 place-items-center rounded-full border border-white/70 bg-[#05070A]/74 text-[0.72rem] font-semibold text-white shadow-[0_8px_24px_rgba(0,0,0,0.34)] backdrop-blur-[2px]">
                 {statusLabel}
-              </p>
-              <div className="grid grid-cols-[auto_auto_auto] items-center gap-2 text-white">
-                <span className="display-type text-[3.55rem] leading-none">
+              </span>
+              <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
+                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_4px_18px_rgba(0,0,0,0.78)]">
                   {matchResultData.homeTeam.score}
                 </span>
-                <span className="text-xl" style={{ color: awayColor }}>
+                <span className="text-3xl font-semibold drop-shadow-[0_3px_12px_rgba(0,0,0,0.78)]">
                   -
                 </span>
-                <span className="display-type text-[3.55rem] leading-none">
+                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_4px_18px_rgba(0,0,0,0.78)]">
                   {matchResultData.awayTeam.score}
                 </span>
               </div>
               {matchResultData.status === "PEN" ? (
-                <p className="mt-0.5 rounded-[4px] border border-white/15 bg-white/[0.08] px-2 py-0.5 text-[0.52rem] text-[#E5EDF5]">
+                <p className="mt-1 rounded-[4px] border border-white/20 bg-[#05070A]/68 px-2 py-0.5 text-[0.55rem] text-[#E5EDF5]">
                   PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
                   {matchResultData.awayTeam.penaltyScore ?? 0}
                 </p>
               ) : null}
             </div>
-            <ResultTeamBlock
-              team={matchResultData.awayTeam}
-              align="right"
-              compact
+            <ResultCrestCard team={matchResultData.awayTeam} align="right" />
+          </div>
+
+          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
+            <GoalList
+              title={matchResultData.homeTeam.shortName}
+              color={matchResultData.homeTeam.primaryColor}
+              scorers={homeScorers}
+              teamName={matchResultData.homeTeam.name}
+            />
+            <div className="grid min-w-[3.4rem] justify-items-center gap-1 pt-0.5 text-center">
+              <span className="rounded-full border border-white/15 bg-[#05070A]/58 px-2 py-1 text-[0.42rem] uppercase tracking-[0.12em] text-white">
+                Gosball
+              </span>
+              {matchResultData.sponsor.enabled ? (
+                <span className="max-w-[5.2rem] truncate text-[0.42rem] text-[#D7E0EE]">
+                  {matchResultData.sponsor.brandName}
+                </span>
+              ) : null}
+            </div>
+            <GoalList
+              title={matchResultData.awayTeam.shortName}
+              color={matchResultData.awayTeam.primaryColor}
+              scorers={awayScorers}
+              teamName={matchResultData.awayTeam.name}
+              alignRight
             />
           </div>
+
+          {matchResultData.motm || matchResultData.note ? (
+            <div className="mx-auto grid max-w-[80%] gap-0.5 rounded-[5px] border border-white/12 bg-[#05070A]/45 px-3 py-1.5 text-center text-[0.52rem] text-[#E5EDF5] backdrop-blur-[2px]">
+              {matchResultData.motm ? (
+                <p>
+                  MOTM{" "}
+                  <span style={{ color: homeColor }}>{matchResultData.motm}</span>
+                </p>
+              ) : null}
+              {matchResultData.note ? (
+                <p className="text-[#D7E0EE]">{matchResultData.note}</p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </section>
-
-      <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-2.5 border-t border-white/15 pt-2.5 text-[0.54rem] text-[#A7B2C5]">
-        <div className="h-px bg-white/15" />
-        <p
-          className="rounded-[4px] border bg-[#05070A]/56 px-3 py-1 text-white"
-          style={{ borderColor: colorAlpha(homeColor, 0.32) }}
-        >
-          Gosball
-        </p>
-        <div className="h-px bg-white/15" />
-        {matchResultData.sponsor.enabled ? (
-          <p className="absolute inset-x-0 -bottom-3.5 text-center">
-            Presented by{" "}
-            <span style={{ color: awayColor }}>
-              {matchResultData.sponsor.brandName}
-            </span>
-          </p>
-        ) : null}
-      </footer>
     </div>
   );
 }
 
-function ResultTeamBlock({
+function ResultCrestCard({
   team,
   align,
-  compact = false,
 }: {
   team: MatchResultData["homeTeam"];
   align: "left" | "right";
-  compact?: boolean;
 }) {
+  const initials = team.shortName.slice(0, 3);
+
   return (
     <div
       className={`grid min-w-0 gap-1.5 ${
         align === "right" ? "justify-items-end text-right" : ""
       }`}
     >
-      <TeamLogo team={team} header compact />
-      <div className="min-w-0">
-        <h2
-          className={`truncate leading-tight text-white ${
-            compact ? "text-[0.68rem]" : "text-[1.02rem]"
-          }`}
-        >
-          {team.name}
-        </h2>
-        <p
-          className={`mt-1 uppercase text-[#A7B2C5] ${
-            compact ? "text-[0.42rem]" : "text-[0.58rem]"
-          }`}
-        >
-          {team.shortName}
-        </p>
+      <div
+        className="relative grid h-24 w-24 place-items-center overflow-hidden rounded-[4px] border border-white/12 bg-[#05070A]/66 shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-[2px]"
+        style={{
+          boxShadow: `inset 0 -3px 0 ${team.primaryColor}, 0 18px 40px rgba(0,0,0,0.34), 0 0 24px ${colorAlpha(team.primaryColor, 0.25)}`,
+        }}
+      >
+        <span
+          className="absolute inset-0 opacity-80"
+          style={{
+            background: `linear-gradient(135deg, ${colorAlpha(
+              team.primaryColor,
+              0.24,
+            )}, rgba(5,7,10,0.18) 48%, rgba(255,255,255,0.08))`,
+          }}
+        />
+        {team.logoUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={team.logoUrl}
+              alt={team.name}
+              className="relative h-[4.9rem] w-[4.9rem] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+            />
+          </>
+        ) : (
+          <span className="relative text-lg font-semibold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
+            {initials}
+          </span>
+        )}
       </div>
+      <p className="max-w-24 truncate text-[0.48rem] uppercase tracking-[0.08em] text-[#D7E0EE] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+        {team.shortName}
+      </p>
     </div>
   );
 }
