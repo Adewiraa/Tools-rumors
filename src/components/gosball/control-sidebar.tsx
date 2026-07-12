@@ -1808,19 +1808,6 @@ function MatchResultControls({
           onChange={(event) => uploadBackground(event.target.files?.[0] ?? null)}
           className="w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-3 text-xs text-[#64748D] file:mr-3 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-3 file:py-2 file:text-xs file:text-white"
         />
-        <Field label={`Overlay gelap: ${matchResultData.overlayOpacity}%`}>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={matchResultData.overlayOpacity}
-            onChange={(event) =>
-              updateMatchResult({ overlayOpacity: Number(event.target.value) })
-            }
-            className="w-full accent-[#533AFD]"
-          />
-        </Field>
       </Panel>
 
       <Panel title="Pencetak Gol" icon={<Plus className="h-4 w-4" />}>

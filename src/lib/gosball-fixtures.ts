@@ -537,7 +537,7 @@ export const defaultMatchResultData: MatchResultData = {
     score: 0,
   },
   scorers: [],
-  overlayOpacity: 58,
+  overlayOpacity: 0,
   motm: "",
   note: "",
   sponsor: {
