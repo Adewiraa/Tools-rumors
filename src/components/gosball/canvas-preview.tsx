@@ -11,6 +11,7 @@ import type {
   MatchdayLineupData,
   MatchResultData,
   Player,
+  SponsorConfig,
   TeamLineup,
   ToolMode,
   TransferRumorData,
@@ -696,11 +697,34 @@ function LineupFooter({
       {lineupData.sponsor.enabled ? (
         <p className={compact ? "absolute inset-x-0 -bottom-3 text-center" : "absolute inset-x-0 -bottom-4 text-center"}>
           Presented by{" "}
-          <span className="text-[#A78BFA]">{lineupData.sponsor.brandName}</span>
+          <SponsorInline sponsor={lineupData.sponsor} color="#A78BFA" />
         </p>
       ) : null}
     </footer>
   );
+}
+
+function SponsorInline({
+  sponsor,
+  color,
+}: {
+  sponsor: SponsorConfig;
+  color: string;
+}) {
+  if (sponsor.logoUrl) {
+    return (
+      <span className="inline-grid translate-y-[0.18rem] place-items-center rounded-full bg-white/88 px-1.5 py-0.5 shadow-[0_4px_12px_rgba(0,0,0,0.16)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={sponsor.logoUrl}
+          alt={sponsor.brandName}
+          className="h-3.5 max-w-16 object-contain"
+        />
+      </span>
+    );
+  }
+
+  return <span style={{ color }}>{sponsor.brandName}</span>;
 }
 
 function TeamLogo({
@@ -963,9 +987,7 @@ function MatchResultPoster({
                 Gosball
               </span>
               {matchResultData.sponsor.enabled ? (
-                <span className="max-w-[5.2rem] truncate rounded-full bg-white/82 px-1.5 py-0.5 text-[0.42rem] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.14)]">
-                  {matchResultData.sponsor.brandName}
-                </span>
+                <ResultSponsorMark sponsor={matchResultData.sponsor} />
               ) : null}
             </div>
             <GoalList
@@ -1111,6 +1133,27 @@ function CompetitionMark({
   );
 }
 
+function ResultSponsorMark({ sponsor }: { sponsor: SponsorConfig }) {
+  if (sponsor.logoUrl) {
+    return (
+      <span className="grid h-5 max-w-[5.6rem] place-items-center rounded-full bg-white/88 px-2 shadow-[0_4px_12px_rgba(0,0,0,0.16)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={sponsor.logoUrl}
+          alt={sponsor.brandName}
+          className="h-3.5 max-w-[4.7rem] object-contain"
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span className="max-w-[5.2rem] truncate rounded-full bg-white/82 px-1.5 py-0.5 text-[0.42rem] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.14)]">
+      {sponsor.brandName}
+    </span>
+  );
+}
+
 function GoalList({
   title,
   color,
@@ -1246,7 +1289,7 @@ function RumorPoster({
         {rumorData.sponsor.enabled ? (
           <p className="text-right">
             Presented by{" "}
-            <span className="text-[#A78BFA]">{rumorData.sponsor.brandName}</span>
+            <SponsorInline sponsor={rumorData.sponsor} color="#A78BFA" />
           </p>
         ) : null}
       </footer>
