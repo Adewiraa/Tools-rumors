@@ -355,19 +355,21 @@ const fillEmptyLineupSlots = (
     team.substitutes,
   ).map((slot) => {
     if (!emptyPlayerName(slot)) {
-      usedPlayerIds.add(slot.id);
+      markPlayerUsed(slot, "substitute");
       return slot;
     }
 
-    const rosterPlayer = rosterPlayers.find(
-      (candidate) => !usedPlayerIds.has(candidate.id),
+    const rosterPlayer = eligiblePlayers.find(
+      (candidate) =>
+        !usedPlayerIds.has(candidate.id) &&
+        canAddPlayer(candidate, "substitute"),
     );
 
     if (!rosterPlayer) {
       return slot;
     }
 
-    usedPlayerIds.add(rosterPlayer.id);
+    markPlayerUsed(rosterPlayer, "substitute");
 
     return rosterPlayer;
   });
@@ -702,8 +704,109 @@ function TeamControls({
   const [importStatus, setImportStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
+  const foreignRegistration = useMemo(
+    () => getForeignRegistration(rosterSuggestions),
+    [rosterSuggestions],
+  );
+  const starterForeignCount = useMemo(
+    () => countForeignPlayers(team.starters),
+    [team.starters],
+  );
+  const dspForeignCount = useMemo(
+    () => countForeignPlayers([...team.starters, ...team.substitutes]),
+    [team.starters, team.substitutes],
+  );
+  const selectedPlayerIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    [...team.starters, ...team.substitutes].forEach((player) => {
+      if (hasLineupPlayer(player)) {
+        ids.add(player.id);
+      }
+    });
+
+    return ids;
+  }, [team.starters, team.substitutes]);
+  const outsideDspPlayers = useMemo(
+    () => rosterSuggestions.filter((player) => !selectedPlayerIds.has(player.id)),
+    [rosterSuggestions, selectedPlayerIds],
+  );
+
+  const getRosterOptionState = (
+    suggestion: Player,
+    currentPlayer: Player,
+    target: "starter" | "substitute",
+  ) => {
+    if (suggestion.id === currentPlayer.id) {
+      return { disabled: false, reason: "" };
+    }
+
+    if (selectedPlayerIds.has(suggestion.id)) {
+      return { disabled: true, reason: "sudah dipilih" };
+    }
+
+    const suggestionIsForeign = isForeignPlayer(suggestion);
+
+    if (
+      suggestionIsForeign &&
+      !foreignRegistration.registeredForeignIds.has(suggestion.id)
+    ) {
+      return { disabled: true, reason: "di luar 11 asing" };
+    }
+
+    if (!suggestionIsForeign) {
+      return { disabled: false, reason: "" };
+    }
+
+    const currentPlayerIsForeign =
+      hasLineupPlayer(currentPlayer) && isForeignPlayer(currentPlayer);
+    const nextDspForeignCount =
+      dspForeignCount - (currentPlayerIsForeign ? 1 : 0) + 1;
+    const nextStarterForeignCount =
+      target === "starter"
+        ? starterForeignCount - (currentPlayerIsForeign ? 1 : 0) + 1
+        : starterForeignCount;
+
+    if (nextDspForeignCount > superLeagueForeignRules.dsp) {
+      return { disabled: true, reason: "DSP max 9 asing" };
+    }
+
+    if (nextStarterForeignCount > superLeagueForeignRules.field) {
+      return { disabled: true, reason: "lapangan max 7 asing" };
+    }
+
+    return { disabled: false, reason: "" };
+  };
+
+  const canApplyCountryToPlayer = (
+    currentPlayer: Player,
+    country: CountryOption,
+    target: "starter" | "substitute",
+  ) => {
+    if (country.code === "ID") {
+      return true;
+    }
+
+    const currentPlayerIsForeign =
+      hasLineupPlayer(currentPlayer) && isForeignPlayer(currentPlayer);
+    const nextDspForeignCount =
+      dspForeignCount - (currentPlayerIsForeign ? 1 : 0) + 1;
+    const nextStarterForeignCount =
+      target === "starter"
+        ? starterForeignCount - (currentPlayerIsForeign ? 1 : 0) + 1
+        : starterForeignCount;
+
+    return (
+      nextDspForeignCount <= superLeagueForeignRules.dsp &&
+      nextStarterForeignCount <= superLeagueForeignRules.field
+    );
+  };
 
   const updateStarterCountry = (index: number, country: CountryOption) => {
+    if (!canApplyCountryToPlayer(team.starters[index], country, "starter")) {
+      return;
+    }
+
     onTeamChange(teamKey, {
       starters: team.starters.map((player, playerIndex) =>
         playerIndex === index
@@ -720,6 +823,10 @@ function TeamControls({
   };
 
   const updateSubstituteCountry = (index: number, country: CountryOption) => {
+    if (!canApplyCountryToPlayer(team.substitutes[index], country, "substitute")) {
+      return;
+    }
+
     onTeamChange(teamKey, {
       substitutes: team.substitutes.map((player, playerIndex) =>
         playerIndex === index
@@ -763,6 +870,14 @@ function TeamControls({
 
   const applyRosterPlayerToStarter = (index: number, playerId: string) => {
     const rosterPlayer = rosterSuggestions.find((player) => player.id === playerId);
+    const currentPlayer = team.starters[index];
+
+    if (
+      rosterPlayer &&
+      getRosterOptionState(rosterPlayer, currentPlayer, "starter").disabled
+    ) {
+      return;
+    }
 
     onTeamChange(teamKey, {
       starters: team.starters.map((player, playerIndex) => {
@@ -793,6 +908,14 @@ function TeamControls({
 
   const applyRosterPlayerToSubstitute = (index: number, playerId: string) => {
     const rosterPlayer = rosterSuggestions.find((player) => player.id === playerId);
+    const currentPlayer = team.substitutes[index];
+
+    if (
+      rosterPlayer &&
+      getRosterOptionState(rosterPlayer, currentPlayer, "substitute").disabled
+    ) {
+      return;
+    }
 
     onTeamChange(teamKey, {
       substitutes: team.substitutes.map((player, playerIndex) => {
@@ -1084,12 +1207,25 @@ function TeamControls({
                       ? `Pilih ${player.position}`
                       : `${player.position} belum ada di roster`}
                   </option>
-                  {positionPlayers.map((suggestion) => (
-                    <option key={suggestion.id} value={suggestion.id}>
-                      {suggestion.shirtNumber ? `${suggestion.shirtNumber} - ` : ""}
-                      {suggestion.name}
-                    </option>
-                  ))}
+                  {positionPlayers.map((suggestion) => {
+                    const optionState = getRosterOptionState(
+                      suggestion,
+                      player,
+                      "starter",
+                    );
+
+                    return (
+                      <option
+                        key={suggestion.id}
+                        value={suggestion.id}
+                        disabled={optionState.disabled}
+                      >
+                        {suggestion.shirtNumber ? `${suggestion.shirtNumber} - ` : ""}
+                        {suggestion.name}
+                        {optionState.reason ? ` (${optionState.reason})` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               </Field>
               <Field label="Flag">
@@ -1122,12 +1258,25 @@ function TeamControls({
                   <option value="">
                     {rosterSuggestions.length ? "Pilih pemain" : "Roster belum dimuat"}
                   </option>
-                  {rosterSuggestions.map((suggestion) => (
-                    <option key={suggestion.id} value={suggestion.id}>
-                      {suggestion.shirtNumber ? `${suggestion.shirtNumber} - ` : ""}
-                      {suggestion.name} / {suggestion.position}
-                    </option>
-                  ))}
+                  {rosterSuggestions.map((suggestion) => {
+                    const optionState = getRosterOptionState(
+                      suggestion,
+                      player,
+                      "substitute",
+                    );
+
+                    return (
+                      <option
+                        key={suggestion.id}
+                        value={suggestion.id}
+                        disabled={optionState.disabled}
+                      >
+                        {suggestion.shirtNumber ? `${suggestion.shirtNumber} - ` : ""}
+                        {suggestion.name} / {suggestion.position}
+                        {optionState.reason ? ` (${optionState.reason})` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               </Field>
               <Field label="Flag">
