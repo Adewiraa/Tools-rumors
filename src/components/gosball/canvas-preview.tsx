@@ -904,6 +904,12 @@ function MatchResultPoster({
           )})`,
         }}
       />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: `rgba(5,7,10,${darkOverlayOpacity * 0.34})`,
+        }}
+      />
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
 
       <header className="relative flex items-start justify-between gap-3">
