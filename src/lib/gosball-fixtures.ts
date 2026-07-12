@@ -9,6 +9,7 @@ import type {
   TeamLineup,
   TransferRumorData,
 } from "@/types/gosball";
+import { competitionMasters } from "@/lib/competitions";
 
 const coordinate = (
   id: string,
@@ -516,8 +517,8 @@ export const defaultRumorData: TransferRumorData = {
 };
 
 export const defaultMatchResultData: MatchResultData = {
-  competitionName: "Liga 1 Indonesia",
-  competitionLogoUrl: "",
+  competitionName: competitionMasters[0].name,
+  competitionLogoUrl: competitionMasters[0].logoUrl,
   matchLabel: "",
   venue: "",
   status: "FT",
