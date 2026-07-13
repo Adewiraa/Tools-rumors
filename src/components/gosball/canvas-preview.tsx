@@ -959,11 +959,11 @@ function MatchResultPoster({
               teamName={matchResultData.homeTeam.name}
             />
             <div className="grid min-w-[3.4rem] justify-items-center gap-1 pt-0.5 text-center">
-              <span className="rounded-full border border-white/40 bg-white/78 px-2 py-1 text-[0.42rem] uppercase tracking-[0.12em] text-[#061B31] shadow-[0_6px_18px_rgba(0,0,0,0.14)] backdrop-blur-[2px]">
+              <span className="rounded-full border border-white/60 bg-white/90 px-2 py-1 text-[0.42rem] uppercase tracking-[0.12em] text-[#061B31] shadow-[0_6px_18px_rgba(0,0,0,0.18)] backdrop-blur-[2px]">
                 Gosball
               </span>
               {matchResultData.sponsor.enabled ? (
-                <span className="max-w-[5.2rem] truncate rounded-full bg-white/64 px-1.5 py-0.5 text-[0.42rem] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.10)]">
+                <span className="max-w-[5.2rem] truncate rounded-full bg-white/82 px-1.5 py-0.5 text-[0.42rem] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.14)]">
                   {matchResultData.sponsor.brandName}
                 </span>
               ) : null}
@@ -1050,7 +1050,7 @@ function ResultCrestCard({
           )}, ${colorAlpha(team.primaryColor, align === "right" ? 0.88 : 0.16)})`,
         }}
       />
-      <p className="max-w-24 truncate rounded-full bg-white/64 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.08em] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.10)]">
+      <p className="max-w-24 truncate rounded-full bg-white/88 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.08em] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.16)]">
         {team.shortName}
       </p>
     </div>
@@ -1097,7 +1097,7 @@ function CompetitionMark({
         )}
       </div>
       {matchLabel ? (
-        <p className="max-w-[7rem] truncate text-[0.48rem] text-[#D7E0EE] drop-shadow-[0_2px_8px_rgba(0,0,0,0.72)]">
+        <p className="max-w-[7rem] truncate rounded-full bg-white/82 px-1.5 py-0.5 text-[0.48rem] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.14)]">
           {matchLabel}
         </p>
       ) : null}
