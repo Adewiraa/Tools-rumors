@@ -927,22 +927,22 @@ function MatchResultPoster({
           <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
             <ResultCrestCard team={matchResultData.homeTeam} align="left" />
             <div className="grid min-w-[9.5rem] justify-items-center">
-              <span className="mb-1 grid min-h-8 min-w-8 place-items-center rounded-full border border-white/70 bg-[#05070A]/74 px-2 text-[0.72rem] font-semibold text-white shadow-[0_8px_24px_rgba(0,0,0,0.34)] backdrop-blur-[2px]">
+              <span className="mb-1 grid min-h-8 min-w-8 place-items-center rounded-full border border-white/80 bg-white/86 px-2 text-[0.72rem] font-semibold text-[#061B31] shadow-[0_8px_24px_rgba(0,0,0,0.20)] backdrop-blur-[3px]">
                 {statusLabel}
               </span>
-              <div className="relative grid grid-cols-[auto_auto_auto] items-center gap-3 rounded-[6px] px-2 text-white">
-                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_4px_18px_rgba(0,0,0,0.78)]">
+              <div className="relative grid grid-cols-[auto_auto_auto] items-center gap-3 rounded-[7px] bg-white/16 px-3 text-white shadow-[0_10px_30px_rgba(0,0,0,0.16)] backdrop-blur-[2px]">
+                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_12px_rgba(0,0,0,0.62)]">
                   {matchResultData.homeTeam.score}
                 </span>
-                <span className="text-3xl font-semibold text-white/90 drop-shadow-[0_3px_12px_rgba(0,0,0,0.78)]">
+                <span className="text-3xl font-semibold text-white/90 drop-shadow-[0_3px_12px_rgba(0,0,0,0.62)]">
                   -
                 </span>
-                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_4px_18px_rgba(0,0,0,0.78)]">
+                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_12px_rgba(0,0,0,0.62)]">
                   {matchResultData.awayTeam.score}
                 </span>
               </div>
               {showPenaltyShootout ? (
-                <p className="mt-1 rounded-[4px] border border-white/20 bg-[#05070A]/68 px-2 py-0.5 text-[0.55rem] text-[#E5EDF5]">
+                <p className="mt-1 rounded-[4px] border border-white/40 bg-white/80 px-2 py-0.5 text-[0.55rem] text-[#061B31]">
                   PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
                   {matchResultData.awayTeam.penaltyScore ?? 0}
                 </p>
@@ -959,11 +959,11 @@ function MatchResultPoster({
               teamName={matchResultData.homeTeam.name}
             />
             <div className="grid min-w-[3.4rem] justify-items-center gap-1 pt-0.5 text-center">
-              <span className="rounded-full border border-white/15 bg-[#05070A]/58 px-2 py-1 text-[0.42rem] uppercase tracking-[0.12em] text-white">
+              <span className="rounded-full border border-white/40 bg-white/78 px-2 py-1 text-[0.42rem] uppercase tracking-[0.12em] text-[#061B31] shadow-[0_6px_18px_rgba(0,0,0,0.14)] backdrop-blur-[2px]">
                 Gosball
               </span>
               {matchResultData.sponsor.enabled ? (
-                <span className="max-w-[5.2rem] truncate text-[0.42rem] text-[#D7E0EE]">
+                <span className="max-w-[5.2rem] truncate rounded-full bg-white/64 px-1.5 py-0.5 text-[0.42rem] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.10)]">
                   {matchResultData.sponsor.brandName}
                 </span>
               ) : null}
@@ -978,7 +978,7 @@ function MatchResultPoster({
           </div>
 
           {matchResultData.motm || matchResultData.note ? (
-            <div className="mx-auto grid max-w-[80%] gap-0.5 rounded-[5px] border border-white/12 bg-[#05070A]/45 px-3 py-1.5 text-center text-[0.52rem] text-[#E5EDF5] backdrop-blur-[2px]">
+            <div className="mx-auto grid max-w-[80%] gap-0.5 rounded-[5px] border border-white/40 bg-white/76 px-3 py-1.5 text-center text-[0.52rem] text-[#061B31] shadow-[0_8px_22px_rgba(0,0,0,0.14)] backdrop-blur-[2px]">
               {matchResultData.motm ? (
                 <p>
                   MOTM{" "}
@@ -986,7 +986,7 @@ function MatchResultPoster({
                 </p>
               ) : null}
               {matchResultData.note ? (
-                <p className="text-[#D7E0EE]">{matchResultData.note}</p>
+                <p className="text-[#334155]">{matchResultData.note}</p>
               ) : null}
             </div>
           ) : null}
@@ -1012,18 +1012,18 @@ function ResultCrestCard({
       }`}
     >
       <div
-        className="relative grid h-24 w-24 place-items-center overflow-hidden rounded-[4px] border border-white/12 bg-[#05070A]/66 shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-[2px]"
+        className="relative grid h-24 w-24 place-items-center overflow-hidden rounded-[4px] border border-white/50 bg-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.20)] backdrop-blur-[3px]"
         style={{
-          boxShadow: `inset 0 -3px 0 ${team.primaryColor}, 0 18px 40px rgba(0,0,0,0.34), 0 0 24px ${colorAlpha(team.primaryColor, 0.25)}`,
+          boxShadow: `inset 0 -3px 0 ${team.primaryColor}, 0 18px 40px rgba(0,0,0,0.20), 0 0 24px ${colorAlpha(team.primaryColor, 0.18)}`,
         }}
       >
         <span
-          className="absolute inset-0 opacity-80"
+          className="absolute inset-0 opacity-70"
           style={{
             background: `linear-gradient(135deg, ${colorAlpha(
               team.primaryColor,
-              0.24,
-            )}, rgba(5,7,10,0.18) 48%, rgba(255,255,255,0.08))`,
+              0.12,
+            )}, rgba(255,255,255,0.42) 48%, rgba(255,255,255,0.76))`,
           }}
         />
         {team.logoUrl ? (
@@ -1050,7 +1050,7 @@ function ResultCrestCard({
           )}, ${colorAlpha(team.primaryColor, align === "right" ? 0.88 : 0.16)})`,
         }}
       />
-      <p className="max-w-24 truncate text-[0.48rem] uppercase tracking-[0.08em] text-[#D7E0EE] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+      <p className="max-w-24 truncate rounded-full bg-white/64 px-1.5 py-0.5 text-[0.48rem] uppercase tracking-[0.08em] text-[#061B31] shadow-[0_4px_12px_rgba(0,0,0,0.10)]">
         {team.shortName}
       </p>
     </div>
