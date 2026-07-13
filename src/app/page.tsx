@@ -47,6 +47,7 @@ import {
   INITIAL_AUDIT_LOGS
 } from '@/lib/mockData';
 import { supabase } from '@/lib/supabaseClient';
+import * as htmlToImage from 'html-to-image';
 
 // User Role Definition
 type UserRole = 'Super Admin' | 'Admin Data' | 'Match Editor' | 'Rumor Editor' | 'Reviewer';
@@ -1432,45 +1433,147 @@ function LineupEditorView({ matchId, clubs, players, matches, onClose, onSave, t
       )}
 
       {activeTab === 'preview' && (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {/* Public Graphic Card Preview Mock */}
-          <div style={{ width: 360, height: 640, backgroundColor: 'var(--navy-950)', borderRadius: 12, color: 'white', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 24, boxShadow: 'var(--shadow-lg)' }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.6, letterSpacing: 1, textTransform: 'uppercase' }}>Liga Nusantara Utama</div>
-              <div style={{ fontSize: 12, fontWeight: 500, marginTop: 4 }}>18 Juli 2026, 19.30 WIB</div>
-              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', margin: '12px 0' }}></div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+          <div className="flex gap-12">
+            <button className="btn btn-md btn-primary" onClick={async () => {
+              const node = document.getElementById('lineup-story-card');
+              if (!node) return;
+              try {
+                triggerToast('Sedang membuat gambar Instagram Story...');
+                const dataUrl = await htmlToImage.toPng(node, {
+                  cacheBust: true,
+                  pixelRatio: 3,
+                });
+                const link = document.createElement('a');
+                link.download = `Lineup_${match.homeClubName}_vs_${match.awayClubName}_Story.png`;
+                link.href = dataUrl;
+                link.click();
+                triggerToast('Gambar Story berhasil diunduh!');
+              } catch (err) {
+                console.error(err);
+                triggerToast('Gagal mengunduh gambar.');
+              }
+            }}>
+              <Plus size={16} /> Unduh Gambar Story (9:16)
+            </button>
+          </div>
+
+          {/* Public Graphic Card Preview - Instagram Story (9:16) */}
+          <div 
+            id="lineup-story-card"
+            style={{ 
+              width: 360, 
+              height: 640, 
+              background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)', 
+              color: 'white', 
+              overflow: 'hidden', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              justifyContent: 'space-between', 
+              padding: '30px 24px', 
+              boxShadow: 'var(--shadow-lg)',
+              position: 'relative',
+              fontFamily: 'system-ui, sans-serif'
+            }}
+          >
+            {/* Background Accent Grid / Glowing Light */}
+            <div style={{ position: 'absolute', top: '-10%', left: '-10%', right: '-10%', height: '40%', background: 'radial-gradient(circle, rgba(15,159,154,0.15) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
+            
+            {/* Header */}
+            <div style={{ zIndex: 2, textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: '#0F9F9A', letterSpacing: 2, textTransform: 'uppercase' }}>
+                {match.competition || 'LIGA NUSANTARA UTAMA'}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, letterSpacing: 0.5, color: '#94a3b8' }}>
+                ROSTER / STARTING XI
+              </div>
+              <div style={{ width: 40, height: 2, backgroundColor: '#0F9F9A', margin: '8px auto 0' }}></div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1, justifyContent: 'center' }}>
-              <div className="flex justify-between align-center">
-                <div>
-                  <div style={{ fontSize: 24 }}>🦅</div>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>JAKARTA GARUDA</div>
-                  <div style={{ fontSize: 10, opacity: 0.6 }}>Formasi: {homeFormation}</div>
+            {/* Teams Matchup Info */}
+            <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {match.homeLogo && match.homeLogo.startsWith('http') ? (
+                    <img src={match.homeLogo} alt={match.homeClubName} crossOrigin="anonymous" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ fontSize: 36 }}>{match.homeLogo || '🦅'}</span>
+                  )}
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>VS</div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 24 }}>🦈</div>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>SURABAYA SAMUDRA</div>
-                  <div style={{ fontSize: 10, opacity: 0.6 }}>Formasi: {awayFormation}</div>
+                <div style={{ fontSize: 11, fontWeight: 800, marginTop: 6, color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {match.homeClubName.split(' ')[0]}
+                </div>
+                <div style={{ fontSize: 9, color: '#0F9F9A', fontWeight: 600, marginTop: 2 }}>
+                  ({homeFormation})
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 12, fontSize: 11, border: '1px solid rgba(255,255,255,0.1)', padding: 12, borderRadius: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 4 }}>STARTERS:</div>
-                  {homeSquad.slice(0, 5).map(p => <div key={p.id} style={{ opacity: 0.8 }}>#{p.shirtNumber} {p.displayName}</div>)}
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#475569', letterSpacing: 1 }}>VS</div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {match.awayLogo && match.awayLogo.startsWith('http') ? (
+                    <img src={match.awayLogo} alt={match.awayClubName} crossOrigin="anonymous" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ fontSize: 36 }}>{match.awayLogo || '🦈'}</span>
+                  )}
                 </div>
-                <div style={{ flex: 1, textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, marginBottom: 4 }}>STARTERS:</div>
-                  {awaySquad.slice(0, 5).map(p => <div key={p.id} style={{ opacity: 0.8 }}>#{p.shirtNumber} {p.displayName}</div>)}
+                <div style={{ fontSize: 11, fontWeight: 800, marginTop: 6, color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {match.awayClubName.split(' ')[0]}
+                </div>
+                <div style={{ fontSize: 9, color: '#0F9F9A', fontWeight: 600, marginTop: 2 }}>
+                  ({awayFormation})
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.4, fontSize: 9 }}>
-              <span>@GARUDAMATCHROOM</span>
-              <span>HD OUTPUT (4X)</span>
+            {/* Players Lists */}
+            <div style={{ zIndex: 2, display: 'flex', gap: 16, flex: 1, margin: '15px 0', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 12, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+              {/* Home Squad */}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', marginBottom: 6, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
+                  STARTING XI
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {homeSquad.filter(p => homeStarters.includes(p.id)).slice(0, 11).map((p, idx) => (
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
+                      <span style={{ color: '#0F9F9A', fontWeight: 700, width: 14 }}>#{p.shirtNumber}</span>
+                      <span style={{ color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110 }}>
+                        {p.displayName} {homeCaptain === p.id && <span style={{ color: '#eab308', fontWeight: 'bold' }}>(C)</span>}
+                      </span>
+                    </div>
+                  ))}
+                  {homeSquad.filter(p => homeStarters.includes(p.id)).length === 0 && (
+                    <div style={{ fontSize: 9, color: '#64748b' }}>Belum ada starter</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Away Squad */}
+              <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: 12 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', marginBottom: 6, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
+                  STARTING XI
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {awaySquad.filter(p => awayStarters.includes(p.id)).slice(0, 11).map((p, idx) => (
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
+                      <span style={{ color: '#0F9F9A', fontWeight: 700, width: 14 }}>#{p.shirtNumber}</span>
+                      <span style={{ color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110 }}>
+                        {p.displayName} {awayCaptain === p.id && <span style={{ color: '#eab308', fontWeight: 'bold' }}>(C)</span>}
+                      </span>
+                    </div>
+                  ))}
+                  {awaySquad.filter(p => awayStarters.includes(p.id)).length === 0 && (
+                    <div style={{ fontSize: 9, color: '#64748b' }}>Belum ada starter</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Watermark */}
+            <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600 }}>
+              <span style={{ letterSpacing: 0.5 }}>@GARUDAMATCHROOM</span>
+              <span style={{ color: '#0F9F9A' }}>MEDIA STUDIO</span>
             </div>
           </div>
         </div>
@@ -1775,6 +1878,136 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
         </div>
       </div>
 
+      {/* Instagram Graphic Export Row */}
+      <div className="card" style={{ marginTop: 24, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+        <div style={{ alignSelf: 'flex-start' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Instagram Feed Graphic (1:1 Ratio)</h3>
+          <p className="page-description" style={{ margin: 0 }}>Gunakan template premium ini untuk mempublikasikan hasil akhir pertandingan ke feeds Instagram resmi.</p>
+        </div>
+        
+        <button className="btn btn-md btn-primary" onClick={async () => {
+          const node = document.getElementById('match-feed-card');
+          if (!node) return;
+          try {
+            triggerToast('Sedang membuat gambar Instagram Feed...');
+            const dataUrl = await htmlToImage.toPng(node, {
+              cacheBust: true,
+              pixelRatio: 2.7, // 400x400 -> 1080x1080
+            });
+            const link = document.createElement('a');
+            link.download = `Result_${match.homeClubName}_vs_${match.awayClubName}_Feed.png`;
+            link.href = dataUrl;
+            link.click();
+            triggerToast('Gambar Feed berhasil diunduh!');
+          } catch (err) {
+            console.error(err);
+            triggerToast('Gagal mengunduh gambar.');
+          }
+        }}>
+          Unduh Gambar Feed (1:1)
+        </button>
+
+        {/* 1:1 IG Feed Graphic */}
+        <div 
+          id="match-feed-card"
+          style={{
+            width: 400,
+            height: 400,
+            background: 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
+            color: 'white',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: 24,
+            borderRadius: 12,
+            boxShadow: 'var(--shadow-lg)',
+            position: 'relative',
+            fontFamily: 'system-ui, sans-serif',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Glowing Accents */}
+          <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
+          <div style={{ position: 'absolute', top: '-20%', right: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
+          
+          {/* Header */}
+          <div style={{ zIndex: 2, textAlign: 'center', display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 10, width: '100%' }}>
+            <span style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', letterSpacing: 1.5 }}>
+              {match.competition || 'LIGA NUSANTARA UTAMA'}
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: '#0F9F9A', color: '#090d16', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
+              FULL TIME
+            </span>
+          </div>
+
+          {/* Scores & Names Matchup */}
+          <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0', width: '100%' }}>
+            {/* Home */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {match.homeLogo && match.homeLogo.startsWith('http') ? (
+                  <img src={match.homeLogo} alt={match.homeClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ fontSize: 44 }}>{match.homeLogo || '🦅'}</span>
+                )}
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
+                {match.homeClubName.split(' ')[0]}
+              </span>
+            </div>
+
+            {/* Score Box */}
+            <div style={{ display: 'flex', alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '0 16px' }}>
+              <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>{homeScore}</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#475569' }}>-</span>
+              <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>{awayScore}</span>
+            </div>
+
+            {/* Away */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {match.awayLogo && match.awayLogo.startsWith('http') ? (
+                  <img src={match.awayLogo} alt={match.awayClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ fontSize: 44 }}>{match.awayLogo || '🦈'}</span>
+                )}
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
+                {match.awayClubName.split(' ')[0]}
+              </span>
+            </div>
+          </div>
+
+          {/* Goals Timeline */}
+          <div style={{ zIndex: 2, flex: 1, overflowY: 'auto', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', flexDirection: 'column', gap: 6, width: '100%', minHeight: 80 }}>
+            {events.filter(e => e.type === 'goal').map((evt) => (
+              <div key={evt.id} style={{ display: 'flex', justifyContent: evt.clubId === match.homeClubId ? 'flex-start' : 'flex-end', fontSize: 11, color: '#e2e8f0' }}>
+                {evt.clubId === match.homeClubId ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
+                    <span>⚽ {evt.playerName}</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{evt.playerName} ⚽</span>
+                    <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
+                  </div>
+                )}
+              </div>
+            ))}
+            {events.filter(e => e.type === 'goal').length === 0 && (
+              <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center', marginTop: 12 }}>Tidak ada gol tercipta</div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div style={{ zIndex: 2, display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600, marginTop: 12, width: '100%' }}>
+            <span>@GARUDAMATCHROOM</span>
+            <span style={{ color: '#0F9F9A' }}>INSTAGRAM LIVE FEED</span>
+          </div>
+        </div>
+      </div>
+
       {/* Safety Rules Reason Dialog Modal */}
       {showReasonModal && (
         <div className="modal-overlay">
@@ -1984,6 +2217,7 @@ function RumorEditorView({ rumorId, clubs, rumors, onClose, onSave, triggerToast
   const [summary, setSummary] = useState(rumor.shortSummary);
   const [body, setBody] = useState(rumor.articleBody);
   const [pubStatus, setPubStatus] = useState(rumor.publicationStatus);
+  const [transferStatus, setTransferStatus] = useState(rumor.transferStatus || 'Rumor');
 
   const handleSave = () => {
     if (!headline || !playerName || !sourceName) {
@@ -2007,6 +2241,7 @@ function RumorEditorView({ rumorId, clubs, rumors, onClose, onSave, triggerToast
       sourceName,
       sourceUrl,
       publicationStatus: pubStatus,
+      transferStatus: transferStatus as any,
       shortSummary: summary,
       articleBody: body
     };
@@ -2099,9 +2334,256 @@ function RumorEditorView({ rumorId, clubs, rumors, onClose, onSave, triggerToast
           </div>
 
           <div className="form-group">
+            <label className="form-label">Transfer Status</label>
+            <select className="form-select" value={transferStatus} onChange={(e: any) => {
+              const val = e.target.value;
+              setTransferStatus(val);
+              if (val === 'Here We Go') {
+                setProbability(100);
+              }
+            }}>
+              <option value="Rumor">Rumor</option>
+              <option value="Advanced Talks">Dalam Negosiasi</option>
+              <option value="Here We Go">Here We Go! / Done Deal</option>
+            </select>
+          </div>
+
+          <div className="form-group">
             <label className="form-label">Nama Sumber Berita <span className="required">*</span></label>
             <input type="text" className="form-input" placeholder="e.g. Fabrizio Romano" value={sourceName} onChange={(e) => setSourceName(e.target.value)} />
           </div>
+        </div>
+      </div>
+
+      {/* Instagram Graphic Export Row */}
+      <div className="card" style={{ marginTop: 24, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+        <div style={{ alignSelf: 'flex-start' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Instagram Transfer Rumor Graphics</h3>
+          <p className="page-description" style={{ margin: 0 }}>Gunakan template story (dan feed done deal) untuk dipublikasikan ke media sosial Instagram.</p>
+        </div>
+
+        <div className="flex gap-24 justify-center w-full" style={{ flexWrap: 'wrap' }}>
+          {/* Card 1: Story Preview */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <button className="btn btn-md btn-primary" onClick={async () => {
+              const node = document.getElementById('rumor-story-card');
+              if (!node) return;
+              try {
+                triggerToast('Sedang membuat gambar Instagram Story...');
+                const dataUrl = await htmlToImage.toPng(node, {
+                  cacheBust: true,
+                  pixelRatio: 3, // 360x640 -> 1080x1920
+                });
+                const link = document.createElement('a');
+                link.download = `Rumor_${playerName.replace(/\s+/g, '_')}_Story.png`;
+                link.href = dataUrl;
+                link.click();
+                triggerToast('Gambar Story berhasil diunduh!');
+              } catch (err) {
+                console.error(err);
+                triggerToast('Gagal mengunduh gambar.');
+              }
+            }}>
+              Unduh Gambar Story (9:16)
+            </button>
+
+            {/* Story Card */}
+            <div 
+              id="rumor-story-card"
+              style={{
+                width: 360,
+                height: 640,
+                background: 'linear-gradient(180deg, #070a13 0%, #0f172a 100%)',
+                color: 'white',
+                padding: '30px 24px',
+                borderRadius: 12,
+                boxShadow: 'var(--shadow-lg)',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                fontFamily: 'system-ui, sans-serif',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Background Glow based on reliability tier */}
+              <div 
+                style={{ 
+                  position: 'absolute', 
+                  top: '-15%', 
+                  left: '-15%', 
+                  right: '-15%', 
+                  height: '45%', 
+                  background: `radial-gradient(circle, ${tier === 'A' ? 'rgba(16,185,129,0.15)' : tier === 'B' ? 'rgba(14,165,233,0.15)' : tier === 'C' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)'} 0%, rgba(0,0,0,0) 70%)`, 
+                  pointerEvents: 'none' 
+                }}
+              ></div>
+
+              {/* Header */}
+              <div style={{ zIndex: 2, textAlign: 'center' }}>
+                <span 
+                  style={{ 
+                    fontSize: 9, 
+                    fontWeight: 800, 
+                    padding: '3px 8px', 
+                    borderRadius: 4, 
+                    backgroundColor: tier === 'A' ? '#10b981' : tier === 'B' ? '#0ea5e9' : tier === 'C' ? '#f59e0b' : '#ef4444',
+                    color: '#070a13',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1
+                  }}
+                >
+                  RELIABILITY TIER {tier}
+                </span>
+                <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600, marginTop: 12, letterSpacing: 1, textTransform: 'uppercase' }}>
+                  RUMOR & TRANSFER UPDATE
+                </div>
+              </div>
+
+              {/* Headline */}
+              <div style={{ zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16 }}>
+                <div 
+                  style={{ 
+                    fontSize: 20, 
+                    fontWeight: 900, 
+                    lineHeight: 1.3, 
+                    textAlign: 'center', 
+                    color: '#f8fafc',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                  }}
+                >
+                  {headline || 'Judul artikel transfer rumor...'}
+                </div>
+
+                <div 
+                  style={{ 
+                    padding: 16, 
+                    borderRadius: 8, 
+                    backgroundColor: 'rgba(255,255,255,0.02)', 
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    alignItems: 'center'
+                  }}
+                >
+                  <div style={{ fontSize: 24, fontWeight: 800, color: '#0F9F9A', textAlign: 'center' }}>
+                    {playerName || 'Nama Pemain'}
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignSelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: '#94a3b8' }}>
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                      <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase' }}>Klub Asal</div>
+                      <div style={{ fontWeight: 700, color: 'white', marginTop: 2 }}>{fromClub || 'Free Agent'}</div>
+                    </div>
+                    <div style={{ fontSize: 14, color: '#0F9F9A' }}>➜</div>
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                      <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase' }}>Klub Tujuan</div>
+                      <div style={{ fontWeight: 700, color: 'white', marginTop: 2 }}>{destClub || 'Belum Ditentukan'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ fontSize: 9, color: '#64748b', display: 'block', textTransform: 'uppercase' }}>Peluang</span>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: '#0F9F9A' }}>{probability}%</span>
+                  </div>
+                  <div style={{ width: 1, height: 24, backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+                  <div style={{ textAlign: 'center' }}>
+                    <span style={{ fontSize: 9, color: '#64748b', display: 'block', textTransform: 'uppercase' }}>Status</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{transferStatus}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600 }}>
+                <span>SUMBER: {sourceName || 'Kanal Terpercaya'}</span>
+                <span style={{ color: '#0F9F9A' }}>@GARUDAMATCHROOM</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Done Deal Feed Preview (Only if Here We Go) */}
+          {transferStatus === 'Here We Go' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <button className="btn btn-md btn-primary" onClick={async () => {
+                const node = document.getElementById('rumor-feed-card');
+                if (!node) return;
+                try {
+                  triggerToast('Sedang membuat gambar Instagram Done Deal Feed...');
+                  const dataUrl = await htmlToImage.toPng(node, {
+                    cacheBust: true,
+                    pixelRatio: 2.7, // 400x400 -> 1080x1080
+                  });
+                  const link = document.createElement('a');
+                  link.download = `DoneDeal_${playerName.replace(/\s+/g, '_')}_Feed.png`;
+                  link.href = dataUrl;
+                  link.click();
+                  triggerToast('Gambar Feed Done Deal berhasil diunduh!');
+                } catch (err) {
+                  console.error(err);
+                  triggerToast('Gagal mengunduh gambar.');
+                }
+              }}>
+                Unduh Gambar Feed Done Deal (1:1)
+              </button>
+
+              {/* Feed Card */}
+              <div 
+                id="rumor-feed-card"
+                style={{
+                  width: 400,
+                  height: 400,
+                  background: 'radial-gradient(circle at center, #0b1528 0%, #030712 100%)',
+                  color: 'white',
+                  padding: 24,
+                  borderRadius: 12,
+                  boxShadow: 'var(--shadow-lg)',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  fontFamily: 'system-ui, sans-serif',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Glowing neon border pattern */}
+                <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, border: '4px solid #0F9F9A', opacity: 0.25, pointerEvents: 'none' }}></div>
+                
+                {/* Header */}
+                <div style={{ zIndex: 2, textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 10 }}>
+                  <div style={{ fontSize: 24, fontWeight: 950, letterSpacing: 4, color: '#0F9F9A', textShadow: '0 0 10px rgba(15,159,154,0.5)', textTransform: 'uppercase' }}>
+                    DONE DEAL
+                  </div>
+                </div>
+
+                {/* Body Content */}
+                <div style={{ zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 14 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#eab308', letterSpacing: 1, textTransform: 'uppercase', backgroundColor: 'rgba(234,179,8,0.1)', padding: '3px 10px', borderRadius: 10 }}>
+                    TRANSFER RESMI
+                  </span>
+                  
+                  <div style={{ fontSize: 28, fontWeight: 900, textAlign: 'center', color: 'white', textTransform: 'uppercase', lineHeight: 1.1 }}>
+                    {playerName || 'Nama Pemain'}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, backgroundColor: 'rgba(255,255,255,0.02)', padding: '10px 20px', borderRadius: 30, border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ fontWeight: 600, color: '#94a3b8' }}>{fromClub || 'Klub Asal'}</span>
+                    <span style={{ color: '#0F9F9A', fontWeight: 800 }}>➜</span>
+                    <span style={{ fontWeight: 800, color: 'white' }}>{destClub || 'Klub Tujuan'}</span>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, fontSize: 9, color: '#64748b', fontWeight: 600 }}>
+                  <span>PUBLISHED BY GM STUDIO</span>
+                  <span style={{ color: '#0F9F9A', letterSpacing: 0.5 }}>@GARUDAMATCHROOM</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -2465,6 +2947,30 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
   const [nationality, setNationality] = useState(player.nationality);
   const [flag, setFlag] = useState(player.flagUrl);
   const [availability, setAvailability] = useState(player.availability);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const searchCountryFlag = async (query: string) => {
+    if (!query) return;
+    setSearching(true);
+    try {
+      const response = await fetch(
+        `/api/countries?q=${encodeURIComponent(query)}`
+      );
+      const data = await response.json();
+      if (data && data.data) {
+        setSearchResults(data.data);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (err) {
+      console.error('Error searching country:', err);
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const handleSave = () => {
     if (!fullName || !displayName) {
@@ -2540,9 +3046,73 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
             <input type="text" className="form-input" value={nationality} onChange={(e) => setNationality(e.target.value)} />
           </div>
           <div style={{ gridColumn: 'span 6' }}>
-            <label className="form-label">Emoji Bendera</label>
-            <input type="text" className="form-input" value={flag} onChange={(e) => setFlag(e.target.value)} />
+            <label className="form-label">Bendera Terpilih</label>
+            <div className="flex align-center gap-12" style={{ height: 42 }}>
+              {flag && flag.startsWith('http') ? (
+                <>
+                  <img src={flag} alt="Bendera" style={{ width: 40, height: 26, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--neutral-300)' }} />
+                  <span style={{ fontSize: 11, color: 'var(--neutral-500)', wordBreak: 'break-all', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{flag.split('/').pop()}</span>
+                </>
+              ) : (
+                <span style={{ fontSize: 24 }}>{flag || '🏳️'}</span>
+              )}
+            </div>
           </div>
+        </div>
+
+        <div style={{ marginTop: 16, border: '1px dashed var(--neutral-300)', padding: 16, borderRadius: 8 }}>
+          <label className="form-label" style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Search size={14} /> Cari Bendera Negara Resmi (Rest Countries API)
+          </label>
+          <div className="flex gap-8">
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Ketik nama negara (e.g. canada, indonesia)..." 
+              value={countrySearch} 
+              onChange={(e) => setCountrySearch(e.target.value)} 
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  searchCountryFlag(countrySearch);
+                }
+              }}
+            />
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={() => searchCountryFlag(countrySearch)}
+              disabled={searching}
+            >
+              {searching ? 'Mencari...' : 'Cari'}
+            </button>
+          </div>
+          
+          {searchResults.length > 0 && (
+            <div style={{ marginTop: 12, maxHeight: 180, overflowY: 'auto', border: '1px solid var(--neutral-200)', borderRadius: 6, backgroundColor: 'var(--neutral-50)', zIndex: 10 }}>
+              {searchResults.map((item, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex align-center justify-between" 
+                  style={{ padding: '10px 12px', borderBottom: idx < searchResults.length - 1 ? '1px solid var(--neutral-200)' : 'none', cursor: 'pointer' }}
+                  onClick={() => {
+                    setNationality(item.names.common);
+                    setFlag(item.flag.url_svg || item.flag.url_png);
+                    setSearchResults([]);
+                    setCountrySearch('');
+                  }}
+                >
+                  <div className="flex align-center gap-12">
+                    {item.flag?.url_png && (
+                      <img src={item.flag.url_png} alt={item.names.common} style={{ width: 28, height: 18, objectFit: 'cover', borderRadius: 2, border: '1px solid var(--neutral-200)' }} />
+                    )}
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--neutral-850)' }}>{item.names.common} ({item.names.official})</span>
+                  </div>
+                  <span style={{ fontSize: 12, color: 'var(--primary-600)', fontWeight: 600 }}>Pilih Bendera</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="form-group" style={{ marginTop: 16 }}>
