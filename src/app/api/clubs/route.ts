@@ -7,6 +7,10 @@ import type { DatabaseClub } from "@/types/database";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function firstRelation<T>(value: T | T[] | null | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export async function GET() {
   const supabase = createSupabaseServerClient();
 
@@ -73,18 +77,20 @@ export async function GET() {
         const clubSeason =
           club.club_seasons?.find(
             (seasonLink) =>
-              seasonLink.seasons?.code === "BRI_SUPER_LEAGUE_2025-26",
+              firstRelation(seasonLink.seasons)?.code ===
+              "BRI_SUPER_LEAGUE_2025-26",
           ) ?? club.club_seasons?.[0];
         const competitionSlugs = Array.from(
           new Set(
             (club.club_seasons ?? [])
-              .map((seasonLink) =>
-                competitionMasters.find(
-                  (competition) =>
-                    competition.code ===
-                    seasonLink.seasons?.competitions?.code,
-                )?.slug,
-              )
+              .map((seasonLink) => {
+                const season = firstRelation(seasonLink.seasons);
+                const linkedCompetition = firstRelation(season?.competitions);
+
+                return competitionMasters.find(
+                  (competition) => competition.code === linkedCompetition?.code,
+                )?.slug;
+              })
               .filter((slug): slug is string => Boolean(slug)),
           ),
         );

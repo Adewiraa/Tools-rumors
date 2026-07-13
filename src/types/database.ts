@@ -12,12 +12,30 @@ export interface DatabaseClub {
   city: string | null;
   club_seasons?: Array<{
     head_coach: string | null;
-    seasons?: {
-      code: string;
-      competitions?: {
-        code: string;
-      } | null;
-    } | null;
+    seasons?:
+      | {
+          code: string;
+          competitions?:
+            | {
+                code: string;
+              }
+            | Array<{
+                code: string;
+              }>
+            | null;
+        }
+      | Array<{
+          code: string;
+          competitions?:
+            | {
+                code: string;
+              }
+            | Array<{
+                code: string;
+              }>
+            | null;
+        }>
+      | null;
   }> | null;
 }
 

@@ -2280,6 +2280,9 @@ function MasterDataControls({
       logoPublicUrl: club.logoUrl ?? "",
       primaryColor: club.primaryColor,
       coachName: club.coachName ?? "",
+      competitionSlugs: club.competitionSlugs?.length
+        ? club.competitionSlugs
+        : ["super-league"],
     }));
   };
 
@@ -2348,6 +2351,22 @@ function MasterDataControls({
         error instanceof Error ? error.message : "Gagal menyimpan klub.",
       );
     }
+  };
+
+  const toggleClubCompetition = (competitionSlug: string) => {
+    setClubForm((current) => {
+      const currentSlugs = current.competitionSlugs.length
+        ? current.competitionSlugs
+        : ["super-league"];
+      const nextSlugs = currentSlugs.includes(competitionSlug)
+        ? currentSlugs.filter((slug) => slug !== competitionSlug)
+        : [...currentSlugs, competitionSlug];
+
+      return {
+        ...current,
+        competitionSlugs: nextSlugs.length ? nextSlugs : currentSlugs,
+      };
+    });
   };
 
   const uploadClubLogo = async (file: File | null) => {
@@ -2569,6 +2588,50 @@ function MasterDataControls({
               className="control-input"
             />
           </Field>
+        </div>
+
+        <div className="grid gap-2 rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-medium text-[#061B31]">
+              Kompetisi yang diikuti
+            </p>
+            <span className="rounded-full bg-white px-2 py-1 text-[0.62rem] text-[#64748D]">
+              {clubForm.competitionSlugs.length} dipilih
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {competitionMasters.map((competition) => {
+              const checked = clubForm.competitionSlugs.includes(
+                competition.slug,
+              );
+
+              return (
+                <label
+                  key={competition.slug}
+                  className={`flex min-h-12 cursor-pointer items-center gap-2 rounded-[5px] border bg-white px-3 py-2 text-xs transition ${
+                    checked
+                      ? "border-[#533AFD] text-[#061B31] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                      : "border-[#D4DEE9] text-[#64748D] hover:border-[#A7B2C5]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleClubCompetition(competition.slug)}
+                    className="h-4 w-4 accent-[#533AFD]"
+                  />
+                  <span className="grid min-w-0 flex-1 gap-0.5">
+                    <span className="truncate font-medium">
+                      {competition.name}
+                    </span>
+                    <span className="truncate text-[0.62rem] text-[#64748D]">
+                      {competition.seasonCode}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
         </div>
 
         <div className="grid grid-cols-[4.25rem_1fr] items-end gap-3">
