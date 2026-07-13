@@ -922,8 +922,8 @@ function MatchResultPoster({
         </span>
       </header>
 
-      <section className="relative mt-auto grid gap-2">
-        <div className="grid gap-2">
+      <section className="relative mt-auto grid gap-1.5">
+        <div className="grid gap-1.5">
           <GoalList
             title={matchResultData.homeTeam.shortName}
             color={matchResultData.homeTeam.primaryColor}
@@ -940,7 +940,7 @@ function MatchResultPoster({
         </div>
 
         {matchResultData.motm || matchResultData.note ? (
-          <div className="grid gap-1 border-l-2 bg-[#05070A]/36 px-3 py-2 text-[0.64rem] text-[#E5EDF5]" style={{ borderColor: homeColor }}>
+          <div className="grid gap-0.5 border-l-2 bg-[#05070A]/30 px-2.5 py-1.5 text-[0.54rem] text-[#E5EDF5]" style={{ borderColor: homeColor }}>
             {matchResultData.motm ? (
               <p>
                 MOTM{" "}
@@ -1002,17 +1002,17 @@ function MatchResultPoster({
         </div>
       </section>
 
-      <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-white/15 pt-3 text-[0.62rem] text-[#A7B2C5]">
+      <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-2.5 border-t border-white/15 pt-2.5 text-[0.54rem] text-[#A7B2C5]">
         <div className="h-px bg-white/15" />
         <p
-          className="rounded-[4px] border bg-[#05070A]/62 px-4 py-1.5 text-white"
+          className="rounded-[4px] border bg-[#05070A]/56 px-3 py-1 text-white"
           style={{ borderColor: colorAlpha(homeColor, 0.32) }}
         >
           Gosball
         </p>
         <div className="h-px bg-white/15" />
         {matchResultData.sponsor.enabled ? (
-          <p className="absolute inset-x-0 -bottom-4 text-center">
+          <p className="absolute inset-x-0 -bottom-3.5 text-center">
             Presented by{" "}
             <span style={{ color: awayColor }}>
               {matchResultData.sponsor.brandName}
@@ -1035,7 +1035,7 @@ function ResultTeamBlock({
 }) {
   return (
     <div
-      className={`grid min-w-0 gap-2 ${
+      className={`grid min-w-0 gap-1.5 ${
         align === "right" ? "justify-items-end text-right" : ""
       }`}
     >
@@ -1043,14 +1043,14 @@ function ResultTeamBlock({
       <div className="min-w-0">
         <h2
           className={`truncate leading-tight text-white ${
-            compact ? "text-[0.78rem]" : "text-[1.02rem]"
+            compact ? "text-[0.68rem]" : "text-[1.02rem]"
           }`}
         >
           {team.name}
         </h2>
         <p
           className={`mt-1 uppercase text-[#A7B2C5] ${
-            compact ? "text-[0.48rem]" : "text-[0.58rem]"
+            compact ? "text-[0.42rem]" : "text-[0.58rem]"
           }`}
         >
           {team.shortName}
