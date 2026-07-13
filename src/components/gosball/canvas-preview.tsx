@@ -828,8 +828,15 @@ function MatchResultPoster({
 }) {
   const homeColor = normalizeHexColor(matchResultData.homeTeam.primaryColor);
   const awayColor = normalizeHexColor(matchResultData.awayTeam.primaryColor);
+  const baseStatusLabel = (matchResultData.status as string) === "HT" ? "HT" : "FT";
+  const extraStatusLabel = matchResultData.customStatus?.trim().toUpperCase();
   const statusLabel =
-    matchResultData.customStatus?.trim() || matchResultData.status;
+    extraStatusLabel === "AET" || extraStatusLabel === "PEN"
+      ? extraStatusLabel
+      : (matchResultData.status as string) === "PEN"
+        ? "PEN"
+        : baseStatusLabel;
+  const showPenaltyShootout = statusLabel === "PEN";
   const darkOverlayOpacity = clamp(matchResultData.overlayOpacity / 100, 0, 0.92);
   const bottomOverlayOpacity = clamp(darkOverlayOpacity + 0.16, 0, 0.96);
   const homeScorers = matchResultData.scorers.filter(
@@ -966,7 +973,7 @@ function MatchResultPoster({
                   {matchResultData.awayTeam.score}
                 </span>
               </div>
-              {matchResultData.status === "PEN" ? (
+              {showPenaltyShootout ? (
                 <p className="mt-1 rounded-[4px] border border-white/20 bg-[#05070A]/68 px-2 py-0.5 text-[0.55rem] text-[#E5EDF5]">
                   PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
                   {matchResultData.awayTeam.penaltyScore ?? 0}
