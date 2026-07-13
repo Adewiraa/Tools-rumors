@@ -940,11 +940,11 @@ function MatchResultPoster({
               <span className="mb-1 grid min-h-8 min-w-8 place-items-center rounded-full border border-white/70 bg-[#05070A]/74 px-2 text-[0.72rem] font-semibold text-white shadow-[0_8px_24px_rgba(0,0,0,0.34)] backdrop-blur-[2px]">
                 {statusLabel}
               </span>
-              <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
+              <div className="relative grid grid-cols-[auto_auto_auto] items-center gap-3 rounded-[6px] px-2 text-white">
                 <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_4px_18px_rgba(0,0,0,0.78)]">
                   {matchResultData.homeTeam.score}
                 </span>
-                <span className="text-3xl font-semibold drop-shadow-[0_3px_12px_rgba(0,0,0,0.78)]">
+                <span className="text-3xl font-semibold text-white/90 drop-shadow-[0_3px_12px_rgba(0,0,0,0.78)]">
                   -
                 </span>
                 <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_4px_18px_rgba(0,0,0,0.78)]">
