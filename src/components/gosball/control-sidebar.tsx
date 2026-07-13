@@ -1129,6 +1129,15 @@ function TeamControls({
         </p>
       </div>
 
+      <SuperLeagueForeignSummary
+        rosterForeignCount={foreignRegistration.foreignPlayers.length}
+        unregisteredForeignCount={
+          foreignRegistration.unregisteredForeignPlayers.length
+        }
+        dspForeignCount={dspForeignCount}
+        starterForeignCount={starterForeignCount}
+      />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Nama klub">
           <input
@@ -1289,7 +1298,151 @@ function TeamControls({
           ))}
         </div>
       </div>
+
+      <OutsideDspPlayers
+        players={outsideDspPlayers}
+        unregisteredForeignIds={foreignRegistration.unregisteredForeignIds}
+      />
     </Panel>
+  );
+}
+
+function SuperLeagueForeignSummary({
+  rosterForeignCount,
+  unregisteredForeignCount,
+  dspForeignCount,
+  starterForeignCount,
+}: {
+  rosterForeignCount: number;
+  unregisteredForeignCount: number;
+  dspForeignCount: number;
+  starterForeignCount: number;
+}) {
+  return (
+    <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="studio-label text-[#533AFD]">Regulasi Super League</p>
+        {unregisteredForeignCount > 0 ? (
+          <span className="rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[0.62rem] text-red-700">
+            {unregisteredForeignCount} luar kuota
+          </span>
+        ) : null}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <ForeignQuotaPill
+          label="Roster"
+          count={rosterForeignCount}
+          max={superLeagueForeignRules.registered}
+        />
+        <ForeignQuotaPill
+          label="DSP"
+          count={dspForeignCount}
+          max={superLeagueForeignRules.dsp}
+        />
+        <ForeignQuotaPill
+          label="Lapangan"
+          count={starterForeignCount}
+          max={superLeagueForeignRules.field}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ForeignQuotaPill({
+  label,
+  count,
+  max,
+}: {
+  label: string;
+  count: number;
+  max: number;
+}) {
+  const isOverLimit = count > max;
+  const isFull = count === max;
+
+  return (
+    <div
+      className={`rounded-[5px] border px-2 py-2 ${
+        isOverLimit
+          ? "border-red-200 bg-red-50 text-red-700"
+          : isFull
+            ? "border-amber-200 bg-amber-50 text-amber-700"
+            : "border-[#D4DEE9] bg-white text-[#061B31]"
+      }`}
+    >
+      <span className="block text-[0.58rem] text-current/70">{label}</span>
+      <span className="block text-sm tabular-nums">
+        {count}/{max}
+      </span>
+    </div>
+  );
+}
+
+function OutsideDspPlayers({
+  players,
+  unregisteredForeignIds,
+}: {
+  players: Player[];
+  unregisteredForeignIds: Set<string>;
+}) {
+  return (
+    <div className="rounded-[5px] border border-[#D4DEE9] bg-[#F6F9FC] p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="studio-label text-[#533AFD]">Di luar DSP</p>
+        <span className="rounded-full bg-white px-2 py-1 text-[0.68rem] text-[#64748D]">
+          {players.length} pemain
+        </span>
+      </div>
+      <div className="max-h-48 space-y-1.5 overflow-y-auto pr-1">
+        {players.map((player) => {
+          const playerIsForeign = isForeignPlayer(player);
+          const isUnregisteredForeign = unregisteredForeignIds.has(player.id);
+
+          return (
+            <div
+              key={player.id}
+              className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-2 rounded-[5px] border border-[#D4DEE9] bg-white px-3 py-2"
+            >
+              <span className="text-xs tabular-nums text-[#64748D]">
+                {player.shirtNumber ?? "-"}
+              </span>
+              <span className="min-w-0">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {playerIsForeign ? (
+                    <FlagBadge
+                      code={player.countryCode}
+                      label={player.nationality}
+                      flagUrl={player.countryFlagUrl}
+                    />
+                  ) : null}
+                  <span className="truncate text-sm text-[#061B31]">
+                    {player.name}
+                  </span>
+                </span>
+                <span className="block truncate text-[0.68rem] text-[#64748D]">
+                  {player.position} / {player.nationality ?? player.countryCode}
+                </span>
+              </span>
+              {isUnregisteredForeign ? (
+                <span className="rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[0.58rem] text-red-700">
+                  luar 11
+                </span>
+              ) : playerIsForeign ? (
+                <span className="rounded-full border border-[#D4DEE9] bg-[#F6F9FC] px-2 py-1 text-[0.58rem] text-[#64748D]">
+                  asing
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
+        {players.length === 0 ? (
+          <p className="rounded-[5px] border border-dashed border-[#D4DEE9] bg-white p-3 text-sm text-[#64748D]">
+            Semua pemain roster sudah masuk DSP atau roster belum dimuat.
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
