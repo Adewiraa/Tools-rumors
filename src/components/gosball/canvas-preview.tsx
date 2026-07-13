@@ -925,7 +925,7 @@ function MatchResultPoster({
       />
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <header className="relative flex items-start justify-between gap-3">
+      <header className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
         <div className="grid justify-items-start gap-1">
           <div className="relative grid h-14 w-14 place-items-center">
             <span className="absolute inset-0 rounded-full bg-white/[0.08] blur-md" />
@@ -938,6 +938,7 @@ function MatchResultPoster({
           </div>
           <p className="sr-only">Gosball match result</p>
         </div>
+        <div className="min-w-0" />
         <CompetitionMark
           name={matchResultData.competitionName}
           logoUrl={matchResultData.competitionLogoUrl}
