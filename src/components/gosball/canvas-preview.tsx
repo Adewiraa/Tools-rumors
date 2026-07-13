@@ -906,12 +906,13 @@ function MatchResultPoster({
 
       <header className="relative flex items-start justify-between gap-3">
         <div className="grid justify-items-start gap-1">
-          <div className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-[6px] bg-white/[0.06] shadow-[0_10px_30px_rgba(0,0,0,0.26)] backdrop-blur-[2px]">
+          <div className="relative grid h-14 w-14 place-items-center">
+            <span className="absolute inset-0 rounded-full bg-white/[0.08] blur-md" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/gosball.png"
               alt="Gosball"
-              className="h-11 w-11 object-contain drop-shadow-[0_3px_10px_rgba(0,0,0,0.55)]"
+              className="relative h-12 w-12 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.62)]"
             />
           </div>
           <p className="sr-only">Gosball match result</p>
