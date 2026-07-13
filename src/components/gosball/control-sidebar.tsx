@@ -776,6 +776,13 @@ export function ControlSidebar({
                 alt={activeSponsor.brandName}
                 className="h-8 max-w-20 object-contain"
               />
+              <button
+                type="button"
+                onClick={() => updateSponsorLogo(undefined)}
+                className="rounded-[4px] border border-[#D4DEE9] bg-white px-2 py-1 text-[0.62rem] text-[#64748D] transition hover:border-[#533AFD] hover:text-[#533AFD]"
+              >
+                Hapus
+              </button>
             </div>
           ) : null}
         </Panel>
