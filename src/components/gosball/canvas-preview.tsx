@@ -9,6 +9,7 @@ import type {
   CanvasAspectRatio,
   FormationCoordinate,
   MatchdayLineupData,
+  MatchResultData,
   Player,
   TeamLineup,
   ToolMode,
@@ -19,6 +20,7 @@ interface CanvasPreviewProps {
   mode: ToolMode;
   aspectRatio: CanvasAspectRatio;
   lineupData: MatchdayLineupData;
+  matchResultData: MatchResultData;
   rumorData: TransferRumorData;
 }
 
@@ -34,10 +36,13 @@ const stripe = {
 };
 
 export const CanvasPreview = forwardRef<HTMLDivElement, CanvasPreviewProps>(
-  function CanvasPreview({ mode, aspectRatio, lineupData, rumorData }, ref) {
+  function CanvasPreview(
+    { mode, aspectRatio, lineupData, matchResultData, rumorData },
+    ref,
+  ) {
     const canvasSizeClass =
-      aspectRatio === "1:1"
-        ? "aspect-square w-full max-w-[780px]"
+      aspectRatio === "4:5"
+        ? "aspect-[4/5] w-full max-w-[min(520px,calc(100svw-1rem))] lg:max-h-[calc(100dvh-4rem)]"
         : "aspect-[9/16] w-full max-w-[min(430px,calc(100svw-1rem))] lg:max-h-[calc(100dvh-4rem)]";
 
     return (
@@ -50,6 +55,8 @@ export const CanvasPreview = forwardRef<HTMLDivElement, CanvasPreviewProps>(
           <CanvasBackground />
           {mode === "lineup" ? (
             <LineupPoster aspectRatio={aspectRatio} lineupData={lineupData} />
+          ) : mode === "matchResult" ? (
+            <MatchResultPoster matchResultData={matchResultData} />
           ) : mode === "rumor" ? (
             <RumorPoster aspectRatio={aspectRatio} rumorData={rumorData} />
           ) : (
@@ -587,7 +594,7 @@ function TeamLogo({
   micro = false,
   header = false,
 }: {
-  team: TeamLineup;
+  team: Pick<TeamLineup, "name" | "shortName" | "logoUrl" | "primaryColor">;
   compact?: boolean;
   micro?: boolean;
   header?: boolean;
@@ -697,6 +704,182 @@ function toFaceoffCoordinate(
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function MatchResultPoster({
+  matchResultData,
+}: {
+  matchResultData: MatchResultData;
+}) {
+  const statusLabel =
+    matchResultData.customStatus?.trim() || matchResultData.status;
+  const homeScorers = matchResultData.scorers.filter(
+    (scorer) => scorer.team === "home" && scorer.playerName.trim(),
+  );
+  const awayScorers = matchResultData.scorers.filter(
+    (scorer) => scorer.team === "away" && scorer.playerName.trim(),
+  );
+
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col overflow-hidden p-[5.2%]">
+      {matchResultData.backgroundImageUrl ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={matchResultData.backgroundImageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div
+            className="absolute inset-0 bg-[#05070A]"
+            style={{ opacity: matchResultData.overlayOpacity / 100 }}
+          />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,#061B31,#0B1020_48%,#05070A)]" />
+      )}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(83,58,253,0.35),transparent_18rem),radial-gradient(circle_at_88%_18%,rgba(255,97,24,0.24),transparent_16rem)]" />
+      <div className="absolute inset-0 opacity-[0.20] [background-image:linear-gradient(rgba(229,237,245,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(229,237,245,0.10)_1px,transparent_1px)] [background-size:30px_30px]" />
+
+      <header className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="studio-label text-[#A78BFA]">Gosball match result</p>
+          <p className="mt-1 truncate text-[0.68rem] text-[#A7B2C5]">
+            {matchResultData.competitionName}
+            {matchResultData.matchLabel ? ` / ${matchResultData.matchLabel}` : ""}
+          </p>
+        </div>
+        <span className="rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-2 text-sm text-white">
+          {statusLabel}
+        </span>
+      </header>
+
+      <section className="relative my-auto grid gap-5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <ResultTeamBlock team={matchResultData.homeTeam} align="left" />
+          <div className="grid min-w-[8.5rem] justify-items-center">
+            <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
+              <span className="display-type text-[4.8rem] leading-none">
+                {matchResultData.homeTeam.score}
+              </span>
+              <span className="text-3xl text-[#FF6118]">-</span>
+              <span className="display-type text-[4.8rem] leading-none">
+                {matchResultData.awayTeam.score}
+              </span>
+            </div>
+            {matchResultData.status === "PEN" ? (
+              <p className="mt-1 rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-1 text-[0.64rem] text-[#E5EDF5]">
+                PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
+                {matchResultData.awayTeam.penaltyScore ?? 0}
+              </p>
+            ) : null}
+          </div>
+          <ResultTeamBlock team={matchResultData.awayTeam} align="right" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <GoalList
+            title={matchResultData.homeTeam.shortName}
+            color={matchResultData.homeTeam.primaryColor}
+            scorers={homeScorers}
+          />
+          <GoalList
+            title={matchResultData.awayTeam.shortName}
+            color={matchResultData.awayTeam.primaryColor}
+            scorers={awayScorers}
+            alignRight
+          />
+        </div>
+
+        {matchResultData.motm || matchResultData.note ? (
+          <div className="grid gap-2 rounded-[6px] border border-white/15 bg-[#0B1020]/78 p-3 text-[0.68rem] text-[#E5EDF5]">
+            {matchResultData.motm ? (
+              <p>
+                MOTM <span className="text-[#A78BFA]">{matchResultData.motm}</span>
+              </p>
+            ) : null}
+            {matchResultData.note ? (
+              <p className="text-[#A7B2C5]">{matchResultData.note}</p>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[0.62rem] text-[#A7B2C5]">
+        <div className="h-px bg-white/15" />
+        <p className="rounded-[4px] border border-white/15 bg-white/[0.08] px-4 py-1.5 text-white">
+          Gosball
+        </p>
+        <div className="h-px bg-white/15" />
+        {matchResultData.sponsor.enabled ? (
+          <p className="absolute inset-x-0 -bottom-4 text-center">
+            Presented by{" "}
+            <span className="text-[#A78BFA]">
+              {matchResultData.sponsor.brandName}
+            </span>
+          </p>
+        ) : null}
+      </footer>
+    </div>
+  );
+}
+
+function ResultTeamBlock({
+  team,
+  align,
+}: {
+  team: MatchResultData["homeTeam"];
+  align: "left" | "right";
+}) {
+  return (
+    <div
+      className={`grid min-w-0 gap-2 ${
+        align === "right" ? "justify-items-end text-right" : ""
+      }`}
+    >
+      <TeamLogo team={team} header compact />
+      <div className="min-w-0">
+        <h2 className="truncate text-[0.92rem] text-white">{team.name}</h2>
+        <p className="text-[0.6rem] text-[#A7B2C5]">{team.shortName}</p>
+      </div>
+    </div>
+  );
+}
+
+function GoalList({
+  title,
+  color,
+  scorers,
+  alignRight = false,
+}: {
+  title: string;
+  color: string;
+  scorers: MatchResultData["scorers"];
+  alignRight?: boolean;
+}) {
+  return (
+    <div className={`min-w-0 rounded-[6px] border border-white/15 bg-[#0B1020]/78 p-3 ${alignRight ? "text-right" : ""}`}>
+      <p className="mb-2 text-[0.58rem] text-[#A7B2C5]" style={{ color }}>
+        {title} goals
+      </p>
+      <div className="grid gap-1">
+        {scorers.length ? (
+          scorers.map((scorer) => (
+            <p
+              key={scorer.id}
+              className="truncate text-[0.68rem] leading-tight text-[#F3F7FF]"
+            >
+              {scorer.playerName}
+              {scorer.minute ? ` ${scorer.minute}` : ""}
+              {scorer.type !== "NORMAL" ? ` (${scorer.type})` : ""}
+            </p>
+          ))
+        ) : (
+          <p className="text-[0.64rem] text-[#64748D]">No goals</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function RumorPoster({
