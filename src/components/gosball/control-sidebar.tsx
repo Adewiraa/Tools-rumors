@@ -1181,7 +1181,7 @@ function TeamControls({
       </Field>
 
       <div className="space-y-3">
-        <p className="text-xs text-[#533AFD]">
+        <p className={`text-xs ${teamTheme.label}`}>
           Starting XI
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
@@ -1189,7 +1189,7 @@ function TeamControls({
             const positionPlayers = getRosterSuggestionsForPosition(player.position);
 
             return (
-            <div key={`${team.id}-starter-${index}`} className="grid grid-cols-[1fr_3rem] gap-2">
+            <div key={`${team.id}-starter-${index}`} className={`grid grid-cols-[1fr_3rem] gap-2 ${teamTheme.slot}`}>
               <Field label={`${index + 1}. ${player.position}`}>
                 <select
                   value={rosterSuggestions.some((item) => item.id === player.id) ? player.id : ""}
@@ -1237,12 +1237,12 @@ function TeamControls({
       </div>
 
       <div className="space-y-3">
-        <p className="text-xs text-[#533AFD]">
+        <p className={`text-xs ${teamTheme.label}`}>
           Cadangan
         </p>
         <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
           {team.substitutes.map((player, index) => (
-            <div key={`${team.id}-substitute-${index}`} className="grid grid-cols-[1fr_3rem] gap-2">
+            <div key={`${team.id}-substitute-${index}`} className={`grid grid-cols-[1fr_3rem] gap-2 ${teamTheme.slot}`}>
               <Field label={`Sub ${index + 1}`}>
                 <select
                   value={rosterSuggestions.some((item) => item.id === player.id) ? player.id : ""}
