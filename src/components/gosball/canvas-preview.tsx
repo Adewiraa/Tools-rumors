@@ -121,12 +121,12 @@ function LineupPoster({
 
 function LineupFeedPoster({ lineupData }: { lineupData: MatchdayLineupData }) {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col p-[4.7%]">
+    <div className="absolute inset-0 z-10 flex flex-col p-[3.8%] sm:p-[4.7%]">
       <LineupHeader lineupData={lineupData} compact={false} />
 
       <FaceoffPitch lineupData={lineupData} />
 
-      <div className="mt-3 grid min-h-0 flex-1 grid-cols-2 gap-3">
+      <div className="mt-2 grid min-h-0 flex-1 grid-cols-2 gap-2 sm:mt-3 sm:gap-3">
         <FeedRosterBoard team={lineupData.homeTeam} side="home" />
         <FeedRosterBoard team={lineupData.awayTeam} side="away" />
       </div>
@@ -159,7 +159,7 @@ function LineupHeader({
             className={`display-type min-w-0 text-center leading-[0.95] tracking-[-0.055em] text-white [overflow-wrap:anywhere] ${
               compact
                 ? "text-[clamp(1.45rem,7.5vw,2.05rem)]"
-                : "text-[clamp(2.65rem,5.6vw,4.8rem)]"
+                : "text-[clamp(1.9rem,5.6vw,4.8rem)]"
             }`}
           >
             {lineupData.homeTeam.shortName}
@@ -207,7 +207,9 @@ function FaceoffPitch({
   return (
     <section
       className={`relative overflow-hidden rounded-[6px] border border-white/15 bg-[#061B31]/72 ${
-        story ? "mt-2 h-[17%] min-h-[112px]" : "mt-4 h-[28%] min-h-[180px]"
+        story
+          ? "mt-2 h-[17%] min-h-[112px]"
+          : "mt-2 h-[23%] min-h-[86px] sm:mt-4 sm:h-[28%] sm:min-h-[160px]"
       }`}
     >
       <div className={story ? "absolute inset-2 rounded-[5px] border border-white/12" : "absolute inset-3 rounded-[5px] border border-white/12"} />
@@ -266,11 +268,10 @@ function FeedRosterBoard({
           background: `linear-gradient(90deg, ${team.primaryColor}, ${stripe.purple})`,
         }}
       />
-      <div className="flex h-full min-h-0 flex-col p-3">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          <TeamLogo team={team} />
+      <div className="flex h-full min-h-0 flex-col p-2.5 sm:p-3">
+        <div className="grid grid-cols-[1fr_auto] items-center gap-2">
           <div className="min-w-0">
-            <h3 className="truncate text-[0.95rem] text-white">{team.name}</h3>
+            <h3 className="truncate text-[0.76rem] text-white sm:text-[0.95rem]">{team.name}</h3>
             <p className="truncate text-[0.6rem] text-[#A7B2C5]">
               coach {team.coach.name}
             </p>
@@ -303,8 +304,7 @@ function StoryRosterBoard({
         }}
       />
       <div className="flex h-full min-h-0 flex-col p-2">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          <TeamLogo team={team} micro />
+        <div className="grid grid-cols-[1fr_auto] items-center gap-2">
           <div className="min-w-0">
             <h3 className="truncate text-[0.8rem] leading-tight text-white">{team.name}</h3>
             <p className="truncate text-[0.48rem] leading-tight text-[#A7B2C5]">
@@ -572,7 +572,7 @@ function LineupFooter({
       </p>
       <div className="h-px bg-white/15" />
       {lineupData.sponsor.enabled ? (
-        <p className={compact ? "absolute inset-x-0 -bottom-2.5 text-center" : "absolute inset-x-0 -bottom-3 text-center"}>
+        <p className={compact ? "absolute inset-x-0 -bottom-3 text-center" : "absolute inset-x-0 -bottom-4 text-center"}>
           Presented by{" "}
           <span className="text-[#A78BFA]">{lineupData.sponsor.brandName}</span>
         </p>
