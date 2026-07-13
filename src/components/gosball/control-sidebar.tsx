@@ -16,6 +16,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { FlagBadge } from "@/components/gosball/flag-badge";
+import { competitionMasters } from "@/lib/competitions";
 import { countryOptions, type CountryOption } from "@/lib/countries";
 import { formationOptions, formationTemplates } from "@/lib/gosball-fixtures";
 import { indonesianClubs } from "@/lib/indonesian-clubs";
@@ -1533,11 +1534,32 @@ function MatchResultControls({
   const [draftMessage, setDraftMessage] = useState("");
   const matchResultExtraStatus = getMatchResultExtraStatus(matchResultData);
   const showPenaltyShootout = hasPenaltyShootout(matchResultData);
+  const selectedCompetitionSlug = useMemo(
+    () =>
+      competitionMasters.find(
+        (competition) =>
+          competition.name === matchResultData.competitionName &&
+          competition.logoUrl === matchResultData.competitionLogoUrl,
+      )?.slug ?? competitionMasters[0].slug,
+    [matchResultData.competitionLogoUrl, matchResultData.competitionName],
+  );
 
   const updateMatchResult = (update: Partial<MatchResultData>) => {
     onMatchResultChange({
       ...matchResultData,
       ...update,
+    });
+  };
+
+  const selectCompetition = (competitionSlug: string) => {
+    const selectedCompetition =
+      competitionMasters.find(
+        (competition) => competition.slug === competitionSlug,
+      ) ?? competitionMasters[0];
+
+    updateMatchResult({
+      competitionName: selectedCompetition.name,
+      competitionLogoUrl: selectedCompetition.logoUrl,
     });
   };
 
@@ -1674,33 +1696,22 @@ function MatchResultControls({
     reader.readAsDataURL(file);
   };
 
-  const uploadCompetitionLogo = (file: File | null) => {
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      updateMatchResult({
-        competitionLogoUrl:
-          typeof reader.result === "string" ? reader.result : undefined,
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="space-y-6">
       <Panel title="Match Result" icon={<Trophy className="h-4 w-4" />}>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Kompetisi">
-            <input
-              value={matchResultData.competitionName}
-              onChange={(event) =>
-                updateMatchResult({ competitionName: event.target.value })
-              }
+            <select
+              value={selectedCompetitionSlug}
+              onChange={(event) => selectCompetition(event.target.value)}
               className="control-input"
-            />
+            >
+              {competitionMasters.map((competition) => (
+                <option key={competition.slug} value={competition.slug}>
+                  {competition.name}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Matchday">
             <input
@@ -1709,16 +1720,6 @@ function MatchResultControls({
                 updateMatchResult({ matchLabel: event.target.value })
               }
               className="control-input"
-            />
-          </Field>
-          <Field label="Logo kompetisi">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) =>
-                uploadCompetitionLogo(event.target.files?.[0] ?? null)
-              }
-              className="w-full rounded-[5px] border border-dashed border-[#D4DEE9] bg-white px-3 py-2 text-xs text-[#64748D] file:mr-2 file:rounded-[4px] file:border-0 file:bg-[#533AFD] file:px-2.5 file:py-1.5 file:text-xs file:text-white"
             />
           </Field>
         </div>
