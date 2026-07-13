@@ -1753,8 +1753,9 @@ function MatchResultControls({
         <Field label={`Overlay gelap: ${matchResultData.overlayOpacity}%`}>
           <input
             type="range"
-            min={25}
-            max={82}
+            min={0}
+            max={100}
+            step={1}
             value={matchResultData.overlayOpacity}
             onChange={(event) =>
               updateMatchResult({ overlayOpacity: Number(event.target.value) })
