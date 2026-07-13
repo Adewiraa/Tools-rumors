@@ -840,7 +840,7 @@ function MatchResultPoster({
         </span>
       </header>
 
-      <section className="relative mb-7 mt-auto grid gap-4">
+      <section className="relative mb-4 mt-auto grid gap-4">
         <div className="grid gap-4">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <ResultTeamBlock team={matchResultData.homeTeam} align="left" />
