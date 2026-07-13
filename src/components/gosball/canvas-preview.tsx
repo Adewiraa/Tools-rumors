@@ -921,8 +921,11 @@ function MatchResultPoster({
           </p>
         </div>
         <span
-          className="rounded-[4px] border bg-[#05070A]/62 px-3 py-2 text-sm text-white shadow-[0_14px_30px_rgba(0,0,0,0.22)]"
-          style={{ borderColor: colorAlpha(awayColor, 0.42) }}
+          className="rounded-[4px] border bg-[#05070A]/72 px-3 py-2 text-sm text-white shadow-[0_14px_30px_rgba(0,0,0,0.28)] backdrop-blur-[2px]"
+          style={{
+            borderColor: colorAlpha(awayColor, 0.48),
+            textShadow: "0 1px 8px rgba(0,0,0,0.7)",
+          }}
         >
           {statusLabel}
         </span>
@@ -1094,7 +1097,10 @@ function GoalList({
         style={{ backgroundColor: color }}
       />
       <div className="min-w-0">
-        <p className="truncate text-[0.48rem] uppercase tracking-[0.08em] text-[#D7E0EE]">
+        <p
+          className="truncate text-[0.48rem] uppercase tracking-[0.08em] text-[#D7E0EE]"
+          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.72)" }}
+        >
           {title} goals
         </p>
         <div className="mt-0.5 grid gap-0.5">
@@ -1103,6 +1109,7 @@ function GoalList({
             <p
               key={scorer.id}
               className="truncate text-[0.58rem] leading-tight text-white"
+              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.72)" }}
             >
               {scorer.playerName}
               {scorer.minute ? ` ${scorer.minute}` : ""}
