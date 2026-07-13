@@ -506,10 +506,34 @@ function RosterGrid({
   team: TeamLineup;
   variant: "feed" | "story";
 }) {
+  if (variant === "story") {
+    return (
+      <div className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-1.5 overflow-hidden">
+        <div className="grid min-h-0 grid-cols-[1.04fr_0.96fr] gap-2 overflow-hidden">
+          <RosterColumn
+            title="Starting XI"
+            players={team.starters}
+            teamColor={team.primaryColor}
+            variant={variant}
+          />
+          <RosterColumn
+            title="Cadangan"
+            players={team.substitutes.slice(0, 10)}
+            teamColor={team.primaryColor}
+            variant={variant}
+            bench
+          />
+        </div>
+        <OutsideDspRoster
+          players={team.outsideDspPlayers ?? []}
+          teamColor={team.primaryColor}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className={`grid min-h-0 overflow-hidden ${
-      variant === "story" ? "grid-cols-[1.06fr_0.94fr] gap-2" : "grid-cols-2 gap-2"
-    }`}>
+    <div className="grid min-h-0 grid-cols-2 gap-2 overflow-hidden">
       <RosterColumn
         title="Starting XI"
         players={team.starters}
@@ -523,6 +547,60 @@ function RosterGrid({
         variant={variant}
         bench
       />
+    </div>
+  );
+}
+
+function OutsideDspRoster({
+  players,
+  teamColor,
+}: {
+  players: Player[];
+  teamColor: string;
+}) {
+  return (
+    <div
+      className="min-h-[2.15rem] rounded-[5px] border border-white/10 bg-white/[0.035] px-2 py-1.5"
+      style={{
+        boxShadow: `inset 0 1px 0 ${teamColor}24`,
+      }}
+    >
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="text-[0.46rem] leading-none text-[#A78BFA]">
+          Asing luar DSP
+        </p>
+        <span
+          className="rounded-[3px] px-1.5 py-0.5 text-[0.4rem] leading-none text-white"
+          style={{ backgroundColor: `${teamColor}66` }}
+        >
+          {players.length}
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-wrap gap-1 overflow-hidden">
+        {players.length ? (
+          players.slice(0, 6).map((player) => (
+            <span
+              key={player.id}
+              className="flex max-w-[46%] items-center gap-1 rounded-[3px] bg-[#05070A]/48 px-1.5 py-0.5 text-[0.45rem] leading-none text-[#F3F7FF]"
+            >
+              <span className="shrink-0 tabular-nums text-[#8A96AC]">
+                {player.shirtNumber ?? "-"}
+              </span>
+              <FlagBadge
+                code={player.countryCode}
+                label={player.nationality}
+                flagUrl={player.countryFlagUrl}
+                tiny
+              />
+              <span className="min-w-0 truncate">{player.name}</span>
+            </span>
+          ))
+        ) : (
+          <span className="text-[0.45rem] leading-none text-[#64748D]">
+            Tidak ada pemain asing di luar DSP
+          </span>
+        )}
+      </div>
     </div>
   );
 }
