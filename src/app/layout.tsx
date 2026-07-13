@@ -2,14 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gosball Media Tools",
-  description:
-    "Matchday line-up and transfer rumor story generator for Indonesian football media.",
-  icons: {
-    icon: "/gosball.png",
-    shortcut: "/gosball.png",
-    apple: "/gosball.png",
-  },
+  title: "GARUDA MATCHROOM — Admin Media Sepak Bola Indonesia",
+  description: "Dashboard operasional admin dan editor media sepak bola Indonesia. Kelola lineup, hasil pertandingan, rumor transfer, master klub, dan master pemain.",
 };
 
 export default function RootLayout({
@@ -19,7 +13,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body>
+        {children}
+      </body>
     </html>
   );
 }
