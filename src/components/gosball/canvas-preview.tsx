@@ -926,18 +926,18 @@ function MatchResultPoster({
         <div className="relative grid gap-2">
           <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
             <ResultCrestCard team={matchResultData.homeTeam} align="left" />
-            <div className="grid min-w-[9.5rem] justify-items-center">
+            <div className="grid w-[11.75rem] justify-items-center">
               <span className="mb-1 grid min-h-8 min-w-8 place-items-center rounded-full border border-white/80 bg-white/86 px-2 text-[0.72rem] font-semibold text-[#061B31] shadow-[0_8px_24px_rgba(0,0,0,0.20)] backdrop-blur-[3px]">
                 {statusLabel}
               </span>
-              <div className="relative grid grid-cols-[auto_auto_auto] items-center gap-3 rounded-[8px] border border-white/70 bg-[#061B31]/88 px-4 text-white shadow-[0_16px_36px_rgba(0,0,0,0.32)] backdrop-blur-[3px]">
-                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
+              <div className="relative grid h-[5.45rem] w-full grid-cols-[1fr_1.7rem_1fr] items-center rounded-[8px] border border-white/70 bg-[#061B31]/92 px-3 text-center text-white shadow-[0_16px_36px_rgba(0,0,0,0.36)] backdrop-blur-[3px]">
+                <span className="display-type justify-self-end text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   {matchResultData.homeTeam.score}
                 </span>
-                <span className="text-3xl font-semibold text-white/88 drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
+                <span className="justify-self-center text-3xl font-semibold text-white/88 drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   -
                 </span>
-                <span className="display-type text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
+                <span className="display-type justify-self-start text-[4.45rem] leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.45)]">
                   {matchResultData.awayTeam.score}
                 </span>
               </div>
