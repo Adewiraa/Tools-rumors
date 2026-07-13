@@ -864,7 +864,7 @@ function MatchResultPoster({
         </div>
 
         {matchResultData.motm || matchResultData.note ? (
-          <div className="grid gap-2 border-l-2 bg-[#05070A]/46 px-3 py-2 text-[0.68rem] text-[#E5EDF5]" style={{ borderColor: homeColor }}>
+          <div className="grid gap-1 border-l-2 bg-[#05070A]/36 px-3 py-2 text-[0.64rem] text-[#E5EDF5]" style={{ borderColor: homeColor }}>
             {matchResultData.motm ? (
               <p>
                 MOTM{" "}
@@ -876,6 +876,54 @@ function MatchResultPoster({
             ) : null}
           </div>
         ) : null}
+
+        <div
+          className="relative overflow-hidden rounded-[7px] border bg-[#05070A]/78 p-3 shadow-[0_22px_60px_rgba(0,0,0,0.38)]"
+          style={{ borderColor: colorAlpha(homeColor, 0.28) }}
+        >
+          <div
+            className="absolute inset-x-0 top-0 h-[3px]"
+            style={{
+              background: `linear-gradient(90deg, ${homeColor}, ${awayColor})`,
+            }}
+          />
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <ResultTeamBlock
+              team={matchResultData.homeTeam}
+              align="left"
+              compact
+            />
+            <div
+              className="grid min-w-[9.5rem] justify-items-center"
+            >
+              <p className="studio-label mb-1 text-[0.48rem]" style={{ color: colorAlpha(awayColor, 0.90) }}>
+                {statusLabel}
+              </p>
+              <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
+                <span className="display-type text-[4.8rem] leading-none">
+                  {matchResultData.homeTeam.score}
+                </span>
+                <span className="text-3xl" style={{ color: awayColor }}>
+                  -
+                </span>
+                <span className="display-type text-[4.8rem] leading-none">
+                  {matchResultData.awayTeam.score}
+                </span>
+              </div>
+              {matchResultData.status === "PEN" ? (
+                <p className="mt-1 rounded-[4px] border border-white/15 bg-white/[0.08] px-3 py-1 text-[0.64rem] text-[#E5EDF5]">
+                  PEN {matchResultData.homeTeam.penaltyScore ?? 0}-
+                  {matchResultData.awayTeam.penaltyScore ?? 0}
+                </p>
+              ) : null}
+            </div>
+            <ResultTeamBlock
+              team={matchResultData.awayTeam}
+              align="right"
+              compact
+            />
+          </div>
+        </div>
       </section>
 
       <footer className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-white/15 pt-3 text-[0.62rem] text-[#A7B2C5]">
@@ -903,9 +951,11 @@ function MatchResultPoster({
 function ResultTeamBlock({
   team,
   align,
+  compact = false,
 }: {
   team: MatchResultData["homeTeam"];
   align: "left" | "right";
+  compact?: boolean;
 }) {
   return (
     <div
@@ -915,10 +965,18 @@ function ResultTeamBlock({
     >
       <TeamLogo team={team} header compact />
       <div className="min-w-0">
-        <h2 className="truncate text-[1.02rem] leading-tight text-white">
+        <h2
+          className={`truncate leading-tight text-white ${
+            compact ? "text-[0.78rem]" : "text-[1.02rem]"
+          }`}
+        >
           {team.name}
         </h2>
-        <p className="mt-1 text-[0.58rem] uppercase text-[#A7B2C5]">
+        <p
+          className={`mt-1 uppercase text-[#A7B2C5] ${
+            compact ? "text-[0.48rem]" : "text-[0.58rem]"
+          }`}
+        >
           {team.shortName}
         </p>
       </div>
