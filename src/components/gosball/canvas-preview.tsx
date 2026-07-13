@@ -932,24 +932,12 @@ function MatchResultPoster({
           </div>
           <p className="sr-only">Gosball match result</p>
         </div>
-        <div className="grid min-w-0 justify-items-end gap-1 pt-1 text-right">
-          <p className="studio-label text-[0.5rem] text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.72)]">
-            Match result
-          </p>
-          <span
-            className="h-[2px] w-16 rounded-full"
-            style={{
-              background: `linear-gradient(90deg, ${colorAlpha(
-                homeColor,
-                0.18,
-              )}, ${awayColor})`,
-            }}
-          />
-          <p className="max-w-[12rem] truncate text-[0.62rem] text-[#D7E0EE] drop-shadow-[0_2px_10px_rgba(0,0,0,0.72)]">
-            {matchResultData.competitionName}
-            {matchResultData.matchLabel ? ` / ${matchResultData.matchLabel}` : ""}
-          </p>
-        </div>
+        <CompetitionMark
+          name={matchResultData.competitionName}
+          logoUrl={matchResultData.competitionLogoUrl}
+          matchLabel={matchResultData.matchLabel}
+          color={awayColor}
+        />
       </header>
 
       <section className="relative mt-auto">
@@ -1085,6 +1073,58 @@ function ResultCrestCard({
       <p className="max-w-24 truncate text-[0.48rem] uppercase tracking-[0.08em] text-[#D7E0EE] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
         {team.shortName}
       </p>
+    </div>
+  );
+}
+
+function CompetitionMark({
+  name,
+  logoUrl,
+  matchLabel,
+  color,
+}: {
+  name: string;
+  logoUrl?: string;
+  matchLabel?: string;
+  color: string;
+}) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("");
+
+  return (
+    <div className="grid justify-items-end gap-1 text-right">
+      <div
+        className="relative grid h-12 min-w-12 place-items-center rounded-full bg-[#05070A]/42 px-2 shadow-[0_10px_28px_rgba(0,0,0,0.24)] backdrop-blur-[2px]"
+        title={name}
+      >
+        <span
+          className="absolute inset-0 rounded-full border border-white/18"
+          style={{ boxShadow: `0 0 18px ${colorAlpha(color, 0.24)}` }}
+        />
+        {logoUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl}
+              alt={name}
+              className="relative h-8 w-8 object-contain drop-shadow-[0_3px_10px_rgba(0,0,0,0.68)]"
+            />
+          </>
+        ) : (
+          <span className="relative text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.72)]">
+            {initials || "LG"}
+          </span>
+        )}
+      </div>
+      {matchLabel ? (
+        <p className="max-w-[7rem] truncate text-[0.48rem] text-[#D7E0EE] drop-shadow-[0_2px_8px_rgba(0,0,0,0.72)]">
+          {matchLabel}
+        </p>
+      ) : null}
     </div>
   );
 }
