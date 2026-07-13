@@ -943,7 +943,7 @@ function MatchResultPoster({
           <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
             <ResultCrestCard team={matchResultData.homeTeam} align="left" />
             <div className="grid min-w-[9.5rem] justify-items-center">
-              <span className="mb-1 grid h-8 w-8 place-items-center rounded-full border border-white/70 bg-[#05070A]/74 text-[0.72rem] font-semibold text-white shadow-[0_8px_24px_rgba(0,0,0,0.34)] backdrop-blur-[2px]">
+              <span className="mb-1 grid min-h-8 min-w-8 place-items-center rounded-full border border-white/70 bg-[#05070A]/74 px-2 text-[0.72rem] font-semibold text-white shadow-[0_8px_24px_rgba(0,0,0,0.34)] backdrop-blur-[2px]">
                 {statusLabel}
               </span>
               <div className="grid grid-cols-[auto_auto_auto] items-center gap-3 text-white">
@@ -1080,39 +1080,45 @@ function GoalList({
   return (
     <div
       title={teamName}
-      className={`grid min-w-0 grid-cols-[auto_1fr] items-start gap-2 rounded-[5px] border bg-[#05070A]/64 px-2.5 py-1.5 shadow-[0_10px_26px_rgba(0,0,0,0.24)] backdrop-blur-[2px] ${
+      className={`min-w-0 px-1.5 py-0.5 ${
         alignRight ? "text-right" : ""
       }`}
-      style={{
-        borderColor: colorAlpha(color, 0.34),
-      }}
     >
-      <span
-        className="mt-0.5 h-full min-h-5 w-[2px]"
-        style={{ backgroundColor: color }}
-      />
       <div className="min-w-0">
         <p
-          className="truncate text-[0.48rem] uppercase tracking-[0.08em] text-[#D7E0EE]"
-          style={{ textShadow: "0 1px 8px rgba(0,0,0,0.72)" }}
+          className="truncate text-[0.45rem] uppercase tracking-[0.1em] text-[#D7E0EE]"
+          style={{
+            color,
+            textShadow: "0 1px 8px rgba(0,0,0,0.86)",
+          }}
         >
           {title} goals
         </p>
-        <div className="mt-0.5 grid gap-0.5">
+        <div className="mt-1 grid gap-0.5">
         {scorers.length ? (
           scorers.map((scorer) => (
             <p
               key={scorer.id}
-              className="truncate text-[0.58rem] leading-tight text-white"
+              className={`flex min-w-0 items-center gap-1 truncate text-[0.58rem] font-semibold uppercase leading-tight text-white ${
+                alignRight ? "justify-end" : ""
+              }`}
               style={{ textShadow: "0 1px 8px rgba(0,0,0,0.72)" }}
             >
-              {scorer.playerName}
-              {scorer.minute ? ` ${scorer.minute}` : ""}
-              {scorer.type !== "NORMAL" ? ` (${scorer.type})` : ""}
+              <span className="min-w-0 truncate">
+                {scorer.minute ? `${scorer.minute} ` : ""}
+                {scorer.playerName}
+                {scorer.type !== "NORMAL" ? ` (${scorer.type})` : ""}
+              </span>
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full border border-white/80"
+                style={{ boxShadow: `0 0 8px ${colorAlpha(color, 0.7)}` }}
+              />
             </p>
           ))
         ) : (
-          <p className="text-[0.52rem] text-[#94A3B8]">No goals</p>
+          <p className="text-[0.52rem] text-[#D7E0EE] drop-shadow-[0_1px_8px_rgba(0,0,0,0.86)]">
+            No goals
+          </p>
         )}
         </div>
       </div>
