@@ -58,6 +58,7 @@ export default function Home() {
   const [activeMenu, setActiveMenu] = useState<'dashboard' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'logs' | 'settings'>('dashboard');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Super Admin');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -264,6 +265,17 @@ export default function Home() {
     setAuditLogs(prev => [newLog, ...prev]);
   };
 
+  // Helper to navigate and close mobile drawer
+  const navigateTo = (menu: typeof activeMenu) => {
+    setActiveMenu(menu);
+    setMobileDrawerOpen(false);
+    setEditingLineupId(null);
+    setEditingResultId(null);
+    setEditingRumorId(null);
+    setEditingClubId(null);
+    setEditingPlayerId(null);
+  };
+
   return (
     <div className="app-container">
       {/* Dynamic Header Alert for Unsaved Changes or Offline status */}
@@ -280,7 +292,80 @@ export default function Home() {
         </div>
       )}
 
-      {/* 1. Sidebar */}
+      {/* Mobile Drawer Overlay */}
+      {mobileDrawerOpen && (
+        <div className="mobile-drawer-overlay" onClick={() => setMobileDrawerOpen(false)}>
+          <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--navy-900)' }}>
+              <div className="flex align-center gap-8">
+                <span style={{ color: 'var(--primary-600)' }}>🇮🇩</span>
+                <span style={{ fontWeight: 700, color: 'var(--white)', fontSize: 16 }}>GARUDA MATCH</span>
+              </div>
+              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setMobileDrawerOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <nav style={{ padding: '12px 0', flex: 1, overflowY: 'auto' }}>
+              <div className="menu-category" style={{ display: 'block' }}>Menu Utama</div>
+              <div className={`menu-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => navigateTo('dashboard')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <Activity size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Dashboard</span>
+              </div>
+
+              <div className="menu-category" style={{ display: 'block' }}>Pertandingan</div>
+              <div className={`menu-item ${activeMenu === 'lineups' ? 'active' : ''}`} onClick={() => navigateTo('lineups')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <FileText size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Lineup Tim</span>
+              </div>
+              <div className={`menu-item ${activeMenu === 'results' ? 'active' : ''}`} onClick={() => navigateTo('results')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <Trophy size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Hasil Pertandingan</span>
+              </div>
+
+              <div className="menu-category" style={{ display: 'block' }}>Editorial</div>
+              <div className={`menu-item ${activeMenu === 'rumors' ? 'active' : ''}`} onClick={() => navigateTo('rumors')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <Radio size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Rumor & Transfer</span>
+              </div>
+
+              <div className="menu-category" style={{ display: 'block' }}>Master Data</div>
+              <div className={`menu-item ${activeMenu === 'clubs' ? 'active' : ''}`} onClick={() => navigateTo('clubs')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <Shield size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Master Klub</span>
+              </div>
+              <div className={`menu-item ${activeMenu === 'players' ? 'active' : ''}`} onClick={() => navigateTo('players')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <User size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Master Pemain</span>
+              </div>
+
+              <div className="menu-category" style={{ display: 'block' }}>Sistem</div>
+              <div className={`menu-item ${activeMenu === 'logs' ? 'active' : ''}`} onClick={() => navigateTo('logs')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <History size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Audit Log</span>
+              </div>
+              <div className={`menu-item ${activeMenu === 'settings' ? 'active' : ''}`} onClick={() => navigateTo('settings')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <Settings size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Pengaturan</span>
+              </div>
+            </nav>
+
+            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--navy-900)', backgroundColor: '#111417' }}>
+              <div className="flex align-center gap-8">
+                <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: 13 }}>
+                  {currentUserRole[0]}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>Admin Garuda</div>
+                  <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{currentUserRole}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 1. Sidebar — Desktop: full sidebar, Mobile: bottom tab bar (5 main items) */}
       <aside className="sidebar" style={{ width: sidebarCollapsed ? '72px' : '248px' }}>
         <div className="sidebar-logo">
           {!sidebarCollapsed ? (
@@ -317,23 +402,29 @@ export default function Home() {
           </div>
 
           {!sidebarCollapsed && <div className="menu-category">Master Data</div>}
-          <div className={`menu-item ${activeMenu === 'clubs' ? 'active' : ''}`} onClick={() => { setActiveMenu('clubs'); setEditingClubId(null); }}>
+          <div className={`menu-item mobile-hidden ${activeMenu === 'clubs' ? 'active' : ''}`} onClick={() => { setActiveMenu('clubs'); setEditingClubId(null); }}>
             <Shield size={18} />
             {!sidebarCollapsed && <span>Master Klub</span>}
           </div>
-          <div className={`menu-item ${activeMenu === 'players' ? 'active' : ''}`} onClick={() => { setActiveMenu('players'); setEditingPlayerId(null); }}>
+          <div className={`menu-item mobile-hidden ${activeMenu === 'players' ? 'active' : ''}`} onClick={() => { setActiveMenu('players'); setEditingPlayerId(null); }}>
             <User size={18} />
             {!sidebarCollapsed && <span>Master Pemain</span>}
           </div>
 
           {!sidebarCollapsed && <div className="menu-category">Sistem</div>}
-          <div className={`menu-item ${activeMenu === 'logs' ? 'active' : ''}`} onClick={() => setActiveMenu('logs')}>
+          <div className={`menu-item mobile-hidden ${activeMenu === 'logs' ? 'active' : ''}`} onClick={() => setActiveMenu('logs')}>
             <History size={18} />
             {!sidebarCollapsed && <span>Audit Log</span>}
           </div>
-          <div className={`menu-item ${activeMenu === 'settings' ? 'active' : ''}`} onClick={() => setActiveMenu('settings')}>
+          <div className={`menu-item mobile-hidden ${activeMenu === 'settings' ? 'active' : ''}`} onClick={() => setActiveMenu('settings')}>
             <Settings size={18} />
-            {!sidebarCollapsed && <span>Pengaturan Demo</span>}
+            {!sidebarCollapsed && <span>Pengaturan</span>}
+          </div>
+
+          {/* Mobile-only "More" button */}
+          <div className="menu-item mobile-more-btn" onClick={() => setMobileDrawerOpen(true)}>
+            <Menu size={18} />
+            <span>Lainnya</span>
           </div>
         </nav>
 
@@ -366,7 +457,10 @@ export default function Home() {
         {/* 2. Top Header */}
         <header className="top-header">
           <div className="flex align-center gap-16">
-            <button className="btn btn-sm btn-secondary" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title="Toggle Sidebar">
+            <button className="btn btn-sm btn-secondary desktop-sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title="Toggle Sidebar">
+              <Menu size={18} />
+            </button>
+            <button className="btn btn-sm btn-secondary mobile-hamburger" onClick={() => setMobileDrawerOpen(true)} title="Menu">
               <Menu size={18} />
             </button>
             <div className="search-input-wrapper">
@@ -576,17 +670,50 @@ export default function Home() {
                     clubs={clubs}
                     players={players}
                     onClose={() => setEditingClubId(null)}
-                    onSave={(updatedClub) => {
-                      if (editingClubId === 'new') {
-                        setClubs(prev => [...prev, updatedClub]);
-                        logAction('CREATE_CLUB', 'Master Klub', `Menambah master klub baru: ${updatedClub.name}`);
-                        triggerToast('Klub baru berhasil ditambahkan!');
-                      } else {
-                        setClubs(prev => prev.map(c => c.id === updatedClub.id ? updatedClub : c));
-                        logAction('UPDATE_CLUB', 'Master Klub', `Memperbarui profil klub: ${updatedClub.name}`);
-                        triggerToast('Profil klub berhasil diperbarui!');
+                    onSave={async (updatedClub) => {
+                      try {
+                        // Persist to Supabase
+                        const supabasePayload = {
+                          id: updatedClub.id,
+                          name: updatedClub.name,
+                          short_name: updatedClub.shortName,
+                          slug: updatedClub.code.toLowerCase(),
+                          city: updatedClub.city,
+                          stadium: updatedClub.stadium,
+                          coach: updatedClub.coach,
+                          primary_color: updatedClub.homeColor,
+                          secondary_color: updatedClub.awayColor,
+                          home_color: updatedClub.homeColor,
+                          away_color: updatedClub.awayColor,
+                          third_color: updatedClub.thirdColor,
+                          logo_public_url: updatedClub.logoUrl,
+                        };
+
+                        const { error } = await supabase
+                          .from('clubs')
+                          .upsert(supabasePayload, { onConflict: 'id' });
+
+                        if (error) {
+                          console.error('Supabase save error:', error);
+                          triggerToast(`Gagal menyimpan ke database: ${error.message}`, 'error');
+                          return;
+                        }
+
+                        // Update local state
+                        if (editingClubId === 'new') {
+                          setClubs(prev => [...prev, updatedClub]);
+                          logAction('CREATE_CLUB', 'Master Klub', `Menambah master klub baru: ${updatedClub.name}`);
+                          triggerToast('Klub baru berhasil ditambahkan!');
+                        } else {
+                          setClubs(prev => prev.map(c => c.id === updatedClub.id ? updatedClub : c));
+                          logAction('UPDATE_CLUB', 'Master Klub', `Memperbarui profil klub: ${updatedClub.name}`);
+                          triggerToast('Profil klub berhasil diperbarui!');
+                        }
+                        setEditingClubId(null);
+                      } catch (err: any) {
+                        console.error('Save club error:', err);
+                        triggerToast('Terjadi kesalahan saat menyimpan. Coba lagi.', 'error');
                       }
-                      setEditingClubId(null);
                     }}
                   />
                 ) : (
