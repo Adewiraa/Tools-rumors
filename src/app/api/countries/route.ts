@@ -19,17 +19,22 @@ export async function GET(request: Request) {
     );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Rest Countries API error:', response.status, errorText);
       return NextResponse.json({ data: [] });
     }
 
     const rawData = await response.json();
-    
-    if (!rawData || !Array.isArray(rawData.data)) {
+
+    // Response structure: { data: { objects: [...], meta: {...} } }
+    const objects = rawData?.data?.objects;
+
+    if (!Array.isArray(objects)) {
       return NextResponse.json({ data: [] });
     }
 
     // Map to frontend-expected structure: { names: { common, official }, flag: { url_svg, url_png } }
-    const mappedData = rawData.data.map((item: any) => ({
+    const mappedData = objects.map((item: any) => ({
       names: {
         common: item.names?.common || '',
         official: item.names?.official || ''
