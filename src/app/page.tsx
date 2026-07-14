@@ -672,20 +672,14 @@ export default function Home() {
                     onClose={() => setEditingClubId(null)}
                     onSave={async (updatedClub) => {
                       try {
-                        // Persist to Supabase
                         const supabasePayload = {
                           id: updatedClub.id,
                           name: updatedClub.name,
                           short_name: updatedClub.shortName,
                           slug: updatedClub.code.toLowerCase(),
                           city: updatedClub.city,
-                          stadium: updatedClub.stadium,
-                          coach: updatedClub.coach,
                           primary_color: updatedClub.homeColor,
                           secondary_color: updatedClub.awayColor,
-                          home_color: updatedClub.homeColor,
-                          away_color: updatedClub.awayColor,
-                          third_color: updatedClub.thirdColor,
                           logo_public_url: updatedClub.logoUrl,
                         };
 
@@ -2832,6 +2826,40 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
   const [awayColor, setAwayColor] = useState(club.awayColor);
   const [thirdColor, setThirdColor] = useState(club.thirdColor);
   const [logo, setLogo] = useState(club.logoUrl);
+  const [uploading, setUploading] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const clubSlug = code ? code.toLowerCase() : 'club';
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = `${clubSlug}/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('club-logos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('club-logos')
+        .getPublicUrl(filePath);
+
+      setLogo(publicUrl);
+    } catch (err: any) {
+      console.error('Error uploading logo:', err);
+      alert(`Gagal mengunggah logo: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const squadList = players.filter(p => p.clubId === club.id);
 
@@ -2917,9 +2945,8 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
         </div>
 
         <div className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Logo Preview */}
           <div>
-            <label className="form-label">Logo Klub</label>
+            <label className="form-label">Logo Klub (HD)</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
               <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)', backgroundColor: 'var(--neutral-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {logo && logo.startsWith('http') ? (
@@ -2929,11 +2956,49 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
                 )}
               </div>
               <div style={{ flex: 1, fontSize: 11, color: 'var(--neutral-500)' }}>
-                {logo && logo.startsWith('http') ? 'Logo tersimpan dari Supabase' : 'Belum ada logo'}
+                {logo && logo.startsWith('http') ? 'Logo HD tersimpan' : 'Belum ada logo'}
               </div>
             </div>
-            <input type="text" className="form-input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="URL logo klub..." style={{ fontSize: 12 }} />
-            <span className="form-helper">Masukkan URL gambar logo klub atau upload via Supabase Storage.</span>
+            
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleLogoUpload} 
+                style={{ display: 'none' }} 
+                id="club-logo-file-input"
+                disabled={uploading}
+              />
+              <label 
+                htmlFor="club-logo-file-input" 
+                className="btn btn-secondary" 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: uploading ? 'not-allowed' : 'pointer', width: '100%', justifyContent: 'center', borderStyle: 'dashed', borderWidth: 1, height: 38, fontSize: 12 }}
+              >
+                {uploading ? (
+                  <span>Mengunggah Logo HD...</span>
+                ) : (
+                  <>
+                    <Upload size={14} />
+                    Unggah Logo (HD)
+                  </>
+                )}
+              </label>
+            </div>
+            
+            {logo && (
+              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: 'var(--neutral-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                  {logo}
+                </span>
+                <button 
+                  type="button" 
+                  onClick={() => setLogo('')} 
+                  style={{ background: 'none', border: 'none', color: 'var(--danger-600)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Hapus
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Team Colors - Home, Away, Third */}
