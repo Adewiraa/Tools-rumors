@@ -44,7 +44,8 @@ import {
   INITIAL_PLAYERS,
   INITIAL_MATCHES,
   INITIAL_RUMORS,
-  INITIAL_AUDIT_LOGS
+  INITIAL_AUDIT_LOGS,
+  calculateClubCompleteness
 } from '@/lib/mockData';
 import { supabase } from '@/lib/supabaseClient';
 import * as htmlToImage from 'html-to-image';
@@ -145,22 +146,27 @@ export default function Home() {
 
         // Map Clubs
         if (clubsData && clubsData.length > 0) {
-          const mappedClubs: Club[] = clubsData.map(c => ({
-            id: c.id,
-            name: c.name,
-            shortName: c.short_name || c.name,
-            code: c.slug ? c.slug.slice(0, 3).toUpperCase() : 'CLUB',
-            city: c.city || 'Unknown',
-            stadium: 'Stadion Utama',
-            founded: 1945,
-            primaryColor: c.primary_color || '#1B365D',
-            secondaryColor: c.secondary_color || '#E2E8F0',
-            logoUrl: c.logo_public_url || '⚽',
-            coach: 'Coach',
-            activePlayersCount: 0,
-            completeness: 80,
-            status: 'active'
-          }));
+          const mappedClubs: Club[] = clubsData.map(c => {
+            const clubData: Club = {
+              id: c.id,
+              name: c.name,
+              shortName: c.short_name || c.name,
+              code: c.slug ? c.slug.slice(0, 3).toUpperCase() : 'CLUB',
+              city: c.city || '',
+              stadium: c.stadium || '',
+              founded: c.founded || 1945,
+              homeColor: c.home_color || c.primary_color || '',
+              awayColor: c.away_color || c.secondary_color || '',
+              thirdColor: c.third_color || '',
+              logoUrl: c.logo_public_url || '',
+              coach: c.coach || '',
+              activePlayersCount: 0,
+              completeness: 0,
+              status: 'active'
+            };
+            clubData.completeness = calculateClubCompleteness(clubData);
+            return clubData;
+          });
           setClubs(mappedClubs);
         }
 
@@ -436,19 +442,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* State Toggle Buttons for UI states */}
-        <div style={{ backgroundColor: 'var(--neutral-100)', padding: '6px 32px', borderBottom: '1px solid var(--neutral-200)', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-700)' }}>Simulasi State Halaman:</span>
-          <button className={`btn btn-sm ${uiState === 'default' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUiState('default')}>Default</button>
-          <button className={`btn btn-sm ${uiState === 'loading' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUiState('loading')}>Loading/Skeleton</button>
-          <button className={`btn btn-sm ${uiState === 'empty' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUiState('empty')}>Empty State</button>
-          <button className={`btn btn-sm ${uiState === 'error' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUiState('error')}>Server Error</button>
-          <div style={{ width: 1, height: 20, backgroundColor: 'var(--neutral-300)' }}></div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-            <input type="checkbox" checked={isOffline} onChange={(e) => setIsOffline(e.target.checked)} />
-            Offline Mode
-          </label>
-        </div>
+
 
         {/* Toast Notification */}
         {toast && (
@@ -2691,12 +2685,13 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
     city: '',
     stadium: '',
     founded: 2026,
-    primaryColor: '#66756A',
-    secondaryColor: '#E2E8F0',
-    logoUrl: '⚽',
+    homeColor: '#66756A',
+    awayColor: '#E2E8F0',
+    thirdColor: '',
+    logoUrl: '',
     coach: '',
     activePlayersCount: 0,
-    completeness: 50,
+    completeness: 0,
     status: 'active' as const
   };
 
@@ -2706,10 +2701,18 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
   const [city, setCity] = useState(club.city);
   const [stadium, setStadium] = useState(club.stadium);
   const [coach, setCoach] = useState(club.coach);
-  const [primaryColor, setPrimaryColor] = useState(club.primaryColor);
+  const [homeColor, setHomeColor] = useState(club.homeColor);
+  const [awayColor, setAwayColor] = useState(club.awayColor);
+  const [thirdColor, setThirdColor] = useState(club.thirdColor);
   const [logo, setLogo] = useState(club.logoUrl);
 
   const squadList = players.filter(p => p.clubId === club.id);
+
+  // Calculate live completeness based on current form state
+  const liveCompleteness = calculateClubCompleteness({
+    name, shortName, code, city, stadium, coach, logoUrl: logo,
+    homeColor, awayColor, thirdColor
+  });
 
   const handleSave = () => {
     if (!name || !shortName || !code) {
@@ -2724,9 +2727,14 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
       city,
       stadium,
       coach,
-      primaryColor,
+      homeColor,
+      awayColor,
+      thirdColor,
       logoUrl: logo,
-      completeness: 100
+      completeness: calculateClubCompleteness({
+        name, shortName, code, city, stadium, coach, logoUrl: logo,
+        homeColor, awayColor, thirdColor
+      })
     };
     onSave(updatedClub);
   };
@@ -2738,7 +2746,15 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
           <button className="btn btn-sm btn-secondary" onClick={onClose}>
             <ArrowLeft size={16} /> Kembali
           </button>
-          <h2 style={{ fontSize: 20, fontWeight: 700 }}>{isNew ? 'Tambah Master Klub Baru' : `Edit Klub: ${club.name}`}</h2>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700 }}>{isNew ? 'Tambah Master Klub Baru' : `Edit Klub: ${club.name}`}</h2>
+            <div className="flex align-center gap-8" style={{ marginTop: 4 }}>
+              <div style={{ width: 80, height: 6, backgroundColor: 'var(--neutral-200)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${liveCompleteness}%`, height: '100%', backgroundColor: liveCompleteness >= 80 ? 'var(--success-600)' : liveCompleteness >= 50 ? 'var(--warning-600)' : 'var(--danger-600)', transition: 'width 0.3s ease' }}></div>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: liveCompleteness >= 80 ? 'var(--success-600)' : liveCompleteness >= 50 ? 'var(--warning-600)' : 'var(--danger-600)' }}>Kelengkapan: {liveCompleteness}%</span>
+            </div>
+          </div>
         </div>
         <button className="btn btn-md btn-primary" onClick={handleSave}>Simpan Klub</button>
       </div>
@@ -2774,16 +2790,59 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
         </div>
 
         <div className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Logo Preview */}
           <div>
-            <label className="form-label">Emoji Logo (Simulasi)</label>
-            <input type="text" className="form-input" value={logo} onChange={(e) => setLogo(e.target.value)} style={{ fontSize: 24, textAlign: 'center' }} />
+            <label className="form-label">Logo Klub</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)', backgroundColor: 'var(--neutral-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {logo && logo.startsWith('http') ? (
+                  <img src={logo} alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                ) : (
+                  <Shield size={24} color="var(--neutral-300)" />
+                )}
+              </div>
+              <div style={{ flex: 1, fontSize: 11, color: 'var(--neutral-500)' }}>
+                {logo && logo.startsWith('http') ? 'Logo tersimpan dari Supabase' : 'Belum ada logo'}
+              </div>
+            </div>
+            <input type="text" className="form-input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="URL logo klub..." style={{ fontSize: 12 }} />
+            <span className="form-helper">Masukkan URL gambar logo klub atau upload via Supabase Storage.</span>
           </div>
 
+          {/* Team Colors - Home, Away, Third */}
           <div>
-            <label className="form-label">Warna Utama Tim</label>
-            <div className="flex align-center gap-8">
-              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} style={{ width: 44, height: 44, border: 'none', padding: 0 }} />
-              <input type="text" className="form-input" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
+            <label className="form-label">Warna Tim</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--neutral-700)', display: 'block', marginBottom: 4 }}>Home</span>
+                <div className="flex align-center gap-8">
+                  <input type="color" value={homeColor} onChange={(e) => setHomeColor(e.target.value)} style={{ width: 36, height: 36, border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-sm)', padding: 2, cursor: 'pointer' }} />
+                  <input type="text" className="form-input" value={homeColor} onChange={(e) => setHomeColor(e.target.value)} style={{ fontSize: 12 }} />
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--neutral-700)', display: 'block', marginBottom: 4 }}>Away</span>
+                <div className="flex align-center gap-8">
+                  <input type="color" value={awayColor} onChange={(e) => setAwayColor(e.target.value)} style={{ width: 36, height: 36, border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-sm)', padding: 2, cursor: 'pointer' }} />
+                  <input type="text" className="form-input" value={awayColor} onChange={(e) => setAwayColor(e.target.value)} style={{ fontSize: 12 }} />
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--neutral-700)', display: 'block', marginBottom: 4 }}>Third</span>
+                <div className="flex align-center gap-8">
+                  <input type="color" value={thirdColor || '#000000'} onChange={(e) => setThirdColor(e.target.value)} style={{ width: 36, height: 36, border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-sm)', padding: 2, cursor: 'pointer' }} />
+                  <input type="text" className="form-input" value={thirdColor} onChange={(e) => setThirdColor(e.target.value)} placeholder="Opsional" style={{ fontSize: 12 }} />
+                </div>
+              </div>
+            </div>
+            {/* Color Preview Swatches */}
+            <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: 10, color: 'var(--neutral-500)', fontWeight: 600 }}>Preview:</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', backgroundColor: homeColor, border: '1px solid var(--neutral-200)' }} title="Home"></div>
+                <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', backgroundColor: awayColor, border: '1px solid var(--neutral-200)' }} title="Away"></div>
+                {thirdColor && <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', backgroundColor: thirdColor, border: '1px solid var(--neutral-200)' }} title="Third"></div>}
+              </div>
             </div>
           </div>
 

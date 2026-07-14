@@ -1,0 +1,24 @@
+{
+  "name": "GARUDA MATCHROOM — Media Tools",
+  "short_name": "Garuda Match",
+  "description": "Dashboard operasional admin dan editor media sepak bola Indonesia.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#151A1D",
+  "theme_color": "#66756A",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

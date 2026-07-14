@@ -6,13 +6,43 @@ export interface Club {
   city: string;
   stadium: string;
   founded: number;
-  primaryColor: string;
-  secondaryColor: string;
+  homeColor: string;
+  awayColor: string;
+  thirdColor: string;
   logoUrl: string;
   coach: string;
   activePlayersCount: number;
   completeness: number; // 0 - 100
   status: 'active' | 'inactive';
+}
+
+// Calculate club completeness based on which fields are filled
+export function calculateClubCompleteness(club: Partial<Club>): number {
+  const fields: { key: keyof Club; weight: number }[] = [
+    { key: 'name', weight: 15 },
+    { key: 'shortName', weight: 10 },
+    { key: 'code', weight: 10 },
+    { key: 'city', weight: 10 },
+    { key: 'stadium', weight: 10 },
+    { key: 'coach', weight: 10 },
+    { key: 'logoUrl', weight: 15 },
+    { key: 'homeColor', weight: 7 },
+    { key: 'awayColor', weight: 7 },
+    { key: 'thirdColor', weight: 6 },
+  ];
+
+  let totalWeight = 0;
+  let filledWeight = 0;
+
+  for (const field of fields) {
+    totalWeight += field.weight;
+    const value = club[field.key];
+    if (value !== undefined && value !== null && value !== '' && value !== '⚽') {
+      filledWeight += field.weight;
+    }
+  }
+
+  return totalWeight > 0 ? Math.round((filledWeight / totalWeight) * 100) : 0;
 }
 
 export interface Player {
@@ -93,8 +123,9 @@ export const INITIAL_CLUBS: Club[] = [
     city: 'Jakarta',
     stadium: 'Stadion Utama Nusantara',
     founded: 1928,
-    primaryColor: '#1B365D',
-    secondaryColor: '#E2E8F0',
+    homeColor: '#1B365D',
+    awayColor: '#E2E8F0',
+    thirdColor: '#C8A96E',
     logoUrl: '🦅',
     coach: 'Bambang Pamungkas',
     activePlayersCount: 26,
@@ -109,8 +140,9 @@ export const INITIAL_CLUBS: Club[] = [
     city: 'Surabaya',
     stadium: 'Stadion Gelora Samudra',
     founded: 1927,
-    primaryColor: '#0F52BA',
-    secondaryColor: '#FFFFFF',
+    homeColor: '#0F52BA',
+    awayColor: '#FFFFFF',
+    thirdColor: '#222222',
     logoUrl: '🦈',
     coach: 'Aji Santoso',
     activePlayersCount: 24,
@@ -125,8 +157,9 @@ export const INITIAL_CLUBS: Club[] = [
     city: 'Bandung',
     stadium: 'Stadion Gelora Cakra',
     founded: 1933,
-    primaryColor: '#004B87',
-    secondaryColor: '#FFCD00',
+    homeColor: '#004B87',
+    awayColor: '#FFCD00',
+    thirdColor: '#FFFFFF',
     logoUrl: '🐯',
     coach: 'Bojan Hodak',
     activePlayersCount: 28,
@@ -141,8 +174,9 @@ export const INITIAL_CLUBS: Club[] = [
     city: 'Gianyar',
     stadium: 'Stadion Kapten Dewata',
     founded: 2015,
-    primaryColor: '#C8102E',
-    secondaryColor: '#000000',
+    homeColor: '#C8102E',
+    awayColor: '#000000',
+    thirdColor: '#FAFAFA',
     logoUrl: '🔱',
     coach: 'Stefano Cugurra',
     activePlayersCount: 25,
@@ -157,8 +191,9 @@ export const INITIAL_CLUBS: Club[] = [
     city: 'Makassar',
     stadium: 'Stadion Gelora Phinisi',
     founded: 1915,
-    primaryColor: '#800000',
-    secondaryColor: '#D4AF37',
+    homeColor: '#800000',
+    awayColor: '#D4AF37',
+    thirdColor: '',
     logoUrl: '⛵',
     coach: 'Bernardo Tavares',
     activePlayersCount: 23,
