@@ -10,28 +10,33 @@ export async function GET(request: Request) {
 
   try {
     const response = await fetch(
-      `https://restcountries.com/v3.1/name/${encodeURIComponent(q)}`
+      `https://api.restcountries.com/countries/v5?q=${encodeURIComponent(q)}`,
+      {
+        headers: {
+          'Authorization': 'Bearer rc_live_7ed6c608bb5b43ad864e423952ff6e14'
+        }
+      }
     );
 
     if (!response.ok) {
       return NextResponse.json({ data: [] });
     }
 
-    const data = await response.json();
+    const rawData = await response.json();
     
-    if (!Array.isArray(data)) {
+    if (!rawData || !Array.isArray(rawData.data)) {
       return NextResponse.json({ data: [] });
     }
 
     // Map to frontend-expected structure: { names: { common, official }, flag: { url_svg, url_png } }
-    const mappedData = data.map((item: any) => ({
+    const mappedData = rawData.data.map((item: any) => ({
       names: {
-        common: item.name?.common || '',
-        official: item.name?.official || ''
+        common: item.names?.common || '',
+        official: item.names?.official || ''
       },
       flag: {
-        url_svg: item.flags?.svg || '',
-        url_png: item.flags?.png || ''
+        url_svg: item.flag?.url_svg || '',
+        url_png: item.flag?.url_png || ''
       }
     }));
 

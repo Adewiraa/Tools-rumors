@@ -85,6 +85,7 @@ export default function Home() {
   const [editingRumorId, setEditingRumorId] = useState<string | null>(null);
   const [editingClubId, setEditingClubId] = useState<string | null>(null);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [selectedPlayerClubId, setSelectedPlayerClubId] = useState<string>('Semua');
 
   // Filter States
   const [filterCompetition, setFilterCompetition] = useState('Semua');
@@ -745,6 +746,7 @@ export default function Home() {
                         logAction('UPDATE_PLAYER', 'Master Pemain', `Memperbarui profil pemain: ${updatedPlayer.fullName}`);
                         triggerToast('Profil pemain berhasil diperbarui!');
                       }
+                      setSelectedPlayerClubId(updatedPlayer.clubId);
                       setEditingPlayerId(null);
                     }}
                   />
@@ -754,8 +756,16 @@ export default function Home() {
                     clubs={clubs}
                     uiState={uiState}
                     onCreateNew={() => setEditingPlayerId('new')}
-                    onEdit={setEditingPlayerId}
+                    onEdit={(id) => {
+                      const pl = players.find(p => p.id === id);
+                      if (pl) {
+                        setSelectedPlayerClubId(pl.clubId);
+                      }
+                      setEditingPlayerId(id);
+                    }}
                     hasPermission={hasPermission}
+                    selectedClubId={selectedPlayerClubId}
+                    setSelectedClubId={setSelectedPlayerClubId}
                   />
                 )
               )}
@@ -3070,11 +3080,27 @@ interface PlayersListProps {
   onCreateNew: () => void;
   onEdit: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
+  selectedClubId: string;
+  setSelectedClubId: (id: string) => void;
 }
 
-function PlayersListView({ players, clubs, onCreateNew, onEdit, hasPermission }: PlayersListProps) {
-  const [selectedClubId, setSelectedClubId] = useState(clubs[0]?.id || 'Semua');
+function PlayersListView({ 
+  players, 
+  clubs, 
+  onCreateNew, 
+  onEdit, 
+  hasPermission,
+  selectedClubId,
+  setSelectedClubId
+}: PlayersListProps) {
   const [selectedPosition, setSelectedPosition] = useState('Semua');
+
+  // Default to first club if selectedClubId is 'Semua' or empty to prevent listing all players
+  useEffect(() => {
+    if ((selectedClubId === 'Semua' || !selectedClubId) && clubs.length > 0) {
+      setSelectedClubId(clubs[0].id);
+    }
+  }, [clubs, selectedClubId, setSelectedClubId]);
 
   const filteredPlayers = players.filter(p => {
     const matchClub = selectedClubId === 'Semua' || p.clubId === selectedClubId;
