@@ -133,6 +133,7 @@ export default function Home() {
             full_name,
             display_name,
             country_code,
+            country_name,
             country_flag_url,
             club_rosters (
               shirt_number,
@@ -186,7 +187,7 @@ export default function Home() {
             else if (pos === 'MF' || pos.toLowerCase().includes('midfielder') || pos.toLowerCase().includes('mid')) position = 'Midfielder';
             else if (pos === 'FW' || pos.toLowerCase().includes('forward') || pos.toLowerCase().includes('striker')) position = 'Forward';
 
-            return {
+            const mappedPlayer: Player = {
               id: p.id,
               fullName: p.full_name,
               displayName: p.display_name || p.full_name,
@@ -194,15 +195,17 @@ export default function Home() {
               clubName,
               position,
               shirtNumber: roster?.shirt_number || 99,
-              nationality: p.country_code === 'ID' ? 'Indonesia' : 'Asing',
+              nationality: p.country_name || (p.country_code === 'ID' ? 'Indonesia' : 'Asing'),
               flagUrl: p.country_flag_url || '🇮🇩',
               age: 25,
               contractStart: '2025-01-01',
               contractEnd: '2028-01-01',
               status: 'active',
               availability: 'available',
-              completeness: 85
+              completeness: 0
             };
+            mappedPlayer.completeness = calculatePlayerCompleteness(mappedPlayer);
+            return mappedPlayer;
           });
           setPlayers(mappedPlayers);
         }
@@ -736,18 +739,109 @@ export default function Home() {
                     clubs={clubs}
                     players={players}
                     onClose={() => setEditingPlayerId(null)}
-                    onSave={(updatedPlayer) => {
-                      if (editingPlayerId === 'new') {
-                        setPlayers(prev => [...prev, updatedPlayer]);
-                        logAction('CREATE_PLAYER', 'Master Pemain', `Menambah master pemain baru: ${updatedPlayer.fullName}`);
-                        triggerToast('Pemain baru berhasil ditambahkan!');
-                      } else {
-                        setPlayers(prev => prev.map(p => p.id === updatedPlayer.id ? updatedPlayer : p));
-                        logAction('UPDATE_PLAYER', 'Master Pemain', `Memperbarui profil pemain: ${updatedPlayer.fullName}`);
-                        triggerToast('Profil pemain berhasil diperbarui!');
+                    onSave={async (updatedPlayer) => {
+                      try {
+                        // 1. Get/Create club_season_id from club_seasons for the selected clubId
+                        const { data: seasonData, error: seasonErr } = await supabase
+                          .from('club_seasons')
+                          .select('id')
+                          .eq('club_id', updatedPlayer.clubId)
+                          .limit(1);
+
+                        if (seasonErr) throw seasonErr;
+
+                        let clubSeasonId = seasonData && seasonData[0]?.id;
+
+                        // If club_season_id doesn't exist, try to lookup any active season or insert a default entry
+                        if (!clubSeasonId) {
+                          const { data: seasonsList } = await supabase.from('seasons').select('id').limit(1);
+                          const activeSeasonId = seasonsList && seasonsList[0]?.id;
+                          if (activeSeasonId) {
+                            const { data: newSeason, error: insErr } = await supabase
+                              .from('club_seasons')
+                              .insert({
+                                club_id: updatedPlayer.clubId,
+                                season_id: activeSeasonId
+                              })
+                              .select('id')
+                              .single();
+                            if (!insErr && newSeason) {
+                              clubSeasonId = newSeason.id;
+                            }
+                          }
+                        }
+
+                        // 2. Save player profile to 'players' table
+                        const countryCode = updatedPlayer.nationality === 'Indonesia' ? 'ID' : 'Asing';
+                        const playerPayload = {
+                          id: updatedPlayer.id,
+                          full_name: updatedPlayer.fullName,
+                          display_name: updatedPlayer.displayName,
+                          country_code: countryCode,
+                          country_name: updatedPlayer.nationality,
+                          country_flag_url: updatedPlayer.flagUrl,
+                        };
+
+                        const { error: playerErr } = await supabase
+                          .from('players')
+                          .upsert(playerPayload, { onConflict: 'id' });
+
+                        if (playerErr) throw playerErr;
+
+                        // 3. Save player roster to 'club_rosters' table
+                        if (clubSeasonId) {
+                          let dbPos = 'MF';
+                          if (updatedPlayer.position === 'Goalkeeper') dbPos = 'GK';
+                          else if (updatedPlayer.position === 'Defender') dbPos = 'DF';
+                          else if (updatedPlayer.position === 'Midfielder') dbPos = 'MF';
+                          else if (updatedPlayer.position === 'Forward') dbPos = 'FW';
+
+                          // Check if roster already exists for this player
+                          const { data: existingRoster, error: rosterFetchErr } = await supabase
+                            .from('club_rosters')
+                            .select('id')
+                            .eq('player_id', updatedPlayer.id)
+                            .limit(1);
+
+                          if (rosterFetchErr) throw rosterFetchErr;
+
+                          const rosterPayload = {
+                            player_id: updatedPlayer.id,
+                            club_season_id: clubSeasonId,
+                            shirt_number: updatedPlayer.shirtNumber,
+                            position: dbPos
+                          };
+
+                          if (existingRoster && existingRoster.length > 0) {
+                            const { error: rosterUpdErr } = await supabase
+                              .from('club_rosters')
+                              .update(rosterPayload)
+                              .eq('id', existingRoster[0].id);
+                            if (rosterUpdErr) throw rosterUpdErr;
+                          } else {
+                            const { error: rosterInsErr } = await supabase
+                              .from('club_rosters')
+                              .insert(rosterPayload);
+                            if (rosterInsErr) throw rosterInsErr;
+                          }
+                        }
+
+                        // 4. Update local state
+                        if (editingPlayerId === 'new') {
+                          setPlayers(prev => [...prev, updatedPlayer]);
+                          logAction('CREATE_PLAYER', 'Master Pemain', `Menambah master pemain baru: ${updatedPlayer.fullName}`);
+                          triggerToast('Pemain baru berhasil ditambahkan!');
+                        } else {
+                          setPlayers(prev => prev.map(p => p.id === updatedPlayer.id ? updatedPlayer : p));
+                          logAction('UPDATE_PLAYER', 'Master Pemain', `Memperbarui profil pemain: ${updatedPlayer.fullName}`);
+                          triggerToast('Profil pemain berhasil diperbarui!');
+                        }
+                        setSelectedPlayerClubId(updatedPlayer.clubId);
+                        setEditingPlayerId(null);
+                      } catch (err: any) {
+                        console.error('Save player error:', err);
+                        triggerToast(`Gagal menyimpan data pemain: ${err.message || err}`, 'error');
                       }
-                      setSelectedPlayerClubId(updatedPlayer.clubId);
-                      setEditingPlayerId(null);
                     }}
                   />
                 ) : (

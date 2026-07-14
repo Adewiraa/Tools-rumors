@@ -15,17 +15,30 @@ SET
   away_color = COALESCE(away_color, secondary_color)
 WHERE home_color IS NULL OR away_color IS NULL;
 
--- 3. PERBAIKAN HAK AKSES (GRANT PRIVILEGES)
+-- 3. PERBAIKAN HAK AKSES (GRANT PRIVILEGES) UNTUK SEMUA TABEL UTAMA
 GRANT ALL PRIVILEGES ON TABLE clubs TO postgres, service_role, anon, authenticated;
+GRANT ALL PRIVILEGES ON TABLE players TO postgres, service_role, anon, authenticated;
+GRANT ALL PRIVILEGES ON TABLE club_rosters TO postgres, service_role, anon, authenticated;
+GRANT ALL PRIVILEGES ON TABLE club_seasons TO postgres, service_role, anon, authenticated;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres, service_role, anon, authenticated;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres, service_role, anon, authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, service_role, anon, authenticated;
 
--- 4. PERBAIKAN ROW LEVEL SECURITY (RLS)
--- Pilihan A: Menonaktifkan RLS pada tabel 'clubs' agar bisa di-update langsung dari client (Sangat Direkomendasikan)
+-- 4. NONAKTIFKAN ROW LEVEL SECURITY (RLS) AGAR BISA DI-UPDATE LANGSUNG DARI CLIENT ADMIN-PANEL
 ALTER TABLE clubs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE players DISABLE ROW LEVEL SECURITY;
+ALTER TABLE club_rosters DISABLE ROW LEVEL SECURITY;
+ALTER TABLE club_seasons DISABLE ROW LEVEL SECURITY;
 
--- Pilihan B: Jika RLS harus tetap aktif, buat policy agar semua role bisa melakukan aksi (SELECT, INSERT, UPDATE, DELETE)
--- Hapus policy lama jika ada untuk menghindari duplikasi
+-- 5. ATAU BUAT PERMISSIVE POLICIES JIKA RLS SEWAKTU-WAKTU DIAKTIFKAN KEMBALI
 DROP POLICY IF EXISTS "Allow all actions for clubs" ON clubs;
 CREATE POLICY "Allow all actions for clubs" ON clubs FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all actions for players" ON players;
+CREATE POLICY "Allow all actions for players" ON players FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all actions for club_rosters" ON club_rosters;
+CREATE POLICY "Allow all actions for club_rosters" ON club_rosters FOR ALL TO public USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all actions for club_seasons" ON club_seasons;
+CREATE POLICY "Allow all actions for club_seasons" ON club_seasons FOR ALL TO public USING (true) WITH CHECK (true);
