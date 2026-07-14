@@ -3361,12 +3361,34 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
     if (!query) return;
     setSearching(true);
     try {
+      // Call the paid Rest Countries API directly — works in all environments (static, server, production)
       const response = await fetch(
-        `/api/countries?q=${encodeURIComponent(query)}`
+        `https://api.restcountries.com/countries/v5?q=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            'Authorization': 'Bearer rc_live_7ed6c608bb5b43ad864e423952ff6e14'
+          }
+        }
       );
-      const data = await response.json();
-      if (data && data.data) {
-        setSearchResults(data.data);
+      if (!response.ok) {
+        setSearchResults([]);
+        return;
+      }
+      const rawData = await response.json();
+      // Response structure: { data: { objects: [...], meta: {...} } }
+      const objects = rawData?.data?.objects;
+      if (Array.isArray(objects)) {
+        const mapped = objects.map((item: any) => ({
+          names: {
+            common: item.names?.common || '',
+            official: item.names?.official || ''
+          },
+          flag: {
+            url_svg: item.flag?.url_svg || '',
+            url_png: item.flag?.url_png || ''
+          }
+        }));
+        setSearchResults(mapped);
       } else {
         setSearchResults([]);
       }
