@@ -45,7 +45,8 @@ import {
   INITIAL_MATCHES,
   INITIAL_RUMORS,
   INITIAL_AUDIT_LOGS,
-  calculateClubCompleteness
+  calculateClubCompleteness,
+  calculatePlayerCompleteness
 } from '@/lib/mockData';
 import { supabase } from '@/lib/supabaseClient';
 import * as htmlToImage from 'html-to-image';
@@ -3072,9 +3073,14 @@ interface PlayersListProps {
 }
 
 function PlayersListView({ players, clubs, onCreateNew, onEdit, hasPermission }: PlayersListProps) {
+  const [selectedClubId, setSelectedClubId] = useState(clubs[0]?.id || 'Semua');
   const [selectedPosition, setSelectedPosition] = useState('Semua');
 
-  const filteredPlayers = players.filter(p => selectedPosition === 'Semua' || p.position === selectedPosition);
+  const filteredPlayers = players.filter(p => {
+    const matchClub = selectedClubId === 'Semua' || p.clubId === selectedClubId;
+    const matchPosition = selectedPosition === 'Semua' || p.position === selectedPosition;
+    return matchClub && matchPosition;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -3084,7 +3090,7 @@ function PlayersListView({ players, clubs, onCreateNew, onEdit, hasPermission }:
             <span>Dashboard</span> <ChevronRight size={10} /> <span>Master Data</span> <ChevronRight size={10} /> <span>Pemain</span>
           </div>
           <h1 className="page-title">Master Pemain</h1>
-          <p className="page-description">Kelola profil pemain, posisi bertanding, kewarganegaraan, nomor jersey, dan status ketersediaan.</p>
+          <p className="page-description">Kelola profil pemain, posisi bertanding, kewarganegaraan, dan nomor punggung jersey.</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
           <button className="btn btn-md btn-primary" onClick={onCreateNew}>
@@ -3094,14 +3100,26 @@ function PlayersListView({ players, clubs, onCreateNew, onEdit, hasPermission }:
       </div>
 
       {/* Filter */}
-      <div className="card" style={{ padding: '16px 24px' }}>
-        <select className="form-select" style={{ maxWidth: 200 }} value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)}>
-          <option value="Semua">Semua Posisi</option>
-          <option value="Goalkeeper">Goalkeeper</option>
-          <option value="Defender">Defender</option>
-          <option value="Midfielder">Midfielder</option>
-          <option value="Forward">Forward</option>
-        </select>
+      <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label className="form-label" style={{ marginBottom: 0, fontWeight: 600 }}>Pilih Klub</label>
+          <select className="form-select" value={selectedClubId} onChange={(e) => setSelectedClubId(e.target.value)}>
+            <option value="Semua">Semua Klub</option>
+            {clubs.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label className="form-label" style={{ marginBottom: 0, fontWeight: 600 }}>Pilih Posisi</label>
+          <select className="form-select" value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)}>
+            <option value="Semua">Semua Posisi</option>
+            <option value="Goalkeeper">Goalkeeper</option>
+            <option value="Defender">Defender</option>
+            <option value="Midfielder">Midfielder</option>
+            <option value="Forward">Forward</option>
+          </select>
+        </div>
       </div>
 
       <div className="table-wrapper">
@@ -3114,49 +3132,51 @@ function PlayersListView({ players, clubs, onCreateNew, onEdit, hasPermission }:
               <th>Klub Aktif</th>
               <th>Posisi</th>
               <th>No Punggung</th>
-              <th>Status Avail</th>
               <th>Kelengkapan</th>
               <th className="text-right">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {filteredPlayers.map(player => {
-              const club = clubs.find(c => c.id === player.clubId);
-              return (
-                <tr key={player.id}>
-                  <td>
-                    {player.flagUrl && player.flagUrl.startsWith('http') ? (
-                      <img src={player.flagUrl} alt={player.nationality} style={{ width: 24, height: 16, objectFit: 'cover', borderRadius: 2 }} />
-                    ) : (
-                      <span style={{ fontSize: 18 }}>{player.flagUrl}</span>
-                    )}
-                  </td>
-                  <td><span className="semibold">{player.fullName}</span></td>
-                  <td>{player.displayName}</td>
-                  <td>{club?.name || 'Free Agent'}</td>
-                  <td>{player.position}</td>
-                  <td>#{player.shirtNumber}</td>
-                  <td>
-                    <span className={`badge ${player.availability === 'available' ? 'badge-success' : player.availability === 'injured' ? 'badge-danger' : 'badge-warning'}`}>
-                      {player.availability}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex align-center gap-8">
-                      <div style={{ width: 60, height: 6, backgroundColor: 'var(--neutral-200)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ width: `${player.completeness}%`, height: '100%', backgroundColor: 'var(--primary-600)' }}></div>
+            {filteredPlayers.length > 0 ? (
+              filteredPlayers.map(player => {
+                const club = clubs.find(c => c.id === player.clubId);
+                return (
+                  <tr key={player.id}>
+                    <td>
+                      {player.flagUrl && player.flagUrl.startsWith('http') ? (
+                        <img src={player.flagUrl} alt={player.nationality} style={{ width: 24, height: 16, objectFit: 'cover', borderRadius: 2 }} />
+                      ) : (
+                        <span style={{ fontSize: 18 }}>{player.flagUrl}</span>
+                      )}
+                    </td>
+                    <td><span className="semibold">{player.fullName}</span></td>
+                    <td>{player.displayName}</td>
+                    <td>{club?.name || 'Free Agent'}</td>
+                    <td>{player.position}</td>
+                    <td>#{player.shirtNumber}</td>
+                    <td>
+                      <div className="flex align-center gap-8">
+                        <div style={{ width: 60, height: 6, backgroundColor: 'var(--neutral-200)', borderRadius: 3, overflow: 'hidden' }}>
+                          <div style={{ width: `${player.completeness}%`, height: '100%', backgroundColor: player.completeness >= 80 ? 'var(--success-600)' : player.completeness >= 50 ? 'var(--warning-600)' : 'var(--danger-600)' }}></div>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 600 }}>{player.completeness}%</span>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 600 }}>{player.completeness}%</span>
-                    </div>
-                  </td>
-                  <td className="text-right">
-                    <button className="btn btn-sm btn-secondary" onClick={() => onEdit(player.id)}>
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+                    </td>
+                    <td className="text-right">
+                      <button className="btn btn-sm btn-secondary" onClick={() => onEdit(player.id)}>
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={8} className="text-center" style={{ color: 'var(--neutral-500)', padding: '24px 0' }}>
+                  Tidak ada data pemain untuk filter ini.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -3202,10 +3222,20 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
   const [shirtNumber, setShirtNumber] = useState(player.shirtNumber);
   const [nationality, setNationality] = useState(player.nationality);
   const [flag, setFlag] = useState(player.flagUrl);
-  const [availability, setAvailability] = useState(player.availability);
   const [countrySearch, setCountrySearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+
+  // Calculate live completeness score
+  const liveCompleteness = calculatePlayerCompleteness({
+    fullName,
+    displayName,
+    clubId,
+    position,
+    shirtNumber,
+    nationality,
+    flagUrl: flag
+  });
 
   const searchCountryFlag = async (query: string) => {
     if (!query) return;
@@ -3244,8 +3274,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
       shirtNumber,
       nationality,
       flagUrl: flag,
-      availability,
-      completeness: 100
+      completeness: liveCompleteness
     };
     onSave(updatedPlayer);
   };
@@ -3257,7 +3286,15 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
           <button className="btn btn-sm btn-secondary" onClick={onClose}>
             <ArrowLeft size={16} /> Kembali
           </button>
-          <h2 style={{ fontSize: 20, fontWeight: 700 }}>{isNew ? 'Tambah Master Pemain Baru' : `Edit Pemain: ${player.fullName}`}</h2>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700 }}>{isNew ? 'Tambah Master Pemain Baru' : `Edit Pemain: ${player.fullName}`}</h2>
+            <div className="flex align-center gap-8" style={{ marginTop: 4 }}>
+              <div style={{ width: 80, height: 6, backgroundColor: 'var(--neutral-200)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${liveCompleteness}%`, height: '100%', backgroundColor: liveCompleteness >= 80 ? 'var(--success-600)' : liveCompleteness >= 50 ? 'var(--warning-600)' : 'var(--danger-600)', transition: 'width 0.3s ease' }}></div>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: liveCompleteness >= 80 ? 'var(--success-600)' : liveCompleteness >= 50 ? 'var(--warning-600)' : 'var(--danger-600)' }}>Kelengkapan: {liveCompleteness}%</span>
+            </div>
+          </div>
         </div>
         <button className="btn btn-md btn-primary" onClick={handleSave}>Simpan Pemain</button>
       </div>
@@ -3371,16 +3408,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
           )}
         </div>
 
-        <div className="form-group" style={{ marginTop: 16 }}>
-          <label className="form-label">Status Availabilty</label>
-          <select className="form-select" value={availability} onChange={(e: any) => setAvailability(e.target.value)}>
-            <option value="available">Available (Siap Tanding)</option>
-            <option value="injured">Injured (Cedera)</option>
-            <option value="suspended">Suspended (Akumulasi / Hukuman)</option>
-            <option value="international_duty">International Duty (Timnas)</option>
-            <option value="doubtful">Doubtful (Diragukan)</option>
-          </select>
-        </div>
+
       </div>
     </div>
   );

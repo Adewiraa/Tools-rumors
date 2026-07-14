@@ -45,6 +45,30 @@ export function calculateClubCompleteness(club: Partial<Club>): number {
   return totalWeight > 0 ? Math.round((filledWeight / totalWeight) * 100) : 0;
 }
 
+// Calculate player completeness based on which fields are filled
+export function calculatePlayerCompleteness(player: Partial<Player>): number {
+  const fields: { key: keyof Player; weight: number }[] = [
+    { key: 'fullName', weight: 35 },
+    { key: 'displayName', weight: 25 },
+    { key: 'clubId', weight: 15 },
+    { key: 'position', weight: 15 },
+    { key: 'shirtNumber', weight: 10 },
+  ];
+
+  let totalWeight = 0;
+  let filledWeight = 0;
+
+  for (const field of fields) {
+    totalWeight += field.weight;
+    const value = player[field.key];
+    if (value !== undefined && value !== null && value !== '') {
+      filledWeight += field.weight;
+    }
+  }
+
+  return totalWeight > 0 ? Math.round((filledWeight / totalWeight) * 100) : 0;
+}
+
 export interface Player {
   id: string;
   fullName: string;
