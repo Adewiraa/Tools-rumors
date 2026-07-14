@@ -3343,8 +3343,9 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
   const [nationality, setNationality] = useState(player.nationality);
   const [flag, setFlag] = useState(player.flagUrl);
   const [countrySearch, setCountrySearch] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [allCountries, setAllCountries] = useState<any[]>([]);
+  const [countriesLoaded, setCountriesLoaded] = useState(false);
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
 
   // Calculate live completeness score
   const liveCompleteness = calculatePlayerCompleteness({
@@ -3357,48 +3358,36 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
     flagUrl: flag
   });
 
-  const searchCountryFlag = async (query: string) => {
-    if (!query) return;
-    setSearching(true);
+  // Load all countries once
+  const loadAllCountries = async () => {
+    if (countriesLoaded) return;
     try {
-      // Call the paid Rest Countries API directly — works in all environments (static, server, production)
       const response = await fetch(
-        `https://api.restcountries.com/countries/v5?q=${encodeURIComponent(query)}`,
-        {
-          headers: {
-            'Authorization': 'Bearer rc_live_7ed6c608bb5b43ad864e423952ff6e14'
-          }
-        }
+        `https://api.restcountries.com/countries/v5?limit=300`,
+        { headers: { 'Authorization': 'Bearer rc_live_7ed6c608bb5b43ad864e423952ff6e14' } }
       );
-      if (!response.ok) {
-        setSearchResults([]);
-        return;
-      }
+      if (!response.ok) return;
       const rawData = await response.json();
-      // Response structure: { data: { objects: [...], meta: {...} } }
       const objects = rawData?.data?.objects;
       if (Array.isArray(objects)) {
-        const mapped = objects.map((item: any) => ({
-          names: {
-            common: item.names?.common || '',
-            official: item.names?.official || ''
-          },
-          flag: {
-            url_svg: item.flag?.url_svg || '',
-            url_png: item.flag?.url_png || ''
-          }
-        }));
-        setSearchResults(mapped);
-      } else {
-        setSearchResults([]);
+        const mapped = objects
+          .map((item: any) => ({
+            names: { common: item.names?.common || '', official: item.names?.official || '' },
+            flag: { url_svg: item.flag?.url_svg || '', url_png: item.flag?.url_png || '' }
+          }))
+          .sort((a: any, b: any) => a.names.common.localeCompare(b.names.common));
+        setAllCountries(mapped);
+        setCountriesLoaded(true);
       }
     } catch (err) {
-      console.error('Error searching country:', err);
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
+      console.error('Error loading countries:', err);
     }
   };
+
+  // Filter countries client-side based on search query
+  const filteredCountries = countrySearch.trim()
+    ? allCountries.filter(c => c.names.common.toLowerCase().includes(countrySearch.toLowerCase()))
+    : allCountries;
 
   const handleSave = () => {
     if (!fullName || !displayName) {
@@ -3475,77 +3464,87 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
           </div>
         </div>
 
-        <div className="grid-12" style={{ gap: 16, marginTop: 16 }}>
-          <div style={{ gridColumn: 'span 6' }}>
-            <label className="form-label">Negara / Kebangsaan</label>
-            <input type="text" className="form-input" value={nationality} onChange={(e) => setNationality(e.target.value)} />
-          </div>
-          <div style={{ gridColumn: 'span 6' }}>
-            <label className="form-label">Bendera Terpilih</label>
-            <div className="flex align-center gap-12" style={{ height: 42 }}>
-              {flag && flag.startsWith('http') ? (
-                <>
-                  <img src={flag} alt="Bendera" style={{ width: 40, height: 26, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--neutral-300)' }} />
-                  <span style={{ fontSize: 11, color: 'var(--neutral-500)', wordBreak: 'break-all', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{flag.split('/').pop()}</span>
-                </>
-              ) : (
-                <span style={{ fontSize: 24 }}>{flag || '🏳️'}</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginTop: 16, border: '1px dashed var(--neutral-300)', padding: 16, borderRadius: 8 }}>
+        {/* Country Searchable Dropdown */}
+        <div className="form-group" style={{ marginTop: 16, position: 'relative' }}>
           <label className="form-label" style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Search size={14} /> Cari Bendera Negara Resmi (Rest Countries API)
+            <Search size={14} /> Negara / Kewarganegaraan
           </label>
-          <div className="flex gap-8">
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="Ketik nama negara (e.g. canada, indonesia)..." 
-              value={countrySearch} 
-              onChange={(e) => setCountrySearch(e.target.value)} 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  searchCountryFlag(countrySearch);
-                }
-              }}
-            />
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
-              onClick={() => searchCountryFlag(countrySearch)}
-              disabled={searching}
-            >
-              {searching ? 'Mencari...' : 'Cari'}
-            </button>
+          {/* Selected flag preview */}
+          {flag && (
+            <div className="flex align-center gap-8" style={{ marginBottom: 8 }}>
+              {flag.startsWith('http') ? (
+                <img src={flag} alt={nationality} style={{ width: 32, height: 21, objectFit: 'cover', borderRadius: 3, border: '1px solid var(--neutral-300)' }} />
+              ) : (
+                <span style={{ fontSize: 20 }}>{flag}</span>
+              )}
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--neutral-800)' }}>{nationality}</span>
+              <button type="button" onClick={() => { setFlag(''); setNationality(''); }} style={{ marginLeft: 4, fontSize: 11, color: 'var(--neutral-500)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>✕ hapus</button>
+            </div>
+          )}
+          {/* Trigger to open dropdown */}
+          <div
+            className="form-input"
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, userSelect: 'none' }}
+            onClick={() => {
+              setCountryDropdownOpen(prev => !prev);
+              if (!countriesLoaded) loadAllCountries();
+            }}
+          >
+            <Search size={14} style={{ color: 'var(--neutral-400)', flexShrink: 0 }} />
+            <span style={{ color: nationality ? 'var(--neutral-800)' : 'var(--neutral-400)', fontSize: 13 }}>
+              {nationality || 'Klik untuk pilih negara...'}
+            </span>
+            <span style={{ marginLeft: 'auto', color: 'var(--neutral-400)', fontSize: 10 }}>{countryDropdownOpen ? '▲' : '▼'}</span>
           </div>
-          
-          {searchResults.length > 0 && (
-            <div style={{ marginTop: 12, maxHeight: 180, overflowY: 'auto', border: '1px solid var(--neutral-200)', borderRadius: 6, backgroundColor: 'var(--neutral-50)', zIndex: 10 }}>
-              {searchResults.map((item, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex align-center justify-between" 
-                  style={{ padding: '10px 12px', borderBottom: idx < searchResults.length - 1 ? '1px solid var(--neutral-200)' : 'none', cursor: 'pointer' }}
-                  onClick={() => {
-                    setNationality(item.names.common);
-                    setFlag(item.flag.url_svg || item.flag.url_png);
-                    setSearchResults([]);
-                    setCountrySearch('');
-                  }}
-                >
-                  <div className="flex align-center gap-12">
-                    {item.flag?.url_png && (
-                      <img src={item.flag.url_png} alt={item.names.common} style={{ width: 28, height: 18, objectFit: 'cover', borderRadius: 2, border: '1px solid var(--neutral-200)' }} />
-                    )}
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--neutral-850)' }}>{item.names.common} ({item.names.official})</span>
-                  </div>
-                  <span style={{ fontSize: 12, color: 'var(--primary-600)', fontWeight: 600 }}>Pilih Bendera</span>
-                </div>
-              ))}
+
+          {/* Dropdown panel */}
+          {countryDropdownOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, backgroundColor: 'var(--surface)', border: '1px solid var(--neutral-200)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4 }}>
+              {/* Search inside dropdown */}
+              <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--neutral-200)' }}>
+                <input
+                  autoFocus
+                  type="text"
+                  className="form-input"
+                  placeholder="Ketik nama negara..."
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  style={{ fontSize: 13 }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              {/* Country list */}
+              <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+                {!countriesLoaded ? (
+                  <div style={{ padding: '16px 12px', textAlign: 'center', color: 'var(--neutral-500)', fontSize: 13 }}>Memuat daftar negara...</div>
+                ) : filteredCountries.length === 0 ? (
+                  <div style={{ padding: '16px 12px', textAlign: 'center', color: 'var(--neutral-500)', fontSize: 13 }}>Negara tidak ditemukan</div>
+                ) : (
+                  filteredCountries.slice(0, 80).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex align-center gap-10"
+                      style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--neutral-100)', backgroundColor: nationality === item.names.common ? 'var(--primary-50)' : 'transparent' }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--neutral-50)')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = nationality === item.names.common ? 'var(--primary-50)' : 'transparent')}
+                      onClick={() => {
+                        setNationality(item.names.common);
+                        setFlag(item.flag.url_svg || item.flag.url_png);
+                        setCountryDropdownOpen(false);
+                        setCountrySearch('');
+                      }}
+                    >
+                      {item.flag?.url_png ? (
+                        <img src={item.flag.url_png} alt={item.names.common} style={{ width: 28, height: 18, objectFit: 'cover', borderRadius: 2, border: '1px solid var(--neutral-200)', flexShrink: 0 }} />
+                      ) : (
+                        <span style={{ width: 28, fontSize: 18 }}>🏳️</span>
+                      )}
+                      <span style={{ fontSize: 13, fontWeight: 500 }}>{item.names.common}</span>
+                      {nationality === item.names.common && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary-600)', fontWeight: 700 }}>✓</span>}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
         </div>
