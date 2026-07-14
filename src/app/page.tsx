@@ -678,8 +678,13 @@ export default function Home() {
                           short_name: updatedClub.shortName,
                           slug: updatedClub.code.toLowerCase(),
                           city: updatedClub.city,
+                          stadium: updatedClub.stadium,
+                          coach: updatedClub.coach,
                           primary_color: updatedClub.homeColor,
                           secondary_color: updatedClub.awayColor,
+                          home_color: updatedClub.homeColor,
+                          away_color: updatedClub.awayColor,
+                          third_color: updatedClub.thirdColor,
                           logo_public_url: updatedClub.logoUrl,
                         };
 
