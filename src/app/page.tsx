@@ -165,7 +165,44 @@ export default function Home() {
           `);
         if (playersError) throw playersError;
 
-        // Map Clubs
+        // 3. Fetch Competitions
+        const { data: competitionsData, error: competitionsError } = await supabase
+          .from('competitions')
+          .select('*')
+          .order('name', { ascending: true });
+        // Tidak throw jika error — fallback ke mock data
+
+        // 4. Fetch relasi club_competitions
+        const { data: clubCompData } = await supabase
+          .from('club_competitions')
+          .select('club_id, competition_id');
+
+        // Map Competitions
+        if (competitionsData && competitionsData.length > 0) {
+          const mappedCompetitions = competitionsData.map(c => ({
+            id: c.id,
+            name: c.name,
+            shortName: c.short_name || '',
+            slug: c.slug || '',
+            type: (c.type || 'league') as Competition['type'],
+            country: c.country || 'Indonesia',
+            logoUrl: c.logo_url || '',
+            season: c.season || '',
+            isActive: c.is_active !== false,
+          }));
+          setCompetitions(mappedCompetitions);
+        }
+
+        // Bangun map: club_id -> competition_id[]
+        const clubCompMap: Record<string, string[]> = {};
+        if (clubCompData && clubCompData.length > 0) {
+          for (const row of clubCompData) {
+            if (!clubCompMap[row.club_id]) clubCompMap[row.club_id] = [];
+            clubCompMap[row.club_id].push(row.competition_id);
+          }
+        }
+
+        // Map Clubs (dengan competitionIds)
         if (clubsData && clubsData.length > 0) {
           const mappedClubs: Club[] = clubsData.map(c => {
             const clubData: Club = {
@@ -182,6 +219,7 @@ export default function Home() {
               logoUrl: c.logo_public_url || '',
               coach: c.coach || '',
               activePlayersCount: 0,
+              competitionIds: clubCompMap[c.id] || [],
               completeness: 0,
               status: 'active'
             };
@@ -706,7 +744,7 @@ export default function Home() {
                     onClose={() => setEditingClubId(null)}
                     onSave={async (updatedClub) => {
                       try {
-                        // Use server-side API route (service_role key, bypasses RLS)
+                        // 1. Simpan data klub ke Supabase
                         const res = await fetch('/api/clubs', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -720,7 +758,25 @@ export default function Home() {
                           return;
                         }
 
-                        // Update local state
+                        // 2. Simpan relasi club <-> kompetisi
+                        const compRes = await fetch('/api/competitions', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'save_club_competitions',
+                            clubId: updatedClub.id,
+                            competitionIds: updatedClub.competitionIds || [],
+                          })
+                        });
+                        const compResult = await compRes.json();
+
+                        if (!compResult.success) {
+                          // Relasi gagal — klub sudah tersimpan tapi tampilkan warning
+                          console.warn('Club competitions save warning:', compResult.error);
+                          triggerToast(`Klub tersimpan, tapi relasi kompetisi gagal: ${compResult.error}`, 'warning');
+                        }
+
+                        // 3. Update local state
                         if (editingClubId === 'new') {
                           setClubs(prev => [...prev, updatedClub]);
                           logAction('CREATE_CLUB', 'Master Klub', `Menambah master klub baru: ${updatedClub.name}`);
@@ -3938,6 +3994,36 @@ function CompetitionEditorView({ competitionId, competitions, onClose, onSave, o
   const [season, setSeason] = useState(comp.season);
   const [isActive, setIsActive] = useState(comp.isActive);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const folderSlug = (slug || name).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'competition';
+      const filePath = `${folderSlug}/${fileName}`;
+
+      const { error } = await supabase.storage
+        .from('competition-logos')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('competition-logos')
+        .getPublicUrl(filePath);
+
+      setLogoUrl(publicUrl);
+    } catch (err: any) {
+      console.error('Error uploading competition logo:', err);
+      alert(`Gagal mengunggah logo: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Auto-generate slug dari name
   const handleNameChange = (val: string) => {
@@ -4065,14 +4151,56 @@ function CompetitionEditorView({ competitionId, competitions, onClose, onSave, o
             </div>
 
             <div style={{ gridColumn: 'span 12' }}>
-              <label className="form-label">URL Logo (opsional)</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="https://..."
-                value={logoUrl}
-                onChange={e => setLogoUrl(e.target.value)}
-              />
+              <label className="form-label">Logo Kompetisi (HD)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)', backgroundColor: 'var(--neutral-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  {logoUrl && logoUrl.startsWith('http') ? (
+                    <img src={logoUrl} alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+                  ) : (
+                    <Trophy size={24} color="var(--neutral-300)" />
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--neutral-500)' }}>
+                  {logoUrl && logoUrl.startsWith('http') ? 'Logo berhasil diunggah' : 'Belum ada logo'}
+                </div>
+              </div>
+
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  style={{ display: 'none' }}
+                  id="competition-logo-file-input"
+                  disabled={uploading}
+                />
+                <label
+                  htmlFor="competition-logo-file-input"
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: uploading ? 'not-allowed' : 'pointer', width: '100%', justifyContent: 'center', borderStyle: 'dashed', borderWidth: 1, height: 38, fontSize: 12 }}
+                >
+                  {uploading ? (
+                    <span>Mengunggah Logo...</span>
+                  ) : (
+                    <><Upload size={14} /> Unggah Logo Kompetisi (HD)</>
+                  )}
+                </label>
+              </div>
+
+              {logoUrl && logoUrl.startsWith('http') && (
+                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, color: 'var(--neutral-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                    {logoUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setLogoUrl('')}
+                    style={{ background: 'none', border: 'none', color: 'var(--danger-600)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
