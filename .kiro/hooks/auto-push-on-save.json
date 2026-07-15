@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Auto Git Push After File Save",
+      "trigger": "PostFileSave",
+      "description": "Otomatis stage, commit, dan push ke origin master setiap kali file kode disimpan oleh Kiro",
+      "matcher": "\\.(ts|tsx|css|json|sql|md)$",
+      "action": {
+        "type": "command",
+        "command": "cd \"d:\\Ade Wiramiharja\\Aplikasi\\Media Tools\" && git add -A && git diff --cached --quiet || git commit -m \"chore: auto-save update via Kiro\" && git push origin master",
+        "timeout": 60
+      }
+    }
+  ]
+}

@@ -40,11 +40,13 @@ import {
   Match,
   Rumor,
   AuditLog,
+  Competition,
   INITIAL_CLUBS,
   INITIAL_PLAYERS,
   INITIAL_MATCHES,
   INITIAL_RUMORS,
   INITIAL_AUDIT_LOGS,
+  INITIAL_COMPETITIONS,
   calculateClubCompleteness,
   calculatePlayerCompleteness
 } from '@/lib/mockData';
@@ -69,7 +71,7 @@ const generateUUID = (): string => {
 
 export default function Home() {
   // Navigation & Shell States
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'logs' | 'settings'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings'>('dashboard');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Super Admin');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -91,6 +93,7 @@ export default function Home() {
   const [matches, setMatches] = useState<Match[]>(INITIAL_MATCHES);
   const [rumors, setRumors] = useState<Rumor[]>(INITIAL_RUMORS);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
+  const [competitions, setCompetitions] = useState<Competition[]>(INITIAL_COMPETITIONS);
 
   // Editor states
   const [editingLineupId, setEditingLineupId] = useState<string | null>(null);
@@ -98,6 +101,7 @@ export default function Home() {
   const [editingRumorId, setEditingRumorId] = useState<string | null>(null);
   const [editingClubId, setEditingClubId] = useState<string | null>(null);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editingCompetitionId, setEditingCompetitionId] = useState<string | null>(null);
   const [selectedPlayerClubId, setSelectedPlayerClubId] = useState<string>('Semua');
 
   // Filter States
@@ -292,6 +296,7 @@ export default function Home() {
     setEditingRumorId(null);
     setEditingClubId(null);
     setEditingPlayerId(null);
+    setEditingCompetitionId(null);
   };
 
   return (
@@ -355,6 +360,10 @@ export default function Home() {
               <div className={`menu-item ${activeMenu === 'players' ? 'active' : ''}`} onClick={() => navigateTo('players')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
                 <User size={18} />
                 <span style={{ display: 'inline', fontSize: 14 }}>Master Pemain</span>
+              </div>
+              <div className={`menu-item ${activeMenu === 'competitions' ? 'active' : ''}`} onClick={() => navigateTo('competitions')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <Trophy size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Master Kompetisi</span>
               </div>
 
               <div className="menu-category" style={{ display: 'block' }}>Sistem</div>
@@ -427,6 +436,10 @@ export default function Home() {
           <div className={`menu-item mobile-hidden ${activeMenu === 'players' ? 'active' : ''}`} onClick={() => { setActiveMenu('players'); setEditingPlayerId(null); }}>
             <User size={18} />
             {!sidebarCollapsed && <span>Master Pemain</span>}
+          </div>
+          <div className={`menu-item mobile-hidden ${activeMenu === 'competitions' ? 'active' : ''}`} onClick={() => { setActiveMenu('competitions'); setEditingCompetitionId(null); }}>
+            <Trophy size={18} />
+            {!sidebarCollapsed && <span>Master Kompetisi</span>}
           </div>
 
           {!sidebarCollapsed && <div className="menu-category">Sistem</div>}
@@ -503,6 +516,7 @@ export default function Home() {
                   else if (activeMenu === 'rumors') setEditingRumorId('new');
                   else if (activeMenu === 'clubs') setEditingClubId('new');
                   else if (activeMenu === 'players') setEditingPlayerId('new');
+                  else if (activeMenu === 'competitions') setEditingCompetitionId('new');
                   else {
                     setActiveMenu('lineups');
                     setEditingLineupId('new');
@@ -580,6 +594,7 @@ export default function Home() {
                   clubs={clubs}
                   players={players}
                   auditLogs={auditLogs}
+                  competitions={competitions}
                   onNavigate={setActiveMenu}
                   uiState={uiState}
                   hasPermission={hasPermission}
@@ -687,6 +702,7 @@ export default function Home() {
                     clubId={editingClubId}
                     clubs={clubs}
                     players={players}
+                    competitions={competitions}
                     onClose={() => setEditingClubId(null)}
                     onSave={async (updatedClub) => {
                       try {
@@ -790,6 +806,67 @@ export default function Home() {
                     hasPermission={hasPermission}
                     selectedClubId={selectedPlayerClubId}
                     setSelectedClubId={setSelectedPlayerClubId}
+                  />
+                )
+              )}
+
+              {/* Master Kompetisi Route */}
+              {activeMenu === 'competitions' && (
+                editingCompetitionId ? (
+                  <CompetitionEditorView
+                    competitionId={editingCompetitionId}
+                    competitions={competitions}
+                    onClose={() => setEditingCompetitionId(null)}
+                    onSave={async (updatedCompetition) => {
+                      try {
+                        const res = await fetch('/api/competitions', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'upsert', competition: updatedCompetition })
+                        });
+                        const result = await res.json();
+                        if (!result.success) {
+                          triggerToast(`Gagal menyimpan kompetisi: ${result.error}`, 'error');
+                          return;
+                        }
+                        if (editingCompetitionId === 'new') {
+                          setCompetitions(prev => [...prev, updatedCompetition]);
+                          logAction('CREATE_COMPETITION', 'Master Kompetisi', `Menambah kompetisi baru: ${updatedCompetition.name}`);
+                          triggerToast('Kompetisi baru berhasil ditambahkan!');
+                        } else {
+                          setCompetitions(prev => prev.map(c => c.id === updatedCompetition.id ? updatedCompetition : c));
+                          logAction('UPDATE_COMPETITION', 'Master Kompetisi', `Memperbarui kompetisi: ${updatedCompetition.name}`);
+                          triggerToast('Kompetisi berhasil diperbarui!');
+                        }
+                        setEditingCompetitionId(null);
+                      } catch (err: any) {
+                        triggerToast('Terjadi kesalahan saat menyimpan kompetisi.', 'error');
+                      }
+                    }}
+                    onDelete={async (id) => {
+                      try {
+                        const res = await fetch(`/api/competitions?id=${id}`, { method: 'DELETE' });
+                        const result = await res.json();
+                        if (!result.success) {
+                          triggerToast(`Gagal menghapus: ${result.error}`, 'error');
+                          return;
+                        }
+                        setCompetitions(prev => prev.filter(c => c.id !== id));
+                        logAction('DELETE_COMPETITION', 'Master Kompetisi', `Menghapus kompetisi id: ${id}`);
+                        triggerToast('Kompetisi berhasil dihapus!');
+                        setEditingCompetitionId(null);
+                      } catch (err: any) {
+                        triggerToast('Terjadi kesalahan saat menghapus.', 'error');
+                      }
+                    }}
+                  />
+                ) : (
+                  <CompetitionsListView
+                    competitions={competitions}
+                    clubs={clubs}
+                    onCreateNew={() => setEditingCompetitionId('new')}
+                    onEdit={setEditingCompetitionId}
+                    hasPermission={hasPermission}
                   />
                 )
               )}
@@ -909,6 +986,7 @@ interface DashboardProps {
   clubs: Club[];
   players: Player[];
   auditLogs: AuditLog[];
+  competitions: Competition[];
   onNavigate: (menu: any) => void;
   uiState: string;
   hasPermission: (module: string, action: any) => boolean;
@@ -2832,11 +2910,12 @@ interface ClubEditorProps {
   clubId: string;
   clubs: Club[];
   players: Player[];
+  competitions: Competition[];
   onClose: () => void;
   onSave: (club: Club) => void;
 }
 
-function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorProps) {
+function ClubEditorView({ clubId, clubs, players, competitions, onClose, onSave }: ClubEditorProps) {
   const isNew = clubId === 'new';
   const club = clubs.find(c => c.id === clubId) || {
     id: generateUUID(),
@@ -2867,6 +2946,7 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
   const [thirdColor, setThirdColor] = useState(club.thirdColor);
   const [logo, setLogo] = useState(club.logoUrl);
   const [uploading, setUploading] = useState(false);
+  const [selectedCompetitionIds, setSelectedCompetitionIds] = useState<string[]>(club.competitionIds || []);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2926,6 +3006,7 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
       awayColor,
       thirdColor,
       logoUrl: logo,
+      competitionIds: selectedCompetitionIds,
       completeness: calculateClubCompleteness({
         name, shortName, code, city, stadium, coach, logoUrl: logo,
         homeColor, awayColor, thirdColor
@@ -3086,6 +3167,56 @@ function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorP
                   #{p.shirtNumber} {p.fullName} ({p.position})
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Kompetisi yang Diikuti */}
+          <div style={{ borderTop: '1px solid var(--neutral-200)', paddingTop: 16 }}>
+            <span className="semibold" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+              Kompetisi yang Diikuti ({selectedCompetitionIds.length} dipilih)
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {competitions.map(comp => {
+                const isSelected = selectedCompetitionIds.includes(comp.id);
+                return (
+                  <label
+                    key={comp.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      border: `1px solid ${isSelected ? 'var(--primary-600)' : 'var(--neutral-200)'}`,
+                      backgroundColor: isSelected ? 'var(--primary-50)' : 'transparent',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {
+                        setSelectedCompetitionIds(prev =>
+                          prev.includes(comp.id)
+                            ? prev.filter(id => id !== comp.id)
+                            : [...prev, comp.id]
+                        );
+                      }}
+                      style={{ accentColor: 'var(--primary-600)' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-900)' }}>{comp.name}</div>
+                      <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>
+                        {comp.type === 'league' ? 'Liga' : comp.type === 'cup' ? 'Piala' : 'Friendly'} · {comp.season} · {comp.country}
+                      </div>
+                    </div>
+                    {!comp.isActive && (
+                      <span className="badge badge-draft" style={{ fontSize: 9, padding: '1px 6px' }}>Nonaktif</span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -3608,7 +3739,433 @@ function GlobalSearchView({ clubs, players, rumors, matches, onClose, onNavigate
 }
 
 // ==========================================
-// 14. SETTINGS VIEW
+// 14. MASTER KOMPETISI LIST VIEW
+// ==========================================
+interface CompetitionsListProps {
+  competitions: Competition[];
+  clubs: Club[];
+  onCreateNew: () => void;
+  onEdit: (id: string) => void;
+  hasPermission: (module: string, action: any) => boolean;
+}
+
+function CompetitionsListView({ competitions, clubs, onCreateNew, onEdit, hasPermission }: CompetitionsListProps) {
+  const [filterType, setFilterType] = useState('Semua');
+  const [filterActive, setFilterActive] = useState('Semua');
+
+  const filtered = competitions.filter(c => {
+    const matchType = filterType === 'Semua' || c.type === filterType;
+    const matchActive = filterActive === 'Semua' || (filterActive === 'Aktif' ? c.isActive : !c.isActive);
+    return matchType && matchActive;
+  });
+
+  const getClubsForCompetition = (compId: string) =>
+    clubs.filter(cl => (cl.competitionIds || []).includes(compId));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="page-header">
+        <div>
+          <div className="breadcrumb">
+            <span>Dashboard</span> <ChevronRight size={10} /> <span>Master Data</span> <ChevronRight size={10} /> <span>Kompetisi</span>
+          </div>
+          <h1 className="page-title">Master Kompetisi</h1>
+          <p className="page-description">Kelola data kompetisi sepak bola — liga, piala, dan turnamen yang diikuti klub-klub dalam sistem.</p>
+        </div>
+        {hasPermission('Master', 'create_edit') && (
+          <button className="btn btn-md btn-primary" onClick={onCreateNew}>
+            <Plus size={16} /> Tambah Kompetisi
+          </button>
+        )}
+      </div>
+
+      {/* Filter Bar */}
+      <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select className="form-select" style={{ maxWidth: 180 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+          <option value="Semua">Semua Tipe</option>
+          <option value="league">Liga</option>
+          <option value="cup">Piala</option>
+          <option value="friendly">Friendly</option>
+        </select>
+        <select className="form-select" style={{ maxWidth: 160 }} value={filterActive} onChange={e => setFilterActive(e.target.value)}>
+          <option value="Semua">Semua Status</option>
+          <option value="Aktif">Aktif</option>
+          <option value="Nonaktif">Nonaktif</option>
+        </select>
+        <span className="text-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>
+          {filtered.length} kompetisi ditemukan
+        </span>
+      </div>
+
+      {/* Stats Summary */}
+      <div className="grid-12">
+        {[
+          { label: 'Total Kompetisi', value: competitions.length, color: 'var(--primary-600)' },
+          { label: 'Aktif', value: competitions.filter(c => c.isActive).length, color: 'var(--success-600)' },
+          { label: 'Liga', value: competitions.filter(c => c.type === 'league').length, color: 'var(--info-600, #0ea5e9)' },
+          { label: 'Piala', value: competitions.filter(c => c.type === 'cup').length, color: 'var(--warning-600)' },
+        ].map((stat, i) => (
+          <div key={i} className="card" style={{ gridColumn: 'span 3', padding: '16px 20px' }}>
+            <div className="text-muted" style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>{stat.label}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: stat.color }}>{stat.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Data Table */}
+      {filtered.length === 0 ? (
+        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+          <AlertCircle size={32} color="var(--neutral-500)" style={{ margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Belum ada kompetisi</h3>
+          <p className="text-muted" style={{ marginBottom: 16 }}>Tambah kompetisi baru atau ubah filter.</p>
+          <button className="btn btn-sm btn-primary" onClick={onCreateNew}>Tambah Kompetisi</button>
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nama Kompetisi</th>
+                <th>Kode</th>
+                <th>Tipe</th>
+                <th>Negara</th>
+                <th>Musim</th>
+                <th>Klub Peserta</th>
+                <th>Status</th>
+                <th className="text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(comp => {
+                const peserta = getClubsForCompetition(comp.id);
+                return (
+                  <tr key={comp.id}>
+                    <td>
+                      <div className="flex align-center gap-8">
+                        <div style={{ width: 32, height: 32, borderRadius: 6, backgroundColor: 'var(--primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Trophy size={16} color="var(--primary-600)" />
+                        </div>
+                        <div>
+                          <div className="semibold">{comp.name}</div>
+                          <div className="text-muted" style={{ fontSize: 11 }}>{comp.slug}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 700, backgroundColor: 'var(--neutral-100)', padding: '2px 6px', borderRadius: 4 }}>
+                        {comp.shortName}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`badge ${comp.type === 'league' ? 'badge-info' : comp.type === 'cup' ? 'badge-warning' : 'badge-draft'}`}>
+                        {comp.type === 'league' ? 'Liga' : comp.type === 'cup' ? 'Piala' : 'Friendly'}
+                      </span>
+                    </td>
+                    <td>{comp.country}</td>
+                    <td>{comp.season || '-'}</td>
+                    <td>
+                      <div className="flex align-center gap-6" style={{ flexWrap: 'wrap', maxWidth: 200 }}>
+                        {peserta.length === 0 ? (
+                          <span className="text-muted" style={{ fontSize: 11 }}>Belum ada</span>
+                        ) : (
+                          <>
+                            {peserta.slice(0, 3).map(cl => (
+                              <span key={cl.id} style={{ fontSize: 10, backgroundColor: 'var(--neutral-100)', padding: '2px 6px', borderRadius: 10, fontWeight: 500 }}>
+                                {cl.shortName || cl.name}
+                              </span>
+                            ))}
+                            {peserta.length > 3 && (
+                              <span style={{ fontSize: 10, color: 'var(--neutral-500)' }}>+{peserta.length - 3} lainnya</span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${comp.isActive ? 'badge-success' : 'badge-draft'}`}>
+                        {comp.isActive ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <button className="btn btn-sm btn-secondary" onClick={() => onEdit(comp.id)}>
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// 15. COMPETITION EDITOR VIEW
+// ==========================================
+interface CompetitionEditorProps {
+  competitionId: string;
+  competitions: Competition[];
+  onClose: () => void;
+  onSave: (competition: Competition) => void;
+  onDelete: (id: string) => void;
+}
+
+function CompetitionEditorView({ competitionId, competitions, onClose, onSave, onDelete }: CompetitionEditorProps) {
+  const isNew = competitionId === 'new';
+  const existing = competitions.find(c => c.id === competitionId);
+  const defaultComp: Competition = {
+    id: generateUUID(),
+    name: '',
+    shortName: '',
+    slug: '',
+    type: 'league',
+    country: 'Indonesia',
+    logoUrl: '',
+    season: '2026/27',
+    isActive: true,
+  };
+  const comp = existing || defaultComp;
+
+  const [name, setName] = useState(comp.name);
+  const [shortName, setShortName] = useState(comp.shortName);
+  const [slug, setSlug] = useState(comp.slug);
+  const [type, setType] = useState<Competition['type']>(comp.type);
+  const [country, setCountry] = useState(comp.country);
+  const [logoUrl, setLogoUrl] = useState(comp.logoUrl);
+  const [season, setSeason] = useState(comp.season);
+  const [isActive, setIsActive] = useState(comp.isActive);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Auto-generate slug dari name
+  const handleNameChange = (val: string) => {
+    setName(val);
+    if (isNew) {
+      setSlug(val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
+    }
+  };
+
+  const handleSave = () => {
+    if (!name || !shortName) {
+      alert('Nama dan Kode Singkat wajib diisi.');
+      return;
+    }
+    const updated: Competition = {
+      ...comp,
+      name,
+      shortName,
+      slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
+      type,
+      country,
+      logoUrl,
+      season,
+      isActive,
+    };
+    onSave(updated);
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Header */}
+      <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
+        <div className="flex align-center gap-12">
+          <button className="btn btn-sm btn-secondary" onClick={onClose}>
+            <ArrowLeft size={16} /> Kembali
+          </button>
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700 }}>
+              {isNew ? 'Tambah Kompetisi Baru' : `Edit Kompetisi: ${comp.name}`}
+            </h2>
+            <div className="breadcrumb" style={{ marginTop: 4 }}>
+              <span>Master Data</span> <ChevronRight size={10} /> <span>Kompetisi</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-12">
+          {!isNew && (
+            <button className="btn btn-md btn-secondary" style={{ color: 'var(--danger-600)', borderColor: 'var(--danger-600)' }} onClick={() => setShowDeleteConfirm(true)}>
+              <Trash2 size={16} /> Hapus
+            </button>
+          )}
+          <button className="btn btn-md btn-primary" onClick={handleSave}>
+            Simpan Kompetisi
+          </button>
+        </div>
+      </div>
+
+      <div className="grid-12">
+        {/* Form utama */}
+        <div className="card" style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="grid-12" style={{ gap: 16 }}>
+            <div style={{ gridColumn: 'span 8' }}>
+              <label className="form-label">Nama Lengkap Kompetisi <span className="required">*</span></label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Contoh: Liga Nusantara Utama"
+                value={name}
+                onChange={e => handleNameChange(e.target.value)}
+              />
+            </div>
+            <div style={{ gridColumn: 'span 4' }}>
+              <label className="form-label">Kode Singkat <span className="required">*</span></label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="LNU"
+                value={shortName}
+                onChange={e => setShortName(e.target.value.toUpperCase())}
+                maxLength={8}
+              />
+            </div>
+
+            <div style={{ gridColumn: 'span 12' }}>
+              <label className="form-label">Slug URL</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="liga-nusantara-utama"
+                value={slug}
+                onChange={e => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+              />
+              <span className="form-helper">Auto-generate dari nama. Digunakan sebagai identifier URL.</span>
+            </div>
+
+            <div style={{ gridColumn: 'span 4' }}>
+              <label className="form-label">Tipe Kompetisi</label>
+              <select className="form-select" value={type} onChange={e => setType(e.target.value as Competition['type'])}>
+                <option value="league">Liga</option>
+                <option value="cup">Piala / Cup</option>
+                <option value="friendly">Friendly</option>
+              </select>
+            </div>
+
+            <div style={{ gridColumn: 'span 4' }}>
+              <label className="form-label">Negara / Zona</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Indonesia"
+                value={country}
+                onChange={e => setCountry(e.target.value)}
+              />
+            </div>
+
+            <div style={{ gridColumn: 'span 4' }}>
+              <label className="form-label">Musim</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="2026/27"
+                value={season}
+                onChange={e => setSeason(e.target.value)}
+              />
+            </div>
+
+            <div style={{ gridColumn: 'span 12' }}>
+              <label className="form-label">URL Logo (opsional)</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="https://..."
+                value={logoUrl}
+                onChange={e => setLogoUrl(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar status */}
+        <div className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Preview */}
+          <div style={{ textAlign: 'center', padding: 20, backgroundColor: 'var(--neutral-50)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--neutral-300)' }}>
+            {logoUrl ? (
+              <img src={logoUrl} alt={name} style={{ width: 72, height: 72, objectFit: 'contain', margin: '0 auto 12px', display: 'block' }} />
+            ) : (
+              <div style={{ width: 72, height: 72, backgroundColor: 'var(--primary-100)', borderRadius: 12, margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Trophy size={32} color="var(--primary-600)" />
+              </div>
+            )}
+            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--neutral-900)' }}>{name || 'Nama Kompetisi'}</div>
+            <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 4 }}>
+              {type === 'league' ? 'Liga' : type === 'cup' ? 'Piala' : 'Friendly'} · {country}
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontFamily: 'monospace', fontSize: 11, backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
+                {shortName || 'KODE'}
+              </span>
+            </div>
+          </div>
+
+          {/* Status toggle */}
+          <div>
+            <label className="form-label">Status Kompetisi</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[true, false].map(val => (
+                <label
+                  key={String(val)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '10px 12px',
+                    borderRadius: 6,
+                    border: `1px solid ${isActive === val ? 'var(--primary-600)' : 'var(--neutral-200)'}`,
+                    backgroundColor: isActive === val ? 'var(--primary-50)' : 'transparent',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="isActive"
+                    checked={isActive === val}
+                    onChange={() => setIsActive(val)}
+                    style={{ accentColor: 'var(--primary-600)' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{val ? 'Aktif' : 'Nonaktif'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--neutral-500)' }}>
+                      {val ? 'Tersedia untuk dipilih di master klub' : 'Disembunyikan dari pilihan'}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Info musim */}
+          <div style={{ padding: 12, backgroundColor: 'var(--neutral-50)', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--neutral-600)' }}>
+            <Info size={13} style={{ marginRight: 6, verticalAlign: 'middle', color: 'var(--primary-600)' }} />
+            Kompetisi yang aktif akan muncul sebagai pilihan di form Master Klub. Nonaktifkan musim yang sudah selesai.
+          </div>
+        </div>
+      </div>
+
+      {/* Confirm Delete Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--danger-600)' }}>Hapus Kompetisi?</h3>
+            <p style={{ fontSize: 13, color: 'var(--neutral-700)', marginBottom: 20 }}>
+              Kompetisi <strong>{comp.name}</strong> akan dihapus permanen. Relasi ke klub juga akan ikut terhapus.
+            </p>
+            <div className="flex gap-12 justify-between">
+              <button className="btn btn-md btn-secondary" onClick={() => setShowDeleteConfirm(false)}>Batal</button>
+              <button className="btn btn-md btn-danger" onClick={() => { setShowDeleteConfirm(false); onDelete(comp.id); }}>
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// 16. SETTINGS VIEW
 // ==========================================
 interface SettingsProps {
   currentUserRole: UserRole;

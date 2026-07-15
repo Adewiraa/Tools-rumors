@@ -1,3 +1,15 @@
+export interface Competition {
+  id: string;
+  name: string;
+  shortName: string;
+  slug: string;
+  type: 'league' | 'cup' | 'friendly';
+  country: string;
+  logoUrl: string;
+  season: string;
+  isActive: boolean;
+}
+
 export interface Club {
   id: string;
   name: string;
@@ -14,6 +26,7 @@ export interface Club {
   activePlayersCount: number;
   completeness: number; // 0 - 100
   status: 'active' | 'inactive';
+  competitionIds?: string[]; // relasi ke kompetisi yang diikuti
 }
 
 // Calculate club completeness based on which fields are filled
@@ -138,6 +151,64 @@ export interface AuditLog {
   details: string;
 }
 
+export const INITIAL_COMPETITIONS: Competition[] = [
+  {
+    id: 'comp-1',
+    name: 'Liga Nusantara Utama',
+    shortName: 'LNU',
+    slug: 'liga-nusantara-utama',
+    type: 'league',
+    country: 'Indonesia',
+    logoUrl: '',
+    season: '2026/27',
+    isActive: true,
+  },
+  {
+    id: 'comp-2',
+    name: 'Piala Nusantara',
+    shortName: 'PN',
+    slug: 'piala-nusantara',
+    type: 'cup',
+    country: 'Indonesia',
+    logoUrl: '',
+    season: '2026',
+    isActive: true,
+  },
+  {
+    id: 'comp-3',
+    name: 'Liga Nusantara 2',
+    shortName: 'LN2',
+    slug: 'liga-nusantara-2',
+    type: 'league',
+    country: 'Indonesia',
+    logoUrl: '',
+    season: '2026/27',
+    isActive: true,
+  },
+  {
+    id: 'comp-4',
+    name: 'Piala Super Nusantara',
+    shortName: 'PSN',
+    slug: 'piala-super-nusantara',
+    type: 'cup',
+    country: 'Indonesia',
+    logoUrl: '',
+    season: '2026',
+    isActive: false,
+  },
+  {
+    id: 'comp-5',
+    name: 'AFC Champions League',
+    shortName: 'AFCCL',
+    slug: 'afc-champions-league',
+    type: 'league',
+    country: 'Asia',
+    logoUrl: '',
+    season: '2026/27',
+    isActive: true,
+  },
+];
+
 export const INITIAL_CLUBS: Club[] = [
   {
     id: 'club-1',
@@ -155,6 +226,7 @@ export const INITIAL_CLUBS: Club[] = [
     activePlayersCount: 26,
     completeness: 95,
     status: 'active',
+    competitionIds: ['comp-1', 'comp-2', 'comp-5'],
   },
   {
     id: 'club-2',
@@ -172,6 +244,7 @@ export const INITIAL_CLUBS: Club[] = [
     activePlayersCount: 24,
     completeness: 90,
     status: 'active',
+    competitionIds: ['comp-1', 'comp-2'],
   },
   {
     id: 'club-3',
@@ -189,6 +262,7 @@ export const INITIAL_CLUBS: Club[] = [
     activePlayersCount: 28,
     completeness: 85,
     status: 'active',
+    competitionIds: ['comp-1', 'comp-2'],
   },
   {
     id: 'club-4',
@@ -206,6 +280,7 @@ export const INITIAL_CLUBS: Club[] = [
     activePlayersCount: 25,
     completeness: 80,
     status: 'active',
+    competitionIds: ['comp-1'],
   },
   {
     id: 'club-5',
@@ -223,6 +298,7 @@ export const INITIAL_CLUBS: Club[] = [
     activePlayersCount: 23,
     completeness: 75,
     status: 'active',
+    competitionIds: ['comp-1', 'comp-2'],
   }
 ];
 
