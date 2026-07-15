@@ -3232,6 +3232,9 @@ interface PlayerEditorProps {
   onSave: (player: Player) => void;
 }
 
+// Global cache to persist country list across component mounts to save API quota and make loading instant
+let globalCountriesCache: any[] = [];
+
 function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerEditorProps) {
   const isNew = playerId === 'new';
   const player = players.find(p => p.id === playerId) || {
@@ -3260,8 +3263,8 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
   const [nationality, setNationality] = useState(player.nationality);
   const [flag, setFlag] = useState(player.flagUrl);
   const [countrySearch, setCountrySearch] = useState('');
-  const [allCountries, setAllCountries] = useState<any[]>([]);
-  const [countriesLoaded, setCountriesLoaded] = useState(false);
+  const [allCountries, setAllCountries] = useState<any[]>(globalCountriesCache);
+  const [countriesLoaded, setCountriesLoaded] = useState(globalCountriesCache.length > 0);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
 
   // Calculate live completeness score
@@ -3275,24 +3278,37 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
     flagUrl: flag
   });
 
-  // Load all countries once
+  // Load all countries once via pagination (capped at 100/request on current plan)
   const loadAllCountries = async () => {
-    if (countriesLoaded) return;
+    if (globalCountriesCache.length > 0) {
+      setAllCountries(globalCountriesCache);
+      setCountriesLoaded(true);
+      return;
+    }
     try {
-      const response = await fetch(
-        `https://api.restcountries.com/countries/v5?limit=300`,
-        { headers: { 'Authorization': 'Bearer rc_live_7ed6c608bb5b43ad864e423952ff6e14' } }
-      );
-      if (!response.ok) return;
-      const rawData = await response.json();
-      const objects = rawData?.data?.objects;
-      if (Array.isArray(objects)) {
-        const mapped = objects
+      const fetchPage = async (page: number) => {
+        const response = await fetch(
+          `https://api.restcountries.com/countries/v5?limit=100&page=${page}`,
+          { headers: { 'Authorization': 'Bearer rc_live_7ed6c608bb5b43ad864e423952ff6e14' } }
+        );
+        if (!response.ok) return [];
+        const rawData = await response.json();
+        return rawData?.data?.objects || [];
+      };
+
+      // Fetch 3 pages in parallel to cover ~300 countries
+      const [p1, p2, p3] = await Promise.all([fetchPage(1), fetchPage(2), fetchPage(3)]);
+      const combined = [...p1, ...p2, ...p3];
+
+      if (combined.length > 0) {
+        const mapped = combined
           .map((item: any) => ({
             names: { common: item.names?.common || '', official: item.names?.official || '' },
             flag: { url_svg: item.flag?.url_svg || '', url_png: item.flag?.url_png || '' }
           }))
           .sort((a: any, b: any) => a.names.common.localeCompare(b.names.common));
+
+        globalCountriesCache = mapped;
         setAllCountries(mapped);
         setCountriesLoaded(true);
       }
@@ -3300,6 +3316,11 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
       console.error('Error loading countries:', err);
     }
   };
+
+  // Pre-load country list automatically on component mount
+  useEffect(() => {
+    loadAllCountries();
+  }, []);
 
   // Filter countries client-side based on search query
   const filteredCountries = countrySearch.trim()
