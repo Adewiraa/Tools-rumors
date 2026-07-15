@@ -48,7 +48,7 @@ import {
   calculateClubCompleteness,
   calculatePlayerCompleteness
 } from '@/lib/mockData';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, supabaseWrite } from '@/lib/supabaseClient';
 import * as htmlToImage from 'html-to-image';
 
 // User Role Definition
@@ -693,7 +693,7 @@ export default function Home() {
                           logo_public_url: updatedClub.logoUrl,
                         };
 
-                        const { error } = await supabase
+                        const { error } = await supabaseWrite
                           .from('clubs')
                           .upsert(supabasePayload, { onConflict: 'id' });
 
@@ -742,7 +742,7 @@ export default function Home() {
                     onSave={async (updatedPlayer) => {
                       try {
                         // 1. Get/Create club_season_id from club_seasons for the selected clubId
-                        const { data: seasonData, error: seasonErr } = await supabase
+                        const { data: seasonData, error: seasonErr } = await supabaseWrite
                           .from('club_seasons')
                           .select('id')
                           .eq('club_id', updatedPlayer.clubId)
@@ -754,10 +754,10 @@ export default function Home() {
 
                         // If club_season_id doesn't exist, try to lookup any active season or insert a default entry
                         if (!clubSeasonId) {
-                          const { data: seasonsList } = await supabase.from('seasons').select('id').limit(1);
+                          const { data: seasonsList } = await supabaseWrite.from('seasons').select('id').limit(1);
                           const activeSeasonId = seasonsList && seasonsList[0]?.id;
                           if (activeSeasonId) {
-                            const { data: newSeason, error: insErr } = await supabase
+                            const { data: newSeason, error: insErr } = await supabaseWrite
                               .from('club_seasons')
                               .insert({
                                 club_id: updatedPlayer.clubId,
@@ -782,7 +782,7 @@ export default function Home() {
                           country_flag_url: updatedPlayer.flagUrl,
                         };
 
-                        const { error: playerErr } = await supabase
+                        const { error: playerErr } = await supabaseWrite
                           .from('players')
                           .upsert(playerPayload, { onConflict: 'id' });
 
@@ -797,7 +797,7 @@ export default function Home() {
                           else if (updatedPlayer.position === 'Forward') dbPos = 'FW';
 
                           // Check if roster already exists for this player
-                          const { data: existingRoster, error: rosterFetchErr } = await supabase
+                          const { data: existingRoster, error: rosterFetchErr } = await supabaseWrite
                             .from('club_rosters')
                             .select('id')
                             .eq('player_id', updatedPlayer.id)
@@ -813,13 +813,13 @@ export default function Home() {
                           };
 
                           if (existingRoster && existingRoster.length > 0) {
-                            const { error: rosterUpdErr } = await supabase
+                            const { error: rosterUpdErr } = await supabaseWrite
                               .from('club_rosters')
                               .update(rosterPayload)
                               .eq('id', existingRoster[0].id);
                             if (rosterUpdErr) throw rosterUpdErr;
                           } else {
-                            const { error: rosterInsErr } = await supabase
+                            const { error: rosterInsErr } = await supabaseWrite
                               .from('club_rosters')
                               .insert(rosterPayload);
                             if (rosterInsErr) throw rosterInsErr;
