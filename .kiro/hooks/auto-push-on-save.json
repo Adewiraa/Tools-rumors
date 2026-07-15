@@ -8,7 +8,7 @@
       "matcher": "\\.(ts|tsx|css|json|sql|md)$",
       "action": {
         "type": "command",
-        "command": "cd \"d:\\Ade Wiramiharja\\Aplikasi\\Media Tools\" && git add -A && git diff --cached --quiet || git commit -m \"chore: auto-save update via Kiro\" && git push origin master",
+        "command": "cd \"d:\\Ade Wiramiharja\\Aplikasi\\Media Tools\" && git add -A && git diff --cached --quiet || git commit -m \"chore: auto-save update via Kiro\" && git push origin main",
         "timeout": 60
       }
     }

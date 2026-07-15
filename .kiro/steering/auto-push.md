@@ -32,5 +32,5 @@ Contoh: `feat: tambah master kompetisi dan relasi ke master club`
 ## Remote Target
 
 - Remote: `origin`  
-- Branch: `master`  
+- Branch: `main`  
 - URL: `https://github.com/Adewiraa/Tools-rumors.git`
