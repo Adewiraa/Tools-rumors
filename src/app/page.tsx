@@ -797,6 +797,25 @@ export default function Home() {
                     uiState={uiState}
                     onCreateNew={() => setEditingClubId('new')}
                     onEdit={setEditingClubId}
+                    onDelete={async (id) => {
+                      try {
+                        const res = await fetch('/api/clubs', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id })
+                        });
+                        const result = await res.json();
+                        if (!result.success) {
+                          triggerToast(`Gagal menghapus klub: ${result.error}`, 'error');
+                          return;
+                        }
+                        setClubs(prev => prev.filter(c => c.id !== id));
+                        logAction('DELETE_CLUB', 'Master Klub', `Menghapus klub id: ${id}`);
+                        triggerToast('Klub berhasil dihapus.');
+                      } catch (err: any) {
+                        triggerToast('Terjadi kesalahan saat menghapus klub.', 'error');
+                      }
+                    }}
                     hasPermission={hasPermission}
                   />
                 )
@@ -856,6 +875,25 @@ export default function Home() {
                         setSelectedPlayerClubId(pl.clubId);
                       }
                       setEditingPlayerId(id);
+                    }}
+                    onDelete={async (id) => {
+                      try {
+                        const res = await fetch('/api/players', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id })
+                        });
+                        const result = await res.json();
+                        if (!result.success) {
+                          triggerToast(`Gagal menghapus pemain: ${result.error}`, 'error');
+                          return;
+                        }
+                        setPlayers(prev => prev.filter(p => p.id !== id));
+                        logAction('DELETE_PLAYER', 'Master Pemain', `Menghapus pemain id: ${id}`);
+                        triggerToast('Pemain berhasil dihapus.');
+                      } catch (err: any) {
+                        triggerToast('Terjadi kesalahan saat menghapus pemain.', 'error');
+                      }
                     }}
                     hasPermission={hasPermission}
                     selectedClubId={selectedPlayerClubId}
@@ -920,6 +958,21 @@ export default function Home() {
                     clubs={clubs}
                     onCreateNew={() => setEditingCompetitionId('new')}
                     onEdit={setEditingCompetitionId}
+                    onDelete={async (id) => {
+                      try {
+                        const res = await fetch(`/api/competitions?id=${id}`, { method: 'DELETE' });
+                        const result = await res.json();
+                        if (!result.success) {
+                          triggerToast(`Gagal menghapus kompetisi: ${result.error}`, 'error');
+                          return;
+                        }
+                        setCompetitions(prev => prev.filter(c => c.id !== id));
+                        logAction('DELETE_COMPETITION', 'Master Kompetisi', `Menghapus kompetisi id: ${id}`);
+                        triggerToast('Kompetisi berhasil dihapus.');
+                      } catch (err: any) {
+                        triggerToast('Terjadi kesalahan saat menghapus kompetisi.', 'error');
+                      }
+                    }}
                     hasPermission={hasPermission}
                   />
                 )
@@ -2885,10 +2938,12 @@ interface ClubsListProps {
   uiState: string;
   onCreateNew: () => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
 }
 
-function ClubsListView({ clubs, onCreateNew, onEdit, hasPermission }: ClubsListProps) {
+function ClubsListView({ clubs, onCreateNew, onEdit, onDelete, hasPermission }: ClubsListProps) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="page-header">
@@ -2944,9 +2999,24 @@ function ClubsListView({ clubs, onCreateNew, onEdit, hasPermission }: ClubsListP
                   </div>
                 </td>
                 <td className="text-right">
-                  <button className="btn btn-sm btn-secondary" onClick={() => onEdit(club.id)}>
-                    Edit Klub
-                  </button>
+                  <div style={{ display: 'inline-flex', gap: 6 }}>
+                    <button className="btn btn-sm btn-secondary" onClick={() => onEdit(club.id)}>
+                      <Edit size={13} /> Edit
+                    </button>
+                    {hasPermission('Master', 'delete') && (
+                      confirmDeleteId === club.id ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
+                          <button className="btn btn-sm btn-danger" onClick={() => { onDelete(club.id); setConfirmDeleteId(null); }}>Ya</button>
+                          <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                        </span>
+                      ) : (
+                        <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(club.id)}>
+                          <Trash2 size={13} />
+                        </button>
+                      )
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -3288,6 +3358,7 @@ interface PlayersListProps {
   uiState: string;
   onCreateNew: () => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
   selectedClubId: string;
   setSelectedClubId: (id: string) => void;
@@ -3297,12 +3368,14 @@ function PlayersListView({
   players, 
   clubs, 
   onCreateNew, 
-  onEdit, 
+  onEdit,
+  onDelete,
   hasPermission,
   selectedClubId,
   setSelectedClubId
 }: PlayersListProps) {
   const [selectedPosition, setSelectedPosition] = useState('Semua');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Default to first club if selectedClubId is 'Semua' or empty to prevent listing all players
   useEffect(() => {
@@ -3398,9 +3471,24 @@ function PlayersListView({
                       </div>
                     </td>
                     <td className="text-right">
-                      <button className="btn btn-sm btn-secondary" onClick={() => onEdit(player.id)}>
-                        Edit
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => onEdit(player.id)}>
+                          <Edit size={13} /> Edit
+                        </button>
+                        {hasPermission('Master', 'delete') && (
+                          confirmDeleteId === player.id ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
+                              <button className="btn btn-sm btn-danger" onClick={() => { onDelete(player.id); setConfirmDeleteId(null); }}>Ya</button>
+                              <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                            </span>
+                          ) : (
+                            <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(player.id)}>
+                              <Trash2 size={13} />
+                            </button>
+                          )
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -3800,12 +3888,14 @@ interface CompetitionsListProps {
   clubs: Club[];
   onCreateNew: () => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
 }
 
-function CompetitionsListView({ competitions, clubs, onCreateNew, onEdit, hasPermission }: CompetitionsListProps) {
+function CompetitionsListView({ competitions, clubs, onCreateNew, onEdit, onDelete, hasPermission }: CompetitionsListProps) {
   const [filterType, setFilterType] = useState('Semua');
   const [filterActive, setFilterActive] = useState('Semua');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filtered = competitions.filter(c => {
     const matchType = filterType === 'Semua' || c.type === filterType;
@@ -3945,9 +4035,24 @@ function CompetitionsListView({ competitions, clubs, onCreateNew, onEdit, hasPer
                       </span>
                     </td>
                     <td className="text-right">
-                      <button className="btn btn-sm btn-secondary" onClick={() => onEdit(comp.id)}>
-                        Edit
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => onEdit(comp.id)}>
+                          <Edit size={13} /> Edit
+                        </button>
+                        {hasPermission('Master', 'delete') && (
+                          confirmDeleteId === comp.id ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
+                              <button className="btn btn-sm btn-danger" onClick={() => { onDelete(comp.id); setConfirmDeleteId(null); }}>Ya</button>
+                              <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                            </span>
+                          ) : (
+                            <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(comp.id)}>
+                              <Trash2 size={13} />
+                            </button>
+                          )
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

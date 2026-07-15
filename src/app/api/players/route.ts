@@ -111,3 +111,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });
+    }
+
+    // Hapus roster dulu (relasi), lalu player
+    await supabaseAdmin.from('club_rosters').delete().eq('player_id', id);
+
+    const { error } = await supabaseAdmin
+      .from('players')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('Player DELETE error:', err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}

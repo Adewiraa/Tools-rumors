@@ -53,3 +53,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from('clubs')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('Club DELETE error:', err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
