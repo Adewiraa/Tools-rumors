@@ -884,3 +884,161 @@ a {
     height: calc(56px + env(safe-area-inset-top, 0px));
   }
 }
+
+/* ==========================================
+   LINEUP EDITOR — RESPONSIVE
+   ========================================== */
+
+.lineup-editor-root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lineup-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--neutral-200);
+  padding-bottom: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lineup-field-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--neutral-500);
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* INFO BAR: 5 kolom di desktop */
+.lineup-info-bar { padding: 12px 16px !important; }
+.lineup-info-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr 1.5fr 3fr;
+  gap: 10px;
+  align-items: end;
+}
+.lineup-venue-field { grid-column: span 1; }
+
+/* TEAMS: 2 kolom di desktop */
+.lineup-teams-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Team Panel */
+.lineup-team-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.lineup-team-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px 8px 0 0;
+  color: white;
+  flex-wrap: wrap;
+}
+
+/* 3 kolom per team: Skuad | Starting | Sub */
+.lineup-cols-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border: 1px solid var(--neutral-200);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.lineup-col {
+  padding: 10px;
+  max-height: 440px;
+  overflow-y: auto;
+  background: white;
+}
+
+.lineup-col-header {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--neutral-600);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--neutral-100);
+}
+
+.hide-mobile { display: inline; }
+
+/* ── TABLET (max 1024px): info bar 2 kolom, teams tetap 2 ── */
+@media (max-width: 1024px) {
+  .lineup-info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .lineup-venue-field {
+    grid-column: span 2;
+  }
+  .lineup-col {
+    max-height: 360px;
+  }
+}
+
+/* ── MOBILE (max 768px): semua single column, 3 kolom jadi accordeon ── */
+@media (max-width: 768px) {
+  .lineup-info-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .lineup-venue-field {
+    grid-column: span 2;
+  }
+
+  /* Teams stack vertically */
+  .lineup-teams-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* 3 kolom di mobile jadi 1 kolom scroll horizontal */
+  .lineup-cols-grid {
+    grid-template-columns: 1fr;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .lineup-col {
+    max-height: none;
+    border-top: 1px solid var(--neutral-100);
+    padding: 10px 12px;
+  }
+
+  .lineup-col:first-child {
+    border-top: none;
+  }
+
+  .hide-mobile { display: none; }
+
+  .lineup-editor-header {
+    gap: 8px;
+  }
+
+  .lineup-team-header {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+
+/* ── SMALL MOBILE (max 480px) ── */
+@media (max-width: 480px) {
+  .lineup-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .lineup-venue-field {
+    grid-column: span 1;
+  }
+  .lineup-info-bar { padding: 10px 12px !important; }
+}

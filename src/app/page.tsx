@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -1521,34 +1521,57 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [awayAsingInput, setAwayAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  // Validasi ringkas
+  // Aturan: total 15 pemain (11 starter + 4 cadangan DSP), asing starter max 7, asing sub max 2, non-DSP max 2
+  const MAX_SUBS = 4;
+  const MAX_ASING_STARTER = 7;
+  const MAX_ASING_SUB = 2;
+  const MAX_NONDSP = 2;
+
   const homeValid = homeStarters.length === 11;
   const awayValid = awayStarters.length === 11;
   const homeHasGK = homeSquad.some(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
   const awayHasGK = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
 
-  // Toggle player: none â†’ starter â†’ cadangan â†’ none
+  const posLabel: Record<string, string> = { Goalkeeper: 'GK', Defender: 'DF', Midfielder: 'MF', Forward: 'FW' };
+
   const togglePlayer = (
     id: string,
+    squad: Player[],
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
-    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>
+    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>,
+    asingList: AsingEntry[]
   ) => {
+    const player = squad.find(p => p.id === id);
+    const isForeign = player?.nationality !== 'Indonesia';
+    const foreignStarters = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
+    const foreignSubs = squad.filter(p => subs.includes(p.id) && p.nationality !== 'Indonesia').length;
     if (starters.includes(id)) {
       setStarters(p => p.filter(x => x !== id));
-      if (subs.length < 7) setSubs(p => [...p, id]);
+      if (subs.length < MAX_SUBS) {
+        if (isForeign && foreignSubs >= MAX_ASING_SUB) { triggerToast('Maks ' + MAX_ASING_SUB + ' asing di cadangan DSP.', 'warning'); return; }
+        setSubs(p => [...p, id]);
+      }
     } else if (subs.includes(id)) {
       setSubs(p => p.filter(x => x !== id));
     } else {
-      if (starters.length < 11) setStarters(p => [...p, id]);
-      else if (subs.length < 7) setSubs(p => [...p, id]);
-      else triggerToast('Slot starter (11) dan cadangan (7) sudah penuh.', 'warning');
+      if (starters.length < 11) {
+        if (isForeign && (foreignStarters + asingList.length) >= MAX_ASING_STARTER) { triggerToast('Maks ' + MAX_ASING_STARTER + ' asing di Starting XI.', 'warning'); return; }
+        setStarters(p => [...p, id]);
+      } else if (subs.length < MAX_SUBS) {
+        if (isForeign && foreignSubs >= MAX_ASING_SUB) { triggerToast('Maks ' + MAX_ASING_SUB + ' asing di cadangan.', 'warning'); return; }
+        setSubs(p => [...p, id]);
+      } else {
+        triggerToast('Slot penuh: 11 starter + ' + MAX_SUBS + ' cadangan.', 'warning');
+      }
     }
   };
 
   const addAsing = (side: 'home' | 'away') => {
     const inp = side === 'home' ? homeAsingInput : awayAsingInput;
-    if (!inp.name.trim()) { triggerToast('Nama pemain wajib diisi.', 'error'); return; }
-    const entry: AsingEntry = { id: `asing-${Date.now()}`, name: inp.name.trim(), no: Number(inp.no) || 0, pos: inp.pos };
+    const asingList = side === 'home' ? homeAsing : awayAsing;
+    if (!inp.name.trim()) { triggerToast('Nama wajib diisi.', 'error'); return; }
+    if (asingList.length >= MAX_NONDSP) { triggerToast('Maks ' + MAX_NONDSP + ' asing non-DSP.', 'warning'); return; }
+    const entry: AsingEntry = { id: 'asing-' + Date.now(), name: inp.name.trim(), no: Number(inp.no) || 0, pos: inp.pos };
     if (side === 'home') { setHomeAsing(p => [...p, entry]); setHomeAsingInput({ name: '', no: '', pos: 'FW' }); }
     else { setAwayAsing(p => [...p, entry]); setAwayAsingInput({ name: '', no: '', pos: 'FW' }); }
   };
@@ -1558,22 +1581,18 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const awayClub = clubs.find(c => c.id === selectedAwayClub);
     const status: Match['lineupStatus'] = homeValid && awayValid && homeHasGK && awayHasGK ? 'Complete' : 'Needs Review';
     const updatedMatch: Match = {
-      id: existingMatch?.id || `match-${Date.now()}`,
-      homeClubId: selectedHomeClub,
-      homeClubName: homeClub?.name || '',
+      id: existingMatch?.id || 'match-' + Date.now(),
+      homeClubId: selectedHomeClub, homeClubName: homeClub?.name || '',
       homeLogo: homeClub?.logoUrl || '',
-      awayClubId: selectedAwayClub,
-      awayClubName: awayClub?.name || '',
+      awayClubId: selectedAwayClub, awayClubName: awayClub?.name || '',
       awayLogo: awayClub?.logoUrl || '',
       competition: selectedCompetitionName,
       season: competitions.find(c => c.name === selectedCompetitionName)?.season || '',
-      kickoff: kickoffTime,
-      venue: venueName,
+      kickoff: kickoffTime, venue: venueName,
       status: existingMatch?.status || 'Scheduled',
       lineupStatus: status,
       publicationStatus: publish ? 'Published' : (existingMatch?.publicationStatus || 'Draft'),
-      editor: 'Admin',
-      lastUpdated: 'Baru saja',
+      editor: 'Admin', lastUpdated: 'Baru saja',
     };
     onSave(updatedMatch);
   };
@@ -1581,360 +1600,271 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const homeClub = clubs.find(c => c.id === selectedHomeClub);
   const awayClub = clubs.find(c => c.id === selectedAwayClub);
 
-  // Render pill pemain
+  const renderFlag = (player: Player) => {
+    if (player.flagUrl && player.flagUrl.startsWith('http')) {
+      return <img src={player.flagUrl} alt="" style={{ width: 14, height: 10, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
+    }
+    if (player.flagUrl && player.flagUrl.length <= 4) {
+      return <span style={{ fontSize: 11, lineHeight: 1 }}>{player.flagUrl}</span>;
+    }
+    return null;
+  };
+
   const renderPill = (
     player: Player,
+    squad: Player[],
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
     subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>,
-    captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>
+    captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>,
+    asingList: AsingEntry[]
   ) => {
     const isStarter = starters.includes(player.id);
     const isSub = subs.includes(player.id);
-    const bg = isStarter ? 'var(--primary-600)' : isSub ? 'var(--neutral-300)' : 'var(--neutral-100)';
-    const color = (isStarter || isSub) ? 'white' : 'var(--neutral-700)';
-    const posMap: Record<string, string> = { Goalkeeper: 'GK', Defender: 'DF', Midfielder: 'MF', Forward: 'FW' };
+    const isForeign = player.nationality !== 'Indonesia';
+    const isUnavail = player.availability !== 'available';
+    const bg = isStarter ? 'var(--primary-600)' : isSub ? 'var(--neutral-400)' : isForeign ? '#fef3c7' : 'var(--neutral-100)';
+    const fg = isStarter ? 'white' : isSub ? 'white' : 'var(--neutral-800)';
     return (
-      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
-        <button onClick={() => togglePlayer(player.id, starters, setStarters, subs, setSubs)}
-          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 5, padding: '5px 8px', borderRadius: 16,
-            border: 'none', cursor: 'pointer', background: bg, color, fontSize: 11,
-            fontWeight: isStarter || isSub ? 700 : 400, textAlign: 'left', transition: 'all 0.12s',
-            opacity: player.availability !== 'available' ? 0.65 : 1 }}
-          title={player.availability !== 'available' ? player.availability : ''}>
-          <span style={{ fontSize: 10, minWidth: 20, opacity: 0.75 }}>#{player.shirtNumber}</span>
+      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 4 }}>
+        <button
+          onClick={() => togglePlayer(player.id, squad, starters, setStarters, subs, setSubs, asingList)}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 8px',
+            borderRadius: 8, border: isForeign && !isStarter && !isSub ? '1px solid #f59e0b' : 'none',
+            cursor: 'pointer', background: bg, color: fg, fontSize: 11,
+            fontWeight: isStarter || isSub ? 700 : 400, textAlign: 'left', opacity: isUnavail ? 0.6 : 1 }}
+          title={isUnavail ? player.availability : ''}>
+          {renderFlag(player)}
+          <span style={{ fontSize: 10, minWidth: 18, opacity: 0.75 }}>#{player.shirtNumber}</span>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</span>
-          <span style={{ fontSize: 9, opacity: 0.7 }}>{posMap[player.position] || 'MF'}</span>
-          {player.nationality !== 'Indonesia' && <span style={{ fontSize: 9 }}>ðŸŒ</span>}
-          {player.availability === 'injured' && <span style={{ fontSize: 9 }}>ðŸ¤•</span>}
-          {player.availability === 'suspended' && <span style={{ fontSize: 9 }}>ðŸš«</span>}
+          <span style={{ fontSize: 9, opacity: 0.65, flexShrink: 0 }}>{posLabel[player.position] || 'MF'}</span>
+          {isUnavail && <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 800, flexShrink: 0 }}>{player.availability === 'injured' ? 'CEÐ”' : 'SUS'}</span>}
         </button>
         {isStarter && (
           <button onClick={() => setCaptain(captain === player.id ? '' : player.id)}
-            style={{ padding: '3px 6px', borderRadius: 10, border: '1px solid',
+            style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid', cursor: 'pointer', fontSize: 10, fontWeight: 800, flexShrink: 0,
               background: captain === player.id ? '#eab308' : 'transparent',
               color: captain === player.id ? '#000' : 'var(--neutral-400)',
-              borderColor: captain === player.id ? '#eab308' : 'var(--neutral-300)',
-              cursor: 'pointer', fontSize: 10, fontWeight: 700 }}>C</button>
+              borderColor: captain === player.id ? '#eab308' : 'var(--neutral-200)' }}>C</button>
         )}
       </div>
     );
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-      {/* â”€â”€ HEADER â”€â”€ */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--neutral-200)', paddingBottom: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-sm btn-secondary" onClick={onClose}><ArrowLeft size={16} /> Kembali</button>
-          <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700 }}>
-              {isNew ? 'Buat Lineup Baru' : `Edit: ${existingMatch?.homeClubName} vs ${existingMatch?.awayClubName}`}
-            </h2>
-            <div style={{ fontSize: 11, color: 'var(--neutral-500)', marginTop: 2, display: 'flex', gap: 10 }}>
-              <span style={{ color: homeValid && homeHasGK ? 'var(--success-600)' : 'var(--warning-600)', fontWeight: 600 }}>
-                {homeValid && homeHasGK ? 'âœ… Home OK' : `âš ï¸ Home ${homeStarters.length}/11${!homeHasGK ? ' (no GK)' : ''}`}
-              </span>
-              <span style={{ color: awayValid && awayHasGK ? 'var(--success-600)' : 'var(--warning-600)', fontWeight: 600 }}>
-                {awayValid && awayHasGK ? 'âœ… Away OK' : `âš ï¸ Away ${awayStarters.length}/11${!awayHasGK ? ' (no GK)' : ''}`}
-              </span>
+  const renderTeamPanel = (
+    side: 'home' | 'away',
+    squad: Player[],
+    club: Club | undefined,
+    formation: string, setFormation: React.Dispatch<React.SetStateAction<string>>,
+    starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
+    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>,
+    captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>,
+    asingList: AsingEntry[], setAsing: React.Dispatch<React.SetStateAction<AsingEntry[]>>,
+    asingInput: { name: string; no: string; pos: string },
+    setAsingInput: React.Dispatch<React.SetStateAction<{ name: string; no: string; pos: string }>>
+  ) => {
+    const isHome = side === 'home';
+    const headerBg = isHome ? 'var(--primary-600)' : '#374151';
+    const valid = starters.length === 11;
+    const hasGK = squad.some(p => starters.includes(p.id) && p.position === 'Goalkeeper');
+    const foreignSubs = squad.filter(p => subs.includes(p.id) && p.nationality !== 'Indonesia').length;
+    return (
+      <div className="lineup-team-panel">
+        <div className="lineup-team-header" style={{ background: headerBg }}>
+          {club?.logoUrl && club.logoUrl.startsWith('http')
+            ? <img src={club.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+            : <span style={{ fontSize: 18 }}>{isHome ? 'H' : 'A'}</span>}
+          <span style={{ fontWeight: 700, fontSize: 13 }}>{isHome ? 'HOME' : 'AWAY'}: {club?.name}</span>
+          <select value={formation} onChange={e => setFormation(e.target.value)}
+            style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 4px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(0,0,0,0.2)', color: 'white' }}>
+            {FORMATIONS.map(fm => <option key={fm} value={fm} style={{ color: 'black', background: 'white' }}>{fm}</option>)}
+          </select>
+          <span style={{ fontSize: 11, fontWeight: 700, background: valid && hasGK ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)', padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
+            {starters.length}/11 {!hasGK ? ' - GK?' : ''}
+          </span>
+        </div>
+        <div className="lineup-cols-grid">
+          <div className="lineup-col">
+            <div className="lineup-col-header">Skuad ({squad.length})</div>
+            <div style={{ fontSize: 9, color: 'var(--neutral-400)', marginBottom: 6 }}>Klik: Starter -&gt; Sub -&gt; Hapus</div>
+            {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
+              const pp = squad.filter(p => p.position === pos);
+              if (!pp.length) return null;
+              return <div key={pos} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-400)', textTransform: 'uppercase', marginBottom: 3, borderBottom: '1px solid var(--neutral-100)', paddingBottom: 2 }}>
+                  {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}
+                </div>
+                {pp.map(p => renderPill(p, squad, starters, setStarters, subs, setSubs, captain, setCaptain, asingList))}
+              </div>;
+            })}
+            {squad.length === 0 && <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: 12 }}>Tidak ada pemain</div>}
+          </div>
+          <div className="lineup-col" style={{ borderLeft: '1px solid var(--neutral-100)' }}>
+            <div className="lineup-col-header" style={{ color: isHome ? 'var(--primary-600)' : '#374151' }}>
+              Starting XI ({starters.length}/11)
+            </div>
+            {starters.length === 0 ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: 12 }}>Pilih dari Skuad</div>
+              : squad.filter(p => starters.includes(p.id))
+                  .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
+                  .map(p => renderPill(p, squad, starters, setStarters, subs, setSubs, captain, setCaptain, asingList))
+            }
+            {asingList.map((a,i) => (
+              <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 8,
+                background: isHome ? 'var(--primary-600)' : '#374151', color: 'white', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                <span style={{ fontSize: 10, opacity: 0.8, minWidth: 20 }}>#{a.no}</span>
+                <span style={{ flex: 1 }}>{a.name}</span>
+                <span style={{ fontSize: 9, opacity: 0.7 }}>{a.pos} INT</span>
+                <button onClick={() => setAsing(p => p.filter(x => x.id !== a.id))}
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 2 }}>x</button>
+              </div>
+            ))}
+          </div>
+          <div className="lineup-col" style={{ borderLeft: '1px solid var(--neutral-100)' }}>
+            <div className="lineup-col-header">Sub ({subs.length}/{MAX_SUBS})</div>
+            {subs.length === 0 ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: 8 }}>Belum ada</div>
+              : squad.filter(p => subs.includes(p.id))
+                  .map(p => renderPill(p, squad, starters, setStarters, subs, setSubs, captain, setCaptain, asingList))
+            }
+            <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--neutral-100)' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 4, textTransform: 'uppercase' }}>
+                Asing Non-DSP ({asingList.length}/{MAX_NONDSP})
+              </div>
+              <input type="text" className="form-input" placeholder="Nama" style={{ fontSize: 11, marginBottom: 4 }}
+                value={asingInput.name} onChange={e => setAsingInput(p => ({ ...p, name: e.target.value }))} />
+              <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 52 }}
+                  value={asingInput.no} onChange={e => setAsingInput(p => ({ ...p, no: e.target.value }))} />
+                <select className="form-select" style={{ fontSize: 11 }}
+                  value={asingInput.pos} onChange={e => setAsingInput(p => ({ ...p, pos: e.target.value }))}>
+                  <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
+                </select>
+              </div>
+              <button className="btn btn-sm btn-secondary" style={{ width: '100%', fontSize: 11 }}
+                onClick={() => addAsing(side)}>+ Tambah</button>
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="btn btn-sm btn-secondary" onClick={() => setShowPreviewModal(true)}>
-            ðŸ“¸ Preview Story
+      </div>
+    );
+  };
+
+  return (
+    <div className="lineup-editor-root">
+
+      {/* HEADER */}
+      <div className="lineup-editor-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <button className="btn btn-sm btn-secondary" onClick={onClose} style={{ flexShrink: 0 }}>
+            <ArrowLeft size={16} />
+            <span className="hide-mobile"> Kembali</span>
           </button>
-          <button className="btn btn-md btn-secondary" onClick={() => handleSave(false)}>Simpan Draft</button>
-          <button className="btn btn-md btn-primary" onClick={() => handleSave(true)}>
-            <Upload size={14} /> Terbitkan
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {isNew ? 'Buat Lineup' : `Edit: ${existingMatch?.homeClubName} vs ${existingMatch?.awayClubName}`}
+            </h2>
+            <div style={{ fontSize: 10, color: 'var(--neutral-500)', display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
+              <span style={{ color: homeValid && homeHasGK ? 'var(--success-600)' : 'var(--warning-600)', fontWeight: 600 }}>
+                Home {homeStarters.length}/11{homeHasGK ? '' : ' (GK?)'}</span>
+              <span style={{ color: awayValid && awayHasGK ? 'var(--success-600)' : 'var(--warning-600)', fontWeight: 600 }}>
+                Away {awayStarters.length}/11{awayHasGK ? '' : ' (GK?)'}</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+          <button className="btn btn-sm btn-secondary" onClick={() => setShowPreviewModal(true)}>Preview</button>
+          <button className="btn btn-sm btn-secondary" onClick={() => handleSave(false)}>Draft</button>
+          <button className="btn btn-sm btn-primary" onClick={() => handleSave(true)}>
+            <Upload size={13} /><span className="hide-mobile"> Terbitkan</span>
           </button>
         </div>
       </div>
 
-      {/* â”€â”€ INFO BAR (kompetisi, klub, kickoff, venue, formasi â€” semua 1 baris) â”€â”€ */}
-      <div className="card" style={{ padding: '12px 16px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 1.5fr 3fr 1.2fr 1.2fr', gap: 10, alignItems: 'end' }}>
+      {/* INFO BAR */}
+      <div className="card lineup-info-bar">
+        <div className="lineup-info-grid">
           <div>
-            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Kompetisi</label>
+            <label className="lineup-field-label">Kompetisi</label>
             <select className="form-select" style={{ fontSize: 12 }} value={selectedCompetitionName} onChange={e => setSelectedCompetitionName(e.target.value)}>
               {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} âœ—</option>)}
+              {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} (nonaktif)</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Tim Home</label>
+            <label className="lineup-field-label">Tim Home</label>
             <select className="form-select" style={{ fontSize: 12 }} value={selectedHomeClub}
               onChange={e => { setSelectedHomeClub(e.target.value); setHomeStarters([]); setHomeSubs([]); setHomeCaptain(''); }}>
               {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Tim Away</label>
+            <label className="lineup-field-label">Tim Away</label>
             <select className="form-select" style={{ fontSize: 12 }} value={selectedAwayClub}
               onChange={e => { setSelectedAwayClub(e.target.value); setAwayStarters([]); setAwaySubs([]); setAwayCaptain(''); }}>
               {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Kickoff</label>
+            <label className="lineup-field-label">Kickoff</label>
             <input type="datetime-local" className="form-input" style={{ fontSize: 11 }}
               value={kickoffTime.slice(0, 16)} onChange={e => setKickoffTime(new Date(e.target.value).toISOString())} />
           </div>
-          <div>
-            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Venue <span style={{ fontWeight: 400, fontSize: 9 }}>(auto dari home, editable)</span></label>
+          <div className="lineup-venue-field">
+            <label className="lineup-field-label">Venue <span style={{ fontWeight: 400, fontSize: 9 }}>(auto, editable)</span></label>
             <input type="text" className="form-input" style={{ fontSize: 12 }} placeholder="Nama stadion..." value={venueName} onChange={e => setVenueName(e.target.value)} />
           </div>
-          <div>
-            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Form. Home</label>
-            <select className="form-select" style={{ fontSize: 12 }} value={homeFormation} onChange={e => setHomeFormation(e.target.value)}>
-              {FORMATIONS.map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Form. Away</label>
-            <select className="form-select" style={{ fontSize: 12 }} value={awayFormation} onChange={e => setAwayFormation(e.target.value)}>
-              {FORMATIONS.map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
-          </div>
         </div>
       </div>
 
-      {/* â”€â”€ 2 KOLOM: HOME | AWAY (side-by-side, semua dalam 1 layar) â”€â”€ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-
-        {/* â•â•â• HOME TEAM â•â•â• */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {/* Header Home */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '8px 12px',
-            background: 'var(--primary-600)', borderRadius: '8px 8px 0 0', color: 'white' }}>
-            {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
-              ? <img src={homeClub.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-              : <span style={{ fontSize: 20 }}>{homeClub?.logoUrl || 'ðŸ '}</span>}
-            <span style={{ fontWeight: 700, fontSize: 13 }}>HOME: {homeClub?.name}</span>
-            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700,
-              background: homeValid && homeHasGK ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)',
-              padding: '2px 8px', borderRadius: 10 }}>
-              {homeStarters.length}/11 {homeHasGK ? '' : 'âš ï¸GK'}
-            </span>
-          </div>
-
-          {/* 3 kolom: Squad | Starting XI | Cadangan */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, border: '1px solid var(--neutral-200)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
-
-            {/* Kolom 1: Squad Terdaftar */}
-            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', background: 'var(--neutral-50)', maxHeight: 420, overflowY: 'auto' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 6, textTransform: 'uppercase' }}>
-                Skuad ({homeSquad.length})
-              </div>
-              <div style={{ fontSize: 9, color: 'var(--neutral-400)', marginBottom: 8 }}>Klik 1x â†’ Starter Â· 2x â†’ Sub Â· 3x â†’ Hapus</div>
-              {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
-                const pp = homeSquad.filter(p => p.position === pos);
-                if (!pp.length) return null;
-                return <div key={pos} style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-400)', marginBottom: 3, textTransform: 'uppercase' }}>
-                    {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}
-                  </div>
-                  {pp.map(p => renderPill(p, homeStarters, setHomeStarters, homeSubs, setHomeSubs, homeCaptain, setHomeCaptain))}
-                </div>;
-              })}
-              {homeSquad.length === 0 && <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Tidak ada pemain terdaftar untuk klub ini</div>}
-            </div>
-
-            {/* Kolom 2: Starting XI */}
-            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', maxHeight: 420, overflowY: 'auto' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--primary-600)', marginBottom: 6, textTransform: 'uppercase' }}>âš½ Starting XI</div>
-              {homeStarters.length === 0
-                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Pilih pemain dari Skuad</div>
-                : homeSquad.filter(p => homeStarters.includes(p.id))
-                    .sort((a, b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
-                    .map(p => renderPill(p, homeStarters, setHomeStarters, homeSubs, setHomeSubs, homeCaptain, setHomeCaptain))
-              }
-              {homeAsing.slice(0, 3).map(a => (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--primary-600)', color: 'white', fontSize: 11, fontWeight: 700, marginBottom: 3 }}>
-                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
-                  <span style={{ flex: 1 }}>{a.name}</span>
-                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
-                  <button onClick={() => setHomeAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
-                </div>
-              ))}
-            </div>
-
-            {/* Kolom 3: Cadangan + Asing */}
-            <div style={{ padding: 10, maxHeight: 420, overflowY: 'auto' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-600)', marginBottom: 6, textTransform: 'uppercase' }}>ðŸ”„ Cadangan ({homeSubs.length}/7)</div>
-              {homeSubs.length === 0
-                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '8px 0' }}>Belum ada</div>
-                : homeSquad.filter(p => homeSubs.includes(p.id))
-                    .map(p => renderPill(p, homeStarters, setHomeStarters, homeSubs, setHomeSubs, homeCaptain, setHomeCaptain))
-              }
-              {homeAsing.slice(3).map(a => (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--neutral-200)', fontSize: 11, fontWeight: 600, marginBottom: 3 }}>
-                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
-                  <span style={{ flex: 1 }}>{a.name}</span>
-                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
-                  <button onClick={() => setHomeAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
-                </div>
-              ))}
-              {/* Input Asing Non-DSP */}
-              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--neutral-100)' }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 5 }}>+ ASING NON-DSP</div>
-                <input type="text" className="form-input" placeholder="Nama" style={{ fontSize: 11, marginBottom: 4 }}
-                  value={homeAsingInput.name} onChange={e => setHomeAsingInput(p => ({ ...p, name: e.target.value }))} />
-                <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
-                  <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 50 }}
-                    value={homeAsingInput.no} onChange={e => setHomeAsingInput(p => ({ ...p, no: e.target.value }))} />
-                  <select className="form-select" style={{ fontSize: 11 }}
-                    value={homeAsingInput.pos} onChange={e => setHomeAsingInput(p => ({ ...p, pos: e.target.value }))}>
-                    <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
-                  </select>
-                </div>
-                <button className="btn btn-sm btn-secondary" style={{ width: '100%', fontSize: 11 }} onClick={() => addAsing('home')}>Tambah</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* â•â•â• AWAY TEAM â•â•â• */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {/* Header Away */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '8px 12px',
-            background: 'var(--neutral-700)', borderRadius: '8px 8px 0 0', color: 'white' }}>
-            {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
-              ? <img src={awayClub.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-              : <span style={{ fontSize: 20 }}>{awayClub?.logoUrl || 'âœˆï¸'}</span>}
-            <span style={{ fontWeight: 700, fontSize: 13 }}>AWAY: {awayClub?.name}</span>
-            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700,
-              background: awayValid && awayHasGK ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)',
-              padding: '2px 8px', borderRadius: 10 }}>
-              {awayStarters.length}/11 {awayHasGK ? '' : 'âš ï¸GK'}
-            </span>
-          </div>
-
-          {/* 3 kolom: Squad | Starting XI | Cadangan */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, border: '1px solid var(--neutral-200)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
-
-            {/* Kolom 1: Squad */}
-            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', background: 'var(--neutral-50)', maxHeight: 420, overflowY: 'auto' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 6, textTransform: 'uppercase' }}>
-                Skuad ({awaySquad.length})
-              </div>
-              <div style={{ fontSize: 9, color: 'var(--neutral-400)', marginBottom: 8 }}>Klik 1x â†’ Starter Â· 2x â†’ Sub Â· 3x â†’ Hapus</div>
-              {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
-                const pp = awaySquad.filter(p => p.position === pos);
-                if (!pp.length) return null;
-                return <div key={pos} style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-400)', marginBottom: 3, textTransform: 'uppercase' }}>
-                    {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}
-                  </div>
-                  {pp.map(p => renderPill(p, awayStarters, setAwayStarters, awaySubs, setAwaySubs, awayCaptain, setAwayCaptain))}
-                </div>;
-              })}
-              {awaySquad.length === 0 && <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Tidak ada pemain terdaftar untuk klub ini</div>}
-            </div>
-
-            {/* Kolom 2: Starting XI */}
-            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', maxHeight: 420, overflowY: 'auto' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 6, textTransform: 'uppercase' }}>âš½ Starting XI</div>
-              {awayStarters.length === 0
-                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Pilih pemain dari Skuad</div>
-                : awaySquad.filter(p => awayStarters.includes(p.id))
-                    .sort((a, b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
-                    .map(p => renderPill(p, awayStarters, setAwayStarters, awaySubs, setAwaySubs, awayCaptain, setAwayCaptain))
-              }
-              {awayAsing.slice(0, 3).map(a => (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--neutral-700)', color: 'white', fontSize: 11, fontWeight: 700, marginBottom: 3 }}>
-                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
-                  <span style={{ flex: 1 }}>{a.name}</span>
-                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
-                  <button onClick={() => setAwayAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
-                </div>
-              ))}
-            </div>
-
-            {/* Kolom 3: Cadangan + Asing */}
-            <div style={{ padding: 10, maxHeight: 420, overflowY: 'auto' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-600)', marginBottom: 6, textTransform: 'uppercase' }}>ðŸ”„ Cadangan ({awaySubs.length}/7)</div>
-              {awaySubs.length === 0
-                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '8px 0' }}>Belum ada</div>
-                : awaySquad.filter(p => awaySubs.includes(p.id))
-                    .map(p => renderPill(p, awayStarters, setAwayStarters, awaySubs, setAwaySubs, awayCaptain, setAwayCaptain))
-              }
-              {awayAsing.slice(3).map(a => (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--neutral-200)', fontSize: 11, fontWeight: 600, marginBottom: 3 }}>
-                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
-                  <span style={{ flex: 1 }}>{a.name}</span>
-                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
-                  <button onClick={() => setAwayAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
-                </div>
-              ))}
-              {/* Input Asing Non-DSP */}
-              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--neutral-100)' }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 5 }}>+ ASING NON-DSP</div>
-                <input type="text" className="form-input" placeholder="Nama" style={{ fontSize: 11, marginBottom: 4 }}
-                  value={awayAsingInput.name} onChange={e => setAwayAsingInput(p => ({ ...p, name: e.target.value }))} />
-                <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
-                  <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 50 }}
-                    value={awayAsingInput.no} onChange={e => setAwayAsingInput(p => ({ ...p, no: e.target.value }))} />
-                  <select className="form-select" style={{ fontSize: 11 }}
-                    value={awayAsingInput.pos} onChange={e => setAwayAsingInput(p => ({ ...p, pos: e.target.value }))}>
-                    <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
-                  </select>
-                </div>
-                <button className="btn btn-sm btn-secondary" style={{ width: '100%', fontSize: 11 }} onClick={() => addAsing('away')}>Tambah</button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* TEAM PANELS */}
+      <div className="lineup-teams-grid">
+        {renderTeamPanel('home', homeSquad, homeClub, homeFormation, setHomeFormation,
+          homeStarters, setHomeStarters, homeSubs, setHomeSubs,
+          homeCaptain, setHomeCaptain, homeAsing, setHomeAsing, homeAsingInput, setHomeAsingInput)}
+        {renderTeamPanel('away', awaySquad, awayClub, awayFormation, setAwayFormation,
+          awayStarters, setAwayStarters, awaySubs, setAwaySubs,
+          awayCaptain, setAwayCaptain, awayAsing, setAwayAsing, awayAsingInput, setAwayAsingInput)}
       </div>
 
-      {/* â”€â”€ MODAL PREVIEW STORY 9:16 â”€â”€ */}
+      {/* PREVIEW MODAL */}
       {showPreviewModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1500,
-          display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowPreviewModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setShowPreviewModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, maxHeight: '95vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-md btn-primary" onClick={async () => {
                 const node = document.getElementById('lineup-story-card');
                 if (!node) return;
                 try {
-                  triggerToast('Membuat gambar Story...');
+                  triggerToast('Membuat gambar...');
                   const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
                   const link = document.createElement('a');
-                  link.download = `Lineup_${homeClub?.shortName}_vs_${awayClub?.shortName}_Story.png`;
+                  link.download = `Lineup_${homeClub?.shortName}_vs_${awayClub?.shortName}.png`;
                   link.href = dataUrl; link.click();
                   triggerToast('Story berhasil diunduh!');
-                } catch { triggerToast('Gagal mengunduh gambar.', 'error'); }
-              }}><Upload size={14} /> Unduh PNG (9:16)</button>
-              <button className="btn btn-md btn-secondary" onClick={() => setShowPreviewModal(false)}><X size={14} /> Tutup</button>
+                } catch { triggerToast('Gagal mengunduh.', 'error'); }
+              }}><Upload size={14} /> Unduh PNG</button>
+              <button className="btn btn-md btn-secondary" onClick={() => setShowPreviewModal(false)}>
+                <X size={14} /> Tutup
+              </button>
             </div>
-
-            {/* Story Card */}
             <div id="lineup-story-card" style={{
-              width: 360, height: 640,
-              background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)',
+              width: 360, height: 640, background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)',
               color: 'white', overflow: 'hidden', display: 'flex', flexDirection: 'column',
               justifyContent: 'space-between', padding: '24px 20px',
               boxShadow: '0 25px 50px rgba(0,0,0,0.8)', position: 'relative', fontFamily: 'system-ui, sans-serif'
             }}>
               <div style={{ position: 'absolute', top: '-10%', left: '-10%', right: '-10%', height: '40%',
                 background: 'radial-gradient(circle, rgba(15,159,154,0.2) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
-
-              {/* Header */}
               <div style={{ zIndex: 2, textAlign: 'center' }}>
-                <div style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', letterSpacing: 2, textTransform: 'uppercase' }}>
-                  {selectedCompetitionName}
-                </div>
+                <div style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', letterSpacing: 2, textTransform: 'uppercase' }}>{selectedCompetitionName}</div>
                 <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: '#94a3b8' }}>STARTING XI</div>
                 <div style={{ width: 32, height: 2, backgroundColor: '#0F9F9A', margin: '5px auto 0' }} />
               </div>
-
-              {/* VS */}
-              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 0' }}>
+              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0' }}>
                 <div style={{ flex: 1, textAlign: 'center' }}>
                   {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
                     ? <img src={homeClub.logoUrl} crossOrigin="anonymous" style={{ width: 44, height: 44, objectFit: 'contain', margin: '0 auto', display: 'block' }} alt="" />
-                    : <div style={{ fontSize: 34, textAlign: 'center' }}>{homeClub?.logoUrl || 'ðŸ '}</div>}
+                    : <div style={{ fontSize: 32, textAlign: 'center' }}>H</div>}
                   <div style={{ fontSize: 10, fontWeight: 800, marginTop: 3, textTransform: 'uppercase', color: 'white' }}>{homeClub?.shortName}</div>
                   <div style={{ fontSize: 8, color: '#0F9F9A' }}>({homeFormation})</div>
                 </div>
@@ -1942,68 +1872,38 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                 <div style={{ flex: 1, textAlign: 'center' }}>
                   {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
                     ? <img src={awayClub.logoUrl} crossOrigin="anonymous" style={{ width: 44, height: 44, objectFit: 'contain', margin: '0 auto', display: 'block' }} alt="" />
-                    : <div style={{ fontSize: 34, textAlign: 'center' }}>{awayClub?.logoUrl || 'âœˆï¸'}</div>}
+                    : <div style={{ fontSize: 32, textAlign: 'center' }}>A</div>}
                   <div style={{ fontSize: 10, fontWeight: 800, marginTop: 3, textTransform: 'uppercase', color: 'white' }}>{awayClub?.shortName}</div>
                   <div style={{ fontSize: 8, color: '#0F9F9A' }}>({awayFormation})</div>
                 </div>
               </div>
-
-              {/* Players */}
               <div style={{ zIndex: 2, display: 'flex', gap: 10, flex: 1, margin: '6px 0',
-                border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 10px',
+                border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px',
                 background: 'rgba(255,255,255,0.02)' }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 8, fontWeight: 800, color: '#0F9F9A', marginBottom: 4, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
-                    {homeClub?.code || 'HOME'}
-                  </div>
-                  {homeSquad.filter(p => homeStarters.includes(p.id))
-                    .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
-                    .map(p => (
+                  <div style={{ fontSize: 8, fontWeight: 800, color: '#0F9F9A', marginBottom: 4, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>{homeClub?.code || 'HOME'}</div>
+                  {homeSquad.filter(p => homeStarters.includes(p.id)).sort((a,b)=>['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)-['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position)).map(p=>(
                     <div key={p.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
                       <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{p.shirtNumber}</span>
-                      <span style={{ color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 95 }}>
-                        {p.displayName}{p.id === homeCaptain ? ' (C)' : ''}
-                      </span>
+                      <span style={{ color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 90 }}>{p.displayName}{p.id===homeCaptain?' (C)':''}</span>
                     </div>
                   ))}
-                  {homeAsing.slice(0,3).map(a => (
-                    <div key={a.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
-                      <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{a.no}</span>
-                      <span style={{ color: '#f1f5f9' }}>{a.name} ðŸŒ</span>
-                    </div>
-                  ))}
-                  {homeStarters.length === 0 && <div style={{ fontSize: 8, color: '#64748b' }}>Belum ada starter</div>}
+                  {homeAsing.map(a=>(<div key={a.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}><span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{a.no}</span><span style={{ color: '#f1f5f9' }}>{a.name} INT</span></div>))}
                 </div>
                 <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: 8 }}>
-                  <div style={{ fontSize: 8, fontWeight: 800, color: '#0F9F9A', marginBottom: 4, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
-                    {awayClub?.code || 'AWAY'}
-                  </div>
-                  {awaySquad.filter(p => awayStarters.includes(p.id))
-                    .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
-                    .map(p => (
+                  <div style={{ fontSize: 8, fontWeight: 800, color: '#0F9F9A', marginBottom: 4, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>{awayClub?.code || 'AWAY'}</div>
+                  {awaySquad.filter(p => awayStarters.includes(p.id)).sort((a,b)=>['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)-['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position)).map(p=>(
                     <div key={p.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
                       <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{p.shirtNumber}</span>
-                      <span style={{ color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 95 }}>
-                        {p.displayName}{p.id === awayCaptain ? ' (C)' : ''}
-                      </span>
+                      <span style={{ color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 90 }}>{p.displayName}{p.id===awayCaptain?' (C)':''}</span>
                     </div>
                   ))}
-                  {awayAsing.slice(0,3).map(a => (
-                    <div key={a.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
-                      <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{a.no}</span>
-                      <span style={{ color: '#f1f5f9' }}>{a.name} ðŸŒ</span>
-                    </div>
-                  ))}
-                  {awayStarters.length === 0 && <div style={{ fontSize: 8, color: '#64748b' }}>Belum ada starter</div>}
+                  {awayAsing.map(a=>(<div key={a.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}><span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{a.no}</span><span style={{ color: '#f1f5f9' }}>{a.name} INT</span></div>))}
                 </div>
               </div>
-
-              {/* Kickoff info */}
               <div style={{ zIndex: 2, textAlign: 'center', fontSize: 9, color: '#64748b', margin: '3px 0' }}>
-                {new Date(kickoffTime).toLocaleString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB Â· {venueName}
+                {new Date(kickoffTime).toLocaleString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB - {venueName}
               </div>
-
-              {/* Footer */}
               <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 7, fontSize: 8, color: '#64748b', fontWeight: 600 }}>
                 <span>@GARUDAMATCHROOM</span>
@@ -2013,7 +1913,6 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
           </div>
         </div>
       )}
-
     </div>
   );
 }
