@@ -55,6 +55,18 @@ import * as htmlToImage from 'html-to-image';
 // User Role Definition
 type UserRole = 'Super Admin' | 'Admin Data' | 'Match Editor' | 'Rumor Editor' | 'Reviewer';
 
+// Helper to generate RFC 4122 compliant UUID v4
+const generateUUID = (): string => {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 export default function Home() {
   // Navigation & Shell States
   const [activeMenu, setActiveMenu] = useState<'dashboard' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'logs' | 'settings'>('dashboard');
@@ -2827,7 +2839,7 @@ interface ClubEditorProps {
 function ClubEditorView({ clubId, clubs, players, onClose, onSave }: ClubEditorProps) {
   const isNew = clubId === 'new';
   const club = clubs.find(c => c.id === clubId) || {
-    id: `club-${Date.now()}`,
+    id: generateUUID(),
     name: '',
     shortName: '',
     code: '',
@@ -3239,7 +3251,7 @@ let globalCountriesCache: any[] = [];
 function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerEditorProps) {
   const isNew = playerId === 'new';
   const player = players.find(p => p.id === playerId) || {
-    id: `player-${Date.now()}`,
+    id: generateUUID(),
     fullName: '',
     displayName: '',
     clubId: clubs[0]?.id || '',
