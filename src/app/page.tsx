@@ -647,11 +647,18 @@ export default function Home() {
                     clubs={clubs}
                     players={players}
                     matches={matches}
+                    competitions={competitions}
                     onClose={() => setEditingLineupId(null)}
                     onSave={(updatedMatch) => {
-                      setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
-                      logAction('UPDATE_LINEUP', 'Lineup Pertandingan', `Memperbarui formasi/lineup ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
-                      triggerToast('Lineup berhasil disimpan!');
+                      if (editingLineupId === 'new') {
+                        setMatches(prev => [updatedMatch, ...prev]);
+                        logAction('CREATE_LINEUP', 'Lineup Pertandingan', `Membuat lineup baru: ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
+                        triggerToast('Lineup baru berhasil dibuat!');
+                      } else {
+                        setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
+                        logAction('UPDATE_LINEUP', 'Lineup Pertandingan', `Memperbarui formasi/lineup ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
+                        triggerToast('Lineup berhasil disimpan!');
+                      }
                       setEditingLineupId(null);
                     }}
                     triggerToast={triggerToast}
@@ -660,9 +667,15 @@ export default function Home() {
                 ) : (
                   <LineupsListView
                     matches={matches}
+                    competitions={competitions}
                     uiState={uiState}
                     onCreateNew={() => setEditingLineupId('new')}
                     onEdit={setEditingLineupId}
+                    onDelete={(id) => {
+                      setMatches(prev => prev.filter(m => m.id !== id));
+                      logAction('DELETE_LINEUP', 'Lineup Pertandingan', `Menghapus lineup match id: ${id}`);
+                      triggerToast('Lineup berhasil dihapus.');
+                    }}
                     hasPermission={hasPermission}
                   />
                 )
