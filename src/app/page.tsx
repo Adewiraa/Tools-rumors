@@ -165,21 +165,19 @@ export default function Home() {
           `);
         if (playersError) throw playersError;
 
-        // 3. Fetch Competitions
-        const { data: competitionsData, error: competitionsError } = await supabase
-          .from('competitions')
-          .select('*')
-          .order('name', { ascending: true });
-        // Tidak throw jika error — fallback ke mock data
+        // 3. Fetch Competitions via API route (service_role, bypass RLS)
+        const compRes = await fetch('/api/competitions');
+        const compJson = await compRes.json();
+        const competitionsData = compJson.success ? compJson.data : null;
 
         // 4. Fetch relasi club_competitions
         const { data: clubCompData } = await supabase
           .from('club_competitions')
           .select('club_id, competition_id');
 
-        // Map Competitions
+        // Map Competitions (data dari API sudah snake_case dari DB)
         if (competitionsData && competitionsData.length > 0) {
-          const mappedCompetitions = competitionsData.map(c => ({
+          const mappedCompetitions: Competition[] = competitionsData.map((c: any) => ({
             id: c.id,
             name: c.name,
             shortName: c.short_name || '',
@@ -3898,8 +3896,12 @@ function CompetitionsListView({ competitions, clubs, onCreateNew, onEdit, hasPer
                   <tr key={comp.id}>
                     <td>
                       <div className="flex align-center gap-8">
-                        <div style={{ width: 32, height: 32, borderRadius: 6, backgroundColor: 'var(--primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Trophy size={16} color="var(--primary-600)" />
+                        <div style={{ width: 36, height: 36, borderRadius: 6, backgroundColor: 'var(--primary-50)', border: '1px solid var(--neutral-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                          {comp.logoUrl && comp.logoUrl.startsWith('http') ? (
+                            <img src={comp.logoUrl} alt={comp.name} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                          ) : (
+                            <Trophy size={16} color="var(--primary-600)" />
+                          )}
                         </div>
                         <div>
                           <div className="semibold">{comp.name}</div>
