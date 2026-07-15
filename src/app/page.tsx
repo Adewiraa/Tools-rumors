@@ -49,6 +49,7 @@ import {
   calculatePlayerCompleteness
 } from '@/lib/mockData';
 import { supabase, supabaseWrite } from '@/lib/supabaseClient';
+import { countriesList } from '@/lib/countriesData';
 import * as htmlToImage from 'html-to-image';
 
 // User Role Definition
@@ -3263,8 +3264,6 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
   const [nationality, setNationality] = useState(player.nationality);
   const [flag, setFlag] = useState(player.flagUrl);
   const [countrySearch, setCountrySearch] = useState('');
-  const [allCountries, setAllCountries] = useState<any[]>(globalCountriesCache);
-  const [countriesLoaded, setCountriesLoaded] = useState(globalCountriesCache.length > 0);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
 
   // Calculate live completeness score
@@ -3278,54 +3277,10 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
     flagUrl: flag
   });
 
-  // Load all countries once via pagination (capped at 100/request on current plan)
-  const loadAllCountries = async () => {
-    if (globalCountriesCache.length > 0) {
-      setAllCountries(globalCountriesCache);
-      setCountriesLoaded(true);
-      return;
-    }
-    try {
-      const fetchPage = async (page: number) => {
-        const response = await fetch(
-          `https://api.restcountries.com/countries/v5?limit=100&page=${page}`,
-          { headers: { 'Authorization': 'Bearer rc_live_7ed6c608bb5b43ad864e423952ff6e14' } }
-        );
-        if (!response.ok) return [];
-        const rawData = await response.json();
-        return rawData?.data?.objects || [];
-      };
-
-      // Fetch 3 pages in parallel to cover ~300 countries
-      const [p1, p2, p3] = await Promise.all([fetchPage(1), fetchPage(2), fetchPage(3)]);
-      const combined = [...p1, ...p2, ...p3];
-
-      if (combined.length > 0) {
-        const mapped = combined
-          .map((item: any) => ({
-            names: { common: item.names?.common || '', official: item.names?.official || '' },
-            flag: { url_svg: item.flag?.url_svg || '', url_png: item.flag?.url_png || '' }
-          }))
-          .sort((a: any, b: any) => a.names.common.localeCompare(b.names.common));
-
-        globalCountriesCache = mapped;
-        setAllCountries(mapped);
-        setCountriesLoaded(true);
-      }
-    } catch (err) {
-      console.error('Error loading countries:', err);
-    }
-  };
-
-  // Pre-load country list automatically on component mount
-  useEffect(() => {
-    loadAllCountries();
-  }, []);
-
-  // Filter countries client-side based on search query
+  // Filter countries client-side based on search query using local static list
   const filteredCountries = countrySearch.trim()
-    ? allCountries.filter(c => c.names.common.toLowerCase().includes(countrySearch.toLowerCase()))
-    : allCountries;
+    ? countriesList.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()))
+    : countriesList;
 
   const handleSave = () => {
     if (!fullName || !displayName) {
@@ -3425,7 +3380,6 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, userSelect: 'none' }}
             onClick={() => {
               setCountryDropdownOpen(prev => !prev);
-              if (!countriesLoaded) loadAllCountries();
             }}
           >
             <Search size={14} style={{ color: 'var(--neutral-400)', flexShrink: 0 }} />
@@ -3453,32 +3407,30 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
               </div>
               {/* Country list */}
               <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-                {!countriesLoaded ? (
-                  <div style={{ padding: '16px 12px', textAlign: 'center', color: 'var(--neutral-500)', fontSize: 13 }}>Memuat daftar negara...</div>
-                ) : filteredCountries.length === 0 ? (
+                {filteredCountries.length === 0 ? (
                   <div style={{ padding: '16px 12px', textAlign: 'center', color: 'var(--neutral-500)', fontSize: 13 }}>Negara tidak ditemukan</div>
                 ) : (
-                  filteredCountries.slice(0, 80).map((item, idx) => (
+                  filteredCountries.map((item, idx) => (
                     <div
                       key={idx}
                       className="flex align-center gap-10"
-                      style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--neutral-100)', backgroundColor: nationality === item.names.common ? 'var(--primary-50)' : 'transparent' }}
+                      style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--neutral-100)', backgroundColor: nationality === item.name ? 'var(--primary-50)' : 'transparent' }}
                       onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--neutral-50)')}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = nationality === item.names.common ? 'var(--primary-50)' : 'transparent')}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = nationality === item.name ? 'var(--primary-50)' : 'transparent')}
                       onClick={() => {
-                        setNationality(item.names.common);
-                        setFlag(item.flag.url_svg || item.flag.url_png);
+                        setNationality(item.name);
+                        setFlag(item.flagUrl);
                         setCountryDropdownOpen(false);
                         setCountrySearch('');
                       }}
                     >
-                      {item.flag?.url_png ? (
-                        <img src={item.flag.url_png} alt={item.names.common} style={{ width: 28, height: 18, objectFit: 'cover', borderRadius: 2, border: '1px solid var(--neutral-200)', flexShrink: 0 }} />
+                      {item.flagUrl ? (
+                        <img src={item.flagUrl} alt={item.name} style={{ width: 28, height: 18, objectFit: 'cover', borderRadius: 2, border: '1px solid var(--neutral-200)', flexShrink: 0 }} />
                       ) : (
                         <span style={{ width: 28, fontSize: 18 }}>🏳️</span>
                       )}
-                      <span style={{ fontSize: 13, fontWeight: 500 }}>{item.names.common}</span>
-                      {nationality === item.names.common && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary-600)', fontWeight: 700 }}>✓</span>}
+                      <span style={{ fontSize: 13, fontWeight: 500 }}>{item.name}</span>
+                      {nationality === item.name && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary-600)', fontWeight: 700 }}>✓</span>}
                     </div>
                   ))
                 )}
