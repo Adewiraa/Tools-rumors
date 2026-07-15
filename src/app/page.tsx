@@ -677,29 +677,17 @@ export default function Home() {
                     onClose={() => setEditingClubId(null)}
                     onSave={async (updatedClub) => {
                       try {
-                        const supabasePayload = {
-                          id: updatedClub.id,
-                          name: updatedClub.name,
-                          short_name: updatedClub.shortName,
-                          slug: updatedClub.code.toLowerCase(),
-                          city: updatedClub.city,
-                          stadium: updatedClub.stadium,
-                          coach: updatedClub.coach,
-                          primary_color: updatedClub.homeColor,
-                          secondary_color: updatedClub.awayColor,
-                          home_color: updatedClub.homeColor,
-                          away_color: updatedClub.awayColor,
-                          third_color: updatedClub.thirdColor,
-                          logo_public_url: updatedClub.logoUrl,
-                        };
+                        // Use server-side API route (service_role key, bypasses RLS)
+                        const res = await fetch('/api/clubs', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ club: updatedClub })
+                        });
+                        const result = await res.json();
 
-                        const { error } = await supabaseWrite
-                          .from('clubs')
-                          .upsert(supabasePayload, { onConflict: 'id' });
-
-                        if (error) {
-                          console.error('Supabase save error:', error);
-                          triggerToast(`Gagal menyimpan ke database: ${error.message}`, 'error');
+                        if (!result.success) {
+                          console.error('Club save error:', result.error);
+                          triggerToast(`Gagal menyimpan ke database: ${result.error}`, 'error');
                           return;
                         }
 
@@ -741,92 +729,21 @@ export default function Home() {
                     onClose={() => setEditingPlayerId(null)}
                     onSave={async (updatedPlayer) => {
                       try {
-                        // 1. Get/Create club_season_id from club_seasons for the selected clubId
-                        const { data: seasonData, error: seasonErr } = await supabaseWrite
-                          .from('club_seasons')
-                          .select('id')
-                          .eq('club_id', updatedPlayer.clubId)
-                          .limit(1);
+                        // Use server-side API route (service_role key, bypasses RLS)
+                        const res = await fetch('/api/players', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'upsert', player: updatedPlayer })
+                        });
+                        const result = await res.json();
 
-                        if (seasonErr) throw seasonErr;
-
-                        let clubSeasonId = seasonData && seasonData[0]?.id;
-
-                        // If club_season_id doesn't exist, try to lookup any active season or insert a default entry
-                        if (!clubSeasonId) {
-                          const { data: seasonsList } = await supabaseWrite.from('seasons').select('id').limit(1);
-                          const activeSeasonId = seasonsList && seasonsList[0]?.id;
-                          if (activeSeasonId) {
-                            const { data: newSeason, error: insErr } = await supabaseWrite
-                              .from('club_seasons')
-                              .insert({
-                                club_id: updatedPlayer.clubId,
-                                season_id: activeSeasonId
-                              })
-                              .select('id')
-                              .single();
-                            if (!insErr && newSeason) {
-                              clubSeasonId = newSeason.id;
-                            }
-                          }
+                        if (!result.success) {
+                          console.error('Player save error:', result.error);
+                          triggerToast(`Gagal menyimpan data pemain: ${result.error}`, 'error');
+                          return;
                         }
 
-                        // 2. Save player profile to 'players' table
-                        const countryCode = updatedPlayer.nationality === 'Indonesia' ? 'ID' : 'Asing';
-                        const playerPayload = {
-                          id: updatedPlayer.id,
-                          full_name: updatedPlayer.fullName,
-                          display_name: updatedPlayer.displayName,
-                          country_code: countryCode,
-                          country_name: updatedPlayer.nationality,
-                          country_flag_url: updatedPlayer.flagUrl,
-                        };
-
-                        const { error: playerErr } = await supabaseWrite
-                          .from('players')
-                          .upsert(playerPayload, { onConflict: 'id' });
-
-                        if (playerErr) throw playerErr;
-
-                        // 3. Save player roster to 'club_rosters' table
-                        if (clubSeasonId) {
-                          let dbPos = 'MF';
-                          if (updatedPlayer.position === 'Goalkeeper') dbPos = 'GK';
-                          else if (updatedPlayer.position === 'Defender') dbPos = 'DF';
-                          else if (updatedPlayer.position === 'Midfielder') dbPos = 'MF';
-                          else if (updatedPlayer.position === 'Forward') dbPos = 'FW';
-
-                          // Check if roster already exists for this player
-                          const { data: existingRoster, error: rosterFetchErr } = await supabaseWrite
-                            .from('club_rosters')
-                            .select('id')
-                            .eq('player_id', updatedPlayer.id)
-                            .limit(1);
-
-                          if (rosterFetchErr) throw rosterFetchErr;
-
-                          const rosterPayload = {
-                            player_id: updatedPlayer.id,
-                            club_season_id: clubSeasonId,
-                            shirt_number: updatedPlayer.shirtNumber,
-                            position: dbPos
-                          };
-
-                          if (existingRoster && existingRoster.length > 0) {
-                            const { error: rosterUpdErr } = await supabaseWrite
-                              .from('club_rosters')
-                              .update(rosterPayload)
-                              .eq('id', existingRoster[0].id);
-                            if (rosterUpdErr) throw rosterUpdErr;
-                          } else {
-                            const { error: rosterInsErr } = await supabaseWrite
-                              .from('club_rosters')
-                              .insert(rosterPayload);
-                            if (rosterInsErr) throw rosterInsErr;
-                          }
-                        }
-
-                        // 4. Update local state
+                        // Update local state
                         if (editingPlayerId === 'new') {
                           setPlayers(prev => [...prev, updatedPlayer]);
                           logAction('CREATE_PLAYER', 'Master Pemain', `Menambah master pemain baru: ${updatedPlayer.fullName}`);
