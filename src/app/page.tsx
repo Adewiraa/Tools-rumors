@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -249,7 +249,7 @@ export default function Home() {
               position,
               shirtNumber: roster?.shirt_number || 99,
               nationality: p.country_name || (p.country_code === 'ID' ? 'Indonesia' : 'Asing'),
-              flagUrl: p.country_flag_url || '🇮🇩',
+              flagUrl: p.country_flag_url || 'ðŸ‡®ðŸ‡©',
               age: 25,
               contractStart: '2025-01-01',
               contractEnd: '2028-01-01',
@@ -357,7 +357,7 @@ export default function Home() {
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--navy-900)' }}>
               <div className="flex align-center gap-8">
-                <span style={{ color: 'var(--primary-600)' }}>🇮🇩</span>
+                <span style={{ color: 'var(--primary-600)' }}>ðŸ‡®ðŸ‡©</span>
                 <span style={{ fontWeight: 700, color: 'var(--white)', fontSize: 16 }}>GARUDA MATCH</span>
               </div>
               <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setMobileDrawerOpen(false)}>
@@ -428,16 +428,16 @@ export default function Home() {
         </div>
       )}
 
-      {/* 1. Sidebar — Desktop: full sidebar, Mobile: bottom tab bar (5 main items) */}
+      {/* 1. Sidebar â€” Desktop: full sidebar, Mobile: bottom tab bar (5 main items) */}
       <aside className="sidebar" style={{ width: sidebarCollapsed ? '72px' : '248px' }}>
         <div className="sidebar-logo">
           {!sidebarCollapsed ? (
             <>
-              <span style={{ color: 'var(--primary-600)' }}>🇮🇩</span>
+              <span style={{ color: 'var(--primary-600)' }}>ðŸ‡®ðŸ‡©</span>
               <span>GARUDA MATCH</span>
             </>
           ) : (
-            <span style={{ color: 'var(--primary-600)' }}>🇮🇩</span>
+            <span style={{ color: 'var(--primary-600)' }}>ðŸ‡®ðŸ‡©</span>
           )}
         </div>
 
@@ -782,7 +782,7 @@ export default function Home() {
                         const compResult = await compRes.json();
 
                         if (!compResult.success) {
-                          // Relasi gagal — klub sudah tersimpan tapi tampilkan warning
+                          // Relasi gagal â€” klub sudah tersimpan tapi tampilkan warning
                           console.warn('Club competitions save warning:', compResult.error);
                           triggerToast(`Klub tersimpan, tapi relasi kompetisi gagal: ${compResult.error}`, 'warning');
                         }
@@ -1136,7 +1136,7 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
         <p className="page-description">Ringkasan operasional media olahraga hari ini: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
-      {/* Row 1 — KPI Cards */}
+      {/* Row 1 â€” KPI Cards */}
       <div className="grid-12">
         <div className="card" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 120 }}>
           <div>
@@ -1179,7 +1179,7 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
         </div>
       </div>
 
-      {/* Row 2 — Agenda & Editor task panel */}
+      {/* Row 2 â€” Agenda & Editor task panel */}
       <div className="grid-12">
         {/* Agenda Pertandingan */}
         <div className="card" style={{ gridColumn: 'span 8' }}>
@@ -1251,7 +1251,7 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>Tinjau rumor Transfer Ardi Pratama</div>
                 <div style={{ fontSize: 11, color: 'var(--neutral-500)', marginTop: 2 }}>Minta konfirmasi agen pemain atau ofisial Cakra FC.</div>
-                <span className="badge badge-warning" style={{ fontSize: 10, padding: '2px 6px', marginTop: 6 }}>Tier B · Penting</span>
+                <span className="badge badge-warning" style={{ fontSize: 10, padding: '2px 6px', marginTop: 6 }}>Tier B Â· Penting</span>
               </div>
             </div>
 
@@ -1267,7 +1267,7 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
         </div>
       </div>
 
-      {/* Row 3 — Quality Warnings & Audit Trail */}
+      {/* Row 3 â€” Quality Warnings & Audit Trail */}
       <div className="grid-12">
         {/* Data Quality */}
         <div className="card" style={{ gridColumn: 'span 5' }}>
@@ -1321,20 +1321,23 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
 // ==========================================
 interface LineupsListProps {
   matches: Match[];
+  competitions: Competition[];
   uiState: string;
   onCreateNew: () => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
 }
 
-function LineupsListView({ matches, onCreateNew, onEdit, hasPermission }: LineupsListProps) {
+function LineupsListView({ matches, competitions, onCreateNew, onEdit, onDelete, hasPermission }: LineupsListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedComp, setSelectedComp] = useState('Semua');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filteredMatches = matches.filter(match => {
     const matchName = `${match.homeClubName} vs ${match.awayClubName}`.toLowerCase();
     const matchesSearch = matchName.includes(searchTerm.toLowerCase()) || match.venue.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesComp = selectedComp === 'Semua' || match.competition.includes(selectedComp);
+    const matchesComp = selectedComp === 'Semua' || match.competition === selectedComp;
     return matchesSearch && matchesComp;
   });
 
@@ -1346,7 +1349,7 @@ function LineupsListView({ matches, onCreateNew, onEdit, hasPermission }: Lineup
             <span>Dashboard</span> <ChevronRight size={10} /> <span>Lineup Pertandingan</span>
           </div>
           <h1 className="page-title">Lineup Pertandingan</h1>
-          <p className="page-description">Kelola susunan pemain, formasi awal, dan pemain cadangan match Liga Nusantara Utama.</p>
+          <p className="page-description">Kelola susunan pemain, formasi, dan cadangan untuk setiap pertandingan.</p>
         </div>
         {hasPermission('Lineup', 'create_edit') && (
           <button className="btn btn-md btn-primary" onClick={onCreateNew}>
@@ -1358,36 +1361,37 @@ function LineupsListView({ matches, onCreateNew, onEdit, hasPermission }: Lineup
       {/* Filter Bar */}
       <div className="card" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 280 }}>
-          <div className="search-input-wrapper" style={{ maxWidth: 300 }}>
+          <div className="search-input-wrapper" style={{ maxWidth: 280 }}>
             <Search size={16} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Cari klub atau stadion..."
-              className="form-input"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <input type="text" placeholder="Cari klub atau stadion..." className="form-input"
+              value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <select className="form-select" style={{ maxWidth: 200 }} value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
+          <select className="form-select" style={{ maxWidth: 220 }} value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
             <option value="Semua">Semua Kompetisi</option>
-            <option value="Liga Nusantara">Liga Nusantara Utama</option>
+            {competitions.filter(c => c.isActive).map(c => (
+              <option key={c.id} value={c.name}>{c.name}</option>
+            ))}
+            {competitions.filter(c => !c.isActive).map(c => (
+              <option key={c.id} value={c.name}>{c.name} (nonaktif)</option>
+            ))}
           </select>
         </div>
-
-        {searchTerm || selectedComp !== 'Semua' ? (
+        {(searchTerm || selectedComp !== 'Semua') && (
           <button className="btn btn-sm btn-secondary" onClick={() => { setSearchTerm(''); setSelectedComp('Semua'); }}>
             Reset Filter
           </button>
-        ) : null}
+        )}
       </div>
 
       {/* Data Table */}
       {filteredMatches.length === 0 ? (
         <div className="card" style={{ padding: 48, textAlign: 'center' }}>
           <AlertCircle size={32} color="var(--neutral-500)" style={{ margin: '0 auto 12px' }} />
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Belum ada lineup pada periode ini</h3>
-          <p className="text-muted" style={{ marginBottom: 16 }}>Buat lineup baru atau ubah kata kunci filter yang digunakan.</p>
-          <button className="btn btn-sm btn-primary" onClick={onCreateNew}>Buat Lineup</button>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Belum ada lineup</h3>
+          <p className="text-muted" style={{ marginBottom: 16 }}>Buat lineup baru atau ubah filter.</p>
+          {hasPermission('Lineup', 'create_edit') && (
+            <button className="btn btn-sm btn-primary" onClick={onCreateNew}>Buat Lineup</button>
+          )}
         </div>
       ) : (
         <div className="table-wrapper">
@@ -1397,9 +1401,8 @@ function LineupsListView({ matches, onCreateNew, onEdit, hasPermission }: Lineup
                 <th>Pertandingan</th>
                 <th>Kompetisi</th>
                 <th>Kickoff</th>
-                <th>Status Data</th>
+                <th>Status</th>
                 <th>Publikasi</th>
-                <th>Editor</th>
                 <th className="text-right">Aksi</th>
               </tr>
             </thead>
@@ -1407,16 +1410,23 @@ function LineupsListView({ matches, onCreateNew, onEdit, hasPermission }: Lineup
               {filteredMatches.map(match => (
                 <tr key={match.id}>
                   <td>
-                    <div className="flex align-center gap-12">
-                      <span style={{ fontSize: 22 }}>{match.homeLogo}</span>
-                      <div>
-                        <div className="semibold">{match.homeClubName} vs {match.awayClubName} {match.awayLogo}</div>
-                        <div className="text-muted" style={{ fontSize: 11 }}>Venue: {match.venue}</div>
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {match.homeLogo && match.homeLogo.startsWith('http')
+                        ? <img src={match.homeLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                        : <span style={{ fontSize: 18 }}>{match.homeLogo}</span>}
+                      <span className="semibold" style={{ fontSize: 13 }}>{match.homeClubName}</span>
+                      <span className="text-muted" style={{ fontSize: 11 }}>vs</span>
+                      {match.awayLogo && match.awayLogo.startsWith('http')
+                        ? <img src={match.awayLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                        : <span style={{ fontSize: 18 }}>{match.awayLogo}</span>}
+                      <span className="semibold" style={{ fontSize: 13 }}>{match.awayClubName}</span>
                     </div>
+                    <div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>{match.venue}</div>
                   </td>
-                  <td>{match.competition}</td>
-                  <td>{new Date(match.kickoff).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB</td>
+                  <td style={{ fontSize: 12 }}>{match.competition}</td>
+                  <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                    {new Date(match.kickoff).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
+                  </td>
                   <td>
                     <span className={`badge ${match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`}>
                       {match.lineupStatus}
@@ -1427,11 +1437,25 @@ function LineupsListView({ matches, onCreateNew, onEdit, hasPermission }: Lineup
                       {match.publicationStatus}
                     </span>
                   </td>
-                  <td>{match.editor}</td>
                   <td className="text-right">
-                    <button className="btn btn-sm btn-secondary" onClick={() => onEdit(match.id)}>
-                      Edit Lineup
-                    </button>
+                    <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                      <button className="btn btn-sm btn-primary" onClick={() => onEdit(match.id)}>
+                        <Edit size={13} /> Edit
+                      </button>
+                      {hasPermission('Lineup', 'delete') && (
+                        confirmDeleteId === match.id ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
+                            <button className="btn btn-sm btn-danger" onClick={() => { onDelete(match.id); setConfirmDeleteId(null); }}>Ya</button>
+                            <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                          </span>
+                        ) : (
+                          <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(match.id)}>
+                            <Trash2 size={13} />
+                          </button>
+                        )
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1444,493 +1468,552 @@ function LineupsListView({ matches, onCreateNew, onEdit, hasPermission }: Lineup
 }
 
 // ==========================================
-// 3. LINEUP EDITOR VIEW (DEEP IMPLEMENTATION)
+// 3. LINEUP EDITOR VIEW â€” 1 TAB LAYOUT
 // ==========================================
+interface AsingEntry { id: string; name: string; no: number; pos: string; }
+
 interface LineupEditorProps {
   matchId: string;
   clubs: Club[];
   players: Player[];
   matches: Match[];
+  competitions: Competition[];
   onClose: () => void;
   onSave: (match: Match) => void;
   triggerToast: (msg: string, type?: any) => void;
   logAction: (action: string, module: string, details: string) => void;
 }
 
-function LineupEditorView({ matchId, clubs, players, matches, onClose, onSave, triggerToast }: LineupEditorProps) {
+function LineupEditorView({ matchId, clubs, players, matches, competitions, onClose, onSave, triggerToast }: LineupEditorProps) {
   const isNew = matchId === 'new';
-  const match = matches.find(m => m.id === matchId) || {
-    id: `match-${Date.now()}`,
-    homeClubId: clubs[0]?.id || '',
-    homeClubName: clubs[0]?.name || '',
-    homeLogo: clubs[0]?.logoUrl || '',
-    awayClubId: clubs[1]?.id || '',
-    awayClubName: clubs[1]?.name || '',
-    awayLogo: clubs[1]?.logoUrl || '',
-    competition: 'Liga Nusantara Utama 2026/27',
-    season: '2026/27',
-    kickoff: new Date().toISOString(),
-    venue: clubs[0]?.stadium || '',
-    status: 'Scheduled' as const,
-    lineupStatus: 'Draft' as const,
-    publicationStatus: 'Draft' as const,
-    editor: 'Match Editor A',
-    lastUpdated: 'Baru saja'
-  };
+  const existingMatch = matches.find(m => m.id === matchId);
+  const firstComp = competitions.find(c => c.isActive) || competitions[0];
 
-  // State fields
-  const [selectedHomeClub, setSelectedHomeClub] = useState(match.homeClubId);
-  const [selectedAwayClub, setSelectedAwayClub] = useState(match.awayClubId);
+  const [selectedCompetitionName, setSelectedCompetitionName] = useState(existingMatch?.competition || firstComp?.name || '');
+  const [selectedHomeClub, setSelectedHomeClub] = useState(existingMatch?.homeClubId || clubs[0]?.id || '');
+  const [selectedAwayClub, setSelectedAwayClub] = useState(existingMatch?.awayClubId || clubs[1]?.id || '');
   const [homeFormation, setHomeFormation] = useState('4-3-3');
   const [awayFormation, setAwayFormation] = useState('4-2-3-1');
-  const [kickoffTime, setKickoffTime] = useState(match.kickoff);
-  const [venueName, setVenueName] = useState(match.venue);
+  const [kickoffTime, setKickoffTime] = useState(existingMatch?.kickoff || new Date().toISOString());
+  const [venueName, setVenueName] = useState(existingMatch?.venue || '');
+  const FORMATIONS = ['4-3-3','4-2-3-1','3-5-2','4-4-2','5-3-2','3-4-3','4-1-4-1'];
 
-  // Home & Away DSP starters and subs list (Simulated via indices)
+  // Auto-fill venue dari home club
+  useEffect(() => {
+    if (!existingMatch?.venue) {
+      const hc = clubs.find(c => c.id === selectedHomeClub);
+      if (hc?.stadium) setVenueName(hc.stadium);
+    }
+  }, [selectedHomeClub]);
+
   const homeSquad = players.filter(p => p.clubId === selectedHomeClub);
   const awaySquad = players.filter(p => p.clubId === selectedAwayClub);
 
-  const [homeStarters, setHomeStarters] = useState<string[]>(homeSquad.slice(0, 11).map(p => p.id));
-  const [homeSubs, setHomeSubs] = useState<string[]>(homeSquad.slice(11, 18).map(p => p.id));
-  const [awayStarters, setAwayStarters] = useState<string[]>(awaySquad.slice(0, 11).map(p => p.id));
-  const [awaySubs, setAwaySubs] = useState<string[]>(awaySquad.slice(11, 18).map(p => p.id));
+  const [homeStarters, setHomeStarters] = useState<string[]>([]);
+  const [homeSubs, setHomeSubs] = useState<string[]>([]);
+  const [awayStarters, setAwayStarters] = useState<string[]>([]);
+  const [awaySubs, setAwaySubs] = useState<string[]>([]);
+  const [homeCaptain, setHomeCaptain] = useState<string>('');
+  const [awayCaptain, setAwayCaptain] = useState<string>('');
+  const [homeAsing, setHomeAsing] = useState<AsingEntry[]>([]);
+  const [awayAsing, setAwayAsing] = useState<AsingEntry[]>([]);
+  const [homeAsingInput, setHomeAsingInput] = useState({ name: '', no: '', pos: 'FW' });
+  const [awayAsingInput, setAwayAsingInput] = useState({ name: '', no: '', pos: 'FW' });
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  // Captain & GK Selectors
-  const [homeCaptain, setHomeCaptain] = useState<string>(homeSquad[0]?.id || '');
-  const [awayCaptain, setAwayCaptain] = useState<string>(awaySquad[0]?.id || '');
+  // Validasi ringkas
+  const homeValid = homeStarters.length === 11;
+  const awayValid = awayStarters.length === 11;
+  const homeHasGK = homeSquad.some(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
+  const awayHasGK = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
 
-  // Validation warnings states
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [overrideReason, setOverrideReason] = useState('');
-  const [showOverrideInput, setShowOverrideInput] = useState(false);
-
-  // Dynamic preview tab state
-  const [activeTab, setActiveTab] = useState<'lineup' | 'info' | 'preview'>('lineup');
-
-  // Trigger Validation check
-  const runValidation = () => {
-    const errors: string[] = [];
-
-    // Check Home Roster
-    if (homeStarters.length !== 11) {
-      errors.push(`Starting XI Home harus berisi tepat 11 pemain (saat ini ${homeStarters.length})`);
-    }
-    const homeGK = homeSquad.filter(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
-    if (homeGK.length === 0) {
-      errors.push('Tim Home membutuhkan minimal 1 penjaga gawang (Goalkeeper) di Starting XI.');
-    }
-    if (!homeStarters.includes(homeCaptain)) {
-      errors.push('Kapten Tim Home harus terpilih dari salah satu pemain starter.');
-    }
-
-    // Check Away Roster
-    if (awayStarters.length !== 11) {
-      errors.push(`Starting XI Away harus berisi tepat 11 pemain (saat ini ${awayStarters.length})`);
-    }
-    const awayGK = awaySquad.filter(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
-    if (awayGK.length === 0) {
-      errors.push('Tim Away membutuhkan minimal 1 penjaga gawang (Goalkeeper) di Starting XI.');
-    }
-    if (!awayStarters.includes(awayCaptain)) {
-      errors.push('Kapten Tim Away harus terpilih dari salah satu pemain starter.');
-    }
-
-    // Availability Check (Injured/Suspended players warning)
-    const unavailableStarters = [...homeStarters, ...awayStarters]
-      .map(id => players.find(p => p.id === id))
-      .filter(p => p && (p.availability === 'injured' || p.availability === 'suspended'));
-
-    if (unavailableStarters.length > 0) {
-      const names = unavailableStarters.map(p => `${p?.displayName} (${p?.availability === 'injured' ? 'Cedera' : 'Hukuman'})`).join(', ');
-      errors.push(`Peringatan Availability: Striker/Pemain ${names} berstatus tidak tersedia tetapi terpilih sebagai Starter.`);
-      setShowOverrideInput(true);
+  // Toggle player: none â†’ starter â†’ cadangan â†’ none
+  const togglePlayer = (
+    id: string,
+    starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
+    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (starters.includes(id)) {
+      setStarters(p => p.filter(x => x !== id));
+      if (subs.length < 7) setSubs(p => [...p, id]);
+    } else if (subs.includes(id)) {
+      setSubs(p => p.filter(x => x !== id));
     } else {
-      setShowOverrideInput(false);
+      if (starters.length < 11) setStarters(p => [...p, id]);
+      else if (subs.length < 7) setSubs(p => [...p, id]);
+      else triggerToast('Slot starter (11) dan cadangan (7) sudah penuh.', 'warning');
     }
-
-    setValidationErrors(errors);
-    return errors.length === 0;
   };
 
-  useEffect(() => {
-    runValidation();
-  }, [homeStarters, awayStarters, homeCaptain, awayCaptain, selectedHomeClub, selectedAwayClub]);
+  const addAsing = (side: 'home' | 'away') => {
+    const inp = side === 'home' ? homeAsingInput : awayAsingInput;
+    if (!inp.name.trim()) { triggerToast('Nama pemain wajib diisi.', 'error'); return; }
+    const entry: AsingEntry = { id: `asing-${Date.now()}`, name: inp.name.trim(), no: Number(inp.no) || 0, pos: inp.pos };
+    if (side === 'home') { setHomeAsing(p => [...p, entry]); setHomeAsingInput({ name: '', no: '', pos: 'FW' }); }
+    else { setAwayAsing(p => [...p, entry]); setAwayAsingInput({ name: '', no: '', pos: 'FW' }); }
+  };
 
-  const handleSave = () => {
-    if (validationErrors.length > 0 && showOverrideInput && !overrideReason) {
-      triggerToast('Mohon isi alasan override pemain yang cedera/diskualifikasi.', 'error');
-      return;
-    }
-
+  const handleSave = (publish = false) => {
     const homeClub = clubs.find(c => c.id === selectedHomeClub);
     const awayClub = clubs.find(c => c.id === selectedAwayClub);
-
+    const status: Match['lineupStatus'] = homeValid && awayValid && homeHasGK && awayHasGK ? 'Complete' : 'Needs Review';
     const updatedMatch: Match = {
-      ...match,
+      id: existingMatch?.id || `match-${Date.now()}`,
       homeClubId: selectedHomeClub,
       homeClubName: homeClub?.name || '',
       homeLogo: homeClub?.logoUrl || '',
       awayClubId: selectedAwayClub,
       awayClubName: awayClub?.name || '',
       awayLogo: awayClub?.logoUrl || '',
-      venue: venueName,
+      competition: selectedCompetitionName,
+      season: competitions.find(c => c.name === selectedCompetitionName)?.season || '',
       kickoff: kickoffTime,
-      lineupStatus: validationErrors.length === 0 ? 'Complete' : 'Needs Review',
-      publicationStatus: match.publicationStatus === 'Published' ? 'Published' : 'Draft',
+      venue: venueName,
+      status: existingMatch?.status || 'Scheduled',
+      lineupStatus: status,
+      publicationStatus: publish ? 'Published' : (existingMatch?.publicationStatus || 'Draft'),
+      editor: 'Admin',
+      lastUpdated: 'Baru saja',
     };
-
     onSave(updatedMatch);
   };
 
-  // Starters toggling simulation
-  const toggleHomeStarter = (id: string) => {
-    if (homeStarters.includes(id)) {
-      setHomeStarters(prev => prev.filter(p => p !== id));
-      setHomeSubs(prev => [...prev, id]);
-    } else {
-      setHomeStarters(prev => [...prev, id]);
-      setHomeSubs(prev => prev.filter(p => p !== id));
-    }
-  };
+  const homeClub = clubs.find(c => c.id === selectedHomeClub);
+  const awayClub = clubs.find(c => c.id === selectedAwayClub);
 
-  const toggleAwayStarter = (id: string) => {
-    if (awayStarters.includes(id)) {
-      setAwayStarters(prev => prev.filter(p => p !== id));
-      setAwaySubs(prev => [...prev, id]);
-    } else {
-      setAwayStarters(prev => [...prev, id]);
-      setAwaySubs(prev => prev.filter(p => p !== id));
-    }
+  // Render pill pemain
+  const renderPill = (
+    player: Player,
+    starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
+    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>,
+    captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    const isStarter = starters.includes(player.id);
+    const isSub = subs.includes(player.id);
+    const bg = isStarter ? 'var(--primary-600)' : isSub ? 'var(--neutral-300)' : 'var(--neutral-100)';
+    const color = (isStarter || isSub) ? 'white' : 'var(--neutral-700)';
+    const posMap: Record<string, string> = { Goalkeeper: 'GK', Defender: 'DF', Midfielder: 'MF', Forward: 'FW' };
+    return (
+      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
+        <button onClick={() => togglePlayer(player.id, starters, setStarters, subs, setSubs)}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 5, padding: '5px 8px', borderRadius: 16,
+            border: 'none', cursor: 'pointer', background: bg, color, fontSize: 11,
+            fontWeight: isStarter || isSub ? 700 : 400, textAlign: 'left', transition: 'all 0.12s',
+            opacity: player.availability !== 'available' ? 0.65 : 1 }}
+          title={player.availability !== 'available' ? player.availability : ''}>
+          <span style={{ fontSize: 10, minWidth: 20, opacity: 0.75 }}>#{player.shirtNumber}</span>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</span>
+          <span style={{ fontSize: 9, opacity: 0.7 }}>{posMap[player.position] || 'MF'}</span>
+          {player.nationality !== 'Indonesia' && <span style={{ fontSize: 9 }}>ðŸŒ</span>}
+          {player.availability === 'injured' && <span style={{ fontSize: 9 }}>ðŸ¤•</span>}
+          {player.availability === 'suspended' && <span style={{ fontSize: 9 }}>ðŸš«</span>}
+        </button>
+        {isStarter && (
+          <button onClick={() => setCaptain(captain === player.id ? '' : player.id)}
+            style={{ padding: '3px 6px', borderRadius: 10, border: '1px solid',
+              background: captain === player.id ? '#eab308' : 'transparent',
+              color: captain === player.id ? '#000' : 'var(--neutral-400)',
+              borderColor: captain === player.id ? '#eab308' : 'var(--neutral-300)',
+              cursor: 'pointer', fontSize: 10, fontWeight: 700 }}>C</button>
+        )}
+      </div>
+    );
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Editor Header */}
-      <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
-        <div className="flex align-center gap-12">
-          <button className="btn btn-sm btn-secondary" onClick={onClose}>
-            <ArrowLeft size={16} /> Kembali
-          </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* â”€â”€ HEADER â”€â”€ */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--neutral-200)', paddingBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="btn btn-sm btn-secondary" onClick={onClose}><ArrowLeft size={16} /> Kembali</button>
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700 }}>
-              {isNew ? 'Buat Lineup Baru' : `Edit Lineup: ${match.homeClubName} vs ${match.awayClubName}`}
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>
+              {isNew ? 'Buat Lineup Baru' : `Edit: ${existingMatch?.homeClubName} vs ${existingMatch?.awayClubName}`}
             </h2>
-            <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>
-              Status Roster: {validationErrors.length === 0 ? <span style={{ color: 'var(--success-600)' }}>Terpenuhi</span> : <span style={{ color: 'var(--warning-600)' }}>Review Diperlukan</span>}
+            <div style={{ fontSize: 11, color: 'var(--neutral-500)', marginTop: 2, display: 'flex', gap: 10 }}>
+              <span style={{ color: homeValid && homeHasGK ? 'var(--success-600)' : 'var(--warning-600)', fontWeight: 600 }}>
+                {homeValid && homeHasGK ? 'âœ… Home OK' : `âš ï¸ Home ${homeStarters.length}/11${!homeHasGK ? ' (no GK)' : ''}`}
+              </span>
+              <span style={{ color: awayValid && awayHasGK ? 'var(--success-600)' : 'var(--warning-600)', fontWeight: 600 }}>
+                {awayValid && awayHasGK ? 'âœ… Away OK' : `âš ï¸ Away ${awayStarters.length}/11${!awayHasGK ? ' (no GK)' : ''}`}
+              </span>
             </div>
           </div>
         </div>
-
-        <div className="flex align-center gap-12">
-          <span style={{ fontSize: 12, color: 'var(--neutral-500)' }}>Autosaved ke local draft</span>
-          <button className="btn btn-md btn-secondary" onClick={handleSave}>Simpan Draft</button>
-          <button className="btn btn-md btn-primary" onClick={handleSave} disabled={validationErrors.length > 0 && !overrideReason}>
-            Submit / Terbitkan
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="btn btn-sm btn-secondary" onClick={() => setShowPreviewModal(true)}>
+            ðŸ“¸ Preview Story
+          </button>
+          <button className="btn btn-md btn-secondary" onClick={() => handleSave(false)}>Simpan Draft</button>
+          <button className="btn btn-md btn-primary" onClick={() => handleSave(true)}>
+            <Upload size={14} /> Terbitkan
           </button>
         </div>
       </div>
 
-      {/* Mode Tabs */}
-      <div className="tab-container">
-        <div className={`tab-item ${activeTab === 'lineup' ? 'active' : ''}`} onClick={() => setActiveTab('lineup')}>Roster Pemain & Taktik</div>
-        <div className={`tab-item ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')}>Match Info & Venue</div>
-        <div className={`tab-item ${activeTab === 'preview' ? 'active' : ''}`} onClick={() => setActiveTab('preview')}>Editorial Preview Card</div>
+      {/* â”€â”€ INFO BAR (kompetisi, klub, kickoff, venue, formasi â€” semua 1 baris) â”€â”€ */}
+      <div className="card" style={{ padding: '12px 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 1.5fr 3fr 1.2fr 1.2fr', gap: 10, alignItems: 'end' }}>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Kompetisi</label>
+            <select className="form-select" style={{ fontSize: 12 }} value={selectedCompetitionName} onChange={e => setSelectedCompetitionName(e.target.value)}>
+              {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} âœ—</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Tim Home</label>
+            <select className="form-select" style={{ fontSize: 12 }} value={selectedHomeClub}
+              onChange={e => { setSelectedHomeClub(e.target.value); setHomeStarters([]); setHomeSubs([]); setHomeCaptain(''); }}>
+              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Tim Away</label>
+            <select className="form-select" style={{ fontSize: 12 }} value={selectedAwayClub}
+              onChange={e => { setSelectedAwayClub(e.target.value); setAwayStarters([]); setAwaySubs([]); setAwayCaptain(''); }}>
+              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Kickoff</label>
+            <input type="datetime-local" className="form-input" style={{ fontSize: 11 }}
+              value={kickoffTime.slice(0, 16)} onChange={e => setKickoffTime(new Date(e.target.value).toISOString())} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Venue <span style={{ fontWeight: 400, fontSize: 9 }}>(auto dari home, editable)</span></label>
+            <input type="text" className="form-input" style={{ fontSize: 12 }} placeholder="Nama stadion..." value={venueName} onChange={e => setVenueName(e.target.value)} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Form. Home</label>
+            <select className="form-select" style={{ fontSize: 12 }} value={homeFormation} onChange={e => setHomeFormation(e.target.value)}>
+              {FORMATIONS.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-500)', display: 'block', marginBottom: 3 }}>Form. Away</label>
+            <select className="form-select" style={{ fontSize: 12 }} value={awayFormation} onChange={e => setAwayFormation(e.target.value)}>
+              {FORMATIONS.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+        </div>
       </div>
 
-      {activeTab === 'lineup' && (
-        <div className="grid-12">
-          {/* Main workspace - Home & Away lists */}
-          <div style={{ gridColumn: 'span 8', display: 'flex', gap: 24 }}>
-            {/* Home Panel */}
-            <div className="card" style={{ flex: 1, padding: 16 }}>
-              <div className="flex justify-between align-center" style={{ marginBottom: 16, borderBottom: '1px solid var(--neutral-100)', paddingBottom: 8 }}>
-                <span style={{ fontSize: 16, fontWeight: 700 }}>Home: {clubs.find(c => c.id === selectedHomeClub)?.name}</span>
-                <select className="form-select" style={{ width: 100, padding: 4 }} value={homeFormation} onChange={(e) => setHomeFormation(e.target.value)}>
-                  <option value="4-3-3">4-3-3</option>
-                  <option value="4-2-3-1">4-2-3-1</option>
-                  <option value="3-5-2">3-5-2</option>
-                </select>
-              </div>
+      {/* â”€â”€ 2 KOLOM: HOME | AWAY (side-by-side, semua dalam 1 layar) â”€â”€ */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
-              <div style={{ marginBottom: 12 }}>
-                <span className="semibold" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>Starting XI (Pilih 11)</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {homeSquad.map(player => (
-                    <div key={player.id} className="flex align-center justify-between" style={{ padding: 8, border: '1px solid var(--neutral-200)', borderRadius: 6, backgroundColor: homeStarters.includes(player.id) ? 'var(--primary-50)' : 'transparent' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-                        <input type="checkbox" checked={homeStarters.includes(player.id)} onChange={() => toggleHomeStarter(player.id)} />
-                        <span>{player.flagUrl} #{player.shirtNumber} <b>{player.fullName}</b> ({player.position})</span>
-                      </label>
-                      <div className="flex gap-8 align-center">
-                        {player.availability !== 'available' && <span className="badge badge-danger" style={{ padding: '1px 6px', fontSize: 9 }}>{player.availability}</span>}
-                        {homeStarters.includes(player.id) && (
-                          <button className={`btn btn-sm ${homeCaptain === player.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '2px 8px', height: 22, fontSize: 10 }} onClick={() => setHomeCaptain(player.id)}>
-                            C
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* â•â•â• HOME TEAM â•â•â• */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {/* Header Home */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '8px 12px',
+            background: 'var(--primary-600)', borderRadius: '8px 8px 0 0', color: 'white' }}>
+            {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
+              ? <img src={homeClub.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+              : <span style={{ fontSize: 20 }}>{homeClub?.logoUrl || 'ðŸ '}</span>}
+            <span style={{ fontWeight: 700, fontSize: 13 }}>HOME: {homeClub?.name}</span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700,
+              background: homeValid && homeHasGK ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)',
+              padding: '2px 8px', borderRadius: 10 }}>
+              {homeStarters.length}/11 {homeHasGK ? '' : 'âš ï¸GK'}
+            </span>
+          </div>
+
+          {/* 3 kolom: Squad | Starting XI | Cadangan */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, border: '1px solid var(--neutral-200)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+
+            {/* Kolom 1: Squad Terdaftar */}
+            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', background: 'var(--neutral-50)', maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 6, textTransform: 'uppercase' }}>
+                Skuad ({homeSquad.length})
               </div>
+              <div style={{ fontSize: 9, color: 'var(--neutral-400)', marginBottom: 8 }}>Klik 1x â†’ Starter Â· 2x â†’ Sub Â· 3x â†’ Hapus</div>
+              {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
+                const pp = homeSquad.filter(p => p.position === pos);
+                if (!pp.length) return null;
+                return <div key={pos} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-400)', marginBottom: 3, textTransform: 'uppercase' }}>
+                    {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}
+                  </div>
+                  {pp.map(p => renderPill(p, homeStarters, setHomeStarters, homeSubs, setHomeSubs, homeCaptain, setHomeCaptain))}
+                </div>;
+              })}
+              {homeSquad.length === 0 && <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Tidak ada pemain terdaftar untuk klub ini</div>}
             </div>
 
-            {/* Away Panel */}
-            <div className="card" style={{ flex: 1, padding: 16 }}>
-              <div className="flex justify-between align-center" style={{ marginBottom: 16, borderBottom: '1px solid var(--neutral-100)', paddingBottom: 8 }}>
-                <span style={{ fontSize: 16, fontWeight: 700 }}>Away: {clubs.find(c => c.id === selectedAwayClub)?.name}</span>
-                <select className="form-select" style={{ width: 100, padding: 4 }} value={awayFormation} onChange={(e) => setAwayFormation(e.target.value)}>
-                  <option value="4-3-3">4-3-3</option>
-                  <option value="4-2-3-1">4-2-3-1</option>
-                  <option value="3-5-2">3-5-2</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: 12 }}>
-                <span className="semibold" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>Starting XI (Pilih 11)</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {awaySquad.map(player => (
-                    <div key={player.id} className="flex align-center justify-between" style={{ padding: 8, border: '1px solid var(--neutral-200)', borderRadius: 6, backgroundColor: awayStarters.includes(player.id) ? 'var(--primary-50)' : 'transparent' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-                        <input type="checkbox" checked={awayStarters.includes(player.id)} onChange={() => toggleAwayStarter(player.id)} />
-                        <span>{player.flagUrl} #{player.shirtNumber} <b>{player.fullName}</b> ({player.position})</span>
-                      </label>
-                      <div className="flex gap-8 align-center">
-                        {player.availability !== 'available' && <span className="badge badge-danger" style={{ padding: '1px 6px', fontSize: 9 }}>{player.availability}</span>}
-                        {awayStarters.includes(player.id) && (
-                          <button className={`btn btn-sm ${awayCaptain === player.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '2px 8px', height: 22, fontSize: 10 }} onClick={() => setAwayCaptain(player.id)}>
-                            C
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Validation Checklist / Override widget */}
-          <div style={{ gridColumn: 'span 4' }}>
-            <div className="card" style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Verifikasi Aturan Lineup</h3>
-              {validationErrors.length === 0 ? (
-                <div style={{ color: 'var(--success-600)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                  <CheckCircle size={16} /> Semua aturan lineup terpenuhi. Data aman dipublikasikan.
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {validationErrors.map((err, index) => (
-                    <div key={index} style={{ color: 'var(--danger-600)', fontSize: 12, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                      <AlertCircle size={14} style={{ marginTop: 2, flexShrink: 0 }} />
-                      <span>{err}</span>
-                    </div>
-                  ))}
-
-                  {showOverrideInput && (
-                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--neutral-200)' }}>
-                      <label className="form-label">Alasan Override Pemain Suspended/Injured <span className="required">*</span></label>
-                      <textarea
-                        className="form-textarea"
-                        rows={2}
-                        placeholder="Contoh: Pemain dinyatakan fit oleh tim medis pasca tes terakhir pagi ini."
-                        value={overrideReason}
-                        onChange={(e) => setOverrideReason(e.target.value)}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Tactical pitch view */}
-            <div className="card" style={{ backgroundColor: 'var(--primary-700)', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, minHeight: 280, borderRadius: 'var(--radius-lg)' }}>
-              <div style={{ border: '2px solid rgba(255,255,255,0.2)', width: '100%', height: 220, borderRadius: 8, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', alignItems: 'center' }}>
-                <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-                <div style={{ border: '2px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 10, opacity: 0.6 }}>MID</span>
-                </div>
-                <span style={{ fontSize: 11, backgroundColor: 'rgba(0,0,0,0.4)', padding: '2px 8px', borderRadius: 4 }}>Pitch Visualizer</span>
-              </div>
-              <div style={{ fontSize: 12, marginTop: 12, opacity: 0.8, textAlign: 'center' }}>
-                Home Formasi: {homeFormation} vs Away Formasi: {awayFormation}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'info' && (
-        <div className="card" style={{ maxWidth: 600 }}>
-          <div className="form-group">
-            <label className="form-label">Klub Home</label>
-            <select className="form-select" value={selectedHomeClub} onChange={(e) => setSelectedHomeClub(e.target.value)}>
-              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Klub Away</label>
-            <select className="form-select" value={selectedAwayClub} onChange={(e) => setSelectedAwayClub(e.target.value)}>
-              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Jadwal Kickoff</label>
-            <input type="datetime-local" className="form-input" value={kickoffTime.slice(0, 16)} onChange={(e) => setKickoffTime(new Date(e.target.value).toISOString())} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Stadion / Venue</label>
-            <input type="text" className="form-input" value={venueName} onChange={(e) => setVenueName(e.target.value)} />
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'preview' && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-          <div className="flex gap-12">
-            <button className="btn btn-md btn-primary" onClick={async () => {
-              const node = document.getElementById('lineup-story-card');
-              if (!node) return;
-              try {
-                triggerToast('Sedang membuat gambar Instagram Story...');
-                const dataUrl = await htmlToImage.toPng(node, {
-                  cacheBust: true,
-                  pixelRatio: 3,
-                });
-                const link = document.createElement('a');
-                link.download = `Lineup_${match.homeClubName}_vs_${match.awayClubName}_Story.png`;
-                link.href = dataUrl;
-                link.click();
-                triggerToast('Gambar Story berhasil diunduh!');
-              } catch (err) {
-                console.error(err);
-                triggerToast('Gagal mengunduh gambar.');
+            {/* Kolom 2: Starting XI */}
+            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--primary-600)', marginBottom: 6, textTransform: 'uppercase' }}>âš½ Starting XI</div>
+              {homeStarters.length === 0
+                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Pilih pemain dari Skuad</div>
+                : homeSquad.filter(p => homeStarters.includes(p.id))
+                    .sort((a, b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
+                    .map(p => renderPill(p, homeStarters, setHomeStarters, homeSubs, setHomeSubs, homeCaptain, setHomeCaptain))
               }
-            }}>
-              <Plus size={16} /> Unduh Gambar Story (9:16)
-            </button>
+              {homeAsing.slice(0, 3).map(a => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--primary-600)', color: 'white', fontSize: 11, fontWeight: 700, marginBottom: 3 }}>
+                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
+                  <span style={{ flex: 1 }}>{a.name}</span>
+                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
+                  <button onClick={() => setHomeAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Kolom 3: Cadangan + Asing */}
+            <div style={{ padding: 10, maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-600)', marginBottom: 6, textTransform: 'uppercase' }}>ðŸ”„ Cadangan ({homeSubs.length}/7)</div>
+              {homeSubs.length === 0
+                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '8px 0' }}>Belum ada</div>
+                : homeSquad.filter(p => homeSubs.includes(p.id))
+                    .map(p => renderPill(p, homeStarters, setHomeStarters, homeSubs, setHomeSubs, homeCaptain, setHomeCaptain))
+              }
+              {homeAsing.slice(3).map(a => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--neutral-200)', fontSize: 11, fontWeight: 600, marginBottom: 3 }}>
+                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
+                  <span style={{ flex: 1 }}>{a.name}</span>
+                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
+                  <button onClick={() => setHomeAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
+                </div>
+              ))}
+              {/* Input Asing Non-DSP */}
+              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--neutral-100)' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 5 }}>+ ASING NON-DSP</div>
+                <input type="text" className="form-input" placeholder="Nama" style={{ fontSize: 11, marginBottom: 4 }}
+                  value={homeAsingInput.name} onChange={e => setHomeAsingInput(p => ({ ...p, name: e.target.value }))} />
+                <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                  <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 50 }}
+                    value={homeAsingInput.no} onChange={e => setHomeAsingInput(p => ({ ...p, no: e.target.value }))} />
+                  <select className="form-select" style={{ fontSize: 11 }}
+                    value={homeAsingInput.pos} onChange={e => setHomeAsingInput(p => ({ ...p, pos: e.target.value }))}>
+                    <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
+                  </select>
+                </div>
+                <button className="btn btn-sm btn-secondary" style={{ width: '100%', fontSize: 11 }} onClick={() => addAsing('home')}>Tambah</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* â•â•â• AWAY TEAM â•â•â• */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {/* Header Away */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '8px 12px',
+            background: 'var(--neutral-700)', borderRadius: '8px 8px 0 0', color: 'white' }}>
+            {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
+              ? <img src={awayClub.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+              : <span style={{ fontSize: 20 }}>{awayClub?.logoUrl || 'âœˆï¸'}</span>}
+            <span style={{ fontWeight: 700, fontSize: 13 }}>AWAY: {awayClub?.name}</span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700,
+              background: awayValid && awayHasGK ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)',
+              padding: '2px 8px', borderRadius: 10 }}>
+              {awayStarters.length}/11 {awayHasGK ? '' : 'âš ï¸GK'}
+            </span>
           </div>
 
-          {/* Public Graphic Card Preview - Instagram Story (9:16) */}
-          <div 
-            id="lineup-story-card"
-            style={{ 
-              width: 360, 
-              height: 640, 
-              background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)', 
-              color: 'white', 
-              overflow: 'hidden', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              justifyContent: 'space-between', 
-              padding: '30px 24px', 
-              boxShadow: 'var(--shadow-lg)',
-              position: 'relative',
-              fontFamily: 'system-ui, sans-serif'
-            }}
-          >
-            {/* Background Accent Grid / Glowing Light */}
-            <div style={{ position: 'absolute', top: '-10%', left: '-10%', right: '-10%', height: '40%', background: 'radial-gradient(circle, rgba(15,159,154,0.15) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
-            
-            {/* Header */}
-            <div style={{ zIndex: 2, textAlign: 'center' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: '#0F9F9A', letterSpacing: 2, textTransform: 'uppercase' }}>
-                {match.competition || 'LIGA NUSANTARA UTAMA'}
+          {/* 3 kolom: Squad | Starting XI | Cadangan */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, border: '1px solid var(--neutral-200)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+
+            {/* Kolom 1: Squad */}
+            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', background: 'var(--neutral-50)', maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 6, textTransform: 'uppercase' }}>
+                Skuad ({awaySquad.length})
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, letterSpacing: 0.5, color: '#94a3b8' }}>
-                ROSTER / STARTING XI
-              </div>
-              <div style={{ width: 40, height: 2, backgroundColor: '#0F9F9A', margin: '8px auto 0' }}></div>
+              <div style={{ fontSize: 9, color: 'var(--neutral-400)', marginBottom: 8 }}>Klik 1x â†’ Starter Â· 2x â†’ Sub Â· 3x â†’ Hapus</div>
+              {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
+                const pp = awaySquad.filter(p => p.position === pos);
+                if (!pp.length) return null;
+                return <div key={pos} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-400)', marginBottom: 3, textTransform: 'uppercase' }}>
+                    {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}
+                  </div>
+                  {pp.map(p => renderPill(p, awayStarters, setAwayStarters, awaySubs, setAwaySubs, awayCaptain, setAwayCaptain))}
+                </div>;
+              })}
+              {awaySquad.length === 0 && <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Tidak ada pemain terdaftar untuk klub ini</div>}
             </div>
 
-            {/* Teams Matchup Info */}
-            <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {match.homeLogo && match.homeLogo.startsWith('http') ? (
-                    <img src={match.homeLogo} alt={match.homeClubName} crossOrigin="anonymous" style={{ width: 48, height: 48, objectFit: 'contain' }} />
-                  ) : (
-                    <span style={{ fontSize: 36 }}>{match.homeLogo || '🦅'}</span>
-                  )}
+            {/* Kolom 2: Starting XI */}
+            <div style={{ padding: 10, borderRight: '1px solid var(--neutral-100)', maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 6, textTransform: 'uppercase' }}>âš½ Starting XI</div>
+              {awayStarters.length === 0
+                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '12px 0' }}>Pilih pemain dari Skuad</div>
+                : awaySquad.filter(p => awayStarters.includes(p.id))
+                    .sort((a, b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
+                    .map(p => renderPill(p, awayStarters, setAwayStarters, awaySubs, setAwaySubs, awayCaptain, setAwayCaptain))
+              }
+              {awayAsing.slice(0, 3).map(a => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--neutral-700)', color: 'white', fontSize: 11, fontWeight: 700, marginBottom: 3 }}>
+                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
+                  <span style={{ flex: 1 }}>{a.name}</span>
+                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
+                  <button onClick={() => setAwayAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 800, marginTop: 6, color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  {match.homeClubName.split(' ')[0]}
-                </div>
-                <div style={{ fontSize: 9, color: '#0F9F9A', fontWeight: 600, marginTop: 2 }}>
-                  ({homeFormation})
-                </div>
-              </div>
-
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#475569', letterSpacing: 1 }}>VS</div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {match.awayLogo && match.awayLogo.startsWith('http') ? (
-                    <img src={match.awayLogo} alt={match.awayClubName} crossOrigin="anonymous" style={{ width: 48, height: 48, objectFit: 'contain' }} />
-                  ) : (
-                    <span style={{ fontSize: 36 }}>{match.awayLogo || '🦈'}</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 11, fontWeight: 800, marginTop: 6, color: 'white', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  {match.awayClubName.split(' ')[0]}
-                </div>
-                <div style={{ fontSize: 9, color: '#0F9F9A', fontWeight: 600, marginTop: 2 }}>
-                  ({awayFormation})
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Players Lists */}
-            <div style={{ zIndex: 2, display: 'flex', gap: 16, flex: 1, margin: '15px 0', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: 12, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-              {/* Home Squad */}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', marginBottom: 6, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
-                  STARTING XI
+            {/* Kolom 3: Cadangan + Asing */}
+            <div style={{ padding: 10, maxHeight: 420, overflowY: 'auto' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-600)', marginBottom: 6, textTransform: 'uppercase' }}>ðŸ”„ Cadangan ({awaySubs.length}/7)</div>
+              {awaySubs.length === 0
+                ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '8px 0' }}>Belum ada</div>
+                : awaySquad.filter(p => awaySubs.includes(p.id))
+                    .map(p => renderPill(p, awayStarters, setAwayStarters, awaySubs, setAwaySubs, awayCaptain, setAwayCaptain))
+              }
+              {awayAsing.slice(3).map(a => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 14, background: 'var(--neutral-200)', fontSize: 11, fontWeight: 600, marginBottom: 3 }}>
+                  <span style={{ fontSize: 10, opacity: 0.8 }}>#{a.no}</span>
+                  <span style={{ flex: 1 }}>{a.name}</span>
+                  <span style={{ fontSize: 9 }}>{a.pos} ðŸŒ</span>
+                  <button onClick={() => setAwayAsing(p => p.filter(x => x.id !== a.id))} style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', fontSize: 12, lineHeight: 1 }}>Ã—</button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {homeSquad.filter(p => homeStarters.includes(p.id)).slice(0, 11).map((p, idx) => (
-                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
-                      <span style={{ color: '#0F9F9A', fontWeight: 700, width: 14 }}>#{p.shirtNumber}</span>
-                      <span style={{ color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110 }}>
-                        {p.displayName} {homeCaptain === p.id && <span style={{ color: '#eab308', fontWeight: 'bold' }}>(C)</span>}
+              ))}
+              {/* Input Asing Non-DSP */}
+              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--neutral-100)' }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 5 }}>+ ASING NON-DSP</div>
+                <input type="text" className="form-input" placeholder="Nama" style={{ fontSize: 11, marginBottom: 4 }}
+                  value={awayAsingInput.name} onChange={e => setAwayAsingInput(p => ({ ...p, name: e.target.value }))} />
+                <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                  <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 50 }}
+                    value={awayAsingInput.no} onChange={e => setAwayAsingInput(p => ({ ...p, no: e.target.value }))} />
+                  <select className="form-select" style={{ fontSize: 11 }}
+                    value={awayAsingInput.pos} onChange={e => setAwayAsingInput(p => ({ ...p, pos: e.target.value }))}>
+                    <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
+                  </select>
+                </div>
+                <button className="btn btn-sm btn-secondary" style={{ width: '100%', fontSize: 11 }} onClick={() => addAsing('away')}>Tambah</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* â”€â”€ MODAL PREVIEW STORY 9:16 â”€â”€ */}
+      {showPreviewModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowPreviewModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-md btn-primary" onClick={async () => {
+                const node = document.getElementById('lineup-story-card');
+                if (!node) return;
+                try {
+                  triggerToast('Membuat gambar Story...');
+                  const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
+                  const link = document.createElement('a');
+                  link.download = `Lineup_${homeClub?.shortName}_vs_${awayClub?.shortName}_Story.png`;
+                  link.href = dataUrl; link.click();
+                  triggerToast('Story berhasil diunduh!');
+                } catch { triggerToast('Gagal mengunduh gambar.', 'error'); }
+              }}><Upload size={14} /> Unduh PNG (9:16)</button>
+              <button className="btn btn-md btn-secondary" onClick={() => setShowPreviewModal(false)}><X size={14} /> Tutup</button>
+            </div>
+
+            {/* Story Card */}
+            <div id="lineup-story-card" style={{
+              width: 360, height: 640,
+              background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)',
+              color: 'white', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+              justifyContent: 'space-between', padding: '24px 20px',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.8)', position: 'relative', fontFamily: 'system-ui, sans-serif'
+            }}>
+              <div style={{ position: 'absolute', top: '-10%', left: '-10%', right: '-10%', height: '40%',
+                background: 'radial-gradient(circle, rgba(15,159,154,0.2) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
+
+              {/* Header */}
+              <div style={{ zIndex: 2, textAlign: 'center' }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', letterSpacing: 2, textTransform: 'uppercase' }}>
+                  {selectedCompetitionName}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, marginTop: 2, color: '#94a3b8' }}>STARTING XI</div>
+                <div style={{ width: 32, height: 2, backgroundColor: '#0F9F9A', margin: '5px auto 0' }} />
+              </div>
+
+              {/* VS */}
+              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 0' }}>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
+                    ? <img src={homeClub.logoUrl} crossOrigin="anonymous" style={{ width: 44, height: 44, objectFit: 'contain', margin: '0 auto', display: 'block' }} alt="" />
+                    : <div style={{ fontSize: 34, textAlign: 'center' }}>{homeClub?.logoUrl || 'ðŸ '}</div>}
+                  <div style={{ fontSize: 10, fontWeight: 800, marginTop: 3, textTransform: 'uppercase', color: 'white' }}>{homeClub?.shortName}</div>
+                  <div style={{ fontSize: 8, color: '#0F9F9A' }}>({homeFormation})</div>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#475569' }}>VS</div>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
+                    ? <img src={awayClub.logoUrl} crossOrigin="anonymous" style={{ width: 44, height: 44, objectFit: 'contain', margin: '0 auto', display: 'block' }} alt="" />
+                    : <div style={{ fontSize: 34, textAlign: 'center' }}>{awayClub?.logoUrl || 'âœˆï¸'}</div>}
+                  <div style={{ fontSize: 10, fontWeight: 800, marginTop: 3, textTransform: 'uppercase', color: 'white' }}>{awayClub?.shortName}</div>
+                  <div style={{ fontSize: 8, color: '#0F9F9A' }}>({awayFormation})</div>
+                </div>
+              </div>
+
+              {/* Players */}
+              <div style={{ zIndex: 2, display: 'flex', gap: 10, flex: 1, margin: '6px 0',
+                border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 10px',
+                background: 'rgba(255,255,255,0.02)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 8, fontWeight: 800, color: '#0F9F9A', marginBottom: 4, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
+                    {homeClub?.code || 'HOME'}
+                  </div>
+                  {homeSquad.filter(p => homeStarters.includes(p.id))
+                    .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
+                    .map(p => (
+                    <div key={p.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
+                      <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{p.shirtNumber}</span>
+                      <span style={{ color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 95 }}>
+                        {p.displayName}{p.id === homeCaptain ? ' (C)' : ''}
                       </span>
                     </div>
                   ))}
-                  {homeSquad.filter(p => homeStarters.includes(p.id)).length === 0 && (
-                    <div style={{ fontSize: 9, color: '#64748b' }}>Belum ada starter</div>
-                  )}
+                  {homeAsing.slice(0,3).map(a => (
+                    <div key={a.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
+                      <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{a.no}</span>
+                      <span style={{ color: '#f1f5f9' }}>{a.name} ðŸŒ</span>
+                    </div>
+                  ))}
+                  {homeStarters.length === 0 && <div style={{ fontSize: 8, color: '#64748b' }}>Belum ada starter</div>}
                 </div>
-              </div>
-
-              {/* Away Squad */}
-              <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: 12 }}>
-                <div style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', marginBottom: 6, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
-                  STARTING XI
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {awaySquad.filter(p => awayStarters.includes(p.id)).slice(0, 11).map((p, idx) => (
-                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
-                      <span style={{ color: '#0F9F9A', fontWeight: 700, width: 14 }}>#{p.shirtNumber}</span>
-                      <span style={{ color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110 }}>
-                        {p.displayName} {awayCaptain === p.id && <span style={{ color: '#eab308', fontWeight: 'bold' }}>(C)</span>}
+                <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: 8 }}>
+                  <div style={{ fontSize: 8, fontWeight: 800, color: '#0F9F9A', marginBottom: 4, borderBottom: '1px solid rgba(15,159,154,0.3)', paddingBottom: 2 }}>
+                    {awayClub?.code || 'AWAY'}
+                  </div>
+                  {awaySquad.filter(p => awayStarters.includes(p.id))
+                    .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
+                    .map(p => (
+                    <div key={p.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
+                      <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{p.shirtNumber}</span>
+                      <span style={{ color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 95 }}>
+                        {p.displayName}{p.id === awayCaptain ? ' (C)' : ''}
                       </span>
                     </div>
                   ))}
-                  {awaySquad.filter(p => awayStarters.includes(p.id)).length === 0 && (
-                    <div style={{ fontSize: 9, color: '#64748b' }}>Belum ada starter</div>
-                  )}
+                  {awayAsing.slice(0,3).map(a => (
+                    <div key={a.id} style={{ display: 'flex', gap: 4, fontSize: 9, marginBottom: 2 }}>
+                      <span style={{ color: '#0F9F9A', fontWeight: 700, minWidth: 18 }}>#{a.no}</span>
+                      <span style={{ color: '#f1f5f9' }}>{a.name} ðŸŒ</span>
+                    </div>
+                  ))}
+                  {awayStarters.length === 0 && <div style={{ fontSize: 8, color: '#64748b' }}>Belum ada starter</div>}
                 </div>
               </div>
-            </div>
 
-            {/* Footer Watermark */}
-            <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600 }}>
-              <span style={{ letterSpacing: 0.5 }}>@GARUDAMATCHROOM</span>
-              <span style={{ color: '#0F9F9A' }}>MEDIA STUDIO</span>
+              {/* Kickoff info */}
+              <div style={{ zIndex: 2, textAlign: 'center', fontSize: 9, color: '#64748b', margin: '3px 0' }}>
+                {new Date(kickoffTime).toLocaleString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB Â· {venueName}
+              </div>
+
+              {/* Footer */}
+              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 7, fontSize: 8, color: '#64748b', fontWeight: 600 }}>
+                <span>@GARUDAMATCHROOM</span>
+                <span style={{ color: '#0F9F9A' }}>MEDIA STUDIO</span>
+              </div>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
@@ -2129,7 +2212,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
           </button>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700 }}>Input Hasil & Timeline Pertandingan</h2>
-            <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>{match.competition} · {match.venue}</div>
+            <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>{match.competition} Â· {match.venue}</div>
           </div>
         </div>
 
@@ -2191,10 +2274,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
               <div style={{ gridColumn: 'span 8' }}>
                 <label className="form-label" style={{ fontSize: 11 }}>Jenis Kejadian</label>
                 <select className="form-select" value={newEventType} onChange={(e: any) => setNewEventType(e.target.value)}>
-                  <option value="goal">Goal ⚽</option>
-                  <option value="yellow_card">Kartu Kuning 🟨</option>
-                  <option value="red_card">Kartu Merah 🟥</option>
-                  <option value="substitution">Pergantian Pemain 🔄</option>
+                  <option value="goal">Goal âš½</option>
+                  <option value="yellow_card">Kartu Kuning ðŸŸ¨</option>
+                  <option value="red_card">Kartu Merah ðŸŸ¥</option>
+                  <option value="substitution">Pergantian Pemain ðŸ”„</option>
                 </select>
               </div>
               <div style={{ gridColumn: 'span 6' }}>
@@ -2221,7 +2304,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
               <div key={evt.id} className="flex justify-between align-center" style={{ padding: '8px 12px', backgroundColor: 'var(--neutral-50)', borderRadius: 6, fontSize: 13 }}>
                 <div className="flex align-center gap-8">
                   <span className="semibold" style={{ color: 'var(--primary-600)' }}>{evt.minute}'</span>
-                  <span>{evt.type === 'goal' ? '⚽' : evt.type === 'yellow_card' ? '🟨' : evt.type === 'red_card' ? '🟥' : '🔄'}</span>
+                  <span>{evt.type === 'goal' ? 'âš½' : evt.type === 'yellow_card' ? 'ðŸŸ¨' : evt.type === 'red_card' ? 'ðŸŸ¥' : 'ðŸ”„'}</span>
                   <span>{evt.playerName}</span>
                 </div>
                 <span className="text-muted" style={{ fontSize: 11 }}>{evt.clubId === match.homeClubId ? 'Home' : 'Away'}</span>
@@ -2301,7 +2384,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
                 {match.homeLogo && match.homeLogo.startsWith('http') ? (
                   <img src={match.homeLogo} alt={match.homeClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
                 ) : (
-                  <span style={{ fontSize: 44 }}>{match.homeLogo || '🦅'}</span>
+                  <span style={{ fontSize: 44 }}>{match.homeLogo || 'ðŸ¦…'}</span>
                 )}
               </div>
               <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
@@ -2322,7 +2405,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
                 {match.awayLogo && match.awayLogo.startsWith('http') ? (
                   <img src={match.awayLogo} alt={match.awayClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
                 ) : (
-                  <span style={{ fontSize: 44 }}>{match.awayLogo || '🦈'}</span>
+                  <span style={{ fontSize: 44 }}>{match.awayLogo || 'ðŸ¦ˆ'}</span>
                 )}
               </div>
               <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
@@ -2338,11 +2421,11 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
                 {evt.clubId === match.homeClubId ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
-                    <span>⚽ {evt.playerName}</span>
+                    <span>âš½ {evt.playerName}</span>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{evt.playerName} ⚽</span>
+                    <span>{evt.playerName} âš½</span>
                     <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
                   </div>
                 )}
@@ -2829,7 +2912,7 @@ function RumorEditorView({ rumorId, clubs, rumors, onClose, onSave, triggerToast
                       <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase' }}>Klub Asal</div>
                       <div style={{ fontWeight: 700, color: 'white', marginTop: 2 }}>{fromClub || 'Free Agent'}</div>
                     </div>
-                    <div style={{ fontSize: 14, color: '#0F9F9A' }}>➜</div>
+                    <div style={{ fontSize: 14, color: '#0F9F9A' }}>âžœ</div>
                     <div style={{ textAlign: 'center', flex: 1 }}>
                       <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase' }}>Klub Tujuan</div>
                       <div style={{ fontWeight: 700, color: 'white', marginTop: 2 }}>{destClub || 'Belum Ditentukan'}</div>
@@ -2924,7 +3007,7 @@ function RumorEditorView({ rumorId, clubs, rumors, onClose, onSave, triggerToast
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, backgroundColor: 'rgba(255,255,255,0.02)', padding: '10px 20px', borderRadius: 30, border: '1px solid rgba(255,255,255,0.06)' }}>
                     <span style={{ fontWeight: 600, color: '#94a3b8' }}>{fromClub || 'Klub Asal'}</span>
-                    <span style={{ color: '#0F9F9A', fontWeight: 800 }}>➜</span>
+                    <span style={{ color: '#0F9F9A', fontWeight: 800 }}>âžœ</span>
                     <span style={{ fontWeight: 800, color: 'white' }}>{destClub || 'Klub Tujuan'}</span>
                   </div>
                 </div>
@@ -2995,7 +3078,7 @@ function ClubsListView({ clubs, onCreateNew, onEdit, onDelete, hasPermission }: 
                   {club.logoUrl && club.logoUrl.startsWith('http') ? (
                     <img src={club.logoUrl} alt={club.name} style={{ width: 32, height: 32, objectFit: 'contain' }} />
                   ) : (
-                    <span style={{ fontSize: 24 }}>{club.logoUrl || '⚽'}</span>
+                    <span style={{ fontSize: 24 }}>{club.logoUrl || 'âš½'}</span>
                   )}
                 </td>
                 <td><span className="semibold">{club.name}</span></td>
@@ -3345,7 +3428,7 @@ function ClubEditorView({ clubId, clubs, players, competitions, onClose, onSave 
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-900)' }}>{comp.name}</div>
                       <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>
-                        {comp.type === 'league' ? 'Liga' : comp.type === 'cup' ? 'Piala' : 'Friendly'} · {comp.season} · {comp.country}
+                        {comp.type === 'league' ? 'Liga' : comp.type === 'cup' ? 'Piala' : 'Friendly'} Â· {comp.season} Â· {comp.country}
                       </div>
                     </div>
                     {!comp.isActive && (
@@ -3545,7 +3628,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
     position: 'Midfielder' as const,
     shirtNumber: 10,
     nationality: 'Indonesia',
-    flagUrl: '🇮🇩',
+    flagUrl: 'ðŸ‡®ðŸ‡©',
     age: 25,
     contractStart: '2026-01-01',
     contractEnd: '2027-12-31',
@@ -3669,7 +3752,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
                 <span style={{ fontSize: 20 }}>{flag}</span>
               )}
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--neutral-800)' }}>{nationality}</span>
-              <button type="button" onClick={() => { setFlag(''); setNationality(''); }} style={{ marginLeft: 4, fontSize: 11, color: 'var(--neutral-500)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>✕ hapus</button>
+              <button type="button" onClick={() => { setFlag(''); setNationality(''); }} style={{ marginLeft: 4, fontSize: 11, color: 'var(--neutral-500)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>âœ• hapus</button>
             </div>
           )}
           {/* Trigger to open dropdown */}
@@ -3684,7 +3767,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
             <span style={{ color: nationality ? 'var(--neutral-800)' : 'var(--neutral-400)', fontSize: 13 }}>
               {nationality || 'Klik untuk pilih negara...'}
             </span>
-            <span style={{ marginLeft: 'auto', color: 'var(--neutral-400)', fontSize: 10 }}>{countryDropdownOpen ? '▲' : '▼'}</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--neutral-400)', fontSize: 10 }}>{countryDropdownOpen ? 'â–²' : 'â–¼'}</span>
           </div>
 
           {/* Dropdown panel */}
@@ -3725,10 +3808,10 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
                       {item.flagUrl ? (
                         <img src={item.flagUrl} alt={item.name} style={{ width: 28, height: 18, objectFit: 'cover', borderRadius: 2, border: '1px solid var(--neutral-200)', flexShrink: 0 }} />
                       ) : (
-                        <span style={{ width: 28, fontSize: 18 }}>🏳️</span>
+                        <span style={{ width: 28, fontSize: 18 }}>ðŸ³ï¸</span>
                       )}
                       <span style={{ fontSize: 13, fontWeight: 500 }}>{item.name}</span>
-                      {nationality === item.name && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary-600)', fontWeight: 700 }}>✓</span>}
+                      {nationality === item.name && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary-600)', fontWeight: 700 }}>âœ“</span>}
                     </div>
                   ))
                 )}
@@ -3927,7 +4010,7 @@ function CompetitionsListView({ competitions, clubs, onCreateNew, onEdit, onDele
             <span>Dashboard</span> <ChevronRight size={10} /> <span>Master Data</span> <ChevronRight size={10} /> <span>Kompetisi</span>
           </div>
           <h1 className="page-title">Master Kompetisi</h1>
-          <p className="page-description">Kelola data kompetisi sepak bola — liga, piala, dan turnamen yang diikuti klub-klub dalam sistem.</p>
+          <p className="page-description">Kelola data kompetisi sepak bola â€” liga, piala, dan turnamen yang diikuti klub-klub dalam sistem.</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
           <button className="btn btn-md btn-primary" onClick={onCreateNew}>
@@ -4338,7 +4421,7 @@ function CompetitionEditorView({ competitionId, competitions, onClose, onSave, o
             )}
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--neutral-900)' }}>{name || 'Nama Kompetisi'}</div>
             <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 4 }}>
-              {type === 'league' ? 'Liga' : type === 'cup' ? 'Piala' : 'Friendly'} · {country}
+              {type === 'league' ? 'Liga' : type === 'cup' ? 'Piala' : 'Friendly'} Â· {country}
             </div>
             <div style={{ marginTop: 8 }}>
               <span style={{ fontFamily: 'monospace', fontSize: 11, backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
