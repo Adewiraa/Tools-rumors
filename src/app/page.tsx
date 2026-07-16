@@ -1754,6 +1754,8 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const fSub = squad.filter(p => subs.includes(p.id) && p.nationality !== 'Indonesia').length;
     const fDibawa = fSt + fSub; // total asing dibawa per pertandingan
 
+    // Asing di pool = terdaftar di squad tapi tidak dibawa ke match (tidak masuk DSP pertandingan)
+    const foreignPool = pool.filter(p => p.nationality !== 'Indonesia');
     return (
       <div className="lineup-team-panel">
         {/* Header */}
@@ -1854,28 +1856,39 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
 
 
 
-            {/* CADANGAN INFO */}
+
+            {/* TIDAK MASUK DSP PERTANDINGAN */}
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--neutral-100)' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-600)', marginBottom: 6,
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Kuota Asing Dibawa</span>
-                <span style={{ background: fDibawa >= MAX_ASING_DIBAWA ? '#fee2e2' : '#fef3c7',
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#92400e', textTransform: 'uppercase' }}>
+                  Tidak Masuk DSP
+                </span>
+                <span style={{ fontSize: 9, fontWeight: 700,
+                  background: fDibawa >= MAX_ASING_DIBAWA ? '#fee2e2' : '#fef3c7',
                   color: fDibawa >= MAX_ASING_DIBAWA ? '#991b1b' : '#92400e',
-                  padding: '1px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700 }}>
-                  {fDibawa}/{MAX_ASING_DIBAWA}
+                  padding: '1px 7px', borderRadius: 6 }}>
+                  Dibawa: {fDibawa}/{MAX_ASING_DIBAWA}
                 </span>
               </div>
-              <div style={{ fontSize: 10, color: 'var(--neutral-400)', lineHeight: 1.5 }}>
-                {fDibawa < MAX_ASING_DIBAWA
-                  ? (`Sisa ${MAX_ASING_DIBAWA - fDibawa} slot asing tersedia`)
-                  : 'Kuota 9 asing per pertandingan penuh'}
-              </div>
-              <div style={{ marginTop: 8, fontSize: 10, color: 'var(--neutral-400)', lineHeight: 1.5,
-                padding: '6px 8px', background: 'var(--neutral-50)', borderRadius: 6 }}>
-                <strong style={{ color: 'var(--neutral-600)' }}>Regulasi:</strong>
-                <br />Maks 7 asing di Starting XI
-                <br />Total asing dibawa maks 9
-                <br />DSP liga maks 11 asing
+              {foreignPool.length === 0 ? (
+                <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: '8px 0' }}>
+                  Semua asing masuk DSP pertandingan
+                </div>
+              ) : (
+                foreignPool.map(p => (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px',
+                    borderRadius: 8, background: '#fef3c7', border: '1px solid #f59e0b',
+                    fontSize: 11, fontWeight: 600, marginBottom: 4, color: '#78350f' }}>
+                    {renderFlag(p)}
+                    <span style={{ fontSize: 10, minWidth: 20, opacity: 0.75 }}>#{p.shirtNumber}</span>
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.displayName}</span>
+                    <span style={{ fontSize: 9, opacity: 0.7 }}>{posLabel[p.position] || 'MF'}</span>
+                  </div>
+                ))
+              )}
+              <div style={{ marginTop: 8, fontSize: 9, color: 'var(--neutral-400)', lineHeight: 1.5,
+                padding: '5px 7px', background: 'var(--neutral-50)', borderRadius: 6 }}>
+                Maks 7 asing starting Â· 9 dibawa Â· 11 DSP liga
               </div>
             </div>
         </div>
