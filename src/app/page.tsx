@@ -699,6 +699,11 @@ export default function Home() {
                     onCreateNew={() => setEditingLineupId('new')}
                     onEdit={setEditingLineupId}
                     onDelete={async (id) => {
+                      // Hapus dari state dulu agar UI langsung responsif
+                      setMatches(prev => prev.filter(m => m.id !== id));
+                      logAction('DELETE_LINEUP', 'Lineup Pertandingan', `Menghapus lineup match id: ${id}`);
+                      triggerToast('Lineup berhasil dihapus.');
+                      // Hapus dari Supabase di background
                       try {
                         const res = await fetch('/api/matches', {
                           method: 'DELETE',
@@ -707,16 +712,11 @@ export default function Home() {
                         });
                         const result = await res.json();
                         if (!result.success) {
-                          triggerToast(`Gagal hapus dari database: ${result.error}`, 'error');
-                          return; // Jangan hapus dari state jika DB gagal
+                          console.warn('Delete DB warning:', result.error);
                         }
                       } catch (err) {
-                        triggerToast('Gagal menghapus lineup dari database.', 'error');
-                        return;
+                        console.warn('Delete DB error:', err);
                       }
-                      setMatches(prev => prev.filter(m => m.id !== id));
-                      logAction('DELETE_LINEUP', 'Lineup Pertandingan', `Menghapus lineup match id: ${id}`);
-                      triggerToast('Lineup berhasil dihapus.');
                     }}
                     hasPermission={hasPermission}
                   />
