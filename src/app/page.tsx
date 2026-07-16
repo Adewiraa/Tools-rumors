@@ -142,7 +142,7 @@ export default function Home() {
         const { data: clubsData, error: clubsError } = await supabase.from('clubs').select('*');
         if (clubsError) throw clubsError;
         
-        // 2. Fetch Players
+        // 2. Fetch Players — explicit select club_id dan clubs.id
         const { data: playersData, error: playersError } = await supabase
           .from('players')
           .select(`
@@ -155,15 +155,21 @@ export default function Home() {
             club_rosters (
               shirt_number,
               position,
+              club_season_id,
               club_seasons (
+                id,
                 club_id,
                 clubs (
+                  id,
                   name
                 )
               )
             )
           `);
-        if (playersError) throw playersError;
+        if (playersError) {
+          console.warn('Players fetch error:', playersError);
+          throw playersError;
+        }
 
         // 3. Fetch Competitions via API route (service_role, bypass RLS)
         const compRes = await fetch('/api/competitions');
