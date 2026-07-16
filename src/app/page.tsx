@@ -90,7 +90,7 @@ export default function Home() {
   // Mock Database State
   const [clubs, setClubs] = useState<Club[]>(INITIAL_CLUBS);
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
-  const [matches, setMatches] = useState<Match[]>(INITIAL_MATCHES);
+  const [matches, setMatches] = useState<Match[]>([]); // Diisi dari Supabase saat load
   const [rumors, setRumors] = useState<Rumor[]>(INITIAL_RUMORS);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [competitions, setCompetitions] = useState<Competition[]>(INITIAL_COMPETITIONS);
