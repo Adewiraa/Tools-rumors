@@ -73,7 +73,7 @@ export default function Home() {
   // Navigation & Shell States
   const [activeMenu, setActiveMenu] = useState<'dashboard' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings'>('dashboard');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Super Admin');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // default collapsed
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
@@ -255,7 +255,7 @@ export default function Home() {
               position,
               shirtNumber: roster?.shirt_number || 99,
               nationality: p.country_name || (p.country_code === 'ID' ? 'Indonesia' : 'Asing'),
-              flagUrl: p.country_flag_url || 'ðŸ‡®ðŸ‡©',
+              flagUrl: p.country_flag_url || '',
               age: 25,
               contractStart: '2025-01-01',
               contractEnd: '2028-01-01',
@@ -341,9 +341,11 @@ export default function Home() {
   };
 
   // Helper to navigate and close mobile drawer
+  // Helper to navigate, close mobile drawer, dan collapse sidebar
   const navigateTo = (menu: typeof activeMenu) => {
     setActiveMenu(menu);
     setMobileDrawerOpen(false);
+    setSidebarCollapsed(true); // auto-collapse setelah pilih menu
     setEditingLineupId(null);
     setEditingResultId(null);
     setEditingRumorId(null);
@@ -351,8 +353,6 @@ export default function Home() {
     setEditingPlayerId(null);
     setEditingCompetitionId(null);
   };
-
-  return (
     <div className="app-container">
       {/* Dynamic Header Alert for Unsaved Changes or Offline status */}
       {isOffline && (
@@ -446,17 +446,17 @@ export default function Home() {
       )}
 
       {/* 1. Sidebar â€” Desktop: full sidebar, Mobile: bottom tab bar (5 main items) */}
-      <aside className="sidebar" style={{ width: sidebarCollapsed ? '72px' : '248px' }}>
+      <aside className="sidebar" style={{ width: sidebarCollapsed ? "72px" : "248px", transition: "width 0.2s ease" }} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
+
         <div className="sidebar-logo">
           {!sidebarCollapsed ? (
             <>
-              <span style={{ color: 'var(--primary-600)' }}>ðŸ‡®ðŸ‡©</span>
+              <span style={{ color: "var(--primary-600)", fontSize: 18, fontWeight: 800, letterSpacing: -1 }}>GM</span>
               <span>GARUDA MATCH</span>
             </>
           ) : (
-            <span style={{ color: 'var(--primary-600)' }}>ðŸ‡®ðŸ‡©</span>
+            <span style={{ color: "var(--primary-600)", fontSize: 14, fontWeight: 800 }}>GM</span>
           )}
-        </div>
 
         <nav className="sidebar-menu">
           {!sidebarCollapsed && <div className="menu-category">Menu Utama</div>}
