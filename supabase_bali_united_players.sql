@@ -77,7 +77,7 @@ FROM (VALUES
   ('Wayan Arta',          21, 'GK'),
   ('Dikri Yusron',        31, 'GK'),
   ('Fitrul Dwi Rustapa',  95, 'GK'),
-  ('João Ferrari',         2,  'DF'),
+  ('Joao Ferrari',         2,  'DF'),
   ('Kadek Arel',           4,  'DF'),
   ('Bagas Adi Nugroho',    5,  'DF'),
   ('Rizky Dwi Febrianto', 16, 'DF'),
