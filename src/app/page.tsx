@@ -698,7 +698,22 @@ export default function Home() {
                     uiState={uiState}
                     onCreateNew={() => setEditingLineupId('new')}
                     onEdit={setEditingLineupId}
-                    onDelete={(id) => {
+                    onDelete={async (id) => {
+                      try {
+                        const res = await fetch('/api/matches', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id }),
+                        });
+                        const result = await res.json();
+                        if (!result.success) {
+                          triggerToast(`Gagal hapus dari database: ${result.error}`, 'error');
+                          return; // Jangan hapus dari state jika DB gagal
+                        }
+                      } catch (err) {
+                        triggerToast('Gagal menghapus lineup dari database.', 'error');
+                        return;
+                      }
                       setMatches(prev => prev.filter(m => m.id !== id));
                       logAction('DELETE_LINEUP', 'Lineup Pertandingan', `Menghapus lineup match id: ${id}`);
                       triggerToast('Lineup berhasil dihapus.');
