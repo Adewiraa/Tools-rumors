@@ -1522,22 +1522,22 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // ATURAN: 11 starter + 4 cadangan DSP, asing starter maks 7,
-  // asing cadangan DSP maks 2, asing non-DSP maks 2 (input manual)
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const MAX_SUBS      = 4;
-  const MAX_ASING_ST  = 7;
-  const MAX_ASING_SUB = 2;
-  const MAX_NONDSP    = 2;
 
-  const homeValid  = homeStarters.length === 11;
-  const awayValid  = awayStarters.length === 11;
-  const homeHasGK  = homeSquad.some(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
-  const awayHasGK  = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
+  // Regulasi:
+  // - Starting XI: 11 pemain, maks 7 asing (selebihnya otomatis ke cadangan/non-DSP)
+  // - Cadangan DSP: maks 4, TIDAK ADA batas asing di cadangan
+  // - Non-DSP: input manual, maks 2
+  const MAX_SUBS   = 4;
+  const MAX_ASING_ST = 7;  // maks asing di starting XI
+  const MAX_NONDSP = 2;
+
+  const homeValid = homeStarters.length === 11;
+  const awayValid = awayStarters.length === 11;
+  const homeHasGK = homeSquad.some(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
+  const awayHasGK = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
   const posLabel: Record<string, string> = { Goalkeeper: 'GK', Defender: 'DF', Midfielder: 'MF', Forward: 'FW' };
 
-  // Klik dari pool: masukkan ke slot yang tepat secara otomatis
+  // Klik dari pool -> masuk slot yang tepat secara otomatis
   const pickPlayer = (
     id: string,
     squad: Player[],
@@ -1548,37 +1548,29 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const player = squad.find(p => p.id === id);
     if (!player) return;
     const isForeign = player.nationality !== 'Indonesia';
-    const fSt  = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
-    const fSub = squad.filter(p => subs.includes(p.id)     && p.nationality !== 'Indonesia').length;
+    // Hitung berapa asing sudah di starting (DSP + non-DSP)
+    const fSt = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length + asingList.length;
 
     if (starters.length < 11) {
-      // Slot starter masih ada
-      if (isForeign && fSt + asingList.length >= MAX_ASING_ST) {
-        // Asing sudah penuh di starter -> coba cadangan
-        if (fSub < MAX_ASING_SUB && subs.length < MAX_SUBS) {
+      // Masih ada slot di starting XI
+      if (isForeign && fSt >= MAX_ASING_ST) {
+        // Kuota asing di starting sudah penuh (7) -> langsung cadangan
+        if (subs.length < MAX_SUBS) {
           setSubs(p => [...p, id]);
+          triggerToast(player.displayName + ' masuk cadangan (kuota asing starting penuh)', 'warning');
         } else if (asingList.length < MAX_NONDSP) {
-          triggerToast(player.displayName + ' otomatis masuk Non-DSP (kuota asing starter & sub penuh)', 'warning');
-          const entry: AsingEntry = { id: 'asing-dsp-' + id, name: player.displayName, no: player.shirtNumber, pos: posLabel[player.position] || 'MF' };
+          const entry: AsingEntry = { id: 'nd-' + id, name: player.displayName, no: player.shirtNumber, pos: posLabel[player.position] || 'MF' };
           setAsing(prev => [...prev, entry]);
+          triggerToast(player.displayName + ' masuk Non-DSP (starting & cadangan penuh)', 'warning');
         } else {
-          triggerToast('Semua kuota asing penuh.', 'warning');
+          triggerToast('Kuota asing penuh di semua slot.', 'warning');
         }
         return;
       }
+      // Asing masih bisa masuk starting, atau pemain lokal
       setStarters(p => [...p, id]);
     } else if (subs.length < MAX_SUBS) {
-      // Starter penuh -> cadangan
-      if (isForeign && fSub >= MAX_ASING_SUB) {
-        if (asingList.length < MAX_NONDSP) {
-          triggerToast(player.displayName + ' otomatis masuk Non-DSP (kuota asing sub penuh)', 'warning');
-          const entry: AsingEntry = { id: 'asing-dsp-' + id, name: player.displayName, no: player.shirtNumber, pos: posLabel[player.position] || 'MF' };
-          setAsing(prev => [...prev, entry]);
-        } else {
-          triggerToast('Semua kuota asing penuh.', 'warning');
-        }
-        return;
-      }
+      // Starting sudah 11 -> masuk cadangan (tidak ada batas asing di cadangan)
       setSubs(p => [...p, id]);
     } else {
       triggerToast('Semua slot penuh (11 starter + ' + MAX_SUBS + ' cadangan).', 'warning');
