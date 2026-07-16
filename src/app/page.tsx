@@ -660,14 +660,30 @@ export default function Home() {
                     matches={matches}
                     competitions={competitions}
                     onClose={() => setEditingLineupId(null)}
-                    onSave={(updatedMatch) => {
+                    onSave={async (updatedMatch) => {
+                      try {
+                        // Simpan ke Supabase
+                        const res = await fetch('/api/matches', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ match: updatedMatch }),
+                        });
+                        const result = await res.json();
+                        if (!result.success) {
+                          console.warn('Lineup save warning:', result.error);
+                          triggerToast(`Lineup tersimpan lokal, DB error: ${result.error}`, 'warning');
+                        }
+                      } catch (err) {
+                        console.warn('Lineup save to DB failed:', err);
+                      }
+                      // Update state lokal bagaimana pun hasilnya
                       if (editingLineupId === 'new') {
                         setMatches(prev => [updatedMatch, ...prev]);
                         logAction('CREATE_LINEUP', 'Lineup Pertandingan', `Membuat lineup baru: ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
                         triggerToast('Lineup baru berhasil dibuat!');
                       } else {
                         setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
-                        logAction('UPDATE_LINEUP', 'Lineup Pertandingan', `Memperbarui formasi/lineup ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
+                        logAction('UPDATE_LINEUP', 'Lineup Pertandingan', `Memperbarui lineup ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
                         triggerToast('Lineup berhasil disimpan!');
                       }
                       setEditingLineupId(null);
