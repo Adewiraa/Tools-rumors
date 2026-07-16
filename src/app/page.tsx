@@ -1655,7 +1655,8 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     return null;
   };
 
-  // â”€â”€ POOL ITEM: klik = masuk slot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  // POOL ITEM: klik = masuk slot, pakai className pool-item-btn (CSS handles sizing)
   const renderPoolItem = (
     player: Player,
     squad: Player[],
@@ -1663,23 +1664,22 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>,
     asingList: AsingEntry[], setAsing: React.Dispatch<React.SetStateAction<AsingEntry[]>>
   ) => {
-    const isForeign  = player.nationality !== 'Indonesia';
-    const isUnavail  = player.availability !== 'available';
+    const isForeign = player.nationality !== 'Indonesia';
+    const isUnavail = player.availability !== 'available';
     return (
       <button key={player.id}
+        className="pool-item-btn"
         onClick={() => pickPlayer(player.id, squad, starters, setStarters, subs, setSubs, asingList, setAsing)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-          padding: '7px 10px', marginBottom: 4, borderRadius: 8, cursor: 'pointer',
           background: isForeign ? '#fffbeb' : 'white',
           border: isForeign ? '1px solid #f59e0b' : '1px solid var(--neutral-200)',
-          textAlign: 'left', transition: 'background 0.1s', opacity: isUnavail ? 0.6 : 1
+          opacity: isUnavail ? 0.6 : 1,
         }}
         title={isUnavail ? player.availability : ''}>
         {renderFlag(player)}
-        <span style={{ fontSize: 10, minWidth: 20, color: 'var(--neutral-500)', fontWeight: 600 }}>#{player.shirtNumber}</span>
-        <span style={{ flex: 1, fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</span>
-        <span style={{ fontSize: 10, color: 'var(--neutral-400)', flexShrink: 0 }}>{posLabel[player.position] || 'MF'}</span>
+        <span style={{ fontSize: 10, minWidth: 18, color: 'var(--neutral-500)', fontWeight: 600, flexShrink: 0 }}>#{player.shirtNumber}</span>
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: isForeign ? 600 : 400 }}>{player.displayName}</span>
+        <span style={{ fontSize: 9, color: 'var(--neutral-400)', flexShrink: 0 }}>{posLabel[player.position] || 'MF'}</span>
         {isUnavail && <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 800, flexShrink: 0 }}>{player.availability === 'injured' ? 'CED' : 'SUS'}</span>}
       </button>
     );
@@ -1795,7 +1795,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
               const pp = pool.filter(p => p.position === pos);
               if (!pp.length) return null;
               return (
-                <div key={pos} style={{ marginBottom: 10 }}>
+                <div key={pos} className="pool-pos-group" style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase',
                     marginBottom: 4, paddingBottom: 2, borderBottom: '1px solid var(--neutral-100)' }}>
                     {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}

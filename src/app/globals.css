@@ -886,13 +886,14 @@ a {
 }
 
 /* ==========================================
-   LINEUP EDITOR — RESPONSIVE
+/* ==========================================
+   LINEUP EDITOR â€” RESPONSIVE
    ========================================== */
 
 .lineup-editor-root {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .lineup-editor-header {
@@ -900,8 +901,8 @@ a {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--neutral-200);
-  padding-bottom: 12px;
-  gap: 10px;
+  padding-bottom: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -913,24 +914,24 @@ a {
   margin-bottom: 3px;
 }
 
-/* INFO BAR: 5 kolom di desktop */
-.lineup-info-bar { padding: 12px 16px !important; }
+/* â”€â”€ INFO BAR â”€â”€ */
+.lineup-info-bar { padding: 10px 14px !important; }
 .lineup-info-grid {
   display: grid;
   grid-template-columns: 2fr 2fr 2fr 1.5fr 3fr;
-  gap: 10px;
+  gap: 8px;
   align-items: end;
 }
 .lineup-venue-field { grid-column: span 1; }
 
-/* TEAMS: 2 kolom di desktop */
+/* â”€â”€ TEAMS GRID: 2 kolom desktop â”€â”€ */
 .lineup-teams-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
+  align-items: start;
 }
 
-/* Team Panel */
 .lineup-team-panel {
   display: flex;
   flex-direction: column;
@@ -946,20 +947,19 @@ a {
   flex-wrap: wrap;
 }
 
-/* 3 kolom per team: Skuad | Starting | Sub */
+/* â”€â”€ 3 KOLOM PER TEAM â”€â”€ */
 .lineup-cols-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   border: 1px solid var(--neutral-200);
   border-top: none;
   border-radius: 0 0 8px 8px;
-  overflow: hidden;
+  overflow: visible; /* NO scrollbar - ikut tinggi konten */
 }
 
 .lineup-col {
   padding: 10px;
-  max-height: 440px;
-  overflow-y: auto;
+  /* NO max-height, NO overflow-y â€” kolom ikut tinggi konten */
   background: white;
 }
 
@@ -973,72 +973,102 @@ a {
   border-bottom: 1px solid var(--neutral-100);
 }
 
+/* Pool item desktop: ukuran normal */
+.pool-item-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 3px;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.1s, transform 0.08s;
+  font-size: 12px;
+}
+.pool-item-btn:hover { opacity: 0.85; transform: scale(0.99); }
+.pool-item-btn:active { transform: scale(0.97); }
+
 .hide-mobile { display: inline; }
 
-/* ── TABLET (max 1024px): info bar 2 kolom, teams tetap 2 ── */
+/* â”€â”€ TABLET â‰¤1024px â”€â”€ */
 @media (max-width: 1024px) {
   .lineup-info-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
   }
   .lineup-venue-field {
-    grid-column: span 2;
-  }
-  .lineup-col {
-    max-height: 360px;
+    grid-column: span 3;
   }
 }
 
-/* ── MOBILE (max 768px): semua single column, 3 kolom jadi accordeon ── */
+/* â”€â”€ MOBILE â‰¤768px â”€â”€ */
 @media (max-width: 768px) {
+  /* Info bar: 2 kolom */
   .lineup-info-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
   }
   .lineup-venue-field {
     grid-column: span 2;
   }
+  .lineup-info-bar { padding: 8px 10px !important; }
 
-  /* Teams stack vertically */
+  /* Teams: 1 kolom full width */
   .lineup-teams-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
-  /* 3 kolom di mobile jadi 1 kolom scroll horizontal */
+  /* 3 kolom jadi 1 kolom stacked */
   .lineup-cols-grid {
     grid-template-columns: 1fr;
-    border-radius: 0 0 8px 8px;
   }
 
   .lineup-col {
-    max-height: none;
     border-top: 1px solid var(--neutral-100);
     padding: 10px 12px;
   }
-
   .lineup-col:first-child {
     border-top: none;
+  }
+
+  /* Pool di mobile: grid 2 kolom pill compact */
+  .lineup-col:first-child .pool-pos-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+  }
+
+  /* Pool item di mobile: lebih compact, font lebih kecil */
+  .pool-item-btn {
+    padding: 5px 7px;
+    font-size: 11px;
+    border-radius: 6px;
+    margin-bottom: 2px;
   }
 
   .hide-mobile { display: none; }
 
   .lineup-editor-header {
-    gap: 8px;
+    gap: 6px;
   }
-
   .lineup-team-header {
     font-size: 12px;
-    padding: 8px 10px;
+    padding: 7px 10px;
   }
 }
 
-/* ── SMALL MOBILE (max 480px) ── */
+/* â”€â”€ SMALL MOBILE â‰¤480px â”€â”€ */
 @media (max-width: 480px) {
   .lineup-info-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
-  .lineup-venue-field {
-    grid-column: span 1;
+  .lineup-info-bar { padding: 8px !important; }
+  
+  /* Pool item sangat compact */
+  .pool-item-btn {
+    padding: 4px 6px;
+    font-size: 10px;
   }
-  .lineup-info-bar { padding: 10px 12px !important; }
 }
