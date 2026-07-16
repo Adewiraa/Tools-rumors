@@ -1521,16 +1521,21 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [awayAsingInput, setAwayAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-
-  // Regulasi per pertandingan:
-  // - Starting XI : 11 pemain, maks 7 asing
-  // - Cadangan    : maks 15 (termasuk asing yang tidak masuk starting)
-  // - Total asing di starting + cadangan DSP = maks 9
-  // - Non-DSP     : 2 asing input manual (di luar skuad 15)
-  const MAX_SUBS        = 15;
-  const MAX_ASING_TOTAL =  9;
-  const MAX_ASING_ST    =  7;
-  const MAX_NONDSP      =  2;
+  // =================================================================
+  // REGULASI PEMAIN ASING - LIGA INDONESIA
+  // - DSP Liga      : maks 11 asing boleh didaftarkan di liga
+  // - Dibawa match  : dari 11, maks 9 yang boleh dibawa per pertandingan
+  // - Starting XI   : dari 9, maks 7 yang boleh main
+  // - Cadangan      : sisa dari 9 dikurangi yang main di starting
+  //   Contoh:
+  //     5 starting asing -> 4 cadangan asing (5+4=9 dibawa)
+  //     6 starting asing -> 3 cadangan asing (6+3=9 dibawa)
+  //     7 starting asing -> 2 cadangan asing (7+2=9 dibawa)
+  // =================================================================
+  const MAX_ASING_DSP     = 11; // maks asing terdaftar di DSP liga
+  const MAX_ASING_DIBAWA  =  9; // maks asing dibawa per pertandingan
+  const MAX_ASING_MAIN    =  7; // maks asing di starting XI
+  const MAX_SUBS          = 15; // maks total cadangan
 
   const homeValid = homeStarters.length === 11;
   const awayValid = awayStarters.length === 11;
@@ -1538,6 +1543,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const awayHasGK = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
   const posLabel: Record<string, string> = { Goalkeeper: 'GK', Defender: 'DF', Midfielder: 'MF', Forward: 'FW' };
 
+  // Klik dari pool -> masuk slot yang tepat otomatis
   const pickPlayer = (
     id: string,
     squad: Player[],
@@ -1552,47 +1558,53 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     if (isForeign) {
       const fSt    = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
       const fSub   = squad.filter(p => subs.includes(p.id)     && p.nationality !== 'Indonesia').length;
-      const fTotal = fSt + fSub;
+      const fDibawa = fSt + fSub; // total asing dibawa (starting + cadangan)
 
-      if (fTotal >= MAX_ASING_TOTAL) {
-        if (asingList.length < MAX_NONDSP) {
-          const entry: AsingEntry = { id: 'nd-' + id, name: player.displayName, no: player.shirtNumber, pos: posLabel[player.position] || 'MF' };
-          setAsing(prev => [...prev, entry]);
-          triggerToast(player.displayName + ' otomatis masuk Non-DSP - kuota 9 asing DSP penuh', 'warning');
-        } else {
-          triggerToast('Kuota asing penuh: 9 DSP dan 2 Non-DSP sudah tercapai.', 'warning');
-        }
+      // Cek apakah total asing yang dibawa sudah mencapai 9
+      if (fDibawa >= MAX_ASING_DIBAWA) {
+        // Semua jatah 9 asing sudah terpakai -> tidak bisa masuk starting/cadangan
+        // Tampilkan info tapi jangan masuk ke mana pun (pemain ini hanya di pool DSP liga)
+        triggerToast(
+          player.displayName + ' tidak bisa dibawa - kuota 9 asing per pertandingan sudah penuh.',
+          'warning'
+        );
         return;
       }
 
-      if (starters.length < 11 && fSt < MAX_ASING_ST) {
+      // Masih ada slot asing dibawa (fDibawa < 9)
+      if (starters.length < 11 && fSt < MAX_ASING_MAIN) {
+        // Slot starter tersedia dan asing starter belum 7 -> masuk starting
         setStarters(p => [...p, id]);
-      } else if (starters.length < 11 && fSt >= MAX_ASING_ST) {
+      } else if (starters.length < 11 && fSt >= MAX_ASING_MAIN) {
+        // Starter tersedia tapi asing di starting sudah 7 -> otomatis cadangan
         if (subs.length < MAX_SUBS) {
           setSubs(p => [...p, id]);
-          triggerToast(player.displayName + ' masuk cadangan - maks 7 asing di starting', 'warning');
+          triggerToast(player.displayName + ' masuk cadangan - kuota 7 asing starting sudah penuh', 'warning');
         } else {
-          triggerToast('Cadangan sudah penuh.', 'warning');
+          triggerToast('Cadangan penuh.', 'warning');
         }
-      } else {
+      } else if (starters.length >= 11) {
+        // Starting sudah 11 -> cadangan
         if (subs.length < MAX_SUBS) {
           setSubs(p => [...p, id]);
         } else {
-          triggerToast('Cadangan sudah penuh.', 'warning');
+          triggerToast('Cadangan penuh.', 'warning');
         }
       }
 
     } else {
+      // Pemain lokal - bebas, tidak ada batasan
       if (starters.length < 11) {
         setStarters(p => [...p, id]);
       } else if (subs.length < MAX_SUBS) {
         setSubs(p => [...p, id]);
       } else {
-        triggerToast('Cadangan sudah penuh.', 'warning');
+        triggerToast('Cadangan penuh.', 'warning');
       }
     }
   };
 
+  // Klik di starting/cadangan -> kembalikan ke pool
   const returnToPool = (
     id: string,
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
@@ -1602,11 +1614,10 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     else if (subs.includes(id)) setSubs(p => p.filter(x => x !== id));
   };
 
+
   const addAsing = (side: 'home' | 'away') => {
-    const inp      = side === 'home' ? homeAsingInput : awayAsingInput;
-    const asingList = side === 'home' ? homeAsing : awayAsing;
+    const inp = side === 'home' ? homeAsingInput : awayAsingInput;
     if (!inp.name.trim()) { triggerToast('Nama wajib diisi.', 'error'); return; }
-    if (asingList.length >= MAX_NONDSP) { triggerToast('Maks ' + MAX_NONDSP + ' asing non-DSP.', 'warning'); return; }
     const entry: AsingEntry = { id: 'asing-' + Date.now(), name: inp.name.trim(), no: Number(inp.no) || 0, pos: inp.pos };
     if (side === 'home') { setHomeAsing(p => [...p, entry]); setHomeAsingInput({ name: '', no: '', pos: 'FW' }); }
     else { setAwayAsing(p => [...p, entry]); setAwayAsingInput({ name: '', no: '', pos: 'FW' }); }
@@ -1741,6 +1752,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const subList = squad.filter(p => subs.includes(p.id));
     const fSt  = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
     const fSub = squad.filter(p => subs.includes(p.id) && p.nationality !== 'Indonesia').length;
+    const fDibawa = fSt + fSub; // total asing dibawa per pertandingan
 
     return (
       <div className="lineup-team-panel">
@@ -1840,45 +1852,34 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
               subList.map(p => renderSelectedItem(p, false, captain, setCaptain, starters, setStarters, subs, setSubs, subColor))
             )}
 
-            {/* NON-DSP */}
-            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--neutral-100)' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Asing Non-DSP</span>
-                <span style={{ background: '#fef3c7', padding: '1px 6px', borderRadius: 6, fontSize: 9 }}>{asingList.length}/{MAX_NONDSP}</span>
-              </div>
-              {asingList.map(a => (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px',
-                  borderRadius: 8, background: '#fef3c7', border: '1px solid #f59e0b',
-                  fontSize: 11, fontWeight: 600, marginBottom: 4, color: '#78350f' }}>
-                  <span style={{ fontSize: 10, minWidth: 20 }}>#{a.no}</span>
-                  <span style={{ flex: 1 }}>{a.name}</span>
-                  <span style={{ fontSize: 9 }}>{a.pos}</span>
-                  <button onClick={() => setAsing(p => p.filter(x => x.id !== a.id))}
-                    style={{ background: 'none', border: 'none', color: '#92400e', cursor: 'pointer',
-                      fontSize: 14, fontWeight: 700, lineHeight: 1, padding: 2 }}>x</button>
-                </div>
-              ))}
-              {asingList.length < MAX_NONDSP && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <input type="text" className="form-input" placeholder="Nama pemain" style={{ fontSize: 11 }}
-                    value={asingInput.name} onChange={e => setAsingInput(p => ({ ...p, name: e.target.value }))} />
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 56 }}
-                      value={asingInput.no} onChange={e => setAsingInput(p => ({ ...p, no: e.target.value }))} />
-                    <select className="form-select" style={{ fontSize: 11 }}
-                      value={asingInput.pos} onChange={e => setAsingInput(p => ({ ...p, pos: e.target.value }))}>
-                      <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
-                    </select>
-                    <button className="btn btn-sm btn-secondary" style={{ fontSize: 11, flexShrink: 0 }}
-                      onClick={() => addAsing(side)}>+</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
 
+
+            {/* CADANGAN INFO */}
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--neutral-100)' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-600)', marginBottom: 6,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Kuota Asing Dibawa</span>
+                <span style={{ background: fDibawa >= MAX_ASING_DIBAWA ? '#fee2e2' : '#fef3c7',
+                  color: fDibawa >= MAX_ASING_DIBAWA ? '#991b1b' : '#92400e',
+                  padding: '1px 7px', borderRadius: 6, fontSize: 10, fontWeight: 700 }}>
+                  {fDibawa}/{MAX_ASING_DIBAWA}
+                </span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--neutral-400)', lineHeight: 1.5 }}>
+                {fDibawa < MAX_ASING_DIBAWA
+                  ? (`Sisa ${MAX_ASING_DIBAWA - fDibawa} slot asing tersedia`)
+                  : 'Kuota 9 asing per pertandingan penuh'}
+              </div>
+              <div style={{ marginTop: 8, fontSize: 10, color: 'var(--neutral-400)', lineHeight: 1.5,
+                padding: '6px 8px', background: 'var(--neutral-50)', borderRadius: 6 }}>
+                <strong style={{ color: 'var(--neutral-600)' }}>Regulasi:</strong>
+                <br />Maks 7 asing di Starting XI
+                <br />Total asing dibawa maks 9
+                <br />DSP liga maks 11 asing
+              </div>
+            </div>
         </div>
+      </div>
       </div>
     );
   };
