@@ -263,6 +263,17 @@ export default function Home() {
           setPlayers(mappedPlayers);
         }
 
+        // 5. Fetch Matches via API route
+        try {
+          const matchRes = await fetch('/api/matches');
+          const matchJson = await matchRes.json();
+          if (matchJson.success && matchJson.data && matchJson.data.length > 0) {
+            setMatches(matchJson.data);
+          }
+        } catch (matchErr) {
+          console.warn('Gagal load matches dari Supabase, pakai data lokal:', matchErr);
+        }
+
         setUiState('default');
         triggerToast('Berhasil memuat data dari Supabase!', 'success');
       } catch (error) {
