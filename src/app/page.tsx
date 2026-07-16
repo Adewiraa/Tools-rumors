@@ -1521,53 +1521,82 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [awayAsingInput, setAwayAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  // Aturan: total 15 pemain (11 starter + 4 cadangan DSP), asing starter max 7, asing sub max 2, non-DSP max 2
-  const MAX_SUBS = 4;
-  const MAX_ASING_STARTER = 7;
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ATURAN: 11 starter + 4 cadangan DSP, asing starter maks 7,
+  // asing cadangan DSP maks 2, asing non-DSP maks 2 (input manual)
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const MAX_SUBS      = 4;
+  const MAX_ASING_ST  = 7;
   const MAX_ASING_SUB = 2;
-  const MAX_NONDSP = 2;
+  const MAX_NONDSP    = 2;
 
-  const homeValid = homeStarters.length === 11;
-  const awayValid = awayStarters.length === 11;
-  const homeHasGK = homeSquad.some(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
-  const awayHasGK = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
-
+  const homeValid  = homeStarters.length === 11;
+  const awayValid  = awayStarters.length === 11;
+  const homeHasGK  = homeSquad.some(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
+  const awayHasGK  = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
   const posLabel: Record<string, string> = { Goalkeeper: 'GK', Defender: 'DF', Midfielder: 'MF', Forward: 'FW' };
 
-  const togglePlayer = (
+  // Klik dari pool: masukkan ke slot yang tepat secara otomatis
+  const pickPlayer = (
     id: string,
     squad: Player[],
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
-    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>,
-    asingList: AsingEntry[]
+    subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>,
+    asingList: AsingEntry[], setAsing: React.Dispatch<React.SetStateAction<AsingEntry[]>>
   ) => {
     const player = squad.find(p => p.id === id);
-    const isForeign = player?.nationality !== 'Indonesia';
-    const foreignStarters = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
-    const foreignSubs = squad.filter(p => subs.includes(p.id) && p.nationality !== 'Indonesia').length;
-    if (starters.includes(id)) {
-      setStarters(p => p.filter(x => x !== id));
-      if (subs.length < MAX_SUBS) {
-        if (isForeign && foreignSubs >= MAX_ASING_SUB) { triggerToast('Maks ' + MAX_ASING_SUB + ' asing di cadangan DSP.', 'warning'); return; }
-        setSubs(p => [...p, id]);
+    if (!player) return;
+    const isForeign = player.nationality !== 'Indonesia';
+    const fSt  = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
+    const fSub = squad.filter(p => subs.includes(p.id)     && p.nationality !== 'Indonesia').length;
+
+    if (starters.length < 11) {
+      // Slot starter masih ada
+      if (isForeign && fSt + asingList.length >= MAX_ASING_ST) {
+        // Asing sudah penuh di starter -> coba cadangan
+        if (fSub < MAX_ASING_SUB && subs.length < MAX_SUBS) {
+          setSubs(p => [...p, id]);
+        } else if (asingList.length < MAX_NONDSP) {
+          triggerToast(player.displayName + ' otomatis masuk Non-DSP (kuota asing starter & sub penuh)', 'warning');
+          const entry: AsingEntry = { id: 'asing-dsp-' + id, name: player.displayName, no: player.shirtNumber, pos: posLabel[player.position] || 'MF' };
+          setAsing(prev => [...prev, entry]);
+        } else {
+          triggerToast('Semua kuota asing penuh.', 'warning');
+        }
+        return;
       }
-    } else if (subs.includes(id)) {
-      setSubs(p => p.filter(x => x !== id));
+      setStarters(p => [...p, id]);
+    } else if (subs.length < MAX_SUBS) {
+      // Starter penuh -> cadangan
+      if (isForeign && fSub >= MAX_ASING_SUB) {
+        if (asingList.length < MAX_NONDSP) {
+          triggerToast(player.displayName + ' otomatis masuk Non-DSP (kuota asing sub penuh)', 'warning');
+          const entry: AsingEntry = { id: 'asing-dsp-' + id, name: player.displayName, no: player.shirtNumber, pos: posLabel[player.position] || 'MF' };
+          setAsing(prev => [...prev, entry]);
+        } else {
+          triggerToast('Semua kuota asing penuh.', 'warning');
+        }
+        return;
+      }
+      setSubs(p => [...p, id]);
     } else {
-      if (starters.length < 11) {
-        if (isForeign && (foreignStarters + asingList.length) >= MAX_ASING_STARTER) { triggerToast('Maks ' + MAX_ASING_STARTER + ' asing di Starting XI.', 'warning'); return; }
-        setStarters(p => [...p, id]);
-      } else if (subs.length < MAX_SUBS) {
-        if (isForeign && foreignSubs >= MAX_ASING_SUB) { triggerToast('Maks ' + MAX_ASING_SUB + ' asing di cadangan.', 'warning'); return; }
-        setSubs(p => [...p, id]);
-      } else {
-        triggerToast('Slot penuh: 11 starter + ' + MAX_SUBS + ' cadangan.', 'warning');
-      }
+      triggerToast('Semua slot penuh (11 starter + ' + MAX_SUBS + ' cadangan).', 'warning');
     }
   };
 
+  // Klik di Starting/Cadangan: kembalikan ke pool
+  const returnToPool = (
+    id: string,
+    starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
+    subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (starters.includes(id)) setStarters(p => p.filter(x => x !== id));
+    else if (subs.includes(id)) setSubs(p => p.filter(x => x !== id));
+  };
+
   const addAsing = (side: 'home' | 'away') => {
-    const inp = side === 'home' ? homeAsingInput : awayAsingInput;
+    const inp      = side === 'home' ? homeAsingInput : awayAsingInput;
     const asingList = side === 'home' ? homeAsing : awayAsing;
     if (!inp.name.trim()) { triggerToast('Nama wajib diisi.', 'error'); return; }
     if (asingList.length >= MAX_NONDSP) { triggerToast('Maks ' + MAX_NONDSP + ' asing non-DSP.', 'warning'); return; }
@@ -1601,50 +1630,80 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const awayClub = clubs.find(c => c.id === selectedAwayClub);
 
   const renderFlag = (player: Player) => {
-    if (player.flagUrl && player.flagUrl.startsWith('http')) {
+    if (player.flagUrl && player.flagUrl.startsWith('http'))
       return <img src={player.flagUrl} alt="" style={{ width: 14, height: 10, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
-    }
-    if (player.flagUrl && player.flagUrl.length <= 4) {
-      return <span style={{ fontSize: 11, lineHeight: 1 }}>{player.flagUrl}</span>;
-    }
+    if (player.flagUrl && player.flagUrl.length <= 4)
+      return <span style={{ fontSize: 12, lineHeight: 1, flexShrink: 0 }}>{player.flagUrl}</span>;
     return null;
   };
 
-  const renderPill = (
+  // â”€â”€ POOL ITEM: klik = masuk slot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const renderPoolItem = (
     player: Player,
     squad: Player[],
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
-    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>,
-    captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>,
-    asingList: AsingEntry[]
+    subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>,
+    asingList: AsingEntry[], setAsing: React.Dispatch<React.SetStateAction<AsingEntry[]>>
   ) => {
-    const isStarter = starters.includes(player.id);
-    const isSub = subs.includes(player.id);
-    const isForeign = player.nationality !== 'Indonesia';
-    const isUnavail = player.availability !== 'available';
-    const bg = isStarter ? 'var(--primary-600)' : isSub ? 'var(--neutral-400)' : isForeign ? '#fef3c7' : 'var(--neutral-100)';
-    const fg = isStarter ? 'white' : isSub ? 'white' : 'var(--neutral-800)';
+    const isForeign  = player.nationality !== 'Indonesia';
+    const isUnavail  = player.availability !== 'available';
     return (
-      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 4 }}>
+      <button key={player.id}
+        onClick={() => pickPlayer(player.id, squad, starters, setStarters, subs, setSubs, asingList, setAsing)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+          padding: '7px 10px', marginBottom: 4, borderRadius: 8, cursor: 'pointer',
+          background: isForeign ? '#fffbeb' : 'white',
+          border: isForeign ? '1px solid #f59e0b' : '1px solid var(--neutral-200)',
+          textAlign: 'left', transition: 'background 0.1s', opacity: isUnavail ? 0.6 : 1
+        }}
+        title={isUnavail ? player.availability : ''}>
+        {renderFlag(player)}
+        <span style={{ fontSize: 10, minWidth: 20, color: 'var(--neutral-500)', fontWeight: 600 }}>#{player.shirtNumber}</span>
+        <span style={{ flex: 1, fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</span>
+        <span style={{ fontSize: 10, color: 'var(--neutral-400)', flexShrink: 0 }}>{posLabel[player.position] || 'MF'}</span>
+        {isUnavail && <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 800, flexShrink: 0 }}>{player.availability === 'injured' ? 'CED' : 'SUS'}</span>}
+      </button>
+    );
+  };
+
+  // â”€â”€ SELECTED ITEM: klik = kembalikan ke pool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const renderSelectedItem = (
+    player: Player,
+    isStarter: boolean,
+    captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>,
+    starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
+    subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>,
+    accentColor: string
+  ) => {
+    const isForeign = player.nationality !== 'Indonesia';
+    return (
+      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
         <button
-          onClick={() => togglePlayer(player.id, squad, starters, setStarters, subs, setSubs, asingList)}
-          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 8px',
-            borderRadius: 8, border: isForeign && !isStarter && !isSub ? '1px solid #f59e0b' : 'none',
-            cursor: 'pointer', background: bg, color: fg, fontSize: 11,
-            fontWeight: isStarter || isSub ? 700 : 400, textAlign: 'left', opacity: isUnavail ? 0.6 : 1 }}
-          title={isUnavail ? player.availability : ''}>
+          onClick={() => returnToPool(player.id, starters, setStarters, subs, setSubs)}
+          title="Klik untuk kembalikan ke pool"
+          style={{
+            flex: 1, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px',
+            borderRadius: 8, border: 'none', cursor: 'pointer', textAlign: 'left',
+            background: accentColor, color: 'white', fontSize: 12, fontWeight: 600
+          }}>
           {renderFlag(player)}
-          <span style={{ fontSize: 10, minWidth: 18, opacity: 0.75 }}>#{player.shirtNumber}</span>
+          <span style={{ fontSize: 10, minWidth: 18, opacity: 0.8 }}>#{player.shirtNumber}</span>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</span>
-          <span style={{ fontSize: 9, opacity: 0.65, flexShrink: 0 }}>{posLabel[player.position] || 'MF'}</span>
-          {isUnavail && <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 800, flexShrink: 0 }}>{player.availability === 'injured' ? 'CEÐ”' : 'SUS'}</span>}
+          <span style={{ fontSize: 9, opacity: 0.7 }}>{posLabel[player.position] || 'MF'}</span>
+          {isForeign && <span style={{ fontSize: 9, opacity: 0.8, fontWeight: 800 }}>INT</span>}
         </button>
         {isStarter && (
           <button onClick={() => setCaptain(captain === player.id ? '' : player.id)}
-            style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid', cursor: 'pointer', fontSize: 10, fontWeight: 800, flexShrink: 0,
+            title="Tandai kapten"
+            style={{
+              padding: '5px 7px', borderRadius: 6, border: '1px solid', cursor: 'pointer',
+              fontSize: 10, fontWeight: 800, flexShrink: 0,
               background: captain === player.id ? '#eab308' : 'transparent',
               color: captain === player.id ? '#000' : 'var(--neutral-400)',
-              borderColor: captain === player.id ? '#eab308' : 'var(--neutral-200)' }}>C</button>
+              borderColor: captain === player.id ? '#eab308' : 'var(--neutral-200)'
+            }}>C
+          </button>
         )}
       </div>
     );
@@ -1656,92 +1715,162 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     club: Club | undefined,
     formation: string, setFormation: React.Dispatch<React.SetStateAction<string>>,
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
-    subs: string[], setSubs: React.Dispatch<React.SetStateAction<string[]>>,
+    subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>,
     captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>,
     asingList: AsingEntry[], setAsing: React.Dispatch<React.SetStateAction<AsingEntry[]>>,
     asingInput: { name: string; no: string; pos: string },
     setAsingInput: React.Dispatch<React.SetStateAction<{ name: string; no: string; pos: string }>>
   ) => {
-    const isHome = side === 'home';
-    const headerBg = isHome ? 'var(--primary-600)' : '#374151';
-    const valid = starters.length === 11;
-    const hasGK = squad.some(p => starters.includes(p.id) && p.position === 'Goalkeeper');
-    const foreignSubs = squad.filter(p => subs.includes(p.id) && p.nationality !== 'Indonesia').length;
+    const isHome      = side === 'home';
+    const accentColor = isHome ? 'var(--primary-600)' : '#374151';
+    const subColor    = isHome ? '#0284c7' : '#6b7280';
+    const valid       = starters.length === 11;
+    const hasGK       = squad.some(p => starters.includes(p.id) && p.position === 'Goalkeeper');
+    // Pool: hanya pemain yang belum dipilih (tidak ada di starters/subs)
+    const pool = squad.filter(p => !starters.includes(p.id) && !subs.includes(p.id));
+    const starterList = squad.filter(p => starters.includes(p.id))
+      .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)
+                   - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position));
+    const subList = squad.filter(p => subs.includes(p.id));
+    const fSt  = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
+    const fSub = squad.filter(p => subs.includes(p.id) && p.nationality !== 'Indonesia').length;
+
     return (
       <div className="lineup-team-panel">
-        <div className="lineup-team-header" style={{ background: headerBg }}>
+        {/* Header */}
+        <div className="lineup-team-header" style={{ background: accentColor }}>
           {club?.logoUrl && club.logoUrl.startsWith('http')
-            ? <img src={club.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-            : <span style={{ fontSize: 18 }}>{isHome ? 'H' : 'A'}</span>}
+            ? <img src={club.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
+            : <span style={{ fontSize: 18, fontWeight: 700 }}>{isHome ? 'H' : 'A'}</span>}
           <span style={{ fontWeight: 700, fontSize: 13 }}>{isHome ? 'HOME' : 'AWAY'}: {club?.name}</span>
           <select value={formation} onChange={e => setFormation(e.target.value)}
-            style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 4px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(0,0,0,0.2)', color: 'white' }}>
+            style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 6px', borderRadius: 4,
+              border: '1px solid rgba(255,255,255,0.35)', background: 'rgba(0,0,0,0.25)', color: 'white' }}>
             {FORMATIONS.map(fm => <option key={fm} value={fm} style={{ color: 'black', background: 'white' }}>{fm}</option>)}
           </select>
-          <span style={{ fontSize: 11, fontWeight: 700, background: valid && hasGK ? 'rgba(34,197,94,0.3)' : 'rgba(234,179,8,0.3)', padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap' }}>
-            {starters.length}/11 {!hasGK ? ' - GK?' : ''}
+          <span style={{ fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '2px 8px', borderRadius: 10,
+            background: valid && hasGK ? 'rgba(34,197,94,0.35)' : 'rgba(234,179,8,0.35)' }}>
+            {starters.length}/11{!hasGK && starters.length > 0 ? ' (GK?)' : ''}
           </span>
         </div>
+
         <div className="lineup-cols-grid">
+
+          {/* â”€â”€ KOLOM 1: POOL (pemain belum dipilih) â”€â”€ */}
           <div className="lineup-col">
-            <div className="lineup-col-header">Skuad ({squad.length})</div>
-            <div style={{ fontSize: 9, color: 'var(--neutral-400)', marginBottom: 6 }}>Klik: Starter -&gt; Sub -&gt; Hapus</div>
-            {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
-              const pp = squad.filter(p => p.position === pos);
-              if (!pp.length) return null;
-              return <div key={pos} style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-400)', textTransform: 'uppercase', marginBottom: 3, borderBottom: '1px solid var(--neutral-100)', paddingBottom: 2 }}>
-                  {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}
-                </div>
-                {pp.map(p => renderPill(p, squad, starters, setStarters, subs, setSubs, captain, setCaptain, asingList))}
-              </div>;
-            })}
-            {squad.length === 0 && <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: 12 }}>Tidak ada pemain</div>}
-          </div>
-          <div className="lineup-col" style={{ borderLeft: '1px solid var(--neutral-100)' }}>
-            <div className="lineup-col-header" style={{ color: isHome ? 'var(--primary-600)' : '#374151' }}>
-              Starting XI ({starters.length}/11)
+            <div className="lineup-col-header">
+              Daftar Pemain ({pool.length})
             </div>
-            {starters.length === 0 ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: 12 }}>Pilih dari Skuad</div>
-              : squad.filter(p => starters.includes(p.id))
-                  .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position) - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
-                  .map(p => renderPill(p, squad, starters, setStarters, subs, setSubs, captain, setCaptain, asingList))
-            }
-            {asingList.map((a,i) => (
-              <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 8,
-                background: isHome ? 'var(--primary-600)' : '#374151', color: 'white', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+            <div style={{ fontSize: 10, color: 'var(--neutral-400)', marginBottom: 8, lineHeight: 1.4 }}>
+              Klik nama = masuk Starting XI otomatis.
+              Kuning = pemain asing.
+            </div>
+            {pool.length === 0 && (
+              <div style={{ textAlign: 'center', color: 'var(--neutral-400)', fontSize: 12, padding: '16px 0' }}>
+                Semua pemain sudah dipilih
+              </div>
+            )}
+            {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
+              const pp = pool.filter(p => p.position === pos);
+              if (!pp.length) return null;
+              return (
+                <div key={pos} style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase',
+                    marginBottom: 4, paddingBottom: 2, borderBottom: '1px solid var(--neutral-100)' }}>
+                    {pos === 'Goalkeeper' ? 'GK' : pos === 'Defender' ? 'DF' : pos === 'Midfielder' ? 'MF' : 'FW'}
+                    <span style={{ fontWeight: 400, marginLeft: 4 }}>({pp.length})</span>
+                  </div>
+                  {pp.map(p => renderPoolItem(p, squad, starters, setStarters, subs, setSubs, asingList, setAsing))}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* â”€â”€ KOLOM 2: STARTING XI â”€â”€ */}
+          <div className="lineup-col" style={{ borderLeft: '1px solid var(--neutral-100)' }}>
+            <div className="lineup-col-header" style={{ color: accentColor }}>
+              Starting XI ({starters.length}/11)
+              {fSt > 0 && <span style={{ fontSize: 9, fontWeight: 600, color: '#92400e', marginLeft: 6,
+                background: '#fef3c7', padding: '1px 5px', borderRadius: 6 }}>
+                {fSt} asing
+              </span>}
+            </div>
+            {starterList.length === 0 ? (
+              <div style={{ textAlign: 'center', color: 'var(--neutral-400)', fontSize: 12, padding: '16px 8px', lineHeight: 1.5 }}>
+                Pilih pemain dari daftar kiri.
+                <br />Klik di sini untuk kembalikan ke pool.
+              </div>
+            ) : (
+              starterList.map(p => renderSelectedItem(p, true, captain, setCaptain, starters, setStarters, subs, setSubs, accentColor))
+            )}
+            {asingList.map(a => (
+              <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px',
+                borderRadius: 8, background: accentColor, color: 'white', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
                 <span style={{ fontSize: 10, opacity: 0.8, minWidth: 20 }}>#{a.no}</span>
                 <span style={{ flex: 1 }}>{a.name}</span>
-                <span style={{ fontSize: 9, opacity: 0.7 }}>{a.pos} INT</span>
+                <span style={{ fontSize: 9, opacity: 0.7 }}>{a.pos} INT*</span>
                 <button onClick={() => setAsing(p => p.filter(x => x.id !== a.id))}
-                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 2 }}>x</button>
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)',
+                    cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 2, fontWeight: 700 }}>x</button>
               </div>
             ))}
           </div>
+
+          {/* â”€â”€ KOLOM 3: CADANGAN + NON-DSP â”€â”€ */}
           <div className="lineup-col" style={{ borderLeft: '1px solid var(--neutral-100)' }}>
-            <div className="lineup-col-header">Sub ({subs.length}/{MAX_SUBS})</div>
-            {subs.length === 0 ? <div style={{ fontSize: 11, color: 'var(--neutral-400)', textAlign: 'center', padding: 8 }}>Belum ada</div>
-              : squad.filter(p => subs.includes(p.id))
-                  .map(p => renderPill(p, squad, starters, setStarters, subs, setSubs, captain, setCaptain, asingList))
-            }
-            <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--neutral-100)' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 4, textTransform: 'uppercase' }}>
-                Asing Non-DSP ({asingList.length}/{MAX_NONDSP})
+            <div className="lineup-col-header" style={{ color: subColor }}>
+              Cadangan ({subs.length}/{MAX_SUBS})
+              {fSub > 0 && <span style={{ fontSize: 9, fontWeight: 600, color: '#92400e', marginLeft: 6,
+                background: '#fef3c7', padding: '1px 5px', borderRadius: 6 }}>
+                {fSub} asing
+              </span>}
+            </div>
+            {subList.length === 0 ? (
+              <div style={{ textAlign: 'center', color: 'var(--neutral-400)', fontSize: 12, padding: '8px 0' }}>
+                Otomatis terisi setelah 11 starter dipilih
               </div>
-              <input type="text" className="form-input" placeholder="Nama" style={{ fontSize: 11, marginBottom: 4 }}
-                value={asingInput.name} onChange={e => setAsingInput(p => ({ ...p, name: e.target.value }))} />
-              <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
-                <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 52 }}
-                  value={asingInput.no} onChange={e => setAsingInput(p => ({ ...p, no: e.target.value }))} />
-                <select className="form-select" style={{ fontSize: 11 }}
-                  value={asingInput.pos} onChange={e => setAsingInput(p => ({ ...p, pos: e.target.value }))}>
-                  <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
-                </select>
+            ) : (
+              subList.map(p => renderSelectedItem(p, false, captain, setCaptain, starters, setStarters, subs, setSubs, subColor))
+            )}
+
+            {/* NON-DSP */}
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--neutral-100)' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#92400e', marginBottom: 6, textTransform: 'uppercase',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Asing Non-DSP</span>
+                <span style={{ background: '#fef3c7', padding: '1px 6px', borderRadius: 6, fontSize: 9 }}>{asingList.length}/{MAX_NONDSP}</span>
               </div>
-              <button className="btn btn-sm btn-secondary" style={{ width: '100%', fontSize: 11 }}
-                onClick={() => addAsing(side)}>+ Tambah</button>
+              {asingList.map(a => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px',
+                  borderRadius: 8, background: '#fef3c7', border: '1px solid #f59e0b',
+                  fontSize: 11, fontWeight: 600, marginBottom: 4, color: '#78350f' }}>
+                  <span style={{ fontSize: 10, minWidth: 20 }}>#{a.no}</span>
+                  <span style={{ flex: 1 }}>{a.name}</span>
+                  <span style={{ fontSize: 9 }}>{a.pos}</span>
+                  <button onClick={() => setAsing(p => p.filter(x => x.id !== a.id))}
+                    style={{ background: 'none', border: 'none', color: '#92400e', cursor: 'pointer',
+                      fontSize: 14, fontWeight: 700, lineHeight: 1, padding: 2 }}>x</button>
+                </div>
+              ))}
+              {asingList.length < MAX_NONDSP && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <input type="text" className="form-input" placeholder="Nama pemain" style={{ fontSize: 11 }}
+                    value={asingInput.name} onChange={e => setAsingInput(p => ({ ...p, name: e.target.value }))} />
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input type="number" className="form-input" placeholder="No" style={{ fontSize: 11, width: 56 }}
+                      value={asingInput.no} onChange={e => setAsingInput(p => ({ ...p, no: e.target.value }))} />
+                    <select className="form-select" style={{ fontSize: 11 }}
+                      value={asingInput.pos} onChange={e => setAsingInput(p => ({ ...p, pos: e.target.value }))}>
+                      <option>GK</option><option>DF</option><option>MF</option><option>FW</option>
+                    </select>
+                    <button className="btn btn-sm btn-secondary" style={{ fontSize: 11, flexShrink: 0 }}
+                      onClick={() => addAsing(side)}>+</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+
         </div>
       </div>
     );
