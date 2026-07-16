@@ -887,9 +887,14 @@ a {
   }
 }
 
-/* ==========================================
-   LINEUP EDITOR — RESPONSIVE
-   ========================================== */
+/* Prevent horizontal scrollbar on main wrapper */
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  min-width: 0;
+}
 
 .lineup-editor-root {
   display: flex;
