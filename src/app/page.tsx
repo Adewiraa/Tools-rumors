@@ -1522,14 +1522,20 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
 
-
-  // Regulasi:
-  // - Starting XI: 11 pemain, maks 7 asing (selebihnya otomatis ke cadangan/non-DSP)
-  // - Cadangan DSP: maks 4, TIDAK ADA batas asing di cadangan
-  // - Non-DSP: input manual, maks 2
-  const MAX_SUBS   = 4;
-  const MAX_ASING_ST = 7;  // maks asing di starting XI
-  const MAX_NONDSP = 2;
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // REGULASI PEMAIN ASING:
+  // - Total asing (starting + cadangan DSP) = maks 9
+  // - Dari 9 itu: maks 7 boleh di starting XI
+  // - Sisa (9 total - yang masuk starting+cadangan) = Non-DSP, maks 2
+  // - Cadangan DSP maks 4 total (boleh semua asing asal total asing <= 9)
+  //   Contoh: 5 starting asing -> cadangan bisa 4 asing (5+4=9)
+  //           6 starting asing -> cadangan bisa 3 asing (6+3=9)
+  //           7 starting asing -> cadangan bisa 2 asing (7+2=9)
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const MAX_SUBS        = 4;   // maks cadangan DSP
+  const MAX_ASING_TOTAL = 9;   // maks total asing (starting + cadangan)
+  const MAX_ASING_ST    = 7;   // maks asing di starting XI saja
+  const MAX_NONDSP      = 2;   // maks asing non-DSP (input manual)
 
   const homeValid = homeStarters.length === 11;
   const awayValid = awayStarters.length === 11;
@@ -1548,32 +1554,54 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const player = squad.find(p => p.id === id);
     if (!player) return;
     const isForeign = player.nationality !== 'Indonesia';
-    // Hitung berapa asing sudah di starting (DSP + non-DSP)
-    const fSt = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length + asingList.length;
 
-    if (starters.length < 11) {
-      // Masih ada slot di starting XI
-      if (isForeign && fSt >= MAX_ASING_ST) {
-        // Kuota asing di starting sudah penuh (7) -> langsung cadangan
-        if (subs.length < MAX_SUBS) {
-          setSubs(p => [...p, id]);
-          triggerToast(player.displayName + ' masuk cadangan (kuota asing starting penuh)', 'warning');
-        } else if (asingList.length < MAX_NONDSP) {
+    if (isForeign) {
+      // Hitung asing yang sudah ada di starting + cadangan DSP
+      const fSt  = squad.filter(p => starters.includes(p.id) && p.nationality !== 'Indonesia').length;
+      const fSub = squad.filter(p => subs.includes(p.id)     && p.nationality !== 'Indonesia').length;
+      const fTotal = fSt + fSub; // total asing di DSP (starting+cadangan)
+
+      if (fTotal >= MAX_ASING_TOTAL) {
+        // Sudah 9 asing di DSP -> hanya bisa Non-DSP
+        if (asingList.length < MAX_NONDSP) {
           const entry: AsingEntry = { id: 'nd-' + id, name: player.displayName, no: player.shirtNumber, pos: posLabel[player.position] || 'MF' };
           setAsing(prev => [...prev, entry]);
-          triggerToast(player.displayName + ' masuk Non-DSP (starting & cadangan penuh)', 'warning');
+          triggerToast(player.displayName + ' masuk Non-DSP (kuota 9 asing DSP sudah penuh)', 'warning');
         } else {
-          triggerToast('Kuota asing penuh di semua slot.', 'warning');
+          triggerToast('Kuota asing penuh: 9 DSP + 2 Non-DSP sudah tercapai.', 'warning');
         }
         return;
       }
-      // Asing masih bisa masuk starting, atau pemain lokal
-      setStarters(p => [...p, id]);
-    } else if (subs.length < MAX_SUBS) {
-      // Starting sudah 11 -> masuk cadangan (tidak ada batas asing di cadangan)
-      setSubs(p => [...p, id]);
+
+      if (starters.length < 11 && fSt < MAX_ASING_ST) {
+        // Masih ada slot starter dan asing di starter belum 7 -> masuk starting
+        setStarters(p => [...p, id]);
+      } else if (starters.length < 11 && fSt >= MAX_ASING_ST) {
+        // Slot starter ada tapi asing di starting sudah 7 -> masuk cadangan
+        if (subs.length < MAX_SUBS) {
+          setSubs(p => [...p, id]);
+          triggerToast(player.displayName + ' masuk cadangan (maks 7 asing di starting tercapai)', 'warning');
+        } else {
+          triggerToast('Cadangan penuh.', 'warning');
+        }
+      } else {
+        // Starting sudah 11 -> coba cadangan
+        if (subs.length < MAX_SUBS) {
+          setSubs(p => [...p, id]);
+        } else {
+          triggerToast('Semua slot penuh (11 starter + ' + MAX_SUBS + ' cadangan).', 'warning');
+        }
+      }
+
     } else {
-      triggerToast('Semua slot penuh (11 starter + ' + MAX_SUBS + ' cadangan).', 'warning');
+      // Pemain lokal: tidak ada batasan khusus
+      if (starters.length < 11) {
+        setStarters(p => [...p, id]);
+      } else if (subs.length < MAX_SUBS) {
+        setSubs(p => [...p, id]);
+      } else {
+        triggerToast('Semua slot penuh (11 starter + ' + MAX_SUBS + ' cadangan).', 'warning');
+      }
     }
   };
 
