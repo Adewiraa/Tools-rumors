@@ -1,0 +1,287 @@
+$f = "d:\Ade Wiramiharja\Aplikasi\Media Tools\src\app\page.tsx"
+$lines = [System.IO.File]::ReadAllLines($f, [System.Text.Encoding]::UTF8)
+
+# Preview block: 0-based 1978-2193
+$before = $lines[0..1977]
+$after  = $lines[2194..($lines.Count - 1)]
+
+# Tulis ke file temp dulu untuk menghindari masalah escaping
+$previewPath = "d:\Ade Wiramiharja\Aplikasi\Media Tools\scripts\preview_block.txt"
+
+$preview = @'
+      {showPreviewModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}
+          onClick={() => setShowPreviewModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, maxHeight: '95vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-md btn-primary" onClick={async () => {
+                const node = document.getElementById('lineup-story-card');
+                if (!node) return;
+                try {
+                  triggerToast('Membuat gambar...');
+                  const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
+                  const link = document.createElement('a');
+                  link.download = 'Lineup_' + (homeClub?.shortName || 'HOME') + '_vs_' + (awayClub?.shortName || 'AWAY') + '.png';
+                  link.href = dataUrl; link.click();
+                  triggerToast('Story berhasil diunduh!');
+                } catch { triggerToast('Gagal mengunduh.', 'error'); }
+              }}><Upload size={14} /> Unduh PNG (9:16)</button>
+              <button className="btn btn-md btn-secondary" onClick={() => setShowPreviewModal(false)}>
+                <X size={14} /> Tutup
+              </button>
+            </div>
+
+            <div id="lineup-story-card" style={{
+              width: 360, minHeight: 640,
+              background: '#0a0a0a',
+              color: 'white', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+              boxShadow: '0 30px 60px rgba(0,0,0,0.9)', position: 'relative',
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}>
+              <div style={{ height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)' }} />
+
+              <div style={{ padding: '14px 18px 12px', display: 'flex', alignItems: 'center', gap: 10,
+                borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                {(() => {
+                  const comp = competitions.find(c => c.name === selectedCompetitionName);
+                  return comp?.logoUrl && comp.logoUrl.startsWith('http')
+                    ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0 }} />
+                    : <div style={{ width: 30, height: 30, background: 'rgba(200,168,75,0.12)', borderRadius: 4,
+                        border: '1px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 12, height: 12, background: '#c8a84b', borderRadius: 2 }} />
+                      </div>;
+                })()}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 7, fontWeight: 700, color: '#c8a84b', letterSpacing: 2, textTransform: 'uppercase' }}>
+                    {selectedCompetitionName}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'white', letterSpacing: 0.3, marginTop: 1 }}>SUSUNAN PEMAIN</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 7, color: '#555', letterSpacing: 1, textTransform: 'uppercase' }}>MEDIA</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>TOOLS</div>
+                </div>
+              </div>
+
+              <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                  {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
+                    ? <img src={homeClub.logoUrl} crossOrigin="anonymous" style={{ width: 36, height: 36, objectFit: 'contain' }} alt="" />
+                    : <div style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.05)', borderRadius: 6 }} />}
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5 }}>{homeClub?.shortName}</div>
+                    <div style={{ fontSize: 8, color: '#c8a84b', fontWeight: 600, marginTop: 1 }}>{homeFormation}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#333', letterSpacing: 2, padding: '0 10px' }}>VS</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, flexDirection: 'row-reverse' }}>
+                  {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
+                    ? <img src={awayClub.logoUrl} crossOrigin="anonymous" style={{ width: 36, height: 36, objectFit: 'contain' }} alt="" />
+                    : <div style={{ width: 36, height: 36, background: 'rgba(255,255,255,0.05)', borderRadius: 6 }} />}
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5 }}>{awayClub?.shortName}</div>
+                    <div style={{ fontSize: 8, color: '#c8a84b', fontWeight: 600, marginTop: 1 }}>{awayFormation}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flex: 1 }}>
+
+                <div style={{ flex: 1, padding: '10px 10px 10px 16px', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ fontSize: 7, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.5,
+                    textTransform: 'uppercase', marginBottom: 7, paddingBottom: 4,
+                    borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                    {homeClub?.code || 'HOME'} - STARTING
+                  </div>
+                  {homeSquad.filter(p => homeStarters.includes(p.id))
+                    .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)
+                                 - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
+                    .map(p => {
+                      const isForeign = p.nationality !== 'Indonesia';
+                      const isCaptain = p.id === homeCaptain;
+                      return (
+                        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
+                          <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 700, minWidth: 22, fontVariantNumeric: 'tabular-nums' }}>
+                            {p.shirtNumber}
+                          </span>
+                          {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
+                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 12, height: 8, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
+                            : isForeign && p.flagUrl && p.flagUrl.length <= 4
+                              ? <span style={{ fontSize: 9, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
+                              : null}
+                          <span style={{ fontSize: 9, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            color: isCaptain ? '#c8a84b' : isForeign ? '#93c5fd' : '#e2e8f0',
+                            fontWeight: isCaptain ? 700 : 400 }}>
+                            {p.displayName}{isCaptain ? ' (C)' : ''}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                  {homeSubs.length > 0 && (
+                    <>
+                      <div style={{ fontSize: 7, fontWeight: 700, color: '#444', letterSpacing: 1, textTransform: 'uppercase',
+                        margin: '7px 0 4px', paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                        CADANGAN
+                      </div>
+                      {homeSquad.filter(p => homeSubs.includes(p.id)).map(p => {
+                        const isForeign = p.nationality !== 'Indonesia';
+                        return (
+                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
+                            <span style={{ fontSize: 7, color: '#555', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
+                            {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
+                              ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
+                              : isForeign && p.flagUrl && p.flagUrl.length <= 4
+                                ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
+                                : null}
+                            <span style={{ fontSize: 8, color: isForeign ? '#6b7280' : '#6b7280', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {p.displayName}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+
+                  {homeSquad.filter(p => !homeStarters.includes(p.id) && !homeSubs.includes(p.id) && p.nationality !== 'Indonesia').length > 0 && (
+                    <>
+                      <div style={{ fontSize: 7, fontWeight: 700, color: '#333', letterSpacing: 1, textTransform: 'uppercase',
+                        margin: '6px 0 3px', paddingTop: 5, borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                        NON-DSP
+                      </div>
+                      {homeSquad.filter(p => !homeStarters.includes(p.id) && !homeSubs.includes(p.id) && p.nationality !== 'Indonesia').map(p => (
+                        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
+                          <span style={{ fontSize: 7, color: '#333', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
+                          {p.flagUrl && p.flagUrl.startsWith('http')
+                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
+                            : p.flagUrl && p.flagUrl.length <= 4
+                              ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
+                              : null}
+                          <span style={{ fontSize: 8, color: '#3f4855', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {p.displayName}
+                          </span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+
+                <div style={{ flex: 1, padding: '10px 16px 10px 10px' }}>
+                  <div style={{ fontSize: 7, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.5,
+                    textTransform: 'uppercase', marginBottom: 7, paddingBottom: 4,
+                    borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
+                    {awayClub?.code || 'AWAY'} - STARTING
+                  </div>
+                  {awaySquad.filter(p => awayStarters.includes(p.id))
+                    .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)
+                                 - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
+                    .map(p => {
+                      const isForeign = p.nationality !== 'Indonesia';
+                      const isCaptain = p.id === awayCaptain;
+                      return (
+                        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
+                          <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 700, minWidth: 22, fontVariantNumeric: 'tabular-nums' }}>
+                            {p.shirtNumber}
+                          </span>
+                          {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
+                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 12, height: 8, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
+                            : isForeign && p.flagUrl && p.flagUrl.length <= 4
+                              ? <span style={{ fontSize: 9, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
+                              : null}
+                          <span style={{ fontSize: 9, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            color: isCaptain ? '#c8a84b' : isForeign ? '#93c5fd' : '#e2e8f0',
+                            fontWeight: isCaptain ? 700 : 400 }}>
+                            {p.displayName}{isCaptain ? ' (C)' : ''}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                  {awaySubs.length > 0 && (
+                    <>
+                      <div style={{ fontSize: 7, fontWeight: 700, color: '#444', letterSpacing: 1, textTransform: 'uppercase',
+                        margin: '7px 0 4px', paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                        CADANGAN
+                      </div>
+                      {awaySquad.filter(p => awaySubs.includes(p.id)).map(p => {
+                        const isForeign = p.nationality !== 'Indonesia';
+                        return (
+                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
+                            <span style={{ fontSize: 7, color: '#555', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
+                            {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
+                              ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
+                              : isForeign && p.flagUrl && p.flagUrl.length <= 4
+                                ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
+                                : null}
+                            <span style={{ fontSize: 8, color: '#6b7280', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {p.displayName}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+
+                  {awaySquad.filter(p => !awayStarters.includes(p.id) && !awaySubs.includes(p.id) && p.nationality !== 'Indonesia').length > 0 && (
+                    <>
+                      <div style={{ fontSize: 7, fontWeight: 700, color: '#333', letterSpacing: 1, textTransform: 'uppercase',
+                        margin: '6px 0 3px', paddingTop: 5, borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                        NON-DSP
+                      </div>
+                      {awaySquad.filter(p => !awayStarters.includes(p.id) && !awaySubs.includes(p.id) && p.nationality !== 'Indonesia').map(p => (
+                        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
+                          <span style={{ fontSize: 7, color: '#333', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
+                          {p.flagUrl && p.flagUrl.startsWith('http')
+                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
+                            : p.flagUrl && p.flagUrl.length <= 4
+                              ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
+                              : null}
+                          <span style={{ fontSize: 8, color: '#3f4855', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {p.displayName}
+                          </span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ padding: '6px 16px', display: 'flex', gap: 14, borderTop: '1px solid rgba(255,255,255,0.04)',
+                background: 'rgba(0,0,0,0.3)' }}>
+                <span style={{ fontSize: 7, color: '#555' }}>
+                  <span style={{ color: '#93c5fd', fontWeight: 600 }}>Biru</span> = Asing starting
+                </span>
+                <span style={{ fontSize: 7, color: '#555' }}>
+                  <span style={{ color: '#c8a84b', fontWeight: 600 }}>Emas</span> = Kapten / No. pemain
+                </span>
+              </div>
+
+              <div style={{ padding: '8px 16px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <div>
+                  <div style={{ fontSize: 8, color: '#555' }}>
+                    {new Date(kickoffTime).toLocaleString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
+                  </div>
+                  <div style={{ fontSize: 7, color: '#3a3a3a', marginTop: 1 }}>{venueName}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>MEDIA TOOLS</div>
+                  <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>@GARUDAMATCHROOM</div>
+                </div>
+              </div>
+
+              <div style={{ height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)' }} />
+            </div>
+          </div>
+        </div>
+      )}
+'@
+
+[System.IO.File]::WriteAllText($previewPath, $preview, [System.Text.UTF8Encoding]::new($false))
+$previewLines = [System.IO.File]::ReadAllLines($previewPath, [System.Text.Encoding]::UTF8)
+
+$newLines = $before + $previewLines + $after
+[System.IO.File]::WriteAllLines($f, $newLines, [System.Text.UTF8Encoding]::new($false))
+Write-Host "Preview rewritten. Total lines: $($newLines.Count)"
