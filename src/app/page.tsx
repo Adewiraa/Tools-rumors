@@ -2175,6 +2175,19 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     return match?.[1] || '';
   };
 
+  const normalizeCountryCodeCandidate = (value?: string) => {
+    const normalizedValue = normalizeCountryValue(value);
+    if (/^[a-z]{2}$/.test(normalizedValue)) return normalizedValue;
+    if (normalizedValue.startsWith('gb-')) return 'gb';
+    return '';
+  };
+
+  const countryCodeToFlagUrl = (countryCode?: string) => {
+    const normalizedCode = normalizeCountryCodeCandidate(countryCode);
+    if (!normalizedCode) return '';
+    return `https://flagcdn.com/w40/${normalizedCode}.png`;
+  };
+
   const countryCodeToFlagEmoji = (countryCode?: string) => {
     const normalizedCode = normalizeCountryValue(countryCode).slice(0, 2).toUpperCase();
     if (!/^[A-Z]{2}$/.test(normalizedCode)) return '';
@@ -2183,12 +2196,18 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
 
   const resolvePlayerFlagUrl = (player: Player) => {
     if (player.flagUrl && player.flagUrl.startsWith('http')) return player.flagUrl;
-    return findCountryForPlayer(player)?.flagUrl || '';
+    return (
+      countryCodeToFlagUrl(player.flagUrl) ||
+      countryCodeToFlagUrl(player.countryCode) ||
+      countryCodeToFlagUrl(findCountryForPlayer(player)?.code) ||
+      findCountryForPlayer(player)?.flagUrl ||
+      ''
+    );
   };
 
   const resolvePlayerFlagEmoji = (player: Player) => {
-    if (player.flagUrl && !player.flagUrl.startsWith('http') && player.flagUrl.length <= 4) return player.flagUrl;
-    return countryCodeToFlagEmoji(player.countryCode || findCountryForPlayer(player)?.code || extractCountryCodeFromFlagUrl(player.flagUrl));
+    if (player.flagUrl && !player.flagUrl.startsWith('http') && player.flagUrl.length <= 4 && !normalizeCountryCodeCandidate(player.flagUrl)) return player.flagUrl;
+    return countryCodeToFlagEmoji(player.countryCode || findCountryForPlayer(player)?.code || extractCountryCodeFromFlagUrl(player.flagUrl) || normalizeCountryCodeCandidate(player.flagUrl));
   };
 
   const renderFlag = (player: Player) => {
@@ -2202,6 +2221,11 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   };
 
   const renderStoryFlag = (player: Player, width: number, height: number, fontSize: number) => {
+    const flagUrl = resolvePlayerFlagUrl(player);
+    if (flagUrl) {
+      return <img src={flagUrl} crossOrigin="anonymous" alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
+    }
+
     const flagEmoji = resolvePlayerFlagEmoji(player);
     if (flagEmoji) {
       return (
@@ -2209,11 +2233,6 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
           {flagEmoji}
         </span>
       );
-    }
-
-    const flagUrl = resolvePlayerFlagUrl(player);
-    if (flagUrl) {
-      return <img src={flagUrl} alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
     }
 
     return <span style={{ fontSize, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span>;
@@ -2609,9 +2628,8 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 800, color: 'white', letterSpacing: 0.3, marginTop: 1 }}>SUSUNAN PEMAIN</div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 7, color: '#555', letterSpacing: 1, textTransform: 'uppercase' }}>MEDIA</div>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 48 }}>
+                  <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 44, height: 32, objectFit: 'contain' }} />
                 </div>
               </div>
 
@@ -2793,9 +2811,12 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
 
                   <div style={{ fontSize: 7, color: '#3a3a3a', marginTop: 1 }}>{venueName}</div>
 
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
-                  <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{APP_HANDLE}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 58, height: 34, objectFit: 'contain' }} />
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
+                    <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{APP_HANDLE}</div>
+                  </div>
                 </div>
               </div>
 
