@@ -1,4 +1,4 @@
-'use client';
+'use client'; // build-fix-v2
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
