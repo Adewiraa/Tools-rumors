@@ -4436,9 +4436,6 @@ interface PlayerEditorProps {
   onSave: (player: Player) => void;
 }
 
-// Global cache to persist country list across component mounts to save API quota and make loading instant
-let globalCountriesCache: any[] = [];
-
 function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerEditorProps) {
   const isNew = playerId === 'new';
   const player = players.find(p => p.id === playerId) || {
@@ -4450,7 +4447,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
     position: 'Midfielder' as const,
     shirtNumber: 10,
     nationality: 'Indonesia',
-    flagUrl: 'ðŸ‡®ðŸ‡©',
+    flagUrl: 'https://flags.restcountries.com/v5/svg/id.svg',
     age: 25,
     contractStart: '2026-01-01',
     contractEnd: '2027-12-31',
@@ -4466,8 +4463,14 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
   const [shirtNumber, setShirtNumber] = useState(player.shirtNumber);
   const [nationality, setNationality] = useState(player.nationality);
   const [flag, setFlag] = useState(player.flagUrl);
+  const [age, setAge] = useState(player.age);
+  const [contractStart, setContractStart] = useState(player.contractStart);
+  const [contractEnd, setContractEnd] = useState(player.contractEnd);
+  const [status, setStatus] = useState<Player['status']>(player.status);
+  const [availability, setAvailability] = useState<Player['availability']>(player.availability);
   const [countrySearch, setCountrySearch] = useState('');
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const selectedClub = clubs.find(c => c.id === clubId);
 
   // Calculate live completeness score
   const liveCompleteness = calculatePlayerCompleteness({
@@ -4501,14 +4504,19 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
       shirtNumber,
       nationality,
       flagUrl: flag,
+      age,
+      contractStart,
+      contractEnd,
+      status,
+      availability,
       completeness: liveCompleteness
     };
     onSave(updatedPlayer);
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
+    <div className="player-editor-root">
+      <div className="player-editor-header">
         <div className="flex align-center gap-12">
           <button className="btn btn-sm btn-secondary" onClick={onClose}>
             <ArrowLeft size={16} /> Kembali
@@ -4526,7 +4534,8 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
         <button className="btn btn-md btn-primary" onClick={handleSave}>Simpan Pemain</button>
       </div>
 
-      <div className="card" style={{ maxWidth: 600 }}>
+      <div className="player-editor-layout">
+      <div className="card player-editor-card">
         <div className="form-group">
           <label className="form-label">Nama Lengkap <span className="required">*</span></label>
           <input type="text" className="form-input" value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -4547,7 +4556,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
         <div className="grid-12" style={{ gap: 16 }}>
           <div style={{ gridColumn: 'span 6' }}>
             <label className="form-label">Posisi</label>
-            <select className="form-select" value={position} onChange={(e: any) => setPosition(e.target.value)}>
+            <select className="form-select" value={position} onChange={(e) => setPosition(e.target.value as Player['position'])}>
               <option value="Goalkeeper">Goalkeeper</option>
               <option value="Defender">Defender</option>
               <option value="Midfielder">Midfielder</option>
@@ -4557,6 +4566,41 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
           <div style={{ gridColumn: 'span 6' }}>
             <label className="form-label">No Punggung</label>
             <input type="number" className="form-input" value={shirtNumber} onChange={(e) => setShirtNumber(Number(e.target.value))} />
+          </div>
+        </div>
+
+        <div className="player-section-title">Detail Kontrak & Status</div>
+        <div className="grid-12" style={{ gap: 16 }}>
+          <div style={{ gridColumn: 'span 3' }}>
+            <label className="form-label">Umur</label>
+            <input type="number" min={15} max={50} className="form-input" value={age} onChange={(e) => setAge(Number(e.target.value))} />
+          </div>
+          <div style={{ gridColumn: 'span 3' }}>
+            <label className="form-label">Status</label>
+            <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value as Player['status'])}>
+              <option value="active">Aktif</option>
+              <option value="free_agent">Free Agent</option>
+              <option value="retired">Pensiun</option>
+            </select>
+          </div>
+          <div style={{ gridColumn: 'span 3' }}>
+            <label className="form-label">Mulai Kontrak</label>
+            <input type="date" className="form-input" value={contractStart} onChange={(e) => setContractStart(e.target.value)} />
+          </div>
+          <div style={{ gridColumn: 'span 3' }}>
+            <label className="form-label">Akhir Kontrak</label>
+            <input type="date" className="form-input" value={contractEnd} onChange={(e) => setContractEnd(e.target.value)} />
+          </div>
+          <div style={{ gridColumn: 'span 12' }}>
+            <label className="form-label">Availability</label>
+            <select className="form-select" value={availability} onChange={(e) => setAvailability(e.target.value as Player['availability'])}>
+              <option value="available">Tersedia</option>
+              <option value="injured">Cedera</option>
+              <option value="suspended">Skorsing</option>
+              <option value="international_duty">Tim Nasional</option>
+              <option value="doubtful">Diragukan</option>
+            </select>
+            <span className="form-helper">Status ini dipakai di lineup editor untuk menandai pemain yang tidak siap bermain.</span>
           </div>
         </div>
 
@@ -4574,7 +4618,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
                 <span style={{ fontSize: 20 }}>{flag}</span>
               )}
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--neutral-800)' }}>{nationality}</span>
-              <button type="button" onClick={() => { setFlag(''); setNationality(''); }} style={{ marginLeft: 4, fontSize: 11, color: 'var(--neutral-500)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>âœ• hapus</button>
+              <button type="button" onClick={() => { setFlag(''); setNationality(''); }} style={{ marginLeft: 4, fontSize: 11, color: 'var(--neutral-500)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>Hapus</button>
             </div>
           )}
           {/* Trigger to open dropdown */}
@@ -4589,7 +4633,7 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
             <span style={{ color: nationality ? 'var(--neutral-800)' : 'var(--neutral-400)', fontSize: 13 }}>
               {nationality || 'Klik untuk pilih negara...'}
             </span>
-            <span style={{ marginLeft: 'auto', color: 'var(--neutral-400)', fontSize: 10 }}>{countryDropdownOpen ? 'â–²' : 'â–¼'}</span>
+            <ChevronRight size={14} style={{ marginLeft: 'auto', color: 'var(--neutral-400)', transform: countryDropdownOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s ease' }} />
           </div>
 
           {/* Dropdown panel */}
@@ -4630,10 +4674,10 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
                       {item.flagUrl ? (
                         <img src={item.flagUrl} alt={item.name} style={{ width: 28, height: 18, objectFit: 'cover', borderRadius: 2, border: '1px solid var(--neutral-200)', flexShrink: 0 }} />
                       ) : (
-                        <span style={{ width: 28, fontSize: 18 }}>ðŸ³ï¸</span>
+                        <span style={{ width: 28, fontSize: 18 }}>-</span>
                       )}
                       <span style={{ fontSize: 13, fontWeight: 500 }}>{item.name}</span>
-                      {nationality === item.name && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--primary-600)', fontWeight: 700 }}>âœ“</span>}
+                      {nationality === item.name && <CheckCircle size={14} style={{ marginLeft: 'auto', color: 'var(--primary-600)' }} />}
                     </div>
                   ))
                 )}
@@ -4642,7 +4686,50 @@ function PlayerEditorView({ playerId, clubs, players, onClose, onSave }: PlayerE
           )}
         </div>
 
+      </div>
 
+        <aside className="card player-summary-card">
+          <div className="player-avatar">
+            {flag && flag.startsWith('http') ? (
+              <img src={flag} alt={nationality || 'Negara'} />
+            ) : (
+              <User size={36} />
+            )}
+          </div>
+          <div className="player-summary-name">{displayName || fullName || 'Nama Pemain'}</div>
+          <div className="player-summary-meta">
+            <span>{selectedClub?.shortName || selectedClub?.name || 'Tanpa Klub'}</span>
+            <span>{position}</span>
+            <span>#{shirtNumber || '-'}</span>
+          </div>
+          <div className="player-summary-completeness">
+            <div className="flex justify-between align-center">
+              <span>Kelengkapan</span>
+              <strong>{liveCompleteness}%</strong>
+            </div>
+            <div className="player-summary-bar">
+              <div style={{ width: `${liveCompleteness}%` }} />
+            </div>
+          </div>
+          <div className="player-summary-list">
+            <div>
+              <span>Negara</span>
+              <strong>{nationality || '-'}</strong>
+            </div>
+            <div>
+              <span>Status</span>
+              <strong>{status === 'active' ? 'Aktif' : status === 'free_agent' ? 'Free Agent' : 'Pensiun'}</strong>
+            </div>
+            <div>
+              <span>Availability</span>
+              <strong>{availability === 'available' ? 'Tersedia' : availability === 'injured' ? 'Cedera' : availability === 'suspended' ? 'Skorsing' : availability === 'international_duty' ? 'Tim Nasional' : 'Diragukan'}</strong>
+            </div>
+            <div>
+              <span>Kontrak</span>
+              <strong>{contractStart || '-'} sampai {contractEnd || '-'}</strong>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
