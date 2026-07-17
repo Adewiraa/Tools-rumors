@@ -1,7 +1,0 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="64" fill="#151A1D"/>
-  <circle cx="256" cy="256" r="160" fill="none" stroke="#66756A" stroke-width="8"/>
-  <text x="256" y="220" text-anchor="middle" font-size="58" font-weight="800" fill="#66756A" font-family="system-ui">GARUDA</text>
-  <text x="256" y="275" text-anchor="middle" font-size="38" font-weight="600" fill="#A98C64" font-family="system-ui">MATCH</text>
-  <text x="256" y="320" text-anchor="middle" font-size="26" font-weight="500" fill="#7A8285" font-family="system-ui">ROOM</text>
-</svg>

@@ -58,6 +58,10 @@ import * as htmlToImage from 'html-to-image';
 type UserRole = 'Super Admin' | 'Admin Data' | 'Match Editor' | 'Rumor Editor' | 'Reviewer';
 type ActiveMenu = 'dashboard' | 'schedule' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings';
 
+const APP_NAME = 'Gosball';
+const APP_LOGO_SRC = '/brand/gosball.png';
+const APP_HANDLE = '@GOSBALL';
+
 const NAV_SECTIONS: {
   title: string;
   items: { id: ActiveMenu; label: string; icon: React.ElementType; mobileHidden?: boolean }[];
@@ -420,8 +424,8 @@ export default function Home() {
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--navy-900)' }}>
               <div className="flex align-center gap-8">
-                <span style={{ color: 'var(--primary-600)' }}>ðŸ‡®ðŸ‡©</span>
-                <span style={{ fontWeight: 700, color: 'var(--white)', fontSize: 16 }}>GARUDA MATCH</span>
+                <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 30, height: 30, objectFit: 'contain', borderRadius: 8, background: '#050505' }} />
+                <span style={{ fontWeight: 700, color: 'var(--white)', fontSize: 16 }}>{APP_NAME}</span>
               </div>
               <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setMobileDrawerOpen(false)}>
                 <X size={20} />
@@ -456,7 +460,7 @@ export default function Home() {
                   {currentUserRole[0]}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>Admin Garuda</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>Admin Gosball</div>
                   <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{currentUserRole}</div>
                 </div>
               </div>
@@ -473,10 +477,10 @@ export default function Home() {
           {!sidebarCollapsed ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13, color: 'white', letterSpacing: -0.5 }}>GM</div>
+                <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--white)', letterSpacing: 0.3 }}>GARUDA</div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--primary-600)', letterSpacing: 1, marginTop: -1 }}>MATCHROOM</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--white)', letterSpacing: 0.3 }}>{APP_NAME}</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--primary-600)', letterSpacing: 1, marginTop: -1 }}>MEDIA APP</div>
                 </div>
               </div>
               <button onClick={() => setSidebarCollapsed(true)} style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'flex' }} title="Sembunyikan Sidebar">
@@ -485,7 +489,7 @@ export default function Home() {
             </div>
           ) : (
             <button onClick={() => setSidebarCollapsed(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }} title="Tampilkan Sidebar">
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 12, color: 'white' }}>GM</div>
+              <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
             </button>
           )}
         </div>
@@ -527,7 +531,7 @@ export default function Home() {
                 {currentUserRole[0]}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Admin Garuda</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Admin Gosball</div>
                 <div style={{ fontSize: 10, color: 'var(--neutral-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUserRole}</div>
               </div>
               <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', flexShrink: 0 }} title="Pengaturan" onClick={() => setActiveMenu('settings')}>
@@ -1255,7 +1259,7 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       {/* Page Title */}
       <div>
-        <h1 className="page-title">Garuda Matchroom</h1>
+        <h1 className="page-title">{APP_NAME}</h1>
         <p className="page-description">Ringkasan operasional media olahraga hari ini: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
@@ -2607,7 +2611,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 7, color: '#555', letterSpacing: 1, textTransform: 'uppercase' }}>MEDIA</div>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>TOOLS</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
                 </div>
               </div>
 
@@ -2790,8 +2794,8 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                   <div style={{ fontSize: 7, color: '#3a3a3a', marginTop: 1 }}>{venueName}</div>
 
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>MEDIA TOOLS</div>
-                  <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>@GARUDAMATCHROOM</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
+                  <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{APP_HANDLE}</div>
                 </div>
               </div>
 
@@ -3299,7 +3303,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
 
           {/* Footer */}
           <div style={{ zIndex: 2, display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600, marginTop: 12, width: '100%' }}>
-            <span>@GARUDAMATCHROOM</span>
+            <span>{APP_HANDLE}</span>
             <span style={{ color: '#0F9F9A' }}>INSTAGRAM LIVE FEED</span>
           </div>
         </div>
@@ -3797,7 +3801,7 @@ function RumorEditorView({ rumorId, clubs, rumors, onClose, onSave, triggerToast
               {/* Footer */}
               <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600 }}>
                 <span>SUMBER: {sourceName || 'Kanal Terpercaya'}</span>
-                <span style={{ color: '#0F9F9A' }}>@GARUDAMATCHROOM</span>
+                <span style={{ color: '#0F9F9A' }}>{APP_HANDLE}</span>
               </div>
             </div>
           </div>
@@ -3875,8 +3879,8 @@ function RumorEditorView({ rumorId, clubs, rumors, onClose, onSave, triggerToast
 
                 {/* Footer */}
                 <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, fontSize: 9, color: '#64748b', fontWeight: 600 }}>
-                  <span>PUBLISHED BY GM STUDIO</span>
-                  <span style={{ color: '#0F9F9A', letterSpacing: 0.5 }}>@GARUDAMATCHROOM</span>
+                  <span>PUBLISHED BY GOSBALL</span>
+                  <span style={{ color: '#0F9F9A', letterSpacing: 0.5 }}>{APP_HANDLE}</span>
                 </div>
               </div>
             </div>
@@ -4781,7 +4785,7 @@ function AuditLogsView({ auditLogs }: { auditLogs: AuditLog[] }) {
           <span>Dashboard</span> <ChevronRight size={10} /> <span>Audit Log</span>
         </div>
         <h1 className="page-title">Sistem Audit Log</h1>
-        <p className="page-description">Daftar rekaman perubahan data penting, riwayat editing, dan validasi publish di Garuda Matchroom.</p>
+        <p className="page-description">Daftar rekaman perubahan data penting, riwayat editing, dan validasi publish di Gosball.</p>
       </div>
 
       <div className="table-wrapper">

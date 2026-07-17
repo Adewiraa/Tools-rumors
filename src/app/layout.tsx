@@ -2,13 +2,20 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GARUDA MATCHROOM — Admin Media Sepak Bola Indonesia",
+  title: "Gosball - Admin Media Sepak Bola Indonesia",
   description: "Dashboard operasional admin dan editor media sepak bola Indonesia. Kelola lineup, hasil pertandingan, rumor transfer, master klub, dan master pemain.",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Garuda Match",
+    title: "Gosball",
   },
 };
 
@@ -17,7 +24,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#66756A",
+  themeColor: "#0A0A0A",
 };
 
 export default function RootLayout({
@@ -28,7 +35,8 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
       <body>
         {children}

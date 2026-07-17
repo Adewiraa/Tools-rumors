@@ -1,23 +1,23 @@
 {
-  "name": "GARUDA MATCHROOM — Media Tools",
-  "short_name": "Garuda Match",
+  "name": "Gosball",
+  "short_name": "Gosball",
   "description": "Dashboard operasional admin dan editor media sepak bola Indonesia.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#151A1D",
-  "theme_color": "#66756A",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
   "orientation": "any",
   "icons": [
     {
-      "src": "/icons/icon-192x192.svg",
+      "src": "/icons/gosball-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512x512.svg",
+      "src": "/icons/gosball-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

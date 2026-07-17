@@ -1,7 +1,9 @@
-const CACHE_NAME = 'garuda-matchroom-v1';
+const CACHE_NAME = 'gosball-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
+  '/icons/gosball-192.png',
+  '/icons/gosball-512.png',
 ];
 
 // Install event — cache static assets
