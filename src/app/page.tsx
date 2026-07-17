@@ -32,7 +32,9 @@ import {
   Activity,
   Check,
   ExternalLink,
-  Lock
+  Lock,
+  Download,
+  Share2
 } from 'lucide-react';
 import {
   Club,
@@ -731,6 +733,7 @@ export default function Home() {
                     competitions={competitions}
                     onClose={() => setEditingLineupId(null)}
                     onSave={async (updatedMatch) => {
+                      const isPublishedLineup = updatedMatch.publicationStatus === 'Published';
                       try {
                         // Simpan ke Supabase
                         const res = await fetch('/api/matches', {
@@ -750,13 +753,13 @@ export default function Home() {
                       if (editingLineupId === 'new') {
                         setMatches(prev => [updatedMatch, ...prev]);
                         logAction('CREATE_LINEUP', 'Lineup Pertandingan', `Membuat lineup baru: ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
-                        triggerToast('Lineup baru berhasil dibuat!');
+                        triggerToast(isPublishedLineup ? 'Lineup berhasil dipublish. Share/download story sudah tersedia.' : 'Lineup baru berhasil dibuat!');
                       } else {
                         setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
                         logAction('UPDATE_LINEUP', 'Lineup Pertandingan', `Memperbarui lineup ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
-                        triggerToast('Lineup berhasil disimpan!');
+                        triggerToast(isPublishedLineup ? 'Lineup berhasil dipublish. Share/download story sudah tersedia.' : 'Lineup berhasil disimpan!');
                       }
-                      setEditingLineupId(null);
+                      setEditingLineupId(isPublishedLineup ? updatedMatch.id : null);
                     }}
                     triggerToast={triggerToast}
                     logAction={logAction}
@@ -1985,7 +1988,7 @@ interface LineupEditorProps {
   matches: Match[];
   competitions: Competition[];
   onClose: () => void;
-  onSave: (match: Match) => void;
+  onSave: (match: Match) => void | Promise<void>;
   triggerToast: (msg: string, type?: any) => void;
   logAction: (action: string, module: string, details: string) => void;
 }
@@ -2027,6 +2030,8 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [homeAsingInput, setHomeAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [awayAsingInput, setAwayAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [isExportingStory, setIsExportingStory] = useState(false);
+  const isPublishedLineup = existingMatch?.publicationStatus === 'Published';
 
   // =================================================================
   // REGULASI PEMAIN ASING - LIGA INDONESIA
@@ -2155,6 +2160,82 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
 
   const homeClub = clubs.find(c => c.id === selectedHomeClub);
   const awayClub = clubs.find(c => c.id === selectedAwayClub);
+  const storyFileName = 'Lineup_' + (homeClub?.shortName || 'HOME') + '_vs_' + (awayClub?.shortName || 'AWAY') + '.png';
+
+  const createLineupStoryImage = async () => {
+    const node = document.getElementById('lineup-story-card');
+    if (!node) throw new Error('Preview lineup belum siap.');
+
+    const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    return { dataUrl, blob, fileName: storyFileName };
+  };
+
+  const downloadLineupStory = async () => {
+    if (!isPublishedLineup) {
+      triggerToast('Publish lineup dulu untuk membuka download story.', 'warning');
+      return;
+    }
+
+    try {
+      setIsExportingStory(true);
+      triggerToast('Membuat gambar...');
+      const { dataUrl, fileName } = await createLineupStoryImage();
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Story berhasil diunduh!');
+    } catch (err) {
+      console.warn('Lineup story download failed:', err);
+      triggerToast('Gagal mengunduh story.', 'error');
+    } finally {
+      setIsExportingStory(false);
+    }
+  };
+
+  const shareLineupStory = async () => {
+    if (!isPublishedLineup) {
+      triggerToast('Publish lineup dulu untuk membuka share story.', 'warning');
+      return;
+    }
+
+    try {
+      setIsExportingStory(true);
+      triggerToast('Membuat gambar...');
+      const { blob, dataUrl, fileName } = await createLineupStoryImage();
+      const file = new File([blob], fileName, { type: 'image/png' });
+      const nav = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean;
+      };
+      const shareData: ShareData = {
+        files: [file],
+        title: `${homeClub?.shortName || 'HOME'} vs ${awayClub?.shortName || 'AWAY'}`,
+        text: 'Lineup Gosball',
+      };
+
+      if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
+        await nav.share(shareData);
+        triggerToast('Story siap dibagikan.');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.', 'warning');
+    } catch (err) {
+      const error = err as { name?: string };
+      if (error?.name !== 'AbortError') {
+        console.warn('Lineup story share failed:', err);
+        triggerToast('Gagal membagikan story.', 'error');
+      }
+    } finally {
+      setIsExportingStory(false);
+    }
+  };
 
   const normalizeCountryValue = (value?: string) => (value || '').trim().toLowerCase();
 
@@ -2610,19 +2691,21 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}
           onClick={() => setShowPreviewModal(false)}>
           <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, maxHeight: '95vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-md btn-primary" onClick={async () => {
-                const node = document.getElementById('lineup-story-card');
-                if (!node) return;
-                try {
-                  triggerToast('Membuat gambar...');
-                  const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
-                  const link = document.createElement('a');
-                  link.download = 'Lineup_' + (homeClub?.shortName || 'HOME') + '_vs_' + (awayClub?.shortName || 'AWAY') + '.png';
-                  link.href = dataUrl; link.click();
-                  triggerToast('Story berhasil diunduh!');
-                } catch { triggerToast('Gagal mengunduh.', 'error'); }
-              }}><Upload size={14} /> Unduh PNG (9:16)</button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {isPublishedLineup ? (
+                <>
+                  <button className="btn btn-md btn-primary" onClick={shareLineupStory} disabled={isExportingStory}>
+                    <Share2 size={14} /> Bagikan Story
+                  </button>
+                  <button className="btn btn-md btn-secondary" onClick={downloadLineupStory} disabled={isExportingStory}>
+                    <Download size={14} /> Unduh PNG
+                  </button>
+                </>
+              ) : (
+                <button className="btn btn-md btn-secondary" disabled title="Publish lineup dulu untuk membuka share dan download story.">
+                  <Lock size={14} /> Publish Dulu
+                </button>
+              )}
               <button className="btn btn-md btn-secondary" onClick={() => setShowPreviewModal(false)}>
                 <X size={14} /> Tutup
               </button>
