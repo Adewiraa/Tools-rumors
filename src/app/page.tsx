@@ -71,7 +71,7 @@ const generateUUID = (): string => {
 
 export default function Home() {
   // Navigation & Shell States
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'schedule' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings'>('dashboard');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Super Admin');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // default collapsed
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -102,6 +102,7 @@ export default function Home() {
   const [editingClubId, setEditingClubId] = useState<string | null>(null);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editingCompetitionId, setEditingCompetitionId] = useState<string | null>(null);
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [selectedPlayerClubId, setSelectedPlayerClubId] = useState<string>('Semua');
 
   // Filter States
@@ -352,6 +353,7 @@ export default function Home() {
     setEditingClubId(null);
     setEditingPlayerId(null);
     setEditingCompetitionId(null);
+    setEditingScheduleId(null);
   };
   return (
     <div className="app-container">
@@ -391,6 +393,10 @@ export default function Home() {
               </div>
 
               <div className="menu-category" style={{ display: 'block' }}>Pertandingan</div>
+              <div className={`menu-item ${activeMenu === 'schedule' ? 'active' : ''}`} onClick={() => navigateTo('schedule')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
+                <Calendar size={18} />
+                <span style={{ display: 'inline', fontSize: 14 }}>Jadwal Pertandingan</span>
+              </div>
               <div className={`menu-item ${activeMenu === 'lineups' ? 'active' : ''}`} onClick={() => navigateTo('lineups')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
                 <FileText size={18} />
                 <span style={{ display: 'inline', fontSize: 14 }}>Lineup Tim</span>
@@ -470,6 +476,10 @@ export default function Home() {
           {!sidebarCollapsed && <div className="menu-category">Pertandingan</div>}
           <div className={`menu-item ${activeMenu === 'lineups' ? 'active' : ''}`} onClick={() => { setActiveMenu('lineups'); setEditingLineupId(null); setEditingResultId(null); }}>
             <FileText size={18} />
+          <div className={`menu-item ${activeMenu === 'schedule' ? 'active' : ''}`} onClick={() => { setActiveMenu('schedule'); setEditingScheduleId(null); }}>
+            <Calendar size={18} />
+            {!sidebarCollapsed && <span>Jadwal Pertandingan</span>}
+          </div>
             {!sidebarCollapsed && <span>Lineup Tim</span>}
           </div>
           <div className={`menu-item ${activeMenu === 'results' ? 'active' : ''}`} onClick={() => { setActiveMenu('results'); setEditingResultId(null); setEditingLineupId(null); }}>
@@ -566,6 +576,7 @@ export default function Home() {
             {hasPermission('Lineup', 'create_edit') && (
               <div style={{ position: 'relative' }}>
                 <button className="btn btn-sm btn-primary" onClick={() => {
+                  if (activeMenu === 'schedule') setEditingScheduleId('new');
                   if (activeMenu === 'lineups') setEditingLineupId('new');
                   else if (activeMenu === 'results') setEditingResultId('new');
                   else if (activeMenu === 'rumors') setEditingRumorId('new');
@@ -656,6 +667,54 @@ export default function Home() {
                   onEditLineup={(id) => { setEditingLineupId(id); setActiveMenu('lineups'); }}
                   onEditResult={(id) => { setEditingResultId(id); setActiveMenu('results'); }}
                 />
+              )}
+
+
+              {/* Jadwal Pertandingan Route */}
+              {activeMenu === 'schedule' && (
+                editingScheduleId ? (
+                  <ScheduleEditorView
+                    matchId={editingScheduleId}
+                    clubs={clubs}
+                    competitions={competitions}
+                    matches={matches}
+                    onClose={() => setEditingScheduleId(null)}
+                    onSave={async (newMatch) => {
+                      try {
+                        const res = await fetch('/api/matches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ match: newMatch }) });
+                        const result = await res.json();
+                        if (!result.success) triggerToast('DB error: ' + result.error, 'warning');
+                      } catch (err) { console.warn('Schedule save error:', err); }
+                      if (editingScheduleId === 'new') {
+                        setMatches(prev => [newMatch, ...prev]);
+                        logAction('CREATE_SCHEDULE', 'Jadwal Pertandingan', 'Jadwal baru: ' + newMatch.homeClubName + ' vs ' + newMatch.awayClubName);
+                        triggerToast('Jadwal berhasil ditambahkan!');
+                      } else {
+                        setMatches(prev => prev.map(m => m.id === newMatch.id ? newMatch : m));
+                        logAction('UPDATE_SCHEDULE', 'Jadwal Pertandingan', 'Update jadwal: ' + newMatch.homeClubName + ' vs ' + newMatch.awayClubName);
+                        triggerToast('Jadwal berhasil diperbarui!');
+                      }
+                      setEditingScheduleId(null);
+                    }}
+                    triggerToast={triggerToast}
+                  />
+                ) : (
+                  <ScheduleListView
+                    matches={matches}
+                    competitions={competitions}
+                    onCreateNew={() => setEditingScheduleId('new')}
+                    onEdit={setEditingScheduleId}
+                    onDelete={async (id) => {
+                      setMatches(prev => prev.filter(m => m.id !== id));
+                      logAction('DELETE_SCHEDULE', 'Jadwal Pertandingan', 'Hapus jadwal id: ' + id);
+                      triggerToast('Jadwal berhasil dihapus.');
+                      try { await fetch('/api/matches', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); } catch {}
+                    }}
+                    onCreateLineup={(id) => { setEditingLineupId(id); setActiveMenu('lineups'); }}
+                    onInputResult={(id) => { setEditingResultId(id); setActiveMenu('results'); }}
+                    hasPermission={hasPermission}
+                  />
+                )
               )}
 
               {/* Lineup Roster Route */}
@@ -1360,6 +1419,322 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+// ==========================================
+// ==========================================
+// 1a. SCHEDULE LIST VIEW
+// ==========================================
+interface ScheduleListProps {
+  matches: Match[];
+  competitions: Competition[];
+  onCreateNew: () => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onCreateLineup: (id: string) => void;
+  onInputResult: (id: string) => void;
+  hasPermission: (module: string, action: any) => boolean;
+}
+
+function ScheduleListView({ matches, competitions, onCreateNew, onEdit, onDelete, onCreateLineup, onInputResult, hasPermission }: ScheduleListProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedComp, setSelectedComp] = useState('Semua');
+  const [selectedStatus, setSelectedStatus] = useState('Semua');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const filtered = matches.filter(m => {
+    const name = (m.homeClubName + ' vs ' + m.awayClubName).toLowerCase();
+    const ms = searchTerm.toLowerCase();
+    const matchSearch = name.includes(ms) || m.venue.toLowerCase().includes(ms);
+    const matchComp   = selectedComp === 'Semua' || m.competition === selectedComp;
+    const matchStatus = selectedStatus === 'Semua' || m.status === selectedStatus;
+    return matchSearch && matchComp && matchStatus;
+  }).sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
+
+  const upcoming = filtered.filter(m => ['Scheduled','Live','Postponed'].includes(m.status));
+  const played   = filtered.filter(m => ['Finished','Cancelled'].includes(m.status));
+
+  const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
+  const statusClass = (s: string) => ({ Scheduled: 'badge-info', Live: 'badge-danger', Finished: 'badge-success', Postponed: 'badge-warning', Cancelled: 'badge-draft' }[s] || 'badge-info');
+  const lineupClass = (s: string) => s === 'Complete' ? 'badge-success' : s === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+  const lineupLabel = (s: string) => s === 'Complete' ? 'Siap' : s === 'Needs Review' ? 'Review' : 'Belum';
+
+  const renderRow = (m: Match) => {
+    const isToday = new Date(m.kickoff).toDateString() === new Date().toDateString();
+    const canLineup = ['Scheduled','Live'].includes(m.status);
+    const canResult = ['Live','Finished'].includes(m.status);
+    return (
+      <tr key={m.id} style={{ backgroundColor: isToday ? 'var(--primary-50)' : undefined }}>
+        <td>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {m.homeLogo && m.homeLogo.startsWith('http')
+              ? <img src={m.homeLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+              : <span style={{ fontSize: 18 }}>{m.homeLogo}</span>}
+            <span className="semibold" style={{ fontSize: 13 }}>{m.homeClubName}</span>
+            <span className="text-muted" style={{ fontSize: 11 }}>vs</span>
+            {m.awayLogo && m.awayLogo.startsWith('http')
+              ? <img src={m.awayLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+              : <span style={{ fontSize: 18 }}>{m.awayLogo}</span>}
+            <span className="semibold" style={{ fontSize: 13 }}>{m.awayClubName}</span>
+            {isToday && <span style={{ fontSize: 10, background: 'var(--primary-600)', color: 'white', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>HARI INI</span>}
+          </div>
+          <div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>{m.venue}</div>
+        </td>
+        <td style={{ fontSize: 12 }}>{m.competition}</td>
+        <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+          <div>{new Date(m.kickoff).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}</div>
+          <div className="text-muted" style={{ fontSize: 11 }}>{new Date(m.kickoff).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</div>
+        </td>
+        <td><span className={`badge ${statusClass(m.status)}`}>{statusLabel(m.status)}</span></td>
+        <td><span className={`badge ${lineupClass(m.lineupStatus)}`}>{lineupLabel(m.lineupStatus)}</span></td>
+        <td style={{ fontSize: 13, fontWeight: 700 }}>
+          {m.status === 'Finished' && m.homeScore !== undefined ? `${m.homeScore} - ${m.awayScore}` : <span className="text-muted">-</span>}
+        </td>
+        <td className="text-right">
+          <div style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {canLineup && hasPermission('Lineup', 'create_edit') && (
+              <button className="btn btn-sm btn-primary" onClick={() => onCreateLineup(m.id)} style={{ fontSize: 11 }}>Lineup</button>
+            )}
+            {canResult && hasPermission('Match Result', 'create_edit') && (
+              <button className="btn btn-sm btn-secondary" onClick={() => onInputResult(m.id)} style={{ fontSize: 11 }}>Hasil</button>
+            )}
+            <button className="btn btn-sm btn-secondary" onClick={() => onEdit(m.id)} style={{ fontSize: 11 }}><Edit size={12} /></button>
+            {hasPermission('Lineup', 'delete') && (
+              confirmDeleteId === m.id ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
+                  <button className="btn btn-sm btn-danger" style={{ fontSize: 11 }} onClick={() => { onDelete(m.id); setConfirmDeleteId(null); }}>Ya</button>
+                  <button className="btn btn-sm btn-secondary" style={{ fontSize: 11 }} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                </span>
+              ) : (
+                <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(m.id)}><Trash2 size={12} /></button>
+              )
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  const renderTable = (rows: Match[], title: string) => (
+    <div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 4 }}>
+        {title} ({rows.length})
+      </div>
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Pertandingan</th>
+              <th>Kompetisi</th>
+              <th>Kickoff</th>
+              <th>Status</th>
+              <th>Lineup</th>
+              <th>Skor</th>
+              <th className="text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>{rows.map(renderRow)}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="page-header">
+        <div>
+          <div className="breadcrumb"><span>Dashboard</span> <ChevronRight size={10} /> <span>Jadwal Pertandingan</span></div>
+          <h1 className="page-title">Jadwal Pertandingan</h1>
+          <p className="page-description">Kelola jadwal semua kompetisi. Langsung buat lineup dan input hasil dari sini.</p>
+        </div>
+        {hasPermission('Lineup', 'create_edit') && (
+          <button className="btn btn-md btn-primary" onClick={onCreateNew}><Plus size={16} /> Tambah Jadwal</button>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: '12px 20px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="search-input-wrapper" style={{ maxWidth: 260, flex: 1 }}>
+          <Search size={14} className="search-icon" />
+          <input type="text" className="form-input" placeholder="Cari klub atau stadion..."
+            value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        </div>
+        <select className="form-select" style={{ maxWidth: 220 }} value={selectedComp} onChange={e => setSelectedComp(e.target.value)}>
+          <option value="Semua">Semua Kompetisi</option>
+          {competitions.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+        </select>
+        <select className="form-select" style={{ maxWidth: 160 }} value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
+          <option value="Semua">Semua Status</option>
+          <option value="Scheduled">Dijadwalkan</option>
+          <option value="Live">Live</option>
+          <option value="Finished">Selesai</option>
+          <option value="Postponed">Ditunda</option>
+          <option value="Cancelled">Dibatalkan</option>
+        </select>
+        {(searchTerm || selectedComp !== 'Semua' || selectedStatus !== 'Semua') && (
+          <button className="btn btn-sm btn-secondary" onClick={() => { setSearchTerm(''); setSelectedComp('Semua'); setSelectedStatus('Semua'); }}>Reset</button>
+        )}
+        <span className="text-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>{filtered.length} pertandingan</span>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+          <Calendar size={36} color="var(--neutral-400)" style={{ margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Belum ada jadwal</h3>
+          <p className="text-muted" style={{ marginBottom: 16 }}>Tambahkan jadwal pertandingan untuk semua kompetisi.</p>
+          {hasPermission('Lineup', 'create_edit') && (
+            <button className="btn btn-sm btn-primary" onClick={onCreateNew}>Tambah Jadwal</button>
+          )}
+        </div>
+      ) : (
+        <>
+          {upcoming.length > 0 && renderTable(upcoming, 'Mendatang')}
+          {played.length > 0 && renderTable(played, 'Sudah Berlangsung')}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// 1b. SCHEDULE EDITOR VIEW
+// ==========================================
+interface ScheduleEditorProps {
+  matchId: string;
+  clubs: Club[];
+  competitions: Competition[];
+  matches: Match[];
+  onClose: () => void;
+  onSave: (match: Match) => void;
+  triggerToast: (msg: string, type?: any) => void;
+}
+
+function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, onSave, triggerToast }: ScheduleEditorProps) {
+  const isNew = matchId === 'new';
+  const existing = matches.find(m => m.id === matchId);
+  const firstComp = competitions.find(c => c.isActive) || competitions[0];
+
+  const [competition, setCompetition] = useState(existing?.competition || firstComp?.name || '');
+  const [homeClubId, setHomeClubId]   = useState(existing?.homeClubId || clubs[0]?.id || '');
+  const [awayClubId, setAwayClubId]   = useState(existing?.awayClubId || (clubs[1]?.id || ''));
+  const [kickoff, setKickoff]         = useState(existing?.kickoff ? existing.kickoff.slice(0, 16) : new Date().toISOString().slice(0, 16));
+  const [venue, setVenue]             = useState(existing?.venue || '');
+  const [status, setStatus]           = useState<Match['status']>(existing?.status || 'Scheduled');
+
+  useEffect(() => {
+    if (!existing?.venue) {
+      const hc = clubs.find(c => c.id === homeClubId);
+      if (hc?.stadium) setVenue(hc.stadium);
+    }
+  }, [homeClubId]);
+
+  const handleSave = () => {
+    if (!homeClubId || !awayClubId) { triggerToast('Pilih kedua tim.', 'error'); return; }
+    if (homeClubId === awayClubId) { triggerToast('Tim home dan away tidak boleh sama.', 'error'); return; }
+    if (!kickoff) { triggerToast('Isi tanggal kickoff.', 'error'); return; }
+    const hc = clubs.find(c => c.id === homeClubId);
+    const ac = clubs.find(c => c.id === awayClubId);
+    const comp = competitions.find(c => c.name === competition);
+    const match: Match = {
+      id: existing?.id || ('match-' + Date.now()),
+      homeClubId, homeClubName: hc?.name || '', homeLogo: hc?.logoUrl || '',
+      awayClubId,  awayClubName: ac?.name || '', awayLogo: ac?.logoUrl || '',
+      competition, season: comp?.season || '',
+      kickoff: new Date(kickoff).toISOString(), venue, status,
+      homeScore: existing?.homeScore, awayScore: existing?.awayScore,
+      halfTimeHomeScore: existing?.halfTimeHomeScore, halfTimeAwayScore: existing?.halfTimeAwayScore,
+      lineupStatus: existing?.lineupStatus || 'Draft',
+      publicationStatus: existing?.publicationStatus || 'Draft',
+      editor: 'Admin', lastUpdated: 'Baru saja',
+    };
+    onSave(match);
+  };
+
+  const homeClub = clubs.find(c => c.id === homeClubId);
+  const awayClub = clubs.find(c => c.id === awayClubId);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--neutral-200)', paddingBottom: 14 }}>
+        <button className="btn btn-sm btn-secondary" onClick={onClose}><ArrowLeft size={16} /> Kembali</button>
+        <div>
+          <div className="breadcrumb"><span>Jadwal</span> <ChevronRight size={10} /> <span>{isNew ? 'Tambah Jadwal' : 'Edit Jadwal'}</span></div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{isNew ? 'Tambah Jadwal Baru' : `Edit: ${existing?.homeClubName} vs ${existing?.awayClubName}`}</h2>
+        </div>
+        <button className="btn btn-md btn-primary" style={{ marginLeft: 'auto' }} onClick={handleSave}>
+          <CheckCircle size={14} /> {isNew ? 'Simpan Jadwal' : 'Update Jadwal'}
+        </button>
+      </div>
+
+      <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="form-group">
+          <label className="form-label">Kompetisi <span className="required">*</span></label>
+          <select className="form-select" value={competition} onChange={e => setCompetition(e.target.value)}>
+            {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} ({c.season})</option>)}
+            {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} (nonaktif)</option>)}
+          </select>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="form-group">
+            <label className="form-label">Tim Home <span className="required">*</span></label>
+            <select className="form-select" value={homeClubId} onChange={e => setHomeClubId(e.target.value)}>
+              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tim Away <span className="required">*</span></label>
+            <select className="form-select" value={awayClubId} onChange={e => setAwayClubId(e.target.value)}>
+              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {homeClubId && awayClubId && homeClubId !== awayClubId && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '14px 0',
+            background: 'var(--neutral-50)', borderRadius: 8, border: '1px solid var(--neutral-200)' }}>
+            <div style={{ textAlign: 'center' }}>
+              {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
+                ? <img src={homeClub.logoUrl} alt="" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                : <span style={{ fontSize: 32 }}>{homeClub?.logoUrl || 'H'}</span>}
+              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{homeClub?.shortName}</div>
+            </div>
+            <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--neutral-400)' }}>VS</span>
+            <div style={{ textAlign: 'center' }}>
+              {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
+                ? <img src={awayClub.logoUrl} alt="" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                : <span style={{ fontSize: 32 }}>{awayClub?.logoUrl || 'A'}</span>}
+              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{awayClub?.shortName}</div>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="form-group">
+            <label className="form-label">Tanggal & Waktu Kickoff <span className="required">*</span></label>
+            <input type="datetime-local" className="form-input" value={kickoff} onChange={e => setKickoff(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Status Pertandingan</label>
+            <select className="form-select" value={status} onChange={e => setStatus(e.target.value as Match['status'])}>
+              <option value="Scheduled">Dijadwalkan</option>
+              <option value="Live">Live</option>
+              <option value="Finished">Selesai</option>
+              <option value="Postponed">Ditunda</option>
+              <option value="Cancelled">Dibatalkan</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Venue / Stadion <span style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400 }}>(auto dari home club)</span></label>
+          <input type="text" className="form-input" placeholder="Nama stadion..." value={venue} onChange={e => setVenue(e.target.value)} />
         </div>
       </div>
     </div>
