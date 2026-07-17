@@ -294,6 +294,7 @@ export default function Home() {
               position,
               shirtNumber: roster?.shirt_number || 99,
               nationality: p.country_name || (p.country_code === 'ID' ? 'Indonesia' : 'Asing'),
+              countryCode: p.country_code || '',
               flagUrl: p.country_flag_url || '',
               age: 25,
               contractStart: '2025-01-01',
@@ -2148,12 +2149,70 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const homeClub = clubs.find(c => c.id === selectedHomeClub);
   const awayClub = clubs.find(c => c.id === selectedAwayClub);
 
+  const normalizeCountryValue = (value?: string) => (value || '').trim().toLowerCase();
+
+  const findCountryForPlayer = (player: Player) => {
+    const countryCode = normalizeCountryValue(player.countryCode);
+    if (countryCode) {
+      const byCode = countriesList.find(country => {
+        const code = normalizeCountryValue(country.code);
+        return code === countryCode || (countryCode.length === 2 && code.startsWith(countryCode));
+      });
+      if (byCode) return byCode;
+    }
+
+    const nationality = normalizeCountryValue(player.nationality);
+    if (!nationality) return undefined;
+    return countriesList.find(country => normalizeCountryValue(country.name) === nationality);
+  };
+
+  const extractCountryCodeFromFlagUrl = (flagUrl?: string) => {
+    const match = (flagUrl || '').match(/\/([a-z]{2})\.(?:svg|png)$/i);
+    return match?.[1] || '';
+  };
+
+  const countryCodeToFlagEmoji = (countryCode?: string) => {
+    const normalizedCode = normalizeCountryValue(countryCode).slice(0, 2).toUpperCase();
+    if (!/^[A-Z]{2}$/.test(normalizedCode)) return '';
+    return String.fromCodePoint(...normalizedCode.split('').map(char => 127397 + char.charCodeAt(0)));
+  };
+
+  const resolvePlayerFlagUrl = (player: Player) => {
+    if (player.flagUrl && player.flagUrl.startsWith('http')) return player.flagUrl;
+    return findCountryForPlayer(player)?.flagUrl || '';
+  };
+
+  const resolvePlayerFlagEmoji = (player: Player) => {
+    if (player.flagUrl && !player.flagUrl.startsWith('http') && player.flagUrl.length <= 4) return player.flagUrl;
+    return countryCodeToFlagEmoji(player.countryCode || findCountryForPlayer(player)?.code || extractCountryCodeFromFlagUrl(player.flagUrl));
+  };
+
   const renderFlag = (player: Player) => {
-    if (player.flagUrl && player.flagUrl.startsWith('http'))
-      return <img src={player.flagUrl} alt="" style={{ width: 14, height: 10, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
-    if (player.flagUrl && player.flagUrl.length <= 4)
-      return <span style={{ fontSize: 12, lineHeight: 1, flexShrink: 0 }}>{player.flagUrl}</span>;
+    const flagUrl = resolvePlayerFlagUrl(player);
+    const flagEmoji = resolvePlayerFlagEmoji(player);
+    if (flagUrl)
+      return <img src={flagUrl} alt="" style={{ width: 14, height: 10, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
+    if (flagEmoji)
+      return <span style={{ fontSize: 12, lineHeight: 1, flexShrink: 0 }}>{flagEmoji}</span>;
     return null;
+  };
+
+  const renderStoryFlag = (player: Player, width: number, height: number, fontSize: number) => {
+    const flagEmoji = resolvePlayerFlagEmoji(player);
+    if (flagEmoji) {
+      return (
+        <span style={{ width, fontSize, lineHeight: 1, flexShrink: 0, textAlign: 'center' }}>
+          {flagEmoji}
+        </span>
+      );
+    }
+
+    const flagUrl = resolvePlayerFlagUrl(player);
+    if (flagUrl) {
+      return <img src={flagUrl} alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
+    }
+
+    return <span style={{ fontSize, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span>;
   };
 
 
@@ -2594,11 +2653,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                           <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 700, minWidth: 22, fontVariantNumeric: 'tabular-nums' }}>
                             {p.shirtNumber}
                           </span>
-                          {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
-                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 12, height: 8, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
-                            : isForeign && p.flagUrl && p.flagUrl.length <= 4
-                              ? <span style={{ fontSize: 9, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                              : isForeign ? <span style={{ fontSize: 8, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span> : null}
+                          {isForeign ? renderStoryFlag(p, 12, 8, 9) : null}
                           <span style={{ fontSize: 9, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                             color: isCaptain ? '#c8a84b' : isForeign ? '#93c5fd' : '#e2e8f0',
                             fontWeight: isCaptain ? 700 : 400 }}>
@@ -2619,11 +2674,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                         return (
                           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                             <span style={{ fontSize: 7, color: '#555', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
-                            {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
-                              ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
-                              : isForeign && p.flagUrl && p.flagUrl.length <= 4
-                                ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                                : null}
+                            {isForeign ? renderStoryFlag(p, 10, 7, 8) : null}
                             <span style={{ fontSize: 8, color: isForeign ? '#6b7280' : '#6b7280', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {p.displayName}
                             </span>
@@ -2642,11 +2693,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                       {homeSquad.filter(p => !homeStarters.includes(p.id) && !homeSubs.includes(p.id) && p.nationality !== 'Indonesia').map(p => (
                         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                           <span style={{ fontSize: 7, color: '#333', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
-                          {p.flagUrl && p.flagUrl.startsWith('http')
-                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
-                            : p.flagUrl && p.flagUrl.length <= 4
-                              ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                              : null}
+                          {renderStoryFlag(p, 10, 7, 8)}
                           <span style={{ fontSize: 8, color: '#3f4855', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {p.displayName}
                           </span>
@@ -2673,11 +2720,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                           <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 700, minWidth: 22, fontVariantNumeric: 'tabular-nums' }}>
                             {p.shirtNumber}
                           </span>
-                          {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
-                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 12, height: 8, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
-                            : isForeign && p.flagUrl && p.flagUrl.length <= 4
-                              ? <span style={{ fontSize: 9, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                              : isForeign ? <span style={{ fontSize: 8, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span> : null}
+                          {isForeign ? renderStoryFlag(p, 12, 8, 9) : null}
                           <span style={{ fontSize: 9, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                             color: isCaptain ? '#c8a84b' : isForeign ? '#93c5fd' : '#e2e8f0',
                             fontWeight: isCaptain ? 700 : 400 }}>
@@ -2698,11 +2741,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                         return (
                           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                             <span style={{ fontSize: 7, color: '#555', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
-                            {isForeign && p.flagUrl && p.flagUrl.startsWith('http')
-                              ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
-                              : isForeign && p.flagUrl && p.flagUrl.length <= 4
-                                ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                                : null}
+                            {isForeign ? renderStoryFlag(p, 10, 7, 8) : null}
                             <span style={{ fontSize: 8, color: '#6b7280', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {p.displayName}
                             </span>
@@ -2721,11 +2760,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                       {awaySquad.filter(p => !awayStarters.includes(p.id) && !awaySubs.includes(p.id) && p.nationality !== 'Indonesia').map(p => (
                         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                           <span style={{ fontSize: 7, color: '#333', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
-                          {p.flagUrl && p.flagUrl.startsWith('http')
-                            ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 10, height: 7, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
-                            : p.flagUrl && p.flagUrl.length <= 4
-                              ? <span style={{ fontSize: 8, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                              : null}
+                          {renderStoryFlag(p, 10, 7, 8)}
                           <span style={{ fontSize: 8, color: '#3f4855', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {p.displayName}
                           </span>

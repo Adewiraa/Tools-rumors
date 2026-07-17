@@ -91,6 +91,7 @@ export interface Player {
   position: 'Goalkeeper' | 'Defender' | 'Midfielder' | 'Forward';
   shirtNumber: number;
   nationality: string;
+  countryCode?: string;
   flagUrl: string;
   age: number;
   contractStart: string;
