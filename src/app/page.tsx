@@ -2197,6 +2197,31 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     return String.fromCodePoint(...normalizedCode.split('').map(char => 127397 + char.charCodeAt(0)));
   };
 
+  const getPlayerCountryCode = (player: Player) => (
+    normalizeCountryCodeCandidate(player.countryCode) ||
+    normalizeCountryCodeCandidate(player.flagUrl) ||
+    normalizeCountryCodeCandidate(findCountryForPlayer(player)?.code) ||
+    normalizeCountryCodeCandidate(extractCountryCodeFromFlagUrl(player.flagUrl))
+  );
+
+  const countryCodeToInlineFlagSrc = (countryCode?: string) => {
+    const code = normalizeCountryCodeCandidate(countryCode);
+    const flagSvgByCode: Record<string, string> = {
+      ar: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#75aadb" d="M0 0h30v20H0z"/><path fill="#fff" d="M0 6.67h30v6.66H0z"/><circle cx="15" cy="10" r="1.5" fill="#f6b40e"/></svg>',
+      br: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#009b3a" d="M0 0h30v20H0z"/><path fill="#ffdf00" d="M15 2 28 10 15 18 2 10z"/><circle cx="15" cy="10" r="4.2" fill="#002776"/></svg>',
+      co: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fcd116" d="M0 0h30v10H0z"/><path fill="#003893" d="M0 10h30v5H0z"/><path fill="#ce1126" d="M0 15h30v5H0z"/></svg>',
+      fr: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#002395" d="M0 0h10v20H0z"/><path fill="#fff" d="M10 0h10v20H10z"/><path fill="#ed2939" d="M20 0h10v20H20z"/></svg>',
+      iq: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#ce1126" d="M0 0h30v6.67H0z"/><path fill="#fff" d="M0 6.67h30v6.66H0z"/><path fill="#000" d="M0 13.33h30V20H0z"/><path fill="#007a3d" d="M12 8.2h6v3.6h-6z"/></svg>',
+      it: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#009246" d="M0 0h10v20H0z"/><path fill="#fff" d="M10 0h10v20H10z"/><path fill="#ce2b37" d="M20 0h10v20H20z"/></svg>',
+      nl: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#ae1c28" d="M0 0h30v6.67H0z"/><path fill="#fff" d="M0 6.67h30v6.66H0z"/><path fill="#21468b" d="M0 13.33h30V20H0z"/></svg>',
+      pt: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#006600" d="M0 0h12v20H0z"/><path fill="#ff0000" d="M12 0h18v20H12z"/><circle cx="12" cy="10" r="3" fill="#ffcc00"/></svg>',
+      es: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#aa151b" d="M0 0h30v5H0zm0 15h30v5H0z"/><path fill="#f1bf00" d="M0 5h30v10H0z"/></svg>',
+      uy: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fff" d="M0 0h30v20H0z"/><path fill="#0038a8" d="M0 4h30v2H0zm0 4h30v2H0zm0 4h30v2H0zm0 4h30v2H0z"/><path fill="#fff" d="M0 0h12v10H0z"/><circle cx="6" cy="5" r="2.2" fill="#fcd116"/></svg>',
+    };
+    const svg = flagSvgByCode[code];
+    return svg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}` : '';
+  };
+
   const resolvePlayerFlagUrl = (player: Player) => {
     if (player.flagUrl && player.flagUrl.startsWith('http')) return player.flagUrl;
     return (
@@ -2224,13 +2249,9 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   };
 
   const renderStoryFlag = (player: Player, width: number, height: number, fontSize: number) => {
-    const flagEmoji = resolvePlayerFlagEmoji(player);
-    if (flagEmoji) {
-      return (
-        <span style={{ width, fontSize, lineHeight: 1, flexShrink: 0, textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-          {flagEmoji}
-        </span>
-      );
+    const inlineFlagSrc = countryCodeToInlineFlagSrc(getPlayerCountryCode(player));
+    if (inlineFlagSrc) {
+      return <img src={inlineFlagSrc} alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
     }
 
     const flagUrl = resolvePlayerFlagUrl(player);
