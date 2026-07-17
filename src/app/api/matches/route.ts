@@ -14,6 +14,24 @@ const supabaseAdmin = createClient(
   }
 );
 
+const toStringArray = (value: any) => (
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+);
+
+const toLineupForeignEntries = (value: any) => (
+  Array.isArray(value)
+    ? value
+        .filter(item => item && typeof item === 'object')
+        .map(item => ({
+          id: String(item.id || `asing-${Date.now()}`),
+          name: String(item.name || ''),
+          no: Number(item.no) || 0,
+          pos: String(item.pos || 'FW'),
+        }))
+        .filter(item => item.name)
+    : []
+);
+
 // GET /api/matches — ambil semua matches, urut kickoff terbaru
 export async function GET() {
   try {
@@ -44,6 +62,16 @@ export async function GET() {
       halfTimeAwayScore:    m.half_time_away_score ?? undefined,
       lineupStatus:         m.lineup_status || 'Draft',
       publicationStatus:    m.publication_status || 'Draft',
+      homeFormation:        m.home_formation || '4-3-3',
+      awayFormation:        m.away_formation || '4-2-3-1',
+      homeStarters:         toStringArray(m.home_starters),
+      homeSubs:             toStringArray(m.home_subs),
+      awayStarters:         toStringArray(m.away_starters),
+      awaySubs:             toStringArray(m.away_subs),
+      homeCaptain:          m.home_captain || '',
+      awayCaptain:          m.away_captain || '',
+      homeAsing:            toLineupForeignEntries(m.home_asing),
+      awayAsing:            toLineupForeignEntries(m.away_asing),
       editor:               m.editor || 'Admin',
       lastUpdated:          m.last_updated || '',
     }));
@@ -81,6 +109,16 @@ export async function POST(request: Request) {
       status:               match.status || 'Scheduled',
       lineup_status:        match.lineupStatus || 'Draft',
       publication_status:   match.publicationStatus || 'Draft',
+      home_formation:       match.homeFormation || '4-3-3',
+      away_formation:       match.awayFormation || '4-2-3-1',
+      home_starters:        Array.isArray(match.homeStarters) ? match.homeStarters : [],
+      home_subs:            Array.isArray(match.homeSubs) ? match.homeSubs : [],
+      away_starters:        Array.isArray(match.awayStarters) ? match.awayStarters : [],
+      away_subs:            Array.isArray(match.awaySubs) ? match.awaySubs : [],
+      home_captain:         match.homeCaptain || '',
+      away_captain:         match.awayCaptain || '',
+      home_asing:           Array.isArray(match.homeAsing) ? match.homeAsing : [],
+      away_asing:           Array.isArray(match.awayAsing) ? match.awayAsing : [],
       editor:               match.editor || 'Admin',
       last_updated:         new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB',
     };

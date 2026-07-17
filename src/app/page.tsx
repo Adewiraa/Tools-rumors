@@ -1496,6 +1496,10 @@ function ScheduleListView({ matches, competitions, onCreateNew, onEdit, onDelete
     const isToday = new Date(m.kickoff).toDateString() === new Date().toDateString();
     const canLineup = ['Scheduled','Live'].includes(m.status);
     const canResult = ['Live','Finished'].includes(m.status) && m.lineupStatus === 'Complete';
+    const hasLineupData =
+      m.lineupStatus !== 'Draft' ||
+      m.publicationStatus === 'Published' ||
+      Boolean(m.homeStarters?.length || m.awayStarters?.length || m.homeSubs?.length || m.awaySubs?.length);
     return (
       <tr key={m.id} style={{ backgroundColor: isToday ? 'var(--primary-50)' : undefined }}>
         <td>
@@ -1526,7 +1530,9 @@ function ScheduleListView({ matches, competitions, onCreateNew, onEdit, onDelete
         <td className="text-right">
           <div style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {canLineup && hasPermission('Lineup', 'create_edit') && (
-              <button className="btn btn-sm btn-primary" onClick={() => onCreateLineup(m.id)} style={{ fontSize: 11 }}>Lineup</button>
+              <button className="btn btn-sm btn-primary" onClick={() => onCreateLineup(m.id)} style={{ fontSize: 11 }}>
+                {hasLineupData ? 'Lihat Lineup' : 'Buat Lineup'}
+              </button>
             )}
             {['Live','Finished'].includes(m.status) && hasPermission('Match Result', 'create_edit') && (
               <button className="btn btn-sm btn-secondary" disabled={!canResult} title={canResult ? 'Input hasil pertandingan' : 'Lengkapi lineup dulu'} onClick={() => onInputResult(m.id)} style={{ fontSize: 11 }}>Hasil</button>
@@ -1710,6 +1716,7 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
     const ac = clubs.find(c => c.id === awayClubId);
     const comp = competitions.find(c => c.name === competition);
     const match: Match = {
+      ...(existing || {}),
       id: existing?.id || ('match-' + Date.now()),
       homeClubId, homeClubName: hc?.name || '', homeLogo: hc?.logoUrl || '',
       awayClubId,  awayClubName: ac?.name || '', awayLogo: ac?.logoUrl || '',
@@ -2002,8 +2009,8 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [selectedCompetitionName, setSelectedCompetitionName] = useState(existingMatch?.competition || firstComp?.name || '');
   const [selectedHomeClub, setSelectedHomeClub] = useState(existingMatch?.homeClubId || clubs[0]?.id || '');
   const [selectedAwayClub, setSelectedAwayClub] = useState(existingMatch?.awayClubId || clubs[1]?.id || '');
-  const [homeFormation, setHomeFormation] = useState('4-3-3');
-  const [awayFormation, setAwayFormation] = useState('4-2-3-1');
+  const [homeFormation, setHomeFormation] = useState(existingMatch?.homeFormation || '4-3-3');
+  const [awayFormation, setAwayFormation] = useState(existingMatch?.awayFormation || '4-2-3-1');
   const [kickoffTime, setKickoffTime] = useState(existingMatch?.kickoff || new Date().toISOString());
   const [venueName, setVenueName] = useState(existingMatch?.venue || '');
   const FORMATIONS = ['4-3-3','4-2-3-1','3-5-2','4-4-2','5-3-2','3-4-3','4-1-4-1'];
@@ -2019,14 +2026,14 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const homeSquad = players.filter(p => p.clubId === selectedHomeClub);
   const awaySquad = players.filter(p => p.clubId === selectedAwayClub);
 
-  const [homeStarters, setHomeStarters] = useState<string[]>([]);
-  const [homeSubs, setHomeSubs] = useState<string[]>([]);
-  const [awayStarters, setAwayStarters] = useState<string[]>([]);
-  const [awaySubs, setAwaySubs] = useState<string[]>([]);
-  const [homeCaptain, setHomeCaptain] = useState<string>('');
-  const [awayCaptain, setAwayCaptain] = useState<string>('');
-  const [homeAsing, setHomeAsing] = useState<AsingEntry[]>([]);
-  const [awayAsing, setAwayAsing] = useState<AsingEntry[]>([]);
+  const [homeStarters, setHomeStarters] = useState<string[]>(existingMatch?.homeStarters || []);
+  const [homeSubs, setHomeSubs] = useState<string[]>(existingMatch?.homeSubs || []);
+  const [awayStarters, setAwayStarters] = useState<string[]>(existingMatch?.awayStarters || []);
+  const [awaySubs, setAwaySubs] = useState<string[]>(existingMatch?.awaySubs || []);
+  const [homeCaptain, setHomeCaptain] = useState<string>(existingMatch?.homeCaptain || '');
+  const [awayCaptain, setAwayCaptain] = useState<string>(existingMatch?.awayCaptain || '');
+  const [homeAsing, setHomeAsing] = useState<AsingEntry[]>(existingMatch?.homeAsing || []);
+  const [awayAsing, setAwayAsing] = useState<AsingEntry[]>(existingMatch?.awayAsing || []);
   const [homeAsingInput, setHomeAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [awayAsingInput, setAwayAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -2142,6 +2149,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const kickoff = existingMatch?.kickoff || kickoffTime;
     const status: Match['lineupStatus'] = homeValid && awayValid && homeHasGK && awayHasGK ? 'Complete' : 'Needs Review';
     const updatedMatch: Match = {
+      ...(existingMatch || {}),
       id: existingMatch?.id || 'match-' + Date.now(),
       homeClubId: existingMatch?.homeClubId || selectedHomeClub, homeClubName: existingMatch?.homeClubName || homeClub?.name || '',
       homeLogo: existingMatch?.homeLogo || homeClub?.logoUrl || '',
@@ -2153,6 +2161,16 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
       status: existingMatch?.status || 'Scheduled',
       lineupStatus: status,
       publicationStatus: publish ? 'Published' : (existingMatch?.publicationStatus || 'Draft'),
+      homeFormation,
+      awayFormation,
+      homeStarters,
+      homeSubs,
+      awayStarters,
+      awaySubs,
+      homeCaptain,
+      awayCaptain,
+      homeAsing,
+      awayAsing,
       editor: 'Admin', lastUpdated: 'Baru saja',
     };
     onSave(updatedMatch);

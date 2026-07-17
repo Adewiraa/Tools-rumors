@@ -25,11 +25,33 @@ CREATE TABLE IF NOT EXISTS matches (
                           CHECK (lineup_status IN ('Draft','Needs Review','Complete')),
   publication_status    TEXT NOT NULL DEFAULT 'Draft'
                           CHECK (publication_status IN ('Draft','Scheduled','Published','Archived')),
+  home_formation        TEXT DEFAULT '4-3-3',
+  away_formation        TEXT DEFAULT '4-2-3-1',
+  home_starters         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  home_subs             JSONB NOT NULL DEFAULT '[]'::jsonb,
+  away_starters         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  away_subs             JSONB NOT NULL DEFAULT '[]'::jsonb,
+  home_captain          TEXT DEFAULT '',
+  away_captain          TEXT DEFAULT '',
+  home_asing            JSONB NOT NULL DEFAULT '[]'::jsonb,
+  away_asing            JSONB NOT NULL DEFAULT '[]'::jsonb,
   editor                TEXT DEFAULT 'Admin',
   last_updated          TEXT DEFAULT 'Baru saja',
   created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Tambahkan kolom lineup detail untuk database yang tabelnya sudah terlanjur dibuat.
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_formation TEXT DEFAULT '4-3-3';
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_formation TEXT DEFAULT '4-2-3-1';
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_starters JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_subs JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_starters JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_subs JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_captain TEXT DEFAULT '';
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_captain TEXT DEFAULT '';
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_asing JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_asing JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 -- Index untuk query cepat
 CREATE INDEX IF NOT EXISTS idx_matches_kickoff      ON matches (kickoff DESC);

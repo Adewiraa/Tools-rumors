@@ -120,6 +120,16 @@ export interface Match {
   halfTimeAwayScore?: number;
   lineupStatus: 'Draft' | 'Needs Review' | 'Complete';
   publicationStatus: 'Draft' | 'Scheduled' | 'Published' | 'Archived';
+  homeFormation?: string;
+  awayFormation?: string;
+  homeStarters?: string[];
+  homeSubs?: string[];
+  awayStarters?: string[];
+  awaySubs?: string[];
+  homeCaptain?: string;
+  awayCaptain?: string;
+  homeAsing?: { id: string; name: string; no: number; pos: string }[];
+  awayAsing?: { id: string; name: string; no: number; pos: string }[];
   editor: string;
   lastUpdated: string;
 }
