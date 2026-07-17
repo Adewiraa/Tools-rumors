@@ -2083,7 +2083,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                 {(() => {
                   const comp = competitions.find(c => c.name === selectedCompetitionName);
                   return comp?.logoUrl && comp.logoUrl.startsWith('http')
-                    ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 30, height: 30, objectFit: 'contain', flexShrink: 0 }} />
+                    ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0, background: 'white', borderRadius: 4, padding: 2 }} />
                     : <div style={{ width: 30, height: 30, background: 'rgba(200,168,75,0.12)', borderRadius: 4,
                         border: '1px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <div style={{ width: 12, height: 12, background: '#c8a84b', borderRadius: 2 }} />
@@ -2147,7 +2147,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                             ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 12, height: 8, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
                             : isForeign && p.flagUrl && p.flagUrl.length <= 4
                               ? <span style={{ fontSize: 9, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                              : null}
+                              : isForeign ? <span style={{ fontSize: 8, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span> : null}
                           <span style={{ fontSize: 9, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                             color: isCaptain ? '#c8a84b' : isForeign ? '#93c5fd' : '#e2e8f0',
                             fontWeight: isCaptain ? 700 : 400 }}>
@@ -2226,7 +2226,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                             ? <img src={p.flagUrl} crossOrigin="anonymous" alt="" style={{ width: 12, height: 8, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />
                             : isForeign && p.flagUrl && p.flagUrl.length <= 4
                               ? <span style={{ fontSize: 9, lineHeight: 1, flexShrink: 0 }}>{p.flagUrl}</span>
-                              : null}
+                              : isForeign ? <span style={{ fontSize: 8, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span> : null}
                           <span style={{ fontSize: 9, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                             color: isCaptain ? '#c8a84b' : isForeign ? '#93c5fd' : '#e2e8f0',
                             fontWeight: isCaptain ? 700 : 400 }}>
@@ -2285,24 +2285,24 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                 </div>
               </div>
 
-              <div style={{ padding: '6px 16px', display: 'flex', gap: 14, borderTop: '1px solid rgba(255,255,255,0.04)',
-                background: 'rgba(0,0,0,0.3)' }}>
-                <span style={{ fontSize: 7, color: '#555' }}>
-                  <span style={{ color: '#93c5fd', fontWeight: 600 }}>Biru</span> = Asing starting
-                </span>
-                <span style={{ fontSize: 7, color: '#555' }}>
-                  <span style={{ color: '#c8a84b', fontWeight: 600 }}>Emas</span> = Kapten / No. pemain
-                </span>
-              </div>
+
+
+
+
+
+
+
+
+
 
               <div style={{ padding: '8px 16px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <div>
-                  <div style={{ fontSize: 8, color: '#555' }}>
-                    {new Date(kickoffTime).toLocaleString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
-                  </div>
+
+
+
+
                   <div style={{ fontSize: 7, color: '#3a3a3a', marginTop: 1 }}>{venueName}</div>
-                </div>
+
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>MEDIA TOOLS</div>
                   <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>@GARUDAMATCHROOM</div>
