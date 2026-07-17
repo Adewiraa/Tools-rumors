@@ -1993,6 +1993,7 @@ interface LineupEditorProps {
 function LineupEditorView({ matchId, clubs, players, matches, competitions, onClose, onSave, triggerToast }: LineupEditorProps) {
   const isNew = matchId === 'new';
   const existingMatch = matches.find(m => m.id === matchId);
+  const matchInfoLocked = Boolean(existingMatch);
   const firstComp = competitions.find(c => c.isActive) || competitions[0];
 
   const [selectedCompetitionName, setSelectedCompetitionName] = useState(existingMatch?.competition || firstComp?.name || '');
@@ -2132,16 +2133,18 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const handleSave = (publish = false) => {
     const homeClub = clubs.find(c => c.id === selectedHomeClub);
     const awayClub = clubs.find(c => c.id === selectedAwayClub);
+    const competitionName = existingMatch?.competition || selectedCompetitionName;
+    const kickoff = existingMatch?.kickoff || kickoffTime;
     const status: Match['lineupStatus'] = homeValid && awayValid && homeHasGK && awayHasGK ? 'Complete' : 'Needs Review';
     const updatedMatch: Match = {
       id: existingMatch?.id || 'match-' + Date.now(),
-      homeClubId: selectedHomeClub, homeClubName: homeClub?.name || '',
-      homeLogo: homeClub?.logoUrl || '',
-      awayClubId: selectedAwayClub, awayClubName: awayClub?.name || '',
-      awayLogo: awayClub?.logoUrl || '',
-      competition: selectedCompetitionName,
-      season: competitions.find(c => c.name === selectedCompetitionName)?.season || '',
-      kickoff: kickoffTime, venue: venueName,
+      homeClubId: existingMatch?.homeClubId || selectedHomeClub, homeClubName: existingMatch?.homeClubName || homeClub?.name || '',
+      homeLogo: existingMatch?.homeLogo || homeClub?.logoUrl || '',
+      awayClubId: existingMatch?.awayClubId || selectedAwayClub, awayClubName: existingMatch?.awayClubName || awayClub?.name || '',
+      awayLogo: existingMatch?.awayLogo || awayClub?.logoUrl || '',
+      competition: competitionName,
+      season: existingMatch?.season || competitions.find(c => c.name === competitionName)?.season || '',
+      kickoff, venue: venueName,
       status: existingMatch?.status || 'Scheduled',
       lineupStatus: status,
       publicationStatus: publish ? 'Published' : (existingMatch?.publicationStatus || 'Draft'),
@@ -2536,7 +2539,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
         <div className="lineup-info-grid">
           <div>
             <label className="lineup-field-label">Kompetisi</label>
-            <select className="form-select" style={{ fontSize: 12 }} value={selectedCompetitionName} onChange={e => setSelectedCompetitionName(e.target.value)}>
+            <select className="form-select" style={{ fontSize: 12 }} value={selectedCompetitionName} disabled={matchInfoLocked} onChange={e => setSelectedCompetitionName(e.target.value)}>
               {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} (nonaktif)</option>)}
             </select>
@@ -2544,6 +2547,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
           <div>
             <label className="lineup-field-label">Tim Home</label>
             <select className="form-select" style={{ fontSize: 12 }} value={selectedHomeClub}
+              disabled={matchInfoLocked}
               onChange={e => { setSelectedHomeClub(e.target.value); setHomeStarters([]); setHomeSubs([]); setHomeCaptain(''); }}>
               {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -2551,6 +2555,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
           <div>
             <label className="lineup-field-label">Tim Away</label>
             <select className="form-select" style={{ fontSize: 12 }} value={selectedAwayClub}
+              disabled={matchInfoLocked}
               onChange={e => { setSelectedAwayClub(e.target.value); setAwayStarters([]); setAwaySubs([]); setAwayCaptain(''); }}>
               {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -2558,7 +2563,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
           <div>
             <label className="lineup-field-label">Kickoff</label>
             <input type="datetime-local" className="form-input" style={{ fontSize: 11 }}
-              value={kickoffTime.slice(0, 16)} onChange={e => setKickoffTime(new Date(e.target.value).toISOString())} />
+              value={kickoffTime.slice(0, 16)} disabled={matchInfoLocked} onChange={e => setKickoffTime(new Date(e.target.value).toISOString())} />
           </div>
           <div className="lineup-venue-field">
             <label className="lineup-field-label">Venue <span style={{ fontWeight: 400, fontSize: 9 }}>(auto, editable)</span></label>
