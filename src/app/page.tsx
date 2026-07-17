@@ -353,6 +353,7 @@ export default function Home() {
     setEditingPlayerId(null);
     setEditingCompetitionId(null);
   };
+  return (
     <div className="app-container">
       {/* Dynamic Header Alert for Unsaved Changes or Offline status */}
       {isOffline && (
@@ -458,6 +459,7 @@ export default function Home() {
             <span style={{ color: "var(--primary-600)", fontSize: 14, fontWeight: 800 }}>GM</span>
           )}
 
+        </div>
         <nav className="sidebar-menu">
           {!sidebarCollapsed && <div className="menu-category">Menu Utama</div>}
           <div className={`menu-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => { setActiveMenu('dashboard'); setEditingLineupId(null); setEditingResultId(null); setEditingRumorId(null); setEditingClubId(null); setEditingPlayerId(null); }}>
