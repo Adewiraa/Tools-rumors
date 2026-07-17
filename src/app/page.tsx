@@ -4000,25 +4000,21 @@ function ClubEditorView({ clubId, clubs, players, competitions, onClose, onSave 
 
     try {
       setUploading(true);
-      const fileExt = file.name.split('.').pop();
       const clubSlug = code ? code.toLowerCase() : 'club';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-      const filePath = `${clubSlug}/${fileName}`;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'club-logos');
+      formData.append('folder', clubSlug);
 
-      const { data, error } = await supabase.storage
-        .from('club-logos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
+      const response = await fetch('/api/uploads/logo', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error || 'Upload gagal');
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('club-logos')
-        .getPublicUrl(filePath);
-
-      setLogo(publicUrl);
+      setLogo(result.data.publicUrl);
     } catch (err: any) {
       console.error('Error uploading logo:', err);
       alert(`Gagal mengunggah logo: ${err.message}`);
@@ -5030,22 +5026,21 @@ function CompetitionEditorView({ competitionId, competitions, onClose, onSave, o
     if (!file) return;
     try {
       setUploading(true);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
       const folderSlug = (slug || name).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'competition';
-      const filePath = `${folderSlug}/${fileName}`;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'competition-logos');
+      formData.append('folder', folderSlug);
 
-      const { error } = await supabase.storage
-        .from('competition-logos')
-        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+      const response = await fetch('/api/uploads/logo', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error || 'Upload gagal');
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('competition-logos')
-        .getPublicUrl(filePath);
-
-      setLogoUrl(publicUrl);
+      setLogoUrl(result.data.publicUrl);
     } catch (err: any) {
       console.error('Error uploading competition logo:', err);
       alert(`Gagal mengunggah logo: ${err.message}`);
