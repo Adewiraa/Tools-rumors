@@ -56,6 +56,44 @@ import * as htmlToImage from 'html-to-image';
 
 // User Role Definition
 type UserRole = 'Super Admin' | 'Admin Data' | 'Match Editor' | 'Rumor Editor' | 'Reviewer';
+type ActiveMenu = 'dashboard' | 'schedule' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings';
+
+const NAV_SECTIONS: {
+  title: string;
+  items: { id: ActiveMenu; label: string; icon: React.ElementType; mobileHidden?: boolean }[];
+}[] = [
+  {
+    title: 'Menu Utama',
+    items: [{ id: 'dashboard', label: 'Dashboard', icon: Activity }],
+  },
+  {
+    title: 'Pertandingan',
+    items: [
+      { id: 'schedule', label: 'Jadwal Pertandingan', icon: Calendar },
+      { id: 'lineups', label: 'Lineup Tim', icon: FileText },
+      { id: 'results', label: 'Hasil Pertandingan', icon: Trophy },
+    ],
+  },
+  {
+    title: 'Editorial',
+    items: [{ id: 'rumors', label: 'Rumor & Transfer', icon: Radio }],
+  },
+  {
+    title: 'Master Data',
+    items: [
+      { id: 'clubs', label: 'Master Klub', icon: Shield, mobileHidden: true },
+      { id: 'players', label: 'Master Pemain', icon: User, mobileHidden: true },
+      { id: 'competitions', label: 'Master Kompetisi', icon: Trophy, mobileHidden: true },
+    ],
+  },
+  {
+    title: 'Sistem',
+    items: [
+      { id: 'logs', label: 'Audit Log', icon: History, mobileHidden: true },
+      { id: 'settings', label: 'Pengaturan', icon: Settings, mobileHidden: true },
+    ],
+  },
+];
 
 // Helper to generate RFC 4122 compliant UUID v4
 const generateUUID = (): string => {
@@ -71,7 +109,7 @@ const generateUUID = (): string => {
 
 export default function Home() {
   // Navigation & Shell States
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'schedule' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<ActiveMenu>('dashboard');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Super Admin');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // default collapsed
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -343,10 +381,7 @@ export default function Home() {
 
   // Helper to navigate and close mobile drawer
   // Helper to navigate, close mobile drawer, dan collapse sidebar
-  const navigateTo = (menu: typeof activeMenu) => {
-    setActiveMenu(menu);
-    setMobileDrawerOpen(false);
-    setSidebarCollapsed(true); // auto-collapse setelah pilih menu
+  const resetEditors = () => {
     setEditingLineupId(null);
     setEditingResultId(null);
     setEditingRumorId(null);
@@ -354,6 +389,13 @@ export default function Home() {
     setEditingPlayerId(null);
     setEditingCompetitionId(null);
     setEditingScheduleId(null);
+  };
+
+  const navigateTo = (menu: ActiveMenu) => {
+    setActiveMenu(menu);
+    setMobileDrawerOpen(false);
+    setSidebarCollapsed(true); // auto-collapse setelah pilih menu
+    resetEditors();
   };
   return (
     <div className="app-container">
@@ -385,56 +427,26 @@ export default function Home() {
               </button>
             </div>
 
-            <nav style={{ padding: '12px 0', flex: 1, overflowY: 'auto' }}>
-              <div className="menu-category" style={{ display: 'block' }}>Menu Utama</div>
-              <div className={`menu-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => navigateTo('dashboard')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <Activity size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Dashboard</span>
-              </div>
-
-              <div className="menu-category" style={{ display: 'block' }}>Pertandingan</div>
-              <div className={`menu-item ${activeMenu === 'schedule' ? 'active' : ''}`} onClick={() => navigateTo('schedule')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <Calendar size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Jadwal Pertandingan</span>
-              </div>
-              <div className={`menu-item ${activeMenu === 'lineups' ? 'active' : ''}`} onClick={() => navigateTo('lineups')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <FileText size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Lineup Tim</span>
-              </div>
-              <div className={`menu-item ${activeMenu === 'results' ? 'active' : ''}`} onClick={() => navigateTo('results')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <Trophy size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Hasil Pertandingan</span>
-              </div>
-
-              <div className="menu-category" style={{ display: 'block' }}>Editorial</div>
-              <div className={`menu-item ${activeMenu === 'rumors' ? 'active' : ''}`} onClick={() => navigateTo('rumors')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <Radio size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Rumor & Transfer</span>
-              </div>
-
-              <div className="menu-category" style={{ display: 'block' }}>Master Data</div>
-              <div className={`menu-item ${activeMenu === 'clubs' ? 'active' : ''}`} onClick={() => navigateTo('clubs')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <Shield size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Master Klub</span>
-              </div>
-              <div className={`menu-item ${activeMenu === 'players' ? 'active' : ''}`} onClick={() => navigateTo('players')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <User size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Master Pemain</span>
-              </div>
-              <div className={`menu-item ${activeMenu === 'competitions' ? 'active' : ''}`} onClick={() => navigateTo('competitions')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <Trophy size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Master Kompetisi</span>
-              </div>
-
-              <div className="menu-category" style={{ display: 'block' }}>Sistem</div>
-              <div className={`menu-item ${activeMenu === 'logs' ? 'active' : ''}`} onClick={() => navigateTo('logs')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <History size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Audit Log</span>
-              </div>
-              <div className={`menu-item ${activeMenu === 'settings' ? 'active' : ''}`} onClick={() => navigateTo('settings')} style={{ flexDirection: 'row', borderLeft: '3px solid transparent', borderTop: 'none' }}>
-                <Settings size={18} />
-                <span style={{ display: 'inline', fontSize: 14 }}>Pengaturan</span>
-              </div>
+            <nav className="mobile-drawer-menu">
+              {NAV_SECTIONS.map(section => (
+                <div key={section.title}>
+                  <div className="menu-category mobile-drawer-category">{section.title}</div>
+                  {section.items.map(item => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`menu-item mobile-drawer-item ${activeMenu === item.id ? 'active' : ''}`}
+                        onClick={() => navigateTo(item.id)}
+                      >
+                        <Icon size={18} />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </nav>
 
             <div style={{ padding: '12px 20px', borderTop: '1px solid var(--navy-900)', backgroundColor: '#111417' }}>
@@ -452,96 +464,78 @@ export default function Home() {
         </div>
       )}
 
-      {/* 1. Sidebar â€” Desktop: full sidebar, Mobile: bottom tab bar (5 main items) */}
-      <aside className="sidebar" style={{ width: sidebarCollapsed ? "72px" : "248px", transition: "width 0.2s ease" }} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
+      {/* SIDEBAR */}
+      <aside className="sidebar" style={{ width: sidebarCollapsed ? '72px' : '248px' }}>
 
+        {/* Logo + Toggle */}
         <div className="sidebar-logo">
           {!sidebarCollapsed ? (
-            <>
-              <span style={{ color: "var(--primary-600)", fontSize: 18, fontWeight: 800, letterSpacing: -1 }}>GM</span>
-              <span>GARUDA MATCH</span>
-            </>
-          ) : (
-            <span style={{ color: "var(--primary-600)", fontSize: 14, fontWeight: 800 }}>GM</span>
-          )}
-
-        </div>
-        <nav className="sidebar-menu">
-          {!sidebarCollapsed && <div className="menu-category">Menu Utama</div>}
-          <div className={`menu-item ${activeMenu === 'dashboard' ? 'active' : ''}`} onClick={() => { setActiveMenu('dashboard'); setEditingLineupId(null); setEditingResultId(null); setEditingRumorId(null); setEditingClubId(null); setEditingPlayerId(null); }}>
-            <Activity size={18} />
-            {!sidebarCollapsed && <span>Dashboard</span>}
-          </div>
-
-          {!sidebarCollapsed && <div className="menu-category">Pertandingan</div>}
-          <div className={`menu-item ${activeMenu === 'lineups' ? 'active' : ''}`} onClick={() => { setActiveMenu('lineups'); setEditingLineupId(null); setEditingResultId(null); }}>
-            <FileText size={18} />
-          <div className={`menu-item ${activeMenu === 'schedule' ? 'active' : ''}`} onClick={() => { setActiveMenu('schedule'); setEditingScheduleId(null); }}>
-            <Calendar size={18} />
-            {!sidebarCollapsed && <span>Jadwal Pertandingan</span>}
-          </div>
-            {!sidebarCollapsed && <span>Lineup Tim</span>}
-          </div>
-          <div className={`menu-item ${activeMenu === 'results' ? 'active' : ''}`} onClick={() => { setActiveMenu('results'); setEditingResultId(null); setEditingLineupId(null); }}>
-            <Trophy size={18} />
-            {!sidebarCollapsed && <span>Hasil Pertandingan</span>}
-          </div>
-
-          {!sidebarCollapsed && <div className="menu-category">Editorial</div>}
-          <div className={`menu-item ${activeMenu === 'rumors' ? 'active' : ''}`} onClick={() => { setActiveMenu('rumors'); setEditingRumorId(null); }}>
-            <Radio size={18} />
-            {!sidebarCollapsed && <span>Rumor & Transfer</span>}
-          </div>
-
-          {!sidebarCollapsed && <div className="menu-category">Master Data</div>}
-          <div className={`menu-item mobile-hidden ${activeMenu === 'clubs' ? 'active' : ''}`} onClick={() => { setActiveMenu('clubs'); setEditingClubId(null); }}>
-            <Shield size={18} />
-            {!sidebarCollapsed && <span>Master Klub</span>}
-          </div>
-          <div className={`menu-item mobile-hidden ${activeMenu === 'players' ? 'active' : ''}`} onClick={() => { setActiveMenu('players'); setEditingPlayerId(null); }}>
-            <User size={18} />
-            {!sidebarCollapsed && <span>Master Pemain</span>}
-          </div>
-          <div className={`menu-item mobile-hidden ${activeMenu === 'competitions' ? 'active' : ''}`} onClick={() => { setActiveMenu('competitions'); setEditingCompetitionId(null); }}>
-            <Trophy size={18} />
-            {!sidebarCollapsed && <span>Master Kompetisi</span>}
-          </div>
-
-          {!sidebarCollapsed && <div className="menu-category">Sistem</div>}
-          <div className={`menu-item mobile-hidden ${activeMenu === 'logs' ? 'active' : ''}`} onClick={() => setActiveMenu('logs')}>
-            <History size={18} />
-            {!sidebarCollapsed && <span>Audit Log</span>}
-          </div>
-          <div className={`menu-item mobile-hidden ${activeMenu === 'settings' ? 'active' : ''}`} onClick={() => setActiveMenu('settings')}>
-            <Settings size={18} />
-            {!sidebarCollapsed && <span>Pengaturan</span>}
-          </div>
-
-          {/* Mobile-only "More" button */}
-          <div className="menu-item mobile-more-btn" onClick={() => setMobileDrawerOpen(true)}>
-            <Menu size={18} />
-            <span>Lainnya</span>
-          </div>
-        </nav>
-
-        <div className="sidebar-footer">
-          {!sidebarCollapsed ? (
-            <div className="flex align-center gap-12 w-full justify-between">
-              <div className="flex align-center gap-8">
-                <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: 13 }}>
-                  {currentUserRole[0]}
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13, color: 'white', letterSpacing: -0.5 }}>GM</div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>Admin Garuda</div>
-                  <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{currentUserRole}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--white)', letterSpacing: 0.3 }}>GARUDA</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--primary-600)', letterSpacing: 1, marginTop: -1 }}>MATCHROOM</div>
                 </div>
               </div>
-              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer' }} title="Log out / Ganti User" onClick={() => setActiveMenu('settings')}>
-                <LogOut size={16} />
+              <button onClick={() => setSidebarCollapsed(true)} style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'flex' }} title="Sembunyikan Sidebar">
+                <ChevronRight size={16} />
               </button>
             </div>
           ) : (
-            <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', margin: '0 auto' }}>
+            <button onClick={() => setSidebarCollapsed(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }} title="Tampilkan Sidebar">
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 12, color: 'white' }}>GM</div>
+            </button>
+          )}
+        </div>
+
+        <nav className="sidebar-menu">
+          {NAV_SECTIONS.map(section => (
+            <div className="sidebar-section" key={section.title}>
+              {!sidebarCollapsed && <div className="menu-category">{section.title}</div>}
+              {section.items.map(item => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`menu-item ${item.mobileHidden ? 'mobile-hidden' : ''} ${activeMenu === item.id ? 'active' : ''}`}
+                    onClick={() => navigateTo(item.id)}
+                    title={item.label}
+                    aria-label={item.label}
+                  >
+                    <Icon size={18} />
+                    {!sidebarCollapsed && <span>{item.label}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+
+          <button type="button" className="menu-item mobile-more-btn" onClick={() => setMobileDrawerOpen(true)}>
+            <Menu size={18} />
+            <span>Lainnya</span>
+          </button>
+        </nav>
+
+        {/* Footer */}
+        <div className="sidebar-footer">
+          {!sidebarCollapsed ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'white', fontSize: 14, flexShrink: 0 }}>
+                {currentUserRole[0]}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Admin Garuda</div>
+                <div style={{ fontSize: 10, color: 'var(--neutral-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUserRole}</div>
+              </div>
+              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', flexShrink: 0 }} title="Pengaturan" onClick={() => setActiveMenu('settings')}>
+                <LogOut size={15} />
+              </button>
+            </div>
+          ) : (
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'white', fontSize: 14, margin: '0 auto', cursor: 'pointer' }}
+              onClick={() => setActiveMenu('settings')}>
               {currentUserRole[0]}
             </div>
           )}
@@ -577,15 +571,19 @@ export default function Home() {
               <div style={{ position: 'relative' }}>
                 <button className="btn btn-sm btn-primary" onClick={() => {
                   if (activeMenu === 'schedule') setEditingScheduleId('new');
-                  if (activeMenu === 'lineups') setEditingLineupId('new');
-                  else if (activeMenu === 'results') setEditingResultId('new');
+                  else if (activeMenu === 'lineups') setEditingLineupId('new');
+                  else if (activeMenu === 'results') {
+                    const readyMatch = matches.find(m => m.lineupStatus === 'Complete' && ['Live', 'Finished'].includes(m.status));
+                    if (readyMatch) setEditingResultId(readyMatch.id);
+                    else triggerToast('Buat dan lengkapi lineup pada hari H sebelum input hasil.', 'warning');
+                  }
                   else if (activeMenu === 'rumors') setEditingRumorId('new');
                   else if (activeMenu === 'clubs') setEditingClubId('new');
                   else if (activeMenu === 'players') setEditingPlayerId('new');
                   else if (activeMenu === 'competitions') setEditingCompetitionId('new');
                   else {
-                    setActiveMenu('lineups');
-                    setEditingLineupId('new');
+                    setActiveMenu('schedule');
+                    setEditingScheduleId('new');
                   }
                 }}>
                   <Plus size={14} /> Buat Baru
@@ -799,7 +797,21 @@ export default function Home() {
                     players={players}
                     matches={matches}
                     onClose={() => setEditingResultId(null)}
-                    onSave={(updatedMatch) => {
+                    onSave={async (updatedMatch) => {
+                      try {
+                        const res = await fetch('/api/matches', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ match: updatedMatch }),
+                        });
+                        const result = await res.json();
+                        if (!result.success) {
+                          triggerToast(`Hasil tersimpan lokal, DB error: ${result.error}`, 'warning');
+                        }
+                      } catch (err) {
+                        console.warn('Result save to DB failed:', err);
+                        triggerToast('Hasil tersimpan lokal, sinkron DB gagal.', 'warning');
+                      }
                       setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
                       logAction('UPDATE_MATCH_RESULT', 'Match Result', `Memperbarui hasil skor ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
                       triggerToast('Hasil pertandingan berhasil diperbarui!');
@@ -811,6 +823,7 @@ export default function Home() {
                 ) : (
                   <MatchResultsListView
                     matches={matches}
+                    competitions={competitions}
                     uiState={uiState}
                     onCreateNew={() => setEditingResultId('new')}
                     onEdit={setEditingResultId}
@@ -1459,6 +1472,12 @@ function ScheduleListView({ matches, competitions, onCreateNew, onEdit, onDelete
 
   const upcoming = filtered.filter(m => ['Scheduled','Live','Postponed'].includes(m.status));
   const played   = filtered.filter(m => ['Finished','Cancelled'].includes(m.status));
+  const scheduledCount = matches.filter(m => m.status === 'Scheduled').length;
+  const lineupReadyCount = matches.filter(m => m.lineupStatus === 'Complete').length;
+  const resultReadyCount = matches.filter(m => m.lineupStatus === 'Complete' && ['Live','Finished'].includes(m.status)).length;
+  const competitionBuckets = competitions
+    .map(comp => ({ comp, count: matches.filter(m => m.competition === comp.name).length }))
+    .filter(item => item.count > 0 || item.comp.isActive);
 
   const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
   const statusClass = (s: string) => ({ Scheduled: 'badge-info', Live: 'badge-danger', Finished: 'badge-success', Postponed: 'badge-warning', Cancelled: 'badge-draft' }[s] || 'badge-info');
@@ -1468,7 +1487,7 @@ function ScheduleListView({ matches, competitions, onCreateNew, onEdit, onDelete
   const renderRow = (m: Match) => {
     const isToday = new Date(m.kickoff).toDateString() === new Date().toDateString();
     const canLineup = ['Scheduled','Live'].includes(m.status);
-    const canResult = ['Live','Finished'].includes(m.status);
+    const canResult = ['Live','Finished'].includes(m.status) && m.lineupStatus === 'Complete';
     return (
       <tr key={m.id} style={{ backgroundColor: isToday ? 'var(--primary-50)' : undefined }}>
         <td>
@@ -1501,8 +1520,8 @@ function ScheduleListView({ matches, competitions, onCreateNew, onEdit, onDelete
             {canLineup && hasPermission('Lineup', 'create_edit') && (
               <button className="btn btn-sm btn-primary" onClick={() => onCreateLineup(m.id)} style={{ fontSize: 11 }}>Lineup</button>
             )}
-            {canResult && hasPermission('Match Result', 'create_edit') && (
-              <button className="btn btn-sm btn-secondary" onClick={() => onInputResult(m.id)} style={{ fontSize: 11 }}>Hasil</button>
+            {['Live','Finished'].includes(m.status) && hasPermission('Match Result', 'create_edit') && (
+              <button className="btn btn-sm btn-secondary" disabled={!canResult} title={canResult ? 'Input hasil pertandingan' : 'Lengkapi lineup dulu'} onClick={() => onInputResult(m.id)} style={{ fontSize: 11 }}>Hasil</button>
             )}
             <button className="btn btn-sm btn-secondary" onClick={() => onEdit(m.id)} style={{ fontSize: 11 }}><Edit size={12} /></button>
             {hasPermission('Lineup', 'delete') && (
@@ -1552,11 +1571,49 @@ function ScheduleListView({ matches, competitions, onCreateNew, onEdit, onDelete
         <div>
           <div className="breadcrumb"><span>Dashboard</span> <ChevronRight size={10} /> <span>Jadwal Pertandingan</span></div>
           <h1 className="page-title">Jadwal Pertandingan</h1>
-          <p className="page-description">Kelola jadwal semua kompetisi. Langsung buat lineup dan input hasil dari sini.</p>
+          <p className="page-description">Kelola jadwal semua kompetisi sebagai pintu awal flow: jadwal, lineup hari H, lalu hasil HT/FT.</p>
         </div>
         {hasPermission('Lineup', 'create_edit') && (
           <button className="btn btn-md btn-primary" onClick={onCreateNew}><Plus size={16} /> Tambah Jadwal</button>
         )}
+      </div>
+
+      <div className="schedule-flow-grid">
+        <div className="schedule-flow-card">
+          <Calendar size={18} />
+          <div>
+            <span>Jadwal dibuat</span>
+            <strong>{scheduledCount}</strong>
+          </div>
+        </div>
+        <div className="schedule-flow-card">
+          <FileText size={18} />
+          <div>
+            <span>Lineup siap</span>
+            <strong>{lineupReadyCount}</strong>
+          </div>
+        </div>
+        <div className="schedule-flow-card">
+          <Trophy size={18} />
+          <div>
+            <span>Siap hasil HT/FT</span>
+            <strong>{resultReadyCount}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="competition-schedule-strip">
+        {competitionBuckets.map(({ comp, count }) => (
+          <button
+            key={comp.id}
+            type="button"
+            className={`competition-schedule-pill ${selectedComp === comp.name ? 'active' : ''}`}
+            onClick={() => setSelectedComp(selectedComp === comp.name ? 'Semua' : comp.name)}
+          >
+            <span>{comp.shortName || comp.name}</span>
+            <strong>{count}</strong>
+          </button>
+        ))}
       </div>
 
       <div className="card" style={{ padding: '12px 20px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1626,6 +1683,9 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
   const [kickoff, setKickoff]         = useState(existing?.kickoff ? existing.kickoff.slice(0, 16) : new Date().toISOString().slice(0, 16));
   const [venue, setVenue]             = useState(existing?.venue || '');
   const [status, setStatus]           = useState<Match['status']>(existing?.status || 'Scheduled');
+  const selectedCompetition = competitions.find(c => c.name === competition);
+  const eligibleClubs = selectedCompetition ? clubs.filter(c => c.competitionIds?.includes(selectedCompetition.id)) : clubs;
+  const clubOptions = eligibleClubs.length >= 2 ? eligibleClubs : clubs;
 
   useEffect(() => {
     if (!existing?.venue) {
@@ -1658,6 +1718,19 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
 
   const homeClub = clubs.find(c => c.id === homeClubId);
   const awayClub = clubs.find(c => c.id === awayClubId);
+  const handleCompetitionChange = (nextName: string) => {
+    setCompetition(nextName);
+    const nextComp = competitions.find(c => c.name === nextName);
+    const nextEligible = nextComp ? clubs.filter(c => c.competitionIds?.includes(nextComp.id)) : clubs;
+    const nextOptions = nextEligible.length >= 2 ? nextEligible : clubs;
+    if (nextOptions.length > 0) {
+      const nextHome = nextOptions[0];
+      const nextAway = nextOptions.find(c => c.id !== nextHome.id);
+      setHomeClubId(nextHome.id);
+      if (nextAway) setAwayClubId(nextAway.id);
+      if (nextHome.stadium) setVenue(nextHome.stadium);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
@@ -1675,23 +1748,26 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
       <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="form-group">
           <label className="form-label">Kompetisi <span className="required">*</span></label>
-          <select className="form-select" value={competition} onChange={e => setCompetition(e.target.value)}>
+          <select className="form-select" value={competition} onChange={e => handleCompetitionChange(e.target.value)}>
             {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} ({c.season})</option>)}
             {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} (nonaktif)</option>)}
           </select>
+          <span className="form-helper">
+            {eligibleClubs.length >= 2 ? `${eligibleClubs.length} klub peserta tersedia untuk kompetisi ini.` : 'Belum ada relasi peserta, semua klub ditampilkan.'}
+          </span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div className="form-group">
             <label className="form-label">Tim Home <span className="required">*</span></label>
             <select className="form-select" value={homeClubId} onChange={e => setHomeClubId(e.target.value)}>
-              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label className="form-label">Tim Away <span className="required">*</span></label>
             <select className="form-select" value={awayClubId} onChange={e => setAwayClubId(e.target.value)}>
-              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
         </div>
@@ -2698,14 +2774,19 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
 // ==========================================
 interface MatchResultsListProps {
   matches: Match[];
+  competitions: Competition[];
   uiState: string;
   onCreateNew: () => void;
   onEdit: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
 }
 
-function MatchResultsListView({ matches, onEdit, hasPermission }: MatchResultsListProps) {
+function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: MatchResultsListProps) {
   const [selectedComp, setSelectedComp] = useState('Semua');
+  const filteredMatches = matches
+    .filter(match => selectedComp === 'Semua' || match.competition === selectedComp)
+    .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
+  const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -2723,7 +2804,9 @@ function MatchResultsListView({ matches, onEdit, hasPermission }: MatchResultsLi
       <div className="card" style={{ padding: '16px 24px' }}>
         <select className="form-select" style={{ maxWidth: 200 }} value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
           <option value="Semua">Semua Kompetisi</option>
-          <option value="Liga Nusantara">Liga Nusantara Utama</option>
+          {competitions.map(comp => (
+            <option key={comp.id} value={comp.name}>{comp.name}</option>
+          ))}
         </select>
       </div>
 
@@ -2734,52 +2817,68 @@ function MatchResultsListView({ matches, onEdit, hasPermission }: MatchResultsLi
             <tr>
               <th>Pertandingan</th>
               <th>Kompetisi</th>
-              <th>Skor Akhir</th>
+              <th>HT</th>
+              <th>FT</th>
               <th>Status</th>
-              <th>Review Status</th>
+              <th>Lineup</th>
               <th>Publikasi</th>
               <th className="text-right">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {matches.map(match => (
-              <tr key={match.id}>
-                <td>
-                  <div className="flex align-center gap-12">
-                    <span style={{ fontSize: 20 }}>{match.homeLogo}</span>
-                    <span className="semibold">{match.homeClubName} vs {match.awayClubName} {match.awayLogo}</span>
-                  </div>
-                </td>
-                <td>{match.competition}</td>
-                <td>
-                  {match.status === 'Scheduled' ? (
-                    <span className="text-muted">-</span>
-                  ) : (
-                    <span style={{ fontSize: 15, fontWeight: 700 }}>{match.homeScore} - {match.awayScore}</span>
-                  )}
-                </td>
-                <td>
-                  <span className={`badge ${match.status === 'Finished' ? 'badge-success' : match.status === 'Live' ? 'badge-danger' : 'badge-warning'}`}>
-                    {match.status}
-                  </span>
-                </td>
-                <td>
-                  <span className={`badge ${match.lineupStatus === 'Complete' ? 'badge-success' : 'badge-warning'}`}>
-                    {match.lineupStatus}
-                  </span>
-                </td>
-                <td>
-                  <span className={`badge ${match.publicationStatus === 'Published' ? 'badge-success' : 'badge-warning'}`}>
-                    {match.publicationStatus}
-                  </span>
-                </td>
-                <td className="text-right">
-                  <button className="btn btn-sm btn-secondary" onClick={() => onEdit(match.id)}>
-                    Input Hasil / Skor
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filteredMatches.map(match => {
+              const canInputResult = match.lineupStatus === 'Complete' && ['Live', 'Finished'].includes(match.status);
+              return (
+                <tr key={match.id}>
+                  <td>
+                    <div className="flex align-center gap-12">
+                      {match.homeLogo && match.homeLogo.startsWith('http')
+                        ? <img src={match.homeLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                        : <span style={{ fontSize: 20 }}>{match.homeLogo}</span>}
+                      <span className="semibold">{match.homeClubName} vs {match.awayClubName}</span>
+                      {match.awayLogo && match.awayLogo.startsWith('http')
+                        ? <img src={match.awayLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                        : <span style={{ fontSize: 20 }}>{match.awayLogo}</span>}
+                    </div>
+                  </td>
+                  <td>{match.competition}</td>
+                  <td>
+                    {match.halfTimeHomeScore !== undefined && match.halfTimeAwayScore !== undefined ? (
+                      <span className="semibold">{match.halfTimeHomeScore} - {match.halfTimeAwayScore}</span>
+                    ) : (
+                      <span className="text-muted">-</span>
+                    )}
+                  </td>
+                  <td>
+                    {match.homeScore !== undefined && match.awayScore !== undefined ? (
+                      <span style={{ fontSize: 15, fontWeight: 700 }}>{match.homeScore} - {match.awayScore}</span>
+                    ) : (
+                      <span className="text-muted">-</span>
+                    )}
+                  </td>
+                  <td>
+                    <span className={`badge ${match.status === 'Finished' ? 'badge-success' : match.status === 'Live' ? 'badge-danger' : 'badge-warning'}`}>
+                      {statusLabel(match.status)}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`}>
+                      {match.lineupStatus}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${match.publicationStatus === 'Published' ? 'badge-success' : 'badge-warning'}`}>
+                      {match.publicationStatus}
+                    </span>
+                  </td>
+                  <td className="text-right">
+                    <button className="btn btn-sm btn-secondary" disabled={!canInputResult || !hasPermission('Match Result', 'create_edit')} title={canInputResult ? 'Input hasil HT/FT' : 'Lineup harus lengkap dan match Live/Finished'} onClick={() => onEdit(match.id)}>
+                      Input HT/FT
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -2810,11 +2909,32 @@ interface MatchEvent {
 }
 
 function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSave, triggerToast, logAction }: MatchResultEditorProps) {
-  const match = matches.find(m => m.id === matchId)!;
+  const foundMatch = matches.find(m => m.id === matchId);
+  const matchMissing = !foundMatch;
+  const match: Match = foundMatch || {
+    id: matchId,
+    homeClubId: '',
+    homeClubName: '',
+    homeLogo: '',
+    awayClubId: '',
+    awayClubName: '',
+    awayLogo: '',
+    competition: '',
+    season: '',
+    kickoff: new Date().toISOString(),
+    venue: '',
+    status: 'Scheduled',
+    lineupStatus: 'Draft',
+    publicationStatus: 'Draft',
+    editor: 'Admin',
+    lastUpdated: '',
+  };
 
   // Editor states
   const [homeScore, setHomeScore] = useState(match.homeScore || 0);
   const [awayScore, setAwayScore] = useState(match.awayScore || 0);
+  const [halfTimeHomeScore, setHalfTimeHomeScore] = useState(match.halfTimeHomeScore || 0);
+  const [halfTimeAwayScore, setHalfTimeAwayScore] = useState(match.halfTimeAwayScore || 0);
   const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(match.status);
 
   // Safety confirmation states
@@ -2851,9 +2971,28 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
     triggerToast('Event berhasil ditambahkan ke timeline!');
   };
 
+  if (matchMissing) {
+    return (
+      <div className="card" style={{ maxWidth: 560 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Pertandingan tidak ditemukan</h2>
+        <p className="text-muted" style={{ marginBottom: 16 }}>Pilih pertandingan dari jadwal atau lineup yang sudah lengkap.</p>
+        <button className="btn btn-sm btn-secondary" onClick={onClose}><ArrowLeft size={16} /> Kembali</button>
+      </div>
+    );
+  }
+
   const handleSaveWithSafetyCheck = () => {
+    if (halfTimeHomeScore > homeScore || halfTimeAwayScore > awayScore) {
+      triggerToast('Skor half time tidak boleh lebih besar dari full time.', 'error');
+      return;
+    }
+
     // If score changed and was already published
-    const scoreChanged = homeScore !== match.homeScore || awayScore !== match.awayScore;
+    const scoreChanged =
+      homeScore !== match.homeScore ||
+      awayScore !== match.awayScore ||
+      halfTimeHomeScore !== match.halfTimeHomeScore ||
+      halfTimeAwayScore !== match.halfTimeAwayScore;
     const wasPublished = match.publicationStatus === 'Published';
 
     if (scoreChanged && wasPublished) {
@@ -2868,6 +3007,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
       ...match,
       homeScore,
       awayScore,
+      halfTimeHomeScore,
+      halfTimeAwayScore,
       status: matchStatus,
       lineupStatus: safetyReason ? 'Needs Review' : 'Complete', // reset to review if modified with reason
     };
@@ -2901,14 +3042,17 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
       <div className="grid-12">
         {/* Left Side: Scores and Safety check info */}
         <div className="card" style={{ gridColumn: 'span 7' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Skor Akhir & Status</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Skor Half Time, Full Time & Status</h3>
 
           <div className="flex align-center justify-between" style={{ padding: '24px 0', borderBottom: '1px solid var(--neutral-100)' }}>
             {/* Home score */}
             <div style={{ textAlign: 'center', flex: 1 }}>
               <div style={{ fontSize: 36 }}>{match.homeLogo}</div>
               <div className="semibold" style={{ fontSize: 15, margin: '8px 0' }}>{match.homeClubName}</div>
-              <input type="number" className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={homeScore} onChange={(e) => setHomeScore(Number(e.target.value))} />
+              <label className="form-label" style={{ textAlign: 'center', marginTop: 10 }}>HT</label>
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeHomeScore} onChange={(e) => setHalfTimeHomeScore(Number(e.target.value))} />
+              <label className="form-label" style={{ textAlign: 'center' }}>FT</label>
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={homeScore} onChange={(e) => setHomeScore(Number(e.target.value))} />
             </div>
 
             <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--neutral-300)' }}>VS</div>
@@ -2917,7 +3061,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
             <div style={{ textAlign: 'center', flex: 1 }}>
               <div style={{ fontSize: 36 }}>{match.awayLogo}</div>
               <div className="semibold" style={{ fontSize: 15, margin: '8px 0' }}>{match.awayClubName}</div>
-              <input type="number" className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={awayScore} onChange={(e) => setAwayScore(Number(e.target.value))} />
+              <label className="form-label" style={{ textAlign: 'center', marginTop: 10 }}>HT</label>
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeAwayScore} onChange={(e) => setHalfTimeAwayScore(Number(e.target.value))} />
+              <label className="form-label" style={{ textAlign: 'center' }}>FT</label>
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={awayScore} onChange={(e) => setAwayScore(Number(e.target.value))} />
             </div>
           </div>
 
@@ -3087,6 +3234,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
                 {match.awayClubName.split(' ')[0]}
               </span>
             </div>
+          </div>
+
+          <div style={{ zIndex: 2, textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8', marginTop: -8, marginBottom: 10 }}>
+            HT {halfTimeHomeScore} - {halfTimeAwayScore}
           </div>
 
           {/* Goals Timeline */}

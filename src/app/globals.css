@@ -86,10 +86,12 @@ a {
   top: 0;
   height: 100vh;
   z-index: 100;
+  overflow: hidden;
 }
 
 .sidebar-logo {
-  padding: 24px;
+  min-height: 78px;
+  padding: 18px 16px;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -102,29 +104,49 @@ a {
 
 .sidebar-menu {
   flex: 1;
-  padding: 16px 0;
+  padding: 12px 8px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--navy-800) transparent;
 }
 
 .menu-category {
   font-size: 11px;
   text-transform: uppercase;
   color: var(--neutral-500);
-  padding: 8px 24px;
+  padding: 14px 12px 6px;
   font-weight: 600;
   letter-spacing: 0.05em;
 }
 
 .menu-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 24px;
+  padding: 10px 12px;
   color: var(--neutral-300);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
   border-left: 3px solid transparent;
+  border-radius: var(--radius-md);
+  text-align: left;
+  min-height: 40px;
+}
+
+.menu-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-item svg {
+  flex-shrink: 0;
 }
 
 .menu-item:hover {
@@ -143,12 +165,46 @@ a {
 }
 
 .sidebar-footer {
-  padding: 16px 24px;
+  min-height: 66px;
+  padding: 14px 16px;
   border-top: 1px solid var(--navy-900);
   background-color: #111417;
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.sidebar[style*="72px"] .sidebar-logo,
+.sidebar[style*="72px"] .sidebar-footer {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.sidebar[style*="72px"] .menu-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.mobile-drawer-menu {
+  padding: 12px 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mobile-drawer-category {
+  display: block;
+  padding-left: 12px;
+}
+
+.mobile-drawer-item {
+  flex-direction: row;
+  border-left: 3px solid transparent;
+  border-top: none;
+}
+
+.mobile-drawer-item span {
+  display: inline;
+  font-size: 14px;
 }
 
 /* Main Content Area */
@@ -463,6 +519,84 @@ a {
   gap: 24px;
 }
 
+.schedule-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.schedule-flow-card {
+  background: var(--white);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.schedule-flow-card svg {
+  color: var(--primary-600);
+}
+
+.schedule-flow-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--neutral-500);
+  font-weight: 600;
+}
+
+.schedule-flow-card strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--neutral-950);
+}
+
+.competition-schedule-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.competition-schedule-pill {
+  border: 1px solid var(--neutral-200);
+  background: var(--white);
+  color: var(--neutral-700);
+  border-radius: var(--radius-md);
+  min-height: 36px;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.competition-schedule-pill strong {
+  min-width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+  font-size: 11px;
+}
+
+.competition-schedule-pill.active {
+  border-color: var(--primary-600);
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
 /* Utility styles */
 .flex { display: flex; }
 .align-center { align-items: center; }
@@ -672,6 +806,35 @@ a {
     max-width: 100%;
   }
 
+  .mobile-drawer-menu {
+    padding: 12px 8px;
+  }
+
+  .mobile-drawer-category {
+    display: block;
+  }
+
+  .mobile-drawer-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-left: 3px solid transparent;
+    border-top: none;
+    text-align: left;
+  }
+
+  .mobile-drawer-item.active {
+    border-left-color: var(--primary-600);
+    border-top-color: transparent;
+  }
+
+  .mobile-drawer-item span {
+    display: inline;
+    font-size: 14px;
+    max-width: none;
+  }
+
   .sidebar-footer {
     display: none;
   }
@@ -713,6 +876,10 @@ a {
   .grid-12 {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .schedule-flow-grid {
+    grid-template-columns: 1fr;
   }
 
   .grid-12 > [style*="gridColumn"],
