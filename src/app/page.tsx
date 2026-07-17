@@ -2221,18 +2221,18 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   };
 
   const renderStoryFlag = (player: Player, width: number, height: number, fontSize: number) => {
-    const flagUrl = resolvePlayerFlagUrl(player);
-    if (flagUrl) {
-      return <img src={flagUrl} crossOrigin="anonymous" alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
-    }
-
     const flagEmoji = resolvePlayerFlagEmoji(player);
     if (flagEmoji) {
       return (
-        <span style={{ width, fontSize, lineHeight: 1, flexShrink: 0, textAlign: 'center' }}>
+        <span style={{ width, fontSize, lineHeight: 1, flexShrink: 0, textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           {flagEmoji}
         </span>
       );
+    }
+
+    const flagUrl = resolvePlayerFlagUrl(player);
+    if (flagUrl) {
+      return <img src={flagUrl} crossOrigin="anonymous" alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
     }
 
     return <span style={{ fontSize, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span>;
@@ -2811,12 +2811,9 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
 
                   <div style={{ fontSize: 7, color: '#3a3a3a', marginTop: 1 }}>{venueName}</div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 58, height: 34, objectFit: 'contain' }} />
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
-                    <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{APP_HANDLE}</div>
-                  </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
+                  <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{APP_HANDLE}</div>
                 </div>
               </div>
 
