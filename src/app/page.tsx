@@ -663,11 +663,15 @@ export default function Home() {
               <div style={{ position: 'relative' }}>
                 <button className="btn btn-sm btn-primary" onClick={() => {
                   if (activeMenu === 'schedule') setEditingScheduleId('new');
-                  else if (activeMenu === 'lineups') setEditingLineupId('new');
+                  else if (activeMenu === 'lineups') {
+                    setActiveMenu('schedule');
+                    setEditingScheduleId('new');
+                    triggerToast('Buat jadwal pertandingan terlebih dahulu. Lineup mengikuti ID jadwal.', 'warning');
+                  }
                   else if (activeMenu === 'results') {
-                    const readyMatch = matches.find(m => m.lineupStatus === 'Complete' && ['Live', 'Finished'].includes(m.status));
+                    const readyMatch = matches.find(m => m.lineupStatus === 'Complete' && m.status === 'Live');
                     if (readyMatch) setEditingResultId(readyMatch.id);
-                    else triggerToast('Buat dan lengkapi lineup pada hari H sebelum input hasil.', 'warning');
+                    else triggerToast('Input hasil hanya tersedia untuk pertandingan Live yang lineup-nya lengkap.', 'warning');
                   }
                   else if (activeMenu === 'rumors') setEditingRumorId('new');
                   else if (activeMenu === 'clubs') setEditingClubId('new');
@@ -2187,10 +2191,17 @@ interface LineupsListProps {
   hasPermission: (module: string, action: any) => boolean;
 }
 
-function LineupsListView({ matches, competitions, onCreateNew, onEdit, onDelete, hasPermission }: LineupsListProps) {
+function LineupsListView({ matches, competitions, onEdit, hasPermission }: LineupsListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedComp, setSelectedComp] = useState('Semua');
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const lineupStatusLabel = (match: Match) => {
+    if (match.status === 'Finished') return 'Selesai';
+    return match.lineupStatus === 'Complete' ? 'Siap' : match.lineupStatus === 'Needs Review' ? 'Review' : 'Belum';
+  };
+  const lineupStatusClass = (match: Match) => {
+    if (match.status === 'Finished') return 'badge-success';
+    return match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+  };
 
   const filteredMatches = matches.filter(match => {
     const matchName = `${match.homeClubName} vs ${match.awayClubName}`.toLowerCase();
@@ -2209,11 +2220,6 @@ function LineupsListView({ matches, competitions, onCreateNew, onEdit, onDelete,
           <h1 className="page-title">Lineup Pertandingan</h1>
           <p className="page-description">Kelola susunan pemain, formasi, dan cadangan untuk setiap pertandingan.</p>
         </div>
-        {hasPermission('Lineup', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={onCreateNew}>
-            <Plus size={16} /> Buat Lineup
-          </button>
-        )}
       </div>
 
       {/* Filter Bar */}
@@ -2246,10 +2252,7 @@ function LineupsListView({ matches, competitions, onCreateNew, onEdit, onDelete,
         <div className="card" style={{ padding: 48, textAlign: 'center' }}>
           <AlertCircle size={32} color="var(--neutral-500)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Belum ada lineup</h3>
-          <p className="text-muted" style={{ marginBottom: 16 }}>Buat lineup baru atau ubah filter.</p>
-          {hasPermission('Lineup', 'create_edit') && (
-            <button className="btn btn-sm btn-primary" onClick={onCreateNew}>Buat Lineup</button>
-          )}
+          <p className="text-muted" style={{ marginBottom: 16 }}>Buat jadwal pertandingan terlebih dahulu, lalu kelola lineup dari ID jadwal tersebut.</p>
         </div>
       ) : (
         <div className="table-wrapper">
@@ -2280,14 +2283,15 @@ function LineupsListView({ matches, competitions, onCreateNew, onEdit, onDelete,
                       <span className="semibold" style={{ fontSize: 13 }}>{match.awayClubName}</span>
                     </div>
                     <div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>{match.venue}</div>
+                    <div className="text-muted" style={{ fontSize: 10, marginTop: 2 }}>ID Jadwal: {match.id}</div>
                   </td>
                   <td style={{ fontSize: 12 }}>{match.competition}</td>
                   <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
                     {new Date(match.kickoff).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
                   </td>
                   <td>
-                    <span className={`badge ${match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`}>
-                      {match.lineupStatus}
+                    <span className={`badge ${lineupStatusClass(match)}`}>
+                      {lineupStatusLabel(match)}
                     </span>
                   </td>
                   <td>
@@ -2296,24 +2300,11 @@ function LineupsListView({ matches, competitions, onCreateNew, onEdit, onDelete,
                     </span>
                   </td>
                   <td className="text-right">
-                    <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                    {match.status !== 'Finished' && hasPermission('Lineup', 'create_edit') && (
                       <button className="btn btn-sm btn-primary" onClick={() => onEdit(match.id)}>
                         <Edit size={13} /> Edit
                       </button>
-                      {(
-                        confirmDeleteId === match.id ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
-                            <button className="btn btn-sm btn-danger" onClick={() => { onDelete(match.id); setConfirmDeleteId(null); }}>Ya</button>
-                            <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
-                          </span>
-                        ) : (
-                          <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(match.id)}>
-                            <Trash2 size={13} />
-                          </button>
-                        )
-                      )}
-                    </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -3314,6 +3305,14 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
     .filter(match => selectedComp === 'Semua' || match.competition === selectedComp)
     .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
   const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
+  const lineupStatusLabel = (match: Match) => {
+    if (match.status === 'Finished') return 'Selesai';
+    return match.lineupStatus === 'Complete' ? 'Siap' : match.lineupStatus === 'Needs Review' ? 'Review' : 'Belum';
+  };
+  const lineupStatusClass = (match: Match) => {
+    if (match.status === 'Finished') return 'badge-success';
+    return match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -3354,7 +3353,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
           </thead>
           <tbody>
             {filteredMatches.map(match => {
-              const canInputResult = match.lineupStatus === 'Complete' || match.status === 'Finished';
+              const canInputResult = match.status === 'Live' && match.lineupStatus === 'Complete';
               return (
                 <tr key={match.id}>
                   <td>
@@ -3367,6 +3366,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                         ? <img src={match.awayLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
                         : <span style={{ fontSize: 20 }}>{match.awayLogo}</span>}
                     </div>
+                    <div className="text-muted" style={{ fontSize: 10, marginTop: 2 }}>ID Jadwal: {match.id}</div>
                   </td>
                   <td>{match.competition}</td>
                   <td>
@@ -3389,8 +3389,8 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                     </span>
                   </td>
                   <td>
-                    <span className={`badge ${match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`}>
-                      {match.lineupStatus}
+                    <span className={`badge ${lineupStatusClass(match)}`}>
+                      {lineupStatusLabel(match)}
                     </span>
                   </td>
                   <td>
@@ -3399,9 +3399,11 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                     </span>
                   </td>
                   <td className="text-right">
-                    <button className="btn btn-sm btn-secondary" disabled={!canInputResult || !hasPermission('Match Result', 'create_edit')} title={canInputResult ? 'Input hasil HT/FT' : 'Lengkapi lineup atau selesaikan pertandingan terlebih dahulu'} onClick={() => onEdit(match.id)}>
-                      Input HT/FT
-                    </button>
+                    {match.status !== 'Finished' && hasPermission('Match Result', 'create_edit') && (
+                      <button className="btn btn-sm btn-secondary" disabled={!canInputResult} title={canInputResult ? 'Input hasil HT/FT' : 'Input hasil tersedia saat pertandingan Live dan lineup lengkap'} onClick={() => onEdit(match.id)}>
+                        Input HT/FT
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -3776,7 +3778,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       halfTimeHomeScore: halfTimeHomeScore === '' ? null : (halfTimeHomeScore as any),
       halfTimeAwayScore: halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any),
       status: matchStatus,
-      lineupStatus: safetyReason ? 'Needs Review' : 'Complete', // reset to review if modified with reason
+      lineupStatus: matchStatus === 'Finished' ? 'Complete' : safetyReason ? 'Needs Review' : 'Complete',
     };
     if (safetyReason) {
       logAction('SAFETY_TRIGGERED', 'Match Result', `Perubahan skor oleh admin. Alasan: "${safetyReason}"`);
