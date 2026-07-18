@@ -2462,6 +2462,8 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const [awayAsing, setAwayAsing] = useState<AsingEntry[]>(existingMatch?.awayAsing || []);
   const [homeAsingInput, setHomeAsingInput] = useState({ name: '', no: '', pos: 'FW' });
   const [awayAsingInput, setAwayAsingInput] = useState({ name: '', no: '', pos: 'FW' });
+  const [homePlayerSearch, setHomePlayerSearch] = useState('');
+  const [awayPlayerSearch, setAwayPlayerSearch] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isExportingStory, setIsExportingStory] = useState(false);
   const isPublishedLineup = existingMatch?.publicationStatus === 'Published';
@@ -2487,6 +2489,19 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
   const homeHasGK = homeSquad.some(p => homeStarters.includes(p.id) && p.position === 'Goalkeeper');
   const awayHasGK = awaySquad.some(p => awayStarters.includes(p.id) && p.position === 'Goalkeeper');
   const posLabel: Record<string, string> = { Goalkeeper: 'GK', Defender: 'DF', Midfielder: 'MF', Forward: 'FW' };
+  const matchesPlayerSearch = (player: Player, query: string) => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return true;
+
+    return [
+      player.displayName,
+      player.fullName,
+      String(player.shirtNumber),
+      player.position,
+      posLabel[player.position],
+      player.nationality,
+    ].some(value => (value || '').toLowerCase().includes(normalizedQuery));
+  };
 
   // Klik dari pool -> masuk slot yang tepat otomatis
   const pickPlayer = (
@@ -2898,6 +2913,9 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const hasGK       = squad.some(p => starters.includes(p.id) && p.position === 'Goalkeeper');
     // Pool: hanya pemain yang belum dipilih (tidak ada di starters/subs)
     const pool = squad.filter(p => !starters.includes(p.id) && !subs.includes(p.id));
+    const playerSearch = isHome ? homePlayerSearch : awayPlayerSearch;
+    const setPlayerSearch = isHome ? setHomePlayerSearch : setAwayPlayerSearch;
+    const filteredPool = pool.filter(player => matchesPlayerSearch(player, playerSearch));
     const starterList = squad.filter(p => starters.includes(p.id))
       .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)
                    - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position));
@@ -2907,7 +2925,7 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
     const fDibawa = fSt + fSub; // total asing dibawa per pertandingan
 
     // Asing di pool = terdaftar di squad tapi tidak dibawa ke match (tidak masuk DSP pertandingan)
-    const foreignPool = pool.filter(p => p.nationality !== 'Indonesia');
+    const foreignPool = filteredPool.filter(p => p.nationality !== 'Indonesia');
     return (
       <div className="lineup-team-panel">
         {/* Header */}
@@ -2932,7 +2950,18 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
           {/* â”€â”€ KOLOM 1: POOL (pemain belum dipilih) â”€â”€ */}
           <div className="lineup-col">
             <div className="lineup-col-header">
-              Daftar Pemain ({pool.length})
+              Daftar Pemain ({playerSearch.trim() ? `${filteredPool.length}/${pool.length}` : pool.length})
+            </div>
+            <div className="search-input-wrapper" style={{ maxWidth: '100%', marginBottom: 8 }}>
+              <Search size={13} className="search-icon" />
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Cari nama, no, posisi..."
+                value={playerSearch}
+                onChange={(e) => setPlayerSearch(e.target.value)}
+                style={{ height: 34, fontSize: 12 }}
+              />
             </div>
             <div style={{ fontSize: 10, color: 'var(--neutral-400)', marginBottom: 8, lineHeight: 1.4 }}>
               Klik nama = masuk Starting XI otomatis.
@@ -2943,8 +2972,13 @@ function LineupEditorView({ matchId, clubs, players, matches, competitions, onCl
                 Semua pemain sudah dipilih
               </div>
             )}
+            {pool.length > 0 && filteredPool.length === 0 && (
+              <div style={{ textAlign: 'center', color: 'var(--neutral-400)', fontSize: 12, padding: '16px 0' }}>
+                Pemain tidak ditemukan
+              </div>
+            )}
             {['Goalkeeper','Defender','Midfielder','Forward'].map(pos => {
-              const pp = pool.filter(p => p.position === pos);
+              const pp = filteredPool.filter(p => p.position === pos);
               if (!pp.length) return null;
               return (
                 <div key={pos} className="pool-pos-group" style={{ marginBottom: 10 }}>
@@ -3964,7 +3998,19 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const [newEventMinute, setNewEventMinute] = useState(45);
   const [newEventType, setNewEventType] = useState<'goal' | 'yellow_card' | 'red_card' | 'substitution'>('goal');
   const [newEventPlayer, setNewEventPlayer] = useState('');
+  const [newEventPlayerSearch, setNewEventPlayerSearch] = useState('');
   const [newEventClub, setNewEventClub] = useState(match.homeClubId);
+  const getFilteredLineupPlayersForClub = (clubId: string) => {
+    const normalizedQuery = newEventPlayerSearch.trim().toLowerCase();
+    const lineupPlayers = getLineupPlayersForClub(clubId);
+    if (!normalizedQuery) return lineupPlayers;
+
+    return lineupPlayers.filter(player => [
+      player.name,
+      String(player.number || ''),
+      player.isForeign ? 'asing' : '',
+    ].some(value => value.toLowerCase().includes(normalizedQuery)));
+  };
 
   const addEvent = () => {
     if (!newEventPlayer) {
@@ -4337,6 +4383,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   onChange={(e) => {
                     setNewEventClub(e.target.value);
                     setNewEventPlayer(''); // Reset selected player when club changes
+                    setNewEventPlayerSearch('');
                   }}
                 >
                   <option value={match.homeClubId}>{match.homeClubName}</option>
@@ -4345,18 +4392,32 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               </div>
               <div style={{ gridColumn: 'span 6' }}>
                 <label className="form-label" style={{ fontSize: 11 }}>Nama Pemain</label>
+                <div className="search-input-wrapper" style={{ maxWidth: '100%', marginBottom: 8 }}>
+                  <Search size={13} className="search-icon" />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Cari pemain..."
+                    value={newEventPlayerSearch}
+                    onChange={(e) => setNewEventPlayerSearch(e.target.value)}
+                    style={{ height: 34, fontSize: 12 }}
+                  />
+                </div>
                 <select 
                   className="form-select" 
                   value={newEventPlayer} 
                   onChange={(e) => setNewEventPlayer(e.target.value)}
                 >
                   <option value="">-- Pilih Pemain --</option>
-                  {getLineupPlayersForClub(newEventClub).map(p => (
+                  {getFilteredLineupPlayersForClub(newEventClub).map(p => (
                     <option key={p.id} value={p.name}>
                       {p.name} {p.number ? `(#${p.number})` : ''} {p.isForeign ? '(Asing)' : ''}
                     </option>
                   ))}
                 </select>
+                {getFilteredLineupPlayersForClub(newEventClub).length === 0 && (
+                  <div className="text-muted" style={{ fontSize: 11, marginTop: 6 }}>Pemain tidak ditemukan</div>
+                )}
               </div>
             </div>
 
