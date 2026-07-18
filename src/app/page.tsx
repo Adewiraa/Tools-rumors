@@ -3310,7 +3310,7 @@ interface MatchResultsListProps {
 function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: MatchResultsListProps) {
   const [selectedComp, setSelectedComp] = useState('Semua');
   const filteredMatches = matches
-    .filter(match => match.lineupStatus === 'Complete')
+    .filter(match => match.lineupStatus === 'Complete' || match.status === 'Finished')
     .filter(match => selectedComp === 'Semua' || match.competition === selectedComp)
     .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
   const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
@@ -3354,7 +3354,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
           </thead>
           <tbody>
             {filteredMatches.map(match => {
-              const canInputResult = match.lineupStatus === 'Complete';
+              const canInputResult = match.lineupStatus === 'Complete' || match.status === 'Finished';
               return (
                 <tr key={match.id}>
                   <td>
@@ -3399,7 +3399,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                     </span>
                   </td>
                   <td className="text-right">
-                    <button className="btn btn-sm btn-secondary" disabled={!canInputResult || !hasPermission('Match Result', 'create_edit')} title={canInputResult ? 'Input hasil HT/FT' : 'Lengkapi lineup terlebih dahulu'} onClick={() => onEdit(match.id)}>
+                    <button className="btn btn-sm btn-secondary" disabled={!canInputResult || !hasPermission('Match Result', 'create_edit')} title={canInputResult ? 'Input hasil HT/FT' : 'Lengkapi lineup atau selesaikan pertandingan terlebih dahulu'} onClick={() => onEdit(match.id)}>
                       Input HT/FT
                     </button>
                   </td>
