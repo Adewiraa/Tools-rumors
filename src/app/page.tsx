@@ -2320,15 +2320,15 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
       )}
       {previewMatch && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: 520 }}>
-            <div className="flex justify-between align-center" style={{ marginBottom: 16 }}>
+          <div className="modal-content output-preview-modal">
+            <div className="output-preview-header">
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Gambar Lineup</h3>
-                <div className="text-muted" style={{ fontSize: 12 }}>{previewMatch.homeClubName} vs {previewMatch.awayClubName} - ID Jadwal: {previewMatch.id}</div>
+                <h3 className="output-preview-title">Gambar Lineup</h3>
+                <div className="output-preview-meta">{previewMatch.homeClubName} vs {previewMatch.awayClubName} - ID Jadwal: {previewMatch.id}</div>
               </div>
-              <button className="btn btn-sm btn-secondary" onClick={() => setPreviewMatch(null)}><X size={14} /> Tutup</button>
+              <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className="output-preview-stage">
               <PublishedLineupStoryCard
                 match={previewMatch}
                 players={players}
@@ -3445,15 +3445,15 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
       </div>
       {timelineMatch && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: 560 }}>
-            <div className="flex justify-between align-center" style={{ marginBottom: 16 }}>
+          <div className="modal-content output-preview-modal">
+            <div className="output-preview-header">
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Gambar Hasil Pertandingan</h3>
-                <div className="text-muted" style={{ fontSize: 12 }}>{timelineMatch.homeClubName} vs {timelineMatch.awayClubName} - ID Jadwal: {timelineMatch.id}</div>
+                <h3 className="output-preview-title">Gambar Hasil Pertandingan</h3>
+                <div className="output-preview-meta">{timelineMatch.homeClubName} vs {timelineMatch.awayClubName} - ID Jadwal: {timelineMatch.id}</div>
               </div>
-              <button className="btn btn-sm btn-secondary" onClick={() => setTimelineMatch(null)}><X size={14} /> Tutup</button>
+              <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setTimelineMatch(null)}><X size={16} /></button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className="output-preview-stage">
               <ResultOutputGraphicCard
                 match={timelineMatch}
                 competitions={competitions}
