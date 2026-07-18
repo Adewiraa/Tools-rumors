@@ -4014,6 +4014,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const [newEventType, setNewEventType] = useState<'goal' | 'yellow_card' | 'red_card' | 'substitution'>('goal');
   const [newEventPlayer, setNewEventPlayer] = useState('');
   const [newEventPlayerSearch, setNewEventPlayerSearch] = useState('');
+  const [isEventPlayerSelectOpen, setIsEventPlayerSelectOpen] = useState(false);
   const [newEventClub, setNewEventClub] = useState(match.homeClubId);
   const getFilteredLineupPlayersForClub = (clubId: string) => {
     const normalizedQuery = newEventPlayerSearch.trim().toLowerCase();
@@ -4026,6 +4027,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       player.isForeign ? 'asing' : '',
     ].some(value => value.toLowerCase().includes(normalizedQuery)));
   };
+  const eventPlayerOptions = getFilteredLineupPlayersForClub(newEventClub);
 
   const addEvent = () => {
     if (!newEventPlayer) {
@@ -4399,6 +4401,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                     setNewEventClub(e.target.value);
                     setNewEventPlayer(''); // Reset selected player when club changes
                     setNewEventPlayerSearch('');
+                    setIsEventPlayerSelectOpen(false);
                   }}
                 >
                   <option value={match.homeClubId}>{match.homeClubName}</option>
@@ -4407,32 +4410,80 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               </div>
               <div style={{ gridColumn: 'span 6' }}>
                 <label className="form-label" style={{ fontSize: 11 }}>Nama Pemain</label>
-                <div className="search-input-wrapper" style={{ maxWidth: '100%', marginBottom: 8 }}>
-                  <Search size={13} className="search-icon" />
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Cari pemain..."
-                    value={newEventPlayerSearch}
-                    onChange={(e) => setNewEventPlayerSearch(e.target.value)}
-                    style={{ height: 34, fontSize: 12 }}
-                  />
+                <div style={{ position: 'relative' }}>
+                  <div className="search-input-wrapper" style={{ maxWidth: '100%' }}>
+                    <Search size={13} className="search-icon" />
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Ketik nama / nomor pemain..."
+                      value={newEventPlayerSearch}
+                      onFocus={() => setIsEventPlayerSelectOpen(true)}
+                      onBlur={() => setTimeout(() => setIsEventPlayerSelectOpen(false), 120)}
+                      onChange={(e) => {
+                        setNewEventPlayerSearch(e.target.value);
+                        setNewEventPlayer('');
+                        setIsEventPlayerSelectOpen(true);
+                      }}
+                      style={{ height: 40, fontSize: 12 }}
+                    />
+                  </div>
+                  {isEventPlayerSelectOpen && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        top: 'calc(100% + 4px)',
+                        zIndex: 60,
+                        backgroundColor: 'var(--white)',
+                        border: '1px solid var(--neutral-200)',
+                        borderRadius: 8,
+                        boxShadow: '0 12px 28px rgba(15, 23, 42, 0.14)',
+                        maxHeight: 210,
+                        overflowY: 'auto',
+                        padding: 4,
+                      }}
+                    >
+                      {eventPlayerOptions.length === 0 ? (
+                        <div className="text-muted" style={{ fontSize: 12, padding: '10px 12px' }}>Pemain tidak ditemukan</div>
+                      ) : (
+                        eventPlayerOptions.map(player => (
+                          <button
+                            key={player.id}
+                            type="button"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              setNewEventPlayer(player.name);
+                              setNewEventPlayerSearch(`${player.name}${player.number ? ` (#${player.number})` : ''}`);
+                              setIsEventPlayerSelectOpen(false);
+                            }}
+                            style={{
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 10,
+                              border: 'none',
+                              background: newEventPlayer === player.name ? 'var(--primary-50)' : 'transparent',
+                              color: 'var(--neutral-900)',
+                              cursor: 'pointer',
+                              padding: '8px 10px',
+                              borderRadius: 6,
+                              textAlign: 'left',
+                              fontSize: 12,
+                            }}
+                          >
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.name}</span>
+                            <span className="text-muted" style={{ fontSize: 11, flexShrink: 0 }}>
+                              {player.number ? `#${player.number}` : ''}{player.isForeign ? ' Asing' : ''}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
-                <select 
-                  className="form-select" 
-                  value={newEventPlayer} 
-                  onChange={(e) => setNewEventPlayer(e.target.value)}
-                >
-                  <option value="">-- Pilih Pemain --</option>
-                  {getFilteredLineupPlayersForClub(newEventClub).map(p => (
-                    <option key={p.id} value={p.name}>
-                      {p.name} {p.number ? `(#${p.number})` : ''} {p.isForeign ? '(Asing)' : ''}
-                    </option>
-                  ))}
-                </select>
-                {getFilteredLineupPlayersForClub(newEventClub).length === 0 && (
-                  <div className="text-muted" style={{ fontSize: 11, marginTop: 6 }}>Pemain tidak ditemukan</div>
-                )}
               </div>
             </div>
 
