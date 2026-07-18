@@ -3673,10 +3673,12 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
     const isHtHomeFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined;
     const isHtAwayFilled = halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined;
 
-    if ((isHtHomeFilled && isFtHomeFilled && (halfTimeHomeScore as number) > (homeScore as number)) ||
-        (isHtAwayFilled && isFtAwayFilled && (halfTimeAwayScore as number) > (awayScore as number))) {
-      triggerToast('Skor half time tidak boleh lebih besar dari skor akhir.', 'error');
-      return;
+    if (showFullTime) {
+      if ((isHtHomeFilled && isFtHomeFilled && (halfTimeHomeScore as number) > (homeScore as number)) ||
+          (isHtAwayFilled && isFtAwayFilled && (halfTimeAwayScore as number) > (awayScore as number))) {
+        triggerToast('Skor half time tidak boleh lebih besar dari skor akhir.', 'error');
+        return;
+      }
     }
 
     // Goal count validation on save
