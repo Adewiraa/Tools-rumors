@@ -798,7 +798,7 @@ a {
 }
 
 .output-preview-modal {
-  max-width: min(760px, calc(100vw - 48px));
+  max-width: min(980px, calc(100vw - 48px));
   padding: 0;
   overflow: hidden;
   border-radius: 18px;
@@ -852,6 +852,29 @@ a {
 
 .output-preview-stage > * {
   flex-shrink: 0;
+}
+
+.output-preview-gallery {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.output-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.output-preview-item-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--neutral-600);
 }
 
 /* Search bar styling */

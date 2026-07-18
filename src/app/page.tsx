@@ -3454,11 +3454,29 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
               <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setTimelineMatch(null)}><X size={16} /></button>
             </div>
             <div className="output-preview-stage">
-              <ResultOutputGraphicCard
-                match={timelineMatch}
-                competitions={competitions}
-                elementId={`result-output-card-${timelineMatch.id}`}
-              />
+              <div className="output-preview-gallery">
+                {timelineMatch.halfTimeHomeScore !== undefined && timelineMatch.halfTimeHomeScore !== null &&
+                  timelineMatch.halfTimeAwayScore !== undefined && timelineMatch.halfTimeAwayScore !== null && (
+                    <div className="output-preview-item">
+                      <div className="output-preview-item-label">Half Time</div>
+                      <ResultOutputGraphicCard
+                        match={timelineMatch}
+                        competitions={competitions}
+                        elementId={`result-output-card-${timelineMatch.id}-ht`}
+                        graphicType="HT"
+                      />
+                    </div>
+                  )}
+                <div className="output-preview-item">
+                  <div className="output-preview-item-label">Full Time</div>
+                  <ResultOutputGraphicCard
+                    match={timelineMatch}
+                    competitions={competitions}
+                    elementId={`result-output-card-${timelineMatch.id}-ft`}
+                    graphicType="FT"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3467,19 +3485,20 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
   );
 }
 
-function ResultOutputGraphicCard({ match, competitions, elementId }: {
+function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }: {
   match: Match;
   competitions: Competition[];
   elementId: string;
+  graphicType: 'HT' | 'FT';
 }) {
   type TimelineOutputEvent = { id?: string; minute?: number; type?: string; playerName?: string; clubId?: string };
   const events = Array.isArray(match.timeline)
     ? (match.timeline as TimelineOutputEvent[]).slice().sort((a, b) => (a.minute || 0) - (b.minute || 0))
     : [];
-  const goalEvents = events.filter(event => event.type === 'goal');
+  const goalEvents = events.filter(event => event.type === 'goal' && (graphicType === 'FT' || (event.minute || 0) <= 45));
   const comp = competitions.find(c => c.name === match.competition);
-  const scoreHome = match.homeScore ?? 0;
-  const scoreAway = match.awayScore ?? 0;
+  const scoreHome = graphicType === 'HT' ? match.halfTimeHomeScore ?? 0 : match.homeScore ?? 0;
+  const scoreAway = graphicType === 'HT' ? match.halfTimeAwayScore ?? 0 : match.awayScore ?? 0;
   const hasHalfTimeScore = match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null &&
     match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null;
   const renderLogo = (logo: string, fallback: string) => (
@@ -3531,7 +3550,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId }: {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            FULL TIME
+            {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
           </span>
           <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain' }} />
         </div>
@@ -3577,7 +3596,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId }: {
         </div>
 
         <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#888', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>
-          {hasHalfTimeScore
+          {graphicType === 'FT' && hasHalfTimeScore
             ? `HALF TIME: ${match.halfTimeHomeScore} - ${match.halfTimeAwayScore}`
             : (match.venue || 'Stadion Pertandingan')}
         </div>
