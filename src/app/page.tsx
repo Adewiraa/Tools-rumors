@@ -3481,6 +3481,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const [graphicType, setGraphicType] = useState<'HT' | 'FT'>('HT');
   const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [isExportingGraphic, setIsExportingGraphic] = useState(false);
   const isHtScoresFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined && halfTimeHomeScore !== null &&
                           halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined && halfTimeAwayScore !== null;
 
@@ -3520,6 +3521,74 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
     });
 
     return list;
+  };
+  const shareResultGraphic = async () => {
+    const node = document.getElementById('match-feed-card');
+    if (!node) return;
+    try {
+      setIsExportingGraphic(true);
+      triggerToast('Membuat gambar untuk dibagikan...');
+      const dataUrl = await htmlToImage.toPng(node, {
+        cacheBust: true,
+        pixelRatio: 2.7,
+      });
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const fileName = `Result_${graphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const file = new File([blob], fileName, { type: 'image/png' });
+      
+      const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+      const shareData: ShareData = {
+        files: [file],
+        title: `${match.homeClubName} vs ${match.awayClubName}`,
+        text: `Hasil pertandingan ${match.homeClubName} vs ${match.awayClubName}`,
+      };
+
+      if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
+        await nav.share(shareData);
+        triggerToast('Gambar siap dibagikan.');
+        return;
+      }
+
+      // Fallback to download
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Bagikan langsung tidak didukung di perangkat ini. Gambar diunduh sebagai fallback.', 'warning');
+    } catch (err) {
+      const error = err as { name?: string };
+      if (error?.name !== 'AbortError') {
+        console.error('Failed to share result graphic:', err);
+        triggerToast('Gagal membagikan gambar.', 'error');
+      }
+    } finally {
+      setIsExportingGraphic(false);
+    }
+  };
+
+  const downloadResultGraphic = async () => {
+    const node = document.getElementById('match-feed-card');
+    if (!node) return;
+    try {
+      setIsExportingGraphic(true);
+      triggerToast('Mengunduh gambar...');
+      const dataUrl = await htmlToImage.toPng(node, {
+        cacheBust: true,
+        pixelRatio: 2.7,
+      });
+      const fileName = `Result_${graphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Gambar berhasil diunduh!');
+    } catch (err) {
+      console.error('Failed to download result graphic:', err);
+      triggerToast('Gagal mengunduh gambar.', 'error');
+    } finally {
+      setIsExportingGraphic(false);
+    }
   };
 
   // Form event handlers
@@ -3964,32 +4033,25 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               </div>
             </div>
 
-            {/* Download Button */}
-            <button
-              className="btn btn-md btn-primary"
-              style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
-              onClick={async () => {
-                const node = document.getElementById('match-feed-card');
-                if (!node) return;
-                try {
-                  triggerToast(`Sedang membuat gambar Instagram (${graphicRatio})...`);
-                  const dataUrl = await htmlToImage.toPng(node, {
-                    cacheBust: true,
-                    pixelRatio: 2.7, // High resolution export
-                  });
-                  const link = document.createElement('a');
-                  link.download = `Result_${graphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`;
-                  link.href = dataUrl;
-                  link.click();
-                  triggerToast('Gambar berhasil diunduh!');
-                } catch (err) {
-                  console.error(err);
-                  triggerToast('Gagal mengunduh gambar.');
-                }
-              }}
-            >
-              Unduh Gambar Feed ({graphicRatio} - {graphicType === 'HT' ? 'Half Time' : 'Full Time'})
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-12" style={{ width: '100%' }}>
+              <button
+                className="btn btn-md btn-primary flex-1 flex align-center justify-center gap-8"
+                style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
+                onClick={shareResultGraphic}
+                disabled={isExportingGraphic}
+              >
+                <Share2 size={16} /> Bagikan Gambar ({graphicType})
+              </button>
+              <button
+                className="btn btn-md btn-secondary flex-1 flex align-center justify-center gap-8"
+                style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
+                onClick={downloadResultGraphic}
+                disabled={isExportingGraphic}
+              >
+                <Download size={16} /> Unduh PNG ({graphicRatio})
+              </button>
+            </div>
 
             {/* IG Feed Graphic Canvas */}
             <div 
