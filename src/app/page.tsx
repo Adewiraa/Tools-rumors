@@ -61,7 +61,7 @@ type UserRole = 'Super Admin' | 'Admin Data' | 'Match Editor' | 'Rumor Editor' |
 type ActiveMenu = 'dashboard' | 'schedule' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings';
 
 const APP_NAME = 'Gosball';
-const APP_LOGO_SRC = '/brand/gosball.png';
+const APP_LOGO_SRC = '/brand/gosball-alt.png';
 const APP_HANDLE = '@GOSBALL';
 
 const NAV_SECTIONS: {
@@ -4088,7 +4088,6 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                         {match.homeClubName.split(' ')[0]}
                       </span>
-                      <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 600 }}>HOME</span>
                     </div>
                   </div>
 
@@ -4120,7 +4119,6 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>
                         {match.awayClubName.split(' ')[0]}
                       </span>
-                      <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 600 }}>AWAY</span>
                     </div>
                   </div>
                 </div>
@@ -4168,7 +4166,6 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               {/* Footer */}
               <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 6, fontSize: 8, color: '#555', fontWeight: 600, marginTop: 8, width: '100%' }}>
                 <span>{APP_HANDLE}</span>
-                <span style={{ color: '#c8a84b', letterSpacing: 0.5 }}>{graphicType === 'HT' ? 'HALF TIME REPORT' : 'FULL TIME REPORT'}</span>
               </div>
             </div>
           </>
