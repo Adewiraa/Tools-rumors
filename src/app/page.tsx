@@ -3602,6 +3602,50 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       triggerToast('Pilih pemain terlebih dahulu.', 'error');
       return;
     }
+
+    // Validation for goal counts in timeline vs pre-filled HT / FT scores
+    if (newEventType === 'goal') {
+      const isHome = newEventClub === match.homeClubId;
+      const limitHT = isHome ? halfTimeHomeScore : halfTimeAwayScore;
+      const limitFT = isHome ? homeScore : awayScore;
+
+      // Count goals in HT (<= 45 mins)
+      const currentHTGoalsCount = events.filter(
+        e => e.type === 'goal' && e.clubId === newEventClub && e.minute <= 45
+      ).length;
+
+      // Count total goals
+      const currentTotalGoalsCount = events.filter(
+        e => e.type === 'goal' && e.clubId === newEventClub
+      ).length;
+
+      if (newEventMinute <= 45) {
+        // HT goal validation
+        const targetHT = (limitHT === '' ? 0 : Number(limitHT));
+        if (currentHTGoalsCount + 1 > targetHT) {
+          triggerToast(
+            `Peringatan: Jumlah gol babak pertama (${isHome ? 'Home' : 'Away'}) di timeline (${currentHTGoalsCount + 1}) melebihi skor HT (${targetHT})!`,
+            'warning'
+          );
+          return;
+        }
+      } else {
+        // FT goal validation (minute > 45)
+        if (!showFullTime) {
+          triggerToast('Peringatan: Aktifkan "Pertandingan Selesai" terlebih dahulu untuk menambahkan gol babak kedua!', 'warning');
+          return;
+        }
+        const targetFT = (limitFT === '' ? 0 : Number(limitFT));
+        if (currentTotalGoalsCount + 1 > targetFT) {
+          triggerToast(
+            `Peringatan: Total gol (${isHome ? 'Home' : 'Away'}) di timeline (${currentTotalGoalsCount + 1}) melebihi skor FT (${targetFT})!`,
+            'warning'
+          );
+          return;
+        }
+      }
+    }
+
     const evt: MatchEvent = {
       id: `${Date.now()}`,
       minute: newEventMinute,
@@ -3633,6 +3677,39 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
         (isHtAwayFilled && isFtAwayFilled && (halfTimeAwayScore as number) > (awayScore as number))) {
       triggerToast('Skor half time tidak boleh lebih besar dari skor akhir.', 'error');
       return;
+    }
+
+    // Goal count validation on save
+    const htHomeGoals = events.filter(e => e.type === 'goal' && e.clubId === match.homeClubId && e.minute <= 45).length;
+    const htAwayGoals = events.filter(e => e.type === 'goal' && e.clubId === match.awayClubId && e.minute <= 45).length;
+    
+    const targetHtHome = halfTimeHomeScore === '' ? 0 : Number(halfTimeHomeScore);
+    const targetHtAway = halfTimeAwayScore === '' ? 0 : Number(halfTimeAwayScore);
+
+    if (htHomeGoals > targetHtHome) {
+      triggerToast(`Jumlah gol HT Home di timeline (${htHomeGoals}) melebihi skor HT (${targetHtHome})!`, 'error');
+      return;
+    }
+    if (htAwayGoals > targetHtAway) {
+      triggerToast(`Jumlah gol HT Away di timeline (${htAwayGoals}) melebihi skor HT (${targetHtAway})!`, 'error');
+      return;
+    }
+
+    if (showFullTime || matchStatus === 'Finished') {
+      const ftHomeGoals = events.filter(e => e.type === 'goal' && e.clubId === match.homeClubId).length;
+      const ftAwayGoals = events.filter(e => e.type === 'goal' && e.clubId === match.awayClubId).length;
+      
+      const targetFtHome = homeScore === '' ? 0 : Number(homeScore);
+      const targetFtAway = awayScore === '' ? 0 : Number(awayScore);
+
+      if (ftHomeGoals > targetFtHome) {
+        triggerToast(`Total gol Home di timeline (${ftHomeGoals}) melebihi skor FT (${targetFtHome})!`, 'error');
+        return;
+      }
+      if (ftAwayGoals > targetFtAway) {
+        triggerToast(`Total gol Away di timeline (${ftAwayGoals}) melebihi skor FT (${targetFtAway})!`, 'error');
+        return;
+      }
     }
 
     // If score changed and was already published
@@ -3749,8 +3826,17 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   setShowFullTime(checked);
                   if (checked) {
                     setMatchStatus('Finished');
+                    // Carry-over HT scores to FT if FT is currently empty or zero
+                    if (homeScore === 0 || homeScore === '') {
+                      setHomeScore(halfTimeHomeScore !== '' ? halfTimeHomeScore : 0);
+                    }
+                    if (awayScore === 0 || awayScore === '') {
+                      setAwayScore(halfTimeAwayScore !== '' ? halfTimeAwayScore : 0);
+                    }
                   } else {
                     setMatchStatus('Live');
+                    setHomeScore(0);
+                    setAwayScore(0);
                   }
                 }} 
               />
@@ -3797,6 +3883,17 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 setMatchStatus(val);
                 if (val === 'Finished') {
                   setShowFullTime(true);
+                  // Carry-over HT scores to FT if FT is currently empty or zero
+                  if (homeScore === 0 || homeScore === '') {
+                    setHomeScore(halfTimeHomeScore !== '' ? halfTimeHomeScore : 0);
+                  }
+                  if (awayScore === 0 || awayScore === '') {
+                    setAwayScore(halfTimeAwayScore !== '' ? halfTimeAwayScore : 0);
+                  }
+                } else {
+                  setShowFullTime(false);
+                  setHomeScore(0);
+                  setAwayScore(0);
                 }
               }}
             >
