@@ -3478,12 +3478,16 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
   // Instagram graphic options
   // Instagram graphic options - default to 'HT' (Half Time) first to prevent UX confusion
-  const [graphicType, setGraphicType] = useState<'HT' | 'FT'>('HT');
+  const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(match.status === 'Finished' ? 'FT' : 'HT');
   const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
+  const effectiveGraphicType: 'HT' | 'FT' = showFullTime ? 'FT' : graphicType;
   const isHtScoresFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined && halfTimeHomeScore !== null &&
                           halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined && halfTimeAwayScore !== null;
+  const isFtScoresFilled = homeScore !== '' && homeScore !== undefined && homeScore !== null &&
+                          awayScore !== '' && awayScore !== undefined && awayScore !== null;
+  const isGraphicScoresFilled = effectiveGraphicType === 'FT' ? isFtScoresFilled : isHtScoresFilled;
 
   // Safety confirmation states
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -3534,7 +3538,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       });
       const response = await fetch(dataUrl);
       const blob = await response.blob();
-      const fileName = `Result_${graphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const fileName = `Result_${effectiveGraphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
       const file = new File([blob], fileName, { type: 'image/png' });
       
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
@@ -3577,7 +3581,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
         cacheBust: true,
         pixelRatio: 2.7,
       });
-      const fileName = `Result_${graphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const fileName = `Result_${effectiveGraphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
       const link = document.createElement('a');
       link.download = fileName;
       link.href = dataUrl;
@@ -3829,6 +3833,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   setShowFullTime(checked);
                   if (checked) {
                     setMatchStatus('Finished');
+                    setGraphicType('FT');
                     // Carry-over HT scores to FT if FT is currently empty or zero
                     if (homeScore === 0 || homeScore === '') {
                       setHomeScore(halfTimeHomeScore !== '' ? halfTimeHomeScore : 0);
@@ -3838,6 +3843,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                     }
                   } else {
                     setMatchStatus('Live');
+                    setGraphicType('HT');
                     setHomeScore(0);
                     setAwayScore(0);
                   }
@@ -3990,7 +3996,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
           <p className="page-description" style={{ margin: 0 }}>Gunakan template premium ini untuk mempublikasikan hasil pertandingan ke feeds Instagram resmi.</p>
         </div>
 
-        {!isHtScoresFilled ? (
+        {!isGraphicScoresFilled ? (
           <div style={{
             width: '100%',
             maxWidth: 500,
@@ -4003,7 +4009,9 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
             fontSize: 13,
             fontWeight: 500
           }}>
-            ⚠️ Silakan isi skor Half Time (HT) di atas terlebih dahulu untuk mengaktifkan preview dan unduhan Instagram Graphic.
+            {effectiveGraphicType === 'FT'
+              ? 'Silakan isi skor akhir Full Time (FT) di atas terlebih dahulu untuk mengaktifkan preview dan unduhan Instagram Graphic.'
+              : 'Silakan isi skor Half Time (HT) di atas terlebih dahulu untuk mengaktifkan preview dan unduhan Instagram Graphic.'}
           </div>
         ) : (
           <>
@@ -4017,8 +4025,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                     type="button"
                     style={{
                       flex: 1,
-                      backgroundColor: graphicType === 'HT' ? 'var(--primary-600)' : 'transparent',
-                      color: graphicType === 'HT' ? 'white' : 'var(--neutral-700)',
+                      backgroundColor: effectiveGraphicType === 'HT' ? 'var(--primary-600)' : 'transparent',
+                      color: effectiveGraphicType === 'HT' ? 'white' : 'var(--neutral-700)',
                       border: 'none',
                       borderRadius: 6,
                       fontWeight: 600,
@@ -4026,7 +4034,13 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       padding: '6px 12px',
                       cursor: 'pointer'
                     }}
-                    onClick={() => setGraphicType('HT')}
+                    onClick={() => {
+                      if (showFullTime) {
+                        triggerToast('Nonaktifkan "Pertandingan Selesai" untuk membuat gambar Half Time.', 'warning');
+                        return;
+                      }
+                      setGraphicType('HT');
+                    }}
                   >
                     Half Time
                   </button>
@@ -4034,8 +4048,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                     type="button"
                     style={{
                       flex: 1,
-                      backgroundColor: graphicType === 'FT' ? 'var(--primary-600)' : 'transparent',
-                      color: graphicType === 'FT' ? 'white' : 'var(--neutral-700)',
+                      backgroundColor: effectiveGraphicType === 'FT' ? 'var(--primary-600)' : 'transparent',
+                      color: effectiveGraphicType === 'FT' ? 'white' : 'var(--neutral-700)',
                       border: 'none',
                       borderRadius: 6,
                       fontWeight: 600,
@@ -4043,7 +4057,13 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       padding: '6px 12px',
                       cursor: 'pointer'
                     }}
-                    onClick={() => setGraphicType('FT')}
+                    onClick={() => {
+                      if (!showFullTime) {
+                        triggerToast('Aktifkan "Pertandingan Selesai" terlebih dahulu untuk membuat gambar Full Time.', 'warning');
+                        return;
+                      }
+                      setGraphicType('FT');
+                    }}
                   >
                     Full Time
                   </button>
@@ -4141,7 +4161,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 onClick={shareResultGraphic}
                 disabled={isExportingGraphic}
               >
-                <Share2 size={16} /> Bagikan Gambar ({graphicType})
+                <Share2 size={16} /> Bagikan Gambar ({effectiveGraphicType})
               </button>
               <button
                 className="btn btn-md btn-secondary flex-1 flex align-center justify-center gap-8"
@@ -4212,7 +4232,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
+                    {effectiveGraphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
                   </span>
                   <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain' }} />
                 </div>
@@ -4256,13 +4276,13 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {/* Score Box */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                      {graphicType === 'HT' 
+                      {effectiveGraphicType === 'HT'
                         ? ((halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0) 
                         : ((homeScore as any) !== '' ? homeScore : 0)}
                     </span>
                     <span style={{ fontSize: 12, fontWeight: 800, color: '#555' }}>-</span>
                     <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                      {graphicType === 'HT' 
+                      {effectiveGraphicType === 'HT'
                         ? ((halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0) 
                         : ((awayScore as any) !== '' ? awayScore : 0)}
                     </span>
@@ -4287,7 +4307,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
                 {/* Sub-text HT Score or Venue */}
                 <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#888', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>
-                  {graphicType === 'FT' 
+                  {effectiveGraphicType === 'FT' && isHtScoresFilled
                     ? `HALF TIME: ${(halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0} - ${(halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0}` 
                     : (match.venue || 'Stadion Pertandingan')}
                 </div>
@@ -4297,7 +4317,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {/* Home Scorers (Left Aligned) */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {events
-                      .filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId) && (graphicType === 'FT' || e.minute <= 45))
+                      .filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId) && (effectiveGraphicType === 'FT' || e.minute <= 45))
                       .map((evt) => (
                         <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0' }}>
                           <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
@@ -4309,7 +4329,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {/* Away Scorers (Right Aligned) */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
                     {events
-                      .filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId) && (graphicType === 'FT' || e.minute <= 45))
+                      .filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId) && (effectiveGraphicType === 'FT' || e.minute <= 45))
                       .map((evt) => (
                         <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse' }}>
                           <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
@@ -4320,7 +4340,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 </div>
 
                 {/* If no goals at all */}
-                {events.filter(e => e.type === 'goal' && (graphicType === 'FT' || e.minute <= 45)).length === 0 && (
+                {events.filter(e => e.type === 'goal' && (effectiveGraphicType === 'FT' || e.minute <= 45)).length === 0 && (
                   <div style={{ fontSize: 9, color: '#555', textAlign: 'center', fontStyle: 'italic', padding: '2px 0' }}>Tidak ada gol tercipta</div>
                 )}
               </div>
