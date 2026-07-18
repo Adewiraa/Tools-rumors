@@ -3685,14 +3685,32 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               </div>
               <div style={{ gridColumn: 'span 6' }}>
                 <label className="form-label" style={{ fontSize: 11 }}>Klub Asal</label>
-                <select className="form-select" value={newEventClub} onChange={(e) => setNewEventClub(e.target.value)}>
+                <select 
+                  className="form-select" 
+                  value={newEventClub} 
+                  onChange={(e) => {
+                    setNewEventClub(e.target.value);
+                    setNewEventPlayer(''); // Reset selected player when club changes
+                  }}
+                >
                   <option value={match.homeClubId}>{match.homeClubName}</option>
                   <option value={match.awayClubId}>{match.awayClubName}</option>
                 </select>
               </div>
               <div style={{ gridColumn: 'span 6' }}>
                 <label className="form-label" style={{ fontSize: 11 }}>Nama Pemain</label>
-                <input type="text" className="form-input" placeholder="Nama Pemain..." value={newEventPlayer} onChange={(e) => setNewEventPlayer(e.target.value)} />
+                <select 
+                  className="form-select" 
+                  value={newEventPlayer} 
+                  onChange={(e) => setNewEventPlayer(e.target.value)}
+                >
+                  <option value="">-- Pilih Pemain --</option>
+                  {getLineupPlayersForClub(newEventClub).map(p => (
+                    <option key={p.id} value={p.name}>
+                      {p.name} {p.number ? `(#${p.number})` : ''} {p.isForeign ? '(Asing)' : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
