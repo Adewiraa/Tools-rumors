@@ -3482,12 +3482,19 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
-  const effectiveGraphicType: 'HT' | 'FT' = showFullTime ? 'FT' : graphicType;
+  const isFullTimeGraphic = showFullTime || matchStatus === 'Finished';
+  const effectiveGraphicType: 'HT' | 'FT' = isFullTimeGraphic ? 'FT' : graphicType;
   const isHtScoresFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined && halfTimeHomeScore !== null &&
                           halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined && halfTimeAwayScore !== null;
   const isFtScoresFilled = homeScore !== '' && homeScore !== undefined && homeScore !== null &&
                           awayScore !== '' && awayScore !== undefined && awayScore !== null;
   const isGraphicScoresFilled = effectiveGraphicType === 'FT' ? isFtScoresFilled : isHtScoresFilled;
+
+  useEffect(() => {
+    if (isFullTimeGraphic && graphicType !== 'FT') {
+      setGraphicType('FT');
+    }
+  }, [graphicType, isFullTimeGraphic]);
 
   // Safety confirmation states
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -3892,6 +3899,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 setMatchStatus(val);
                 if (val === 'Finished') {
                   setShowFullTime(true);
+                  setGraphicType('FT');
                   // Carry-over HT scores to FT if FT is currently empty or zero
                   if (homeScore === 0 || homeScore === '') {
                     setHomeScore(halfTimeHomeScore !== '' ? halfTimeHomeScore : 0);
@@ -3901,6 +3909,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   }
                 } else {
                   setShowFullTime(false);
+                  setGraphicType('HT');
                   setHomeScore(0);
                   setAwayScore(0);
                 }
