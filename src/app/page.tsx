@@ -147,6 +147,41 @@ const getEditableScheduleStatus = (match?: Match): Match['status'] => {
   return 'Scheduled';
 };
 
+type ResultGraphicSettings = {
+  backgroundImage?: string | null;
+  backgroundPositionX?: number;
+  backgroundPositionY?: number;
+  backgroundZoom?: number;
+  backgroundDim?: number;
+  halfTimeSaved?: boolean;
+};
+
+const RESULT_GRAPHIC_META_TYPE = '__result_graphic_settings';
+
+const getResultGraphicSettings = (match: Match): ResultGraphicSettings => {
+  const timeline = Array.isArray(match.timeline) ? match.timeline : [];
+  const meta = timeline.find(item => item && typeof item === 'object' && item.type === RESULT_GRAPHIC_META_TYPE);
+  const settings = meta && typeof meta.settings === 'object' ? meta.settings : (match as any).resultGraphic;
+  return settings && typeof settings === 'object' ? settings : {};
+};
+
+const getMatchTimelineEvents = (timeline?: any[]) => (
+  Array.isArray(timeline)
+    ? timeline.filter(item => item && typeof item === 'object' && item.type !== RESULT_GRAPHIC_META_TYPE)
+    : []
+);
+
+const getTimelineWithResultGraphicSettings = (events: any[], settings: ResultGraphicSettings) => ([
+  ...getMatchTimelineEvents(events),
+  {
+    id: RESULT_GRAPHIC_META_TYPE,
+    type: RESULT_GRAPHIC_META_TYPE,
+    settings,
+  },
+]);
+
+const hasSavedHalfTimeResult = (match: Match) => getResultGraphicSettings(match).halfTimeSaved === true;
+
 const storyNormalizeCountryValue = (value?: string) => (value || '').trim().toLowerCase();
 
 const storyNormalizeCountryCodeCandidate = (value?: string) => {
@@ -3414,6 +3449,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
             {filteredMatches.map(match => {
               const effectiveStatus = getEffectiveMatchStatus(match);
               const canInputResult = effectiveStatus === 'Live' && match.lineupStatus === 'Complete';
+              const hasSavedHalfTime = hasSavedHalfTimeResult(match);
               return (
                 <tr key={match.id}>
                   <td>
@@ -3430,7 +3466,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                   </td>
                   <td>{match.competition}</td>
                   <td>
-                    {match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null && match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? (
+                    {hasSavedHalfTime && match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null && match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? (
                       <span className="semibold">{match.halfTimeHomeScore} - {match.halfTimeAwayScore}</span>
                     ) : (
                       <span className="text-muted">-</span>
@@ -3487,7 +3523,8 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
             </div>
             <div className="output-preview-stage">
               <div className="output-preview-gallery">
-                {timelineMatch.halfTimeHomeScore !== undefined && timelineMatch.halfTimeHomeScore !== null &&
+                {hasSavedHalfTimeResult(timelineMatch) &&
+                  timelineMatch.halfTimeHomeScore !== undefined && timelineMatch.halfTimeHomeScore !== null &&
                   timelineMatch.halfTimeAwayScore !== undefined && timelineMatch.halfTimeAwayScore !== null && (
                     <div className="output-preview-item">
                       <div className="output-preview-item-label">Half Time</div>
@@ -3524,14 +3561,19 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
   graphicType: 'HT' | 'FT';
 }) {
   type TimelineOutputEvent = { id?: string; minute?: number; type?: string; playerName?: string; clubId?: string };
-  const events = Array.isArray(match.timeline)
-    ? (match.timeline as TimelineOutputEvent[]).slice().sort((a, b) => (a.minute || 0) - (b.minute || 0))
-    : [];
+  const events = (getMatchTimelineEvents(match.timeline) as TimelineOutputEvent[]).slice().sort((a, b) => (a.minute || 0) - (b.minute || 0));
   const goalEvents = events.filter(event => event.type === 'goal' && (graphicType === 'FT' || (event.minute || 0) <= 45));
   const comp = competitions.find(c => c.name === match.competition);
+  const resultGraphicSettings = getResultGraphicSettings(match);
+  const backgroundImage = resultGraphicSettings.backgroundImage || null;
+  const backgroundPositionX = resultGraphicSettings.backgroundPositionX ?? 50;
+  const backgroundPositionY = resultGraphicSettings.backgroundPositionY ?? 50;
+  const backgroundZoom = resultGraphicSettings.backgroundZoom ?? 100;
+  const backgroundDim = resultGraphicSettings.backgroundDim ?? 20;
   const scoreHome = graphicType === 'HT' ? match.halfTimeHomeScore ?? 0 : match.homeScore ?? 0;
   const scoreAway = graphicType === 'HT' ? match.halfTimeAwayScore ?? 0 : match.awayScore ?? 0;
-  const hasHalfTimeScore = match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null &&
+  const hasHalfTimeScore = hasSavedHalfTimeResult(match) &&
+    match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null &&
     match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null;
   const renderLogo = (logo: string, fallback: string) => (
     logo && logo.startsWith('http')
@@ -3554,8 +3596,39 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
       fontFamily: 'Inter, system-ui, sans-serif',
       overflow: 'hidden',
     }}>
-      <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
+      {backgroundImage ? (
+        <>
+          <img
+            src={backgroundImage}
+            alt=""
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: `${backgroundPositionX}% ${backgroundPositionY}%`,
+              transform: `scale(${backgroundZoom / 100})`,
+              transformOrigin: `${backgroundPositionX}% ${backgroundPositionY}%`,
+              zIndex: 0,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: `linear-gradient(rgba(10, 10, 10, ${Math.max(backgroundDim - 12, 0) / 100}) 0%, rgba(10, 10, 10, ${backgroundDim / 100}) 45%, rgba(10, 10, 10, ${Math.min(backgroundDim + 45, 85) / 100}) 90%)`,
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
+        </>
+      )}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', zIndex: 3 }} />
 
       <div style={{
@@ -3592,16 +3665,16 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
 
       <div style={{
         zIndex: 2,
-        backgroundColor: 'rgba(10, 10, 10, 0.85)',
-        backdropFilter: 'blur(8px)',
+        backgroundColor: backgroundImage ? 'rgba(10, 10, 10, 0.48)' : 'rgba(10, 10, 10, 0.85)',
+        backdropFilter: backgroundImage ? 'blur(2px) saturate(115%)' : 'blur(8px)',
         borderRadius: 10,
-        border: '1px solid rgba(200, 168, 75, 0.25)',
+        border: backgroundImage ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid rgba(200, 168, 75, 0.25)',
         padding: '12px 14px',
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
         width: '100%',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+        boxShadow: backgroundImage ? '0 10px 24px rgba(0, 0, 0, 0.28)' : '0 8px 32px rgba(0, 0, 0, 0.6)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
@@ -3712,6 +3785,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
     lastUpdated: '',
   };
   const effectiveInitialStatus = getEffectiveMatchStatus(match);
+  const initialResultGraphicSettings = getResultGraphicSettings(match);
+  const halfTimeWasSaved = hasSavedHalfTimeResult(match);
 
   // Editor states
   // Initialize FT scores to 0 if match is not Finished (to keep it clean and locked)
@@ -3735,16 +3810,16 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   // Instagram graphic options - default to 'HT' (Half Time) first to prevent UX confusion
   const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(effectiveInitialStatus === 'Finished' ? 'FT' : 'HT');
   const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(initialResultGraphicSettings.backgroundImage || null);
   const [pendingBackgroundImage, setPendingBackgroundImage] = useState<string | null>(null);
-  const [backgroundPositionX, setBackgroundPositionX] = useState(50);
-  const [backgroundPositionY, setBackgroundPositionY] = useState(50);
-  const [backgroundZoom, setBackgroundZoom] = useState(100);
-  const [backgroundDim, setBackgroundDim] = useState(20);
-  const [pendingBackgroundPositionX, setPendingBackgroundPositionX] = useState(50);
-  const [pendingBackgroundPositionY, setPendingBackgroundPositionY] = useState(50);
-  const [pendingBackgroundZoom, setPendingBackgroundZoom] = useState(100);
-  const [pendingBackgroundDim, setPendingBackgroundDim] = useState(20);
+  const [backgroundPositionX, setBackgroundPositionX] = useState(initialResultGraphicSettings.backgroundPositionX ?? 50);
+  const [backgroundPositionY, setBackgroundPositionY] = useState(initialResultGraphicSettings.backgroundPositionY ?? 50);
+  const [backgroundZoom, setBackgroundZoom] = useState(initialResultGraphicSettings.backgroundZoom ?? 100);
+  const [backgroundDim, setBackgroundDim] = useState(initialResultGraphicSettings.backgroundDim ?? 20);
+  const [pendingBackgroundPositionX, setPendingBackgroundPositionX] = useState(initialResultGraphicSettings.backgroundPositionX ?? 50);
+  const [pendingBackgroundPositionY, setPendingBackgroundPositionY] = useState(initialResultGraphicSettings.backgroundPositionY ?? 50);
+  const [pendingBackgroundZoom, setPendingBackgroundZoom] = useState(initialResultGraphicSettings.backgroundZoom ?? 100);
+  const [pendingBackgroundDim, setPendingBackgroundDim] = useState(initialResultGraphicSettings.backgroundDim ?? 20);
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
   const isFullTimeGraphic = showFullTime || matchStatus === 'Finished';
   const effectiveGraphicType: 'HT' | 'FT' = isFullTimeGraphic ? 'FT' : graphicType;
@@ -3753,6 +3828,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const isFtScoresFilled = homeScore !== '' && homeScore !== undefined && homeScore !== null &&
                           awayScore !== '' && awayScore !== undefined && awayScore !== null;
   const isGraphicScoresFilled = effectiveGraphicType === 'FT' ? isFtScoresFilled : isHtScoresFilled;
+  const shouldShowHalfTimeInFullTimeGraphic = halfTimeWasSaved && isHtScoresFilled;
 
   useEffect(() => {
     if (isFullTimeGraphic && graphicType !== 'FT') {
@@ -3784,8 +3860,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
     // Timeline events state - loaded from database match.timeline
   const [events, setEvents] = useState<MatchEvent[]>(
-    Array.isArray(match.timeline) && match.timeline.length > 0 
-      ? match.timeline 
+    Array.isArray(match.timeline) && match.timeline.length > 0
+      ? getMatchTimelineEvents(match.timeline) as MatchEvent[]
       : []
   );
 
@@ -3912,7 +3988,9 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
         e => e.type === 'goal' && String(e.clubId) === String(newEventClub)
       ).length;
 
-      if (newEventMinute <= 45) {
+      const shouldValidateAgainstHalfTime = newEventMinute <= 45 && (!showFullTime || halfTimeWasSaved);
+
+      if (shouldValidateAgainstHalfTime) {
         // HT goal validation
         const targetHT = (limitHT === '' ? 0 : Number(limitHT));
         if (currentHTGoalsCount + 1 > targetHT) {
@@ -3923,7 +4001,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
           return;
         }
       } else {
-        // FT goal validation (minute > 45)
+        // FT goal validation (minute > 45, or direct Full Time without saved Half Time)
         if (!showFullTime) {
           triggerToast('Peringatan: Aktifkan "Pertandingan Selesai" terlebih dahulu untuk menambahkan gol babak kedua!', 'warning');
           return;
@@ -3965,8 +4043,14 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
     const isFtAwayFilled = awayScore !== '' && awayScore !== undefined;
     const isHtHomeFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined;
     const isHtAwayFilled = halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined;
+    const isSavingFullTime = showFullTime || matchStatus === 'Finished';
+    const shouldPersistHalfTime = !isSavingFullTime || halfTimeWasSaved;
+    const nextHomeScore = showFullTime ? (homeScore === '' ? null : homeScore) : null;
+    const nextAwayScore = showFullTime ? (awayScore === '' ? null : awayScore) : null;
+    const nextHalfTimeHomeScore = shouldPersistHalfTime ? (halfTimeHomeScore === '' ? null : halfTimeHomeScore) : null;
+    const nextHalfTimeAwayScore = shouldPersistHalfTime ? (halfTimeAwayScore === '' ? null : halfTimeAwayScore) : null;
 
-    if (showFullTime) {
+    if (showFullTime && shouldPersistHalfTime) {
       if ((isHtHomeFilled && isFtHomeFilled && (halfTimeHomeScore as number) > (homeScore as number)) ||
           (isHtAwayFilled && isFtAwayFilled && (halfTimeAwayScore as number) > (awayScore as number))) {
         triggerToast('Skor half time tidak boleh lebih besar dari skor akhir.', 'error');
@@ -3975,22 +4059,24 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
     }
 
     // Goal count validation on save
-    const htHomeGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId) && e.minute <= 45).length;
-    const htAwayGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId) && e.minute <= 45).length;
-    
-    const targetHtHome = halfTimeHomeScore === '' ? 0 : Number(halfTimeHomeScore);
-    const targetHtAway = halfTimeAwayScore === '' ? 0 : Number(halfTimeAwayScore);
+    if (shouldPersistHalfTime) {
+      const htHomeGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId) && e.minute <= 45).length;
+      const htAwayGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId) && e.minute <= 45).length;
 
-    if (htHomeGoals > targetHtHome) {
-      triggerToast(`Jumlah gol HT Home di timeline (${htHomeGoals}) melebihi skor HT (${targetHtHome})!`, 'error');
-      return;
-    }
-    if (htAwayGoals > targetHtAway) {
-      triggerToast(`Jumlah gol HT Away di timeline (${htAwayGoals}) melebihi skor HT (${targetHtAway})!`, 'error');
-      return;
+      const targetHtHome = halfTimeHomeScore === '' ? 0 : Number(halfTimeHomeScore);
+      const targetHtAway = halfTimeAwayScore === '' ? 0 : Number(halfTimeAwayScore);
+
+      if (htHomeGoals > targetHtHome) {
+        triggerToast(`Jumlah gol HT Home di timeline (${htHomeGoals}) melebihi skor HT (${targetHtHome})!`, 'error');
+        return;
+      }
+      if (htAwayGoals > targetHtAway) {
+        triggerToast(`Jumlah gol HT Away di timeline (${htAwayGoals}) melebihi skor HT (${targetHtAway})!`, 'error');
+        return;
+      }
     }
 
-    if (showFullTime || matchStatus === 'Finished') {
+    if (isSavingFullTime) {
       const ftHomeGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId)).length;
       const ftAwayGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId)).length;
       
@@ -4009,10 +4095,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
     // If score changed and was already published
     const scoreChanged =
-      (homeScore === '' ? null : homeScore) !== (match.homeScore ?? null) ||
-      (awayScore === '' ? null : awayScore) !== (match.awayScore ?? null) ||
-      (halfTimeHomeScore === '' ? null : halfTimeHomeScore) !== (match.halfTimeHomeScore ?? null) ||
-      (halfTimeAwayScore === '' ? null : halfTimeAwayScore) !== (match.halfTimeAwayScore ?? null);
+      nextHomeScore !== (match.homeScore ?? null) ||
+      nextAwayScore !== (match.awayScore ?? null) ||
+      nextHalfTimeHomeScore !== (match.halfTimeHomeScore ?? null) ||
+      nextHalfTimeAwayScore !== (match.halfTimeAwayScore ?? null);
     const wasPublished = match.publicationStatus === 'Published';
 
     if (scoreChanged && wasPublished) {
@@ -4023,19 +4109,30 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   };
 
   const submitUpdate = () => {
+    const isSavingFullTime = showFullTime || matchStatus === 'Finished';
+    const shouldPersistHalfTime = !isSavingFullTime || halfTimeWasSaved;
     const storedStatus: Match['status'] =
-      showFullTime || matchStatus === 'Finished'
+      isSavingFullTime
         ? 'Finished'
         : (matchStatus === 'Postponed' || matchStatus === 'Cancelled' ? matchStatus : 'Scheduled');
+    const nextGraphicSettings: ResultGraphicSettings = {
+      backgroundImage,
+      backgroundPositionX,
+      backgroundPositionY,
+      backgroundZoom,
+      backgroundDim,
+      halfTimeSaved: shouldPersistHalfTime,
+    };
     const updatedMatch: Match = {
       ...match,
       // Save FT scores as null if showFullTime is not active (halftime score only)
       homeScore: showFullTime ? (homeScore === '' ? null : (homeScore as any)) : null,
       awayScore: showFullTime ? (awayScore === '' ? null : (awayScore as any)) : null,
-      halfTimeHomeScore: halfTimeHomeScore === '' ? null : (halfTimeHomeScore as any),
-      halfTimeAwayScore: halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any),
+      halfTimeHomeScore: shouldPersistHalfTime ? (halfTimeHomeScore === '' ? null : (halfTimeHomeScore as any)) : null,
+      halfTimeAwayScore: shouldPersistHalfTime ? (halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any)) : null,
       status: storedStatus,
       lineupStatus: storedStatus === 'Finished' ? 'Complete' : safetyReason ? 'Needs Review' : 'Complete',
+      timeline: getTimelineWithResultGraphicSettings(events, nextGraphicSettings),
     };
     if (safetyReason) {
       logAction('SAFETY_TRIGGERED', 'Match Result', `Perubahan skor oleh admin. Alasan: "${safetyReason}"`);
@@ -4059,7 +4156,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
         <div className="flex gap-12">
           <button className="btn btn-md btn-primary" onClick={handleSaveWithSafetyCheck}>
-            Simpan Hasil Akhir
+            {showFullTime ? 'Simpan Full Time' : 'Simpan Half Time'}
           </button>
         </div>
       </div>
@@ -4685,7 +4782,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
                 {/* Sub-text HT Score or Venue */}
                 <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#888', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>
-                  {effectiveGraphicType === 'FT' && isHtScoresFilled
+                  {effectiveGraphicType === 'FT' && shouldShowHalfTimeInFullTimeGraphic
                     ? `HALF TIME: ${(halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0} - ${(halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0}` 
                     : (match.venue || 'Stadion Pertandingan')}
                 </div>
