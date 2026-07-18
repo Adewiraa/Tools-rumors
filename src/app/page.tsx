@@ -960,6 +960,7 @@ export default function Home() {
                       }
                     }}
                     hasPermission={hasPermission}
+                    triggerToast={triggerToast}
                   />
                 )
               )}
@@ -2278,12 +2279,14 @@ interface LineupsListProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
+  triggerToast: (msg: string, type?: any) => void;
 }
 
-function LineupsListView({ matches, players, competitions, onEdit, hasPermission }: LineupsListProps) {
+function LineupsListView({ matches, players, competitions, onEdit, hasPermission, triggerToast }: LineupsListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedComp, setSelectedComp] = useState('Semua');
   const [previewMatch, setPreviewMatch] = useState<Match | null>(null);
+  const [isExportingLineupStory, setIsExportingLineupStory] = useState(false);
   const lineupStatusLabel = (match: Match) => {
     if (getEffectiveMatchStatus(match) === 'Finished') return 'Selesai';
     const effectiveLineupStatus = getEffectiveLineupStatus(match);
@@ -2301,6 +2304,71 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
     const matchesComp = selectedComp === 'Semua' || match.competition === selectedComp;
     return matchesSearch && matchesComp;
   });
+  const getLineupOutputElementId = (matchId: string) => `lineup-output-card-${matchId}`;
+  const getLineupOutputFileName = (match: Match) => `Lineup_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
+
+  const createLineupOutputImage = async (match: Match) => {
+    const node = document.getElementById(getLineupOutputElementId(match.id));
+    if (!node) throw new Error('Gambar lineup belum siap.');
+    const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    return { dataUrl, blob, fileName: getLineupOutputFileName(match) };
+  };
+
+  const downloadLineupOutput = async (match: Match) => {
+    try {
+      setIsExportingLineupStory(true);
+      triggerToast('Membuat gambar lineup...');
+      const { dataUrl, fileName } = await createLineupOutputImage(match);
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Lineup berhasil diunduh!');
+    } catch (err) {
+      console.warn('Lineup output download failed:', err);
+      triggerToast('Gagal mengunduh lineup.', 'error');
+    } finally {
+      setIsExportingLineupStory(false);
+    }
+  };
+
+  const shareLineupOutput = async (match: Match) => {
+    try {
+      setIsExportingLineupStory(true);
+      triggerToast('Membuat gambar lineup...');
+      const { blob, dataUrl, fileName } = await createLineupOutputImage(match);
+      const file = new File([blob], fileName, { type: 'image/png' });
+      const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+      const shareData: ShareData = {
+        files: [file],
+        title: `${match.homeClubName} vs ${match.awayClubName}`,
+        text: 'Lineup Gosball',
+      };
+
+      if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
+        await nav.share(shareData);
+        triggerToast('Lineup siap dibagikan.');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.', 'warning');
+    } catch (err) {
+      const error = err as { name?: string };
+      if (error?.name !== 'AbortError') {
+        console.warn('Lineup output share failed:', err);
+        triggerToast('Gagal membagikan lineup.', 'error');
+      }
+    } finally {
+      setIsExportingLineupStory(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="page-header">
@@ -2361,6 +2429,7 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
             <tbody>
               {filteredMatches.map(match => {
                 const effectiveStatus = getEffectiveMatchStatus(match);
+                const canViewPublishedLineup = match.publicationStatus === 'Published' || effectiveStatus === 'Finished';
                 return (
                 <tr key={match.id}>
                   <td>
@@ -2393,7 +2462,7 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
                     </span>
                   </td>
                   <td className="text-right">
-                    {effectiveStatus === 'Finished' ? (
+                    {canViewPublishedLineup ? (
                       <button className="btn btn-sm btn-secondary" onClick={() => setPreviewMatch(match)}>
                         <Info size={13} /> Lihat Lineup
                       </button>
@@ -2418,14 +2487,22 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
                 <h3 className="output-preview-title">Gambar Lineup</h3>
                 <div className="output-preview-meta">{previewMatch.homeClubName} vs {previewMatch.awayClubName} - ID Jadwal: {previewMatch.id}</div>
               </div>
-              <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></button>
+              <div className="flex gap-8" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <button className="btn btn-sm btn-primary" onClick={() => shareLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
+                  <Share2 size={14} /> Bagikan
+                </button>
+                <button className="btn btn-sm btn-secondary" onClick={() => downloadLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
+                  <Download size={14} /> Unduh
+                </button>
+                <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></button>
+              </div>
             </div>
             <div className="output-preview-stage">
               <PublishedLineupStoryCard
                 match={previewMatch}
                 players={players}
                 competitions={competitions}
-                elementId={`lineup-output-card-${previewMatch.id}`}
+                elementId={getLineupOutputElementId(previewMatch.id)}
               />
             </div>
           </div>
