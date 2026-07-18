@@ -72,6 +72,7 @@ export async function GET() {
       awayCaptain:          m.away_captain || '',
       homeAsing:            toLineupForeignEntries(m.home_asing),
       awayAsing:            toLineupForeignEntries(m.away_asing),
+      timeline:             m.timeline || [],
       editor:               m.editor || 'Admin',
       lastUpdated:          m.last_updated || '',
     }));
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
       away_captain:         match.awayCaptain || '',
       home_asing:           Array.isArray(match.homeAsing) ? match.homeAsing : [],
       away_asing:           Array.isArray(match.awayAsing) ? match.awayAsing : [],
+      timeline:             Array.isArray(match.timeline) ? match.timeline : [],
       editor:               match.editor || 'Admin',
       last_updated:         new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB',
     };
@@ -129,11 +131,22 @@ export async function POST(request: Request) {
     if (match.halfTimeHomeScore !== undefined) payload.half_time_home_score = match.halfTimeHomeScore;
     if (match.halfTimeAwayScore !== undefined) payload.half_time_away_score = match.halfTimeAwayScore;
 
-    const { error } = await supabaseAdmin
+    let result = await supabaseAdmin
       .from('matches')
       .upsert(payload, { onConflict: 'id' });
 
-    if (error) throw error;
+    if (result.error) {
+      if (result.error.message.includes('timeline') || result.error.message.includes('column')) {
+        console.warn('Timeline column missing in DB, retrying without timeline payload...');
+        delete payload.timeline;
+        const retryResult = await supabaseAdmin
+          .from('matches')
+          .upsert(payload, { onConflict: 'id' });
+        if (retryResult.error) throw retryResult.error;
+      } else {
+        throw result.error;
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

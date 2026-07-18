@@ -130,6 +130,7 @@ export interface Match {
   awayCaptain?: string;
   homeAsing?: { id: string; name: string; no: number; pos: string }[];
   awayAsing?: { id: string; name: string; no: number; pos: string }[];
+  timeline?: any[];
   editor: string;
   lastUpdated: string;
 }

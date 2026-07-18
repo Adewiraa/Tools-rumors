@@ -42,3 +42,6 @@ CREATE POLICY "Allow all actions for club_rosters" ON club_rosters FOR ALL TO pu
 
 DROP POLICY IF EXISTS "Allow all actions for club_seasons" ON club_seasons;
 CREATE POLICY "Allow all actions for club_seasons" ON club_seasons FOR ALL TO public USING (true) WITH CHECK (true);
+
+-- 6. Tambahkan kolom timeline untuk menyimpan kejadian gol / kartu pertandingan jika belum ada
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS timeline JSONB DEFAULT '[]'::jsonb;

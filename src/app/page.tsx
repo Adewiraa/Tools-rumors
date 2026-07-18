@@ -1468,7 +1468,7 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>Tinjau rumor Transfer Ardi Pratama</div>
                 <div style={{ fontSize: 11, color: 'var(--neutral-500)', marginTop: 2 }}>Minta konfirmasi agen pemain atau ofisial Cakra FC.</div>
-                <span className="badge badge-warning" style={{ fontSize: 10, padding: '2px 6px', marginTop: 6 }}>Tier B Â· Penting</span>
+                <span className="badge badge-warning" style={{ fontSize: 10, padding: '2px 6px', marginTop: 6 }}>Tier B · Penting</span>
               </div>
             </div>
 
@@ -3309,6 +3309,7 @@ interface MatchResultsListProps {
 function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: MatchResultsListProps) {
   const [selectedComp, setSelectedComp] = useState('Semua');
   const filteredMatches = matches
+    .filter(match => match.lineupStatus === 'Complete')
     .filter(match => selectedComp === 'Semua' || match.competition === selectedComp)
     .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
   const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
@@ -3352,7 +3353,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
           </thead>
           <tbody>
             {filteredMatches.map(match => {
-              const canInputResult = match.lineupStatus === 'Complete' && ['Live', 'Finished'].includes(match.status);
+              const canInputResult = match.lineupStatus === 'Complete';
               return (
                 <tr key={match.id}>
                   <td>
@@ -3368,14 +3369,14 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                   </td>
                   <td>{match.competition}</td>
                   <td>
-                    {match.halfTimeHomeScore !== undefined && match.halfTimeAwayScore !== undefined ? (
+                    {match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null && match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? (
                       <span className="semibold">{match.halfTimeHomeScore} - {match.halfTimeAwayScore}</span>
                     ) : (
                       <span className="text-muted">-</span>
                     )}
                   </td>
                   <td>
-                    {match.homeScore !== undefined && match.awayScore !== undefined ? (
+                    {match.homeScore !== undefined && match.homeScore !== null && match.awayScore !== undefined && match.awayScore !== null ? (
                       <span style={{ fontSize: 15, fontWeight: 700 }}>{match.homeScore} - {match.awayScore}</span>
                     ) : (
                       <span className="text-muted">-</span>
@@ -3397,7 +3398,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                     </span>
                   </td>
                   <td className="text-right">
-                    <button className="btn btn-sm btn-secondary" disabled={!canInputResult || !hasPermission('Match Result', 'create_edit')} title={canInputResult ? 'Input hasil HT/FT' : 'Lineup harus lengkap dan match Live/Finished'} onClick={() => onEdit(match.id)}>
+                    <button className="btn btn-sm btn-secondary" disabled={!canInputResult || !hasPermission('Match Result', 'create_edit')} title={canInputResult ? 'Input hasil HT/FT' : 'Lengkapi lineup terlebih dahulu'} onClick={() => onEdit(match.id)}>
                       Input HT/FT
                     </button>
                   </td>
@@ -3456,23 +3457,58 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
   };
 
   // Editor states
-  const [homeScore, setHomeScore] = useState(match.homeScore || 0);
-  const [awayScore, setAwayScore] = useState(match.awayScore || 0);
-  const [halfTimeHomeScore, setHalfTimeHomeScore] = useState(match.halfTimeHomeScore || 0);
-  const [halfTimeAwayScore, setHalfTimeAwayScore] = useState(match.halfTimeAwayScore || 0);
+  const [homeScore, setHomeScore] = useState<number | ''>(match.homeScore !== undefined && match.homeScore !== null ? match.homeScore : '');
+  const [awayScore, setAwayScore] = useState<number | ''>(match.awayScore !== undefined && match.awayScore !== null ? match.awayScore : '');
+  const [halfTimeHomeScore, setHalfTimeHomeScore] = useState<number | ''>(match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null ? match.halfTimeHomeScore : '');
+  const [halfTimeAwayScore, setHalfTimeAwayScore] = useState<number | ''>(match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? match.halfTimeAwayScore : '');
   const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(match.status);
+
+  // Instagram graphic options
+  const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(
+    match.homeScore !== undefined && match.homeScore !== null ? 'FT' : 'HT'
+  );
+  const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const isHtScoresFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined && halfTimeHomeScore !== null &&
+                          halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined && halfTimeAwayScore !== null;
 
   // Safety confirmation states
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [safetyReason, setSafetyReason] = useState('');
 
-  // Timeline events mock data state
-  const [events, setEvents] = useState<MatchEvent[]>([
-    { id: '1', minute: 15, type: 'goal', playerName: 'Bruno Silva', clubId: match.awayClubId },
-    { id: '2', minute: 40, type: 'yellow_card', playerName: 'Rizky Ridho', clubId: match.homeClubId },
-    { id: '3', minute: 65, type: 'goal', playerName: 'Gustavo Almeida', clubId: match.homeClubId },
-    { id: '4', minute: 82, type: 'goal', playerName: 'Witan Sulaeman', clubId: match.homeClubId }
-  ]);
+    // Timeline events state - loaded from database match.timeline
+  const [events, setEvents] = useState<MatchEvent[]>(
+    Array.isArray(match.timeline) && match.timeline.length > 0 
+      ? match.timeline 
+      : []
+  );
+
+  // Helper to load roster players from lineup
+  const getLineupPlayersForClub = (clubId: string) => {
+    const isHome = clubId === match.homeClubId;
+    const startersIds = isHome ? (match.homeStarters || []) : (match.awayStarters || []);
+    const subsIds = isHome ? (match.homeSubs || []) : (match.awaySubs || []);
+    const asingPlayers = isHome ? (match.homeAsing || []) : (match.awayAsing || []);
+
+    const localStarters = players.filter(p => startersIds.includes(p.id));
+    const localSubs = players.filter(p => subsIds.includes(p.id));
+
+    const list: { id: string; name: string; number?: number; isForeign?: boolean }[] = [];
+
+    localStarters.forEach(p => {
+      list.push({ id: p.id, name: p.displayName || p.fullName, number: p.shirtNumber });
+    });
+
+    localSubs.forEach(p => {
+      list.push({ id: p.id, name: p.displayName || p.fullName, number: p.shirtNumber });
+    });
+
+    asingPlayers.forEach((p: any) => {
+      list.push({ id: p.id, name: p.name, number: p.no, isForeign: true });
+    });
+
+    return list;
+  };
 
   // Form event handlers
   const [newEventMinute, setNewEventMinute] = useState(45);
@@ -3507,17 +3543,23 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
   }
 
   const handleSaveWithSafetyCheck = () => {
-    if (halfTimeHomeScore > homeScore || halfTimeAwayScore > awayScore) {
-      triggerToast('Skor half time tidak boleh lebih besar dari full time.', 'error');
+    const isFtHomeFilled = homeScore !== '' && homeScore !== undefined;
+    const isFtAwayFilled = awayScore !== '' && awayScore !== undefined;
+    const isHtHomeFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined;
+    const isHtAwayFilled = halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined;
+
+    if ((isHtHomeFilled && isFtHomeFilled && (halfTimeHomeScore as number) > (homeScore as number)) ||
+        (isHtAwayFilled && isFtAwayFilled && (halfTimeAwayScore as number) > (awayScore as number))) {
+      triggerToast('Skor half time tidak boleh lebih besar dari skor akhir.', 'error');
       return;
     }
 
     // If score changed and was already published
     const scoreChanged =
-      homeScore !== match.homeScore ||
-      awayScore !== match.awayScore ||
-      halfTimeHomeScore !== match.halfTimeHomeScore ||
-      halfTimeAwayScore !== match.halfTimeAwayScore;
+      (homeScore === '' ? null : homeScore) !== (match.homeScore ?? null) ||
+      (awayScore === '' ? null : awayScore) !== (match.awayScore ?? null) ||
+      (halfTimeHomeScore === '' ? null : halfTimeHomeScore) !== (match.halfTimeHomeScore ?? null) ||
+      (halfTimeAwayScore === '' ? null : halfTimeAwayScore) !== (match.halfTimeAwayScore ?? null);
     const wasPublished = match.publicationStatus === 'Published';
 
     if (scoreChanged && wasPublished) {
@@ -3530,10 +3572,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
   const submitUpdate = () => {
     const updatedMatch: Match = {
       ...match,
-      homeScore,
-      awayScore,
-      halfTimeHomeScore,
-      halfTimeAwayScore,
+      homeScore: homeScore === '' ? null : (homeScore as any),
+      awayScore: awayScore === '' ? null : (awayScore as any),
+      halfTimeHomeScore: halfTimeHomeScore === '' ? null : (halfTimeHomeScore as any),
+      halfTimeAwayScore: halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any),
       status: matchStatus,
       lineupStatus: safetyReason ? 'Needs Review' : 'Complete', // reset to review if modified with reason
     };
@@ -3553,7 +3595,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
           </button>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700 }}>Input Hasil & Timeline Pertandingan</h2>
-            <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>{match.competition} Â· {match.venue}</div>
+            <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>{match.competition} · {match.venue}</div>
           </div>
         </div>
 
@@ -3572,24 +3614,36 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
           <div className="flex align-center justify-between" style={{ padding: '24px 0', borderBottom: '1px solid var(--neutral-100)' }}>
             {/* Home score */}
             <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ fontSize: 36 }}>{match.homeLogo}</div>
+              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                {match.homeLogo && match.homeLogo.startsWith('http') ? (
+                  <img src={match.homeLogo} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ fontSize: 36 }}>{match.homeLogo || '⚽'}</span>
+                )}
+              </div>
               <div className="semibold" style={{ fontSize: 15, margin: '8px 0' }}>{match.homeClubName}</div>
               <label className="form-label" style={{ textAlign: 'center', marginTop: 10 }}>HT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeHomeScore} onChange={(e) => setHalfTimeHomeScore(Number(e.target.value))} />
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeHomeScore} onChange={(e) => setHalfTimeHomeScore(e.target.value === '' ? '' : Number(e.target.value))} />
               <label className="form-label" style={{ textAlign: 'center' }}>FT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={homeScore} onChange={(e) => setHomeScore(Number(e.target.value))} />
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={homeScore} onChange={(e) => setHomeScore(e.target.value === '' ? '' : Number(e.target.value))} />
             </div>
 
             <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--neutral-300)' }}>VS</div>
 
             {/* Away score */}
             <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ fontSize: 36 }}>{match.awayLogo}</div>
+              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                {match.awayLogo && match.awayLogo.startsWith('http') ? (
+                  <img src={match.awayLogo} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ fontSize: 36 }}>{match.awayLogo || '⚽'}</span>
+                )}
+              </div>
               <div className="semibold" style={{ fontSize: 15, margin: '8px 0' }}>{match.awayClubName}</div>
               <label className="form-label" style={{ textAlign: 'center', marginTop: 10 }}>HT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeAwayScore} onChange={(e) => setHalfTimeAwayScore(Number(e.target.value))} />
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeAwayScore} onChange={(e) => setHalfTimeAwayScore(e.target.value === '' ? '' : Number(e.target.value))} />
               <label className="form-label" style={{ textAlign: 'center' }}>FT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={awayScore} onChange={(e) => setAwayScore(Number(e.target.value))} />
+              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={awayScore} onChange={(e) => setAwayScore(e.target.value === '' ? '' : Number(e.target.value))} />
             </div>
           </div>
 
@@ -3621,10 +3675,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
               <div style={{ gridColumn: 'span 8' }}>
                 <label className="form-label" style={{ fontSize: 11 }}>Jenis Kejadian</label>
                 <select className="form-select" value={newEventType} onChange={(e: any) => setNewEventType(e.target.value)}>
-                  <option value="goal">Goal âš½</option>
-                  <option value="yellow_card">Kartu Kuning ðŸŸ¨</option>
-                  <option value="red_card">Kartu Merah ðŸŸ¥</option>
-                  <option value="substitution">Pergantian Pemain ðŸ”„</option>
+                  <option value="goal">⚽ Gol</option>
+                  <option value="yellow_card">🟨 Kartu Kuning</option>
+                  <option value="red_card">🟥 Kartu Merah</option>
+                  <option value="substitution">🔄 Pergantian Pemain</option>
                 </select>
               </div>
               <div style={{ gridColumn: 'span 6' }}>
@@ -3651,7 +3705,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
               <div key={evt.id} className="flex justify-between align-center" style={{ padding: '8px 12px', backgroundColor: 'var(--neutral-50)', borderRadius: 6, fontSize: 13 }}>
                 <div className="flex align-center gap-8">
                   <span className="semibold" style={{ color: 'var(--primary-600)' }}>{evt.minute}'</span>
-                  <span>{evt.type === 'goal' ? 'âš½' : evt.type === 'yellow_card' ? 'ðŸŸ¨' : evt.type === 'red_card' ? 'ðŸŸ¥' : 'ðŸ”„'}</span>
+                  <span>{evt.type === 'goal' ? '⚽' : evt.type === 'yellow_card' ? '🟨' : evt.type === 'red_card' ? '🟥' : '🔄'}</span>
                   <span>{evt.playerName}</span>
                 </div>
                 <span className="text-muted" style={{ fontSize: 11 }}>{evt.clubId === match.homeClubId ? 'Home' : 'Away'}</span>
@@ -3663,136 +3717,316 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
 
       {/* Instagram Graphic Export Row */}
       <div className="card" style={{ marginTop: 24, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-        <div style={{ alignSelf: 'flex-start' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Instagram Feed Graphic (1:1 Ratio)</h3>
-          <p className="page-description" style={{ margin: 0 }}>Gunakan template premium ini untuk mempublikasikan hasil akhir pertandingan ke feeds Instagram resmi.</p>
+        <div style={{ alignSelf: 'flex-start', width: '100%' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Instagram Feed Graphic</h3>
+          <p className="page-description" style={{ margin: 0 }}>Gunakan template premium ini untuk mempublikasikan hasil pertandingan ke feeds Instagram resmi.</p>
         </div>
-        
-        <button className="btn btn-md btn-primary" onClick={async () => {
-          const node = document.getElementById('match-feed-card');
-          if (!node) return;
-          try {
-            triggerToast('Sedang membuat gambar Instagram Feed...');
-            const dataUrl = await htmlToImage.toPng(node, {
-              cacheBust: true,
-              pixelRatio: 2.7, // 400x400 -> 1080x1080
-            });
-            const link = document.createElement('a');
-            link.download = `Result_${match.homeClubName}_vs_${match.awayClubName}_Feed.png`;
-            link.href = dataUrl;
-            link.click();
-            triggerToast('Gambar Feed berhasil diunduh!');
-          } catch (err) {
-            console.error(err);
-            triggerToast('Gagal mengunduh gambar.');
-          }
-        }}>
-          Unduh Gambar Feed (1:1)
-        </button>
 
-        {/* 1:1 IG Feed Graphic */}
-        <div 
-          id="match-feed-card"
-          style={{
-            width: 400,
-            height: 400,
-            background: 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
-            color: 'white',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            padding: 24,
+        {!isHtScoresFilled ? (
+          <div style={{
+            width: '100%',
+            maxWidth: 500,
+            padding: '24px 16px',
+            backgroundColor: 'var(--neutral-50)',
+            border: '1px dashed var(--neutral-300)',
             borderRadius: 12,
-            boxShadow: 'var(--shadow-lg)',
-            position: 'relative',
-            fontFamily: 'system-ui, sans-serif',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Glowing Accents */}
-          <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
-          <div style={{ position: 'absolute', top: '-20%', right: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
-          
-          {/* Header */}
-          <div style={{ zIndex: 2, textAlign: 'center', display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 10, width: '100%' }}>
-            <span style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', letterSpacing: 1.5 }}>
-              {match.competition || 'LIGA NUSANTARA UTAMA'}
-            </span>
-            <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: '#0F9F9A', color: '#090d16', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
-              FULL TIME
-            </span>
+            textAlign: 'center',
+            color: 'var(--neutral-600)',
+            fontSize: 13,
+            fontWeight: 500
+          }}>
+            ⚠️ Silakan isi skor Half Time (HT) di atas terlebih dahulu untuk mengaktifkan preview dan unduhan Instagram Graphic.
           </div>
-
-          {/* Scores & Names Matchup */}
-          <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0', width: '100%' }}>
-            {/* Home */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {match.homeLogo && match.homeLogo.startsWith('http') ? (
-                  <img src={match.homeLogo} alt={match.homeClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
-                ) : (
-                  <span style={{ fontSize: 44 }}>{match.homeLogo || 'ðŸ¦…'}</span>
-                )}
+        ) : (
+          <>
+            {/* Control Panel */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, width: '100%', maxWidth: 500, justifyContent: 'center' }}>
+              {/* Content Type */}
+              <div style={{ flex: '1 1 140px' }}>
+                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>Tipe Konten</label>
+                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-100)', padding: 3, borderRadius: 8 }}>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      backgroundColor: graphicType === 'HT' ? 'var(--primary-600)' : 'transparent',
+                      color: graphicType === 'HT' ? 'white' : 'var(--neutral-700)',
+                      border: 'none',
+                      borderRadius: 6,
+                      fontWeight: 600,
+                      fontSize: 11,
+                      padding: '6px 12px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setGraphicType('HT')}
+                  >
+                    Half Time
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      backgroundColor: graphicType === 'FT' ? 'var(--primary-600)' : 'transparent',
+                      color: graphicType === 'FT' ? 'white' : 'var(--neutral-700)',
+                      border: 'none',
+                      borderRadius: 6,
+                      fontWeight: 600,
+                      fontSize: 11,
+                      padding: '6px 12px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setGraphicType('FT')}
+                  >
+                    Full Time
+                  </button>
+                </div>
               </div>
-              <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
-                {match.homeClubName.split(' ')[0]}
-              </span>
-            </div>
 
-            {/* Score Box */}
-            <div style={{ display: 'flex', alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '0 16px' }}>
-              <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>{homeScore}</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#475569' }}>-</span>
-              <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>{awayScore}</span>
-            </div>
-
-            {/* Away */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {match.awayLogo && match.awayLogo.startsWith('http') ? (
-                  <img src={match.awayLogo} alt={match.awayClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
-                ) : (
-                  <span style={{ fontSize: 44 }}>{match.awayLogo || 'ðŸ¦ˆ'}</span>
-                )}
+              {/* Ratio Selection */}
+              <div style={{ flex: '1 1 140px' }}>
+                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>Rasio Gambar</label>
+                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-100)', padding: 3, borderRadius: 8 }}>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      backgroundColor: graphicRatio === '1:1' ? 'var(--primary-600)' : 'transparent',
+                      color: graphicRatio === '1:1' ? 'white' : 'var(--neutral-700)',
+                      border: 'none',
+                      borderRadius: 6,
+                      fontWeight: 600,
+                      fontSize: 11,
+                      padding: '6px 12px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setGraphicRatio('1:1')}
+                  >
+                    1:1 Feed
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      backgroundColor: graphicRatio === '4:5' ? 'var(--primary-600)' : 'transparent',
+                      color: graphicRatio === '4:5' ? 'white' : 'var(--neutral-700)',
+                      border: 'none',
+                      borderRadius: 6,
+                      fontWeight: 600,
+                      fontSize: 11,
+                      padding: '6px 12px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setGraphicRatio('4:5')}
+                  >
+                    4:5 Story
+                  </button>
+                </div>
               </div>
-              <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
-                {match.awayClubName.split(' ')[0]}
-              </span>
+
+              {/* Background Image Upload */}
+              <div style={{ flex: '1 1 180px' }}>
+                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>Gambar Background</label>
+                <div className="flex gap-8 align-center" style={{ display: 'flex', alignItems: 'center' }}>
+                  <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span>📁</span> {backgroundImage ? 'Ganti Bg' : 'Pilih Gambar'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            if (event.target?.result) {
+                              setBackgroundImage(event.target.result as string);
+                              triggerToast('Gambar background berhasil diunggah!');
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  {backgroundImage && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-danger"
+                      style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      onClick={() => {
+                        setBackgroundImage(null);
+                        triggerToast('Gambar background dihapus.');
+                      }}
+                    >
+                      <span>🗑️</span> Hapus
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div style={{ zIndex: 2, textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8', marginTop: -8, marginBottom: 10 }}>
-            HT {halfTimeHomeScore} - {halfTimeAwayScore}
-          </div>
+            {/* Download Button */}
+            <button
+              className="btn btn-md btn-primary"
+              style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
+              onClick={async () => {
+                const node = document.getElementById('match-feed-card');
+                if (!node) return;
+                try {
+                  triggerToast(`Sedang membuat gambar Instagram (${graphicRatio})...`);
+                  const dataUrl = await htmlToImage.toPng(node, {
+                    cacheBust: true,
+                    pixelRatio: 2.7, // High resolution export
+                  });
+                  const link = document.createElement('a');
+                  link.download = `Result_${graphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`;
+                  link.href = dataUrl;
+                  link.click();
+                  triggerToast('Gambar berhasil diunduh!');
+                } catch (err) {
+                  console.error(err);
+                  triggerToast('Gagal mengunduh gambar.');
+                }
+              }}
+            >
+              Unduh Gambar Feed ({graphicRatio} - {graphicType === 'HT' ? 'Half Time' : 'Full Time'})
+            </button>
 
-          {/* Goals Timeline */}
-          <div style={{ zIndex: 2, flex: 1, overflowY: 'auto', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 16px', backgroundColor: 'rgba(255,255,255,0.01)', display: 'flex', flexDirection: 'column', gap: 6, width: '100%', minHeight: 80 }}>
-            {events.filter(e => e.type === 'goal').map((evt) => (
-              <div key={evt.id} style={{ display: 'flex', justifyContent: evt.clubId === match.homeClubId ? 'flex-start' : 'flex-end', fontSize: 11, color: '#e2e8f0' }}>
-                {evt.clubId === match.homeClubId ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
-                    <span>âš½ {evt.playerName}</span>
+            {/* IG Feed Graphic Canvas */}
+            <div 
+              id="match-feed-card"
+              style={{
+                width: 400,
+                height: graphicRatio === '1:1' ? 400 : 500,
+                background: backgroundImage 
+                  ? `linear-gradient(rgba(9, 13, 22, 0.75), rgba(9, 13, 22, 0.75)), url(${backgroundImage}) center/cover no-repeat` 
+                  : 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: 24,
+                borderRadius: 12,
+                boxShadow: 'var(--shadow-lg)',
+                position: 'relative',
+                fontFamily: 'system-ui, sans-serif',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Glowing Accents - only show if there is no background image to keep custom backdrops clean */}
+              {!backgroundImage && (
+                <>
+                  <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
+                  <div style={{ position: 'absolute', top: '-20%', right: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
+                </>
+              )}
+              
+              {/* Header */}
+              <div style={{ zIndex: 2, textAlign: 'center', display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 10, width: '100%' }}>
+                <span style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', letterSpacing: 1.5 }}>
+                  {match.competition || 'LIGA NUSANTARA UTAMA'}
+                </span>
+                <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: '#0F9F9A', color: '#090d16', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
+                  {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
+                </span>
+              </div>
+
+              {/* Scores & Names Matchup */}
+              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: graphicRatio === '1:1' ? '16px 0' : '28px 0', width: '100%' }}>
+                {/* Home */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                  <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {match.homeLogo && match.homeLogo.startsWith('http') ? (
+                      <img src={match.homeLogo} alt={match.homeClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                    ) : (
+                      <span style={{ fontSize: 44 }}>{match.homeLogo || '⚽'}</span>
+                    )}
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{evt.playerName} âš½</span>
-                    <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
+                    {match.homeClubName.split(' ')[0]}
+                  </span>
+                </div>
+
+                {/* Score Box */}
+                <div style={{ display: 'flex', alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '0 16px' }}>
+                  <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>
+                    {graphicType === 'HT' 
+                      ? ((halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0) 
+                      : ((homeScore as any) !== '' ? homeScore : 0)}
+                  </span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#475569' }}>-</span>
+                  <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>
+                    {graphicType === 'HT' 
+                      ? ((halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0) 
+                      : ((awayScore as any) !== '' ? awayScore : 0)}
+                  </span>
+                </div>
+
+                {/* Away */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                  <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {match.awayLogo && match.awayLogo.startsWith('http') ? (
+                      <img src={match.awayLogo} alt={match.awayClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                    ) : (
+                      <span style={{ fontSize: 44 }}>{match.awayLogo || '⚽'}</span>
+                    )}
                   </div>
+                  <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
+                    {match.awayClubName.split(' ')[0]}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sub-text below matchup */}
+              <div style={{ zIndex: 2, textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8', marginTop: -8, marginBottom: 10 }}>
+                {graphicType === 'FT' 
+                  ? `HT ${(halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0} - ${(halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0}` 
+                  : (match.venue || 'Stadion Pertandingan')}
+              </div>
+
+              {/* Goals Timeline */}
+              <div style={{ 
+                zIndex: 2, 
+                flex: 1, 
+                overflowY: 'auto', 
+                border: '1px solid rgba(255,255,255,0.06)', 
+                borderRadius: 8, 
+                padding: '10px 16px', 
+                backgroundColor: 'rgba(255,255,255,0.01)', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 6, 
+                width: '100%', 
+                minHeight: graphicRatio === '1:1' ? 80 : 150 
+              }}>
+                {events.filter(e => e.type === 'goal' && (graphicType === 'FT' || e.minute <= 45)).map((evt) => (
+                  <div key={evt.id} style={{ display: 'flex', justifyContent: evt.clubId === match.homeClubId ? 'flex-start' : 'flex-end', fontSize: 11, color: '#e2e8f0' }}>
+                    {evt.clubId === match.homeClubId ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
+                        <span>⚽ {evt.playerName}</span>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>{evt.playerName} ⚽</span>
+                        <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {events.filter(e => e.type === 'goal' && (graphicType === 'FT' || e.minute <= 45)).length === 0 && (
+                  <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center', marginTop: 12 }}>Tidak ada gol tercipta</div>
                 )}
               </div>
-            ))}
-            {events.filter(e => e.type === 'goal').length === 0 && (
-              <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center', marginTop: 12 }}>Tidak ada gol tercipta</div>
-            )}
-          </div>
 
-          {/* Footer */}
-          <div style={{ zIndex: 2, display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600, marginTop: 12, width: '100%' }}>
-            <span>{APP_HANDLE}</span>
-            <span style={{ color: '#0F9F9A' }}>INSTAGRAM LIVE FEED</span>
-          </div>
-        </div>
+              {/* Footer */}
+              <div style={{ zIndex: 2, display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600, marginTop: 12, width: '100%' }}>
+                <span>{APP_HANDLE}</span>
+                <span style={{ color: '#0F9F9A' }}>{graphicType === 'HT' ? 'INSTAGRAM HALF TIME FEED' : 'INSTAGRAM LIVE FEED'}</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Safety Rules Reason Dialog Modal */}
@@ -4429,7 +4663,7 @@ function ClubsListView({ clubs, onCreateNew, onEdit, onDelete, hasPermission }: 
                   {club.logoUrl && club.logoUrl.startsWith('http') ? (
                     <img src={club.logoUrl} alt={club.name} style={{ width: 32, height: 32, objectFit: 'contain' }} />
                   ) : (
-                    <span style={{ fontSize: 24 }}>{club.logoUrl || 'âš½'}</span>
+                    <span style={{ fontSize: 24 }}>{club.logoUrl || '⚽'}</span>
                   )}
                 </td>
                 <td><span className="semibold">{club.name}</span></td>
@@ -4775,7 +5009,7 @@ function ClubEditorView({ clubId, clubs, players, competitions, onClose, onSave 
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-900)' }}>{comp.name}</div>
                       <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>
-                        {comp.type === 'league' ? 'Liga' : comp.type === 'cup' ? 'Piala' : 'Friendly'} Â· {comp.season} Â· {comp.country}
+                        {comp.type === 'league' ? 'Liga' : comp.type === 'cup' ? 'Piala' : 'Friendly'} · {comp.season} · {comp.country}
                       </div>
                     </div>
                     {!comp.isActive && (
@@ -5854,7 +6088,7 @@ function CompetitionEditorView({ competitionId, competitions, onClose, onSave, o
             )}
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--neutral-900)' }}>{name || 'Nama Kompetisi'}</div>
             <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 4 }}>
-              {type === 'league' ? 'Liga' : type === 'cup' ? 'Piala' : 'Friendly'} Â· {country}
+              {type === 'league' ? 'Liga' : type === 'cup' ? 'Piala' : 'Friendly'} · {country}
             </div>
             <div style={{ marginTop: 8 }}>
               <span style={{ fontFamily: 'monospace', fontSize: 11, backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
