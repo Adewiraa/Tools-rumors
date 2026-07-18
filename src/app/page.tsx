@@ -891,6 +891,7 @@ export default function Home() {
                     clubs={clubs}
                     players={players}
                     matches={matches}
+                    competitions={competitions}
                     onClose={() => setEditingResultId(null)}
                     onSave={async (updatedMatch) => {
                       try {
@@ -3424,6 +3425,7 @@ interface MatchResultEditorProps {
   onSave: (match: Match) => void;
   triggerToast: (msg: string, type?: any) => void;
   logAction: (action: string, module: string, details: string) => void;
+  competitions: Competition[];
 }
 
 interface MatchEvent {
@@ -3434,7 +3436,7 @@ interface MatchEvent {
   clubId: string;
 }
 
-function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSave, triggerToast, logAction }: MatchResultEditorProps) {
+function MatchResultEditorView({ matchId, clubs, players, matches, competitions, onClose, onSave, triggerToast, logAction }: MatchResultEditorProps) {
   const foundMatch = matches.find(m => m.id === matchId);
   const matchMissing = !foundMatch;
   const match: Match = foundMatch || {
@@ -3899,130 +3901,177 @@ function MatchResultEditorView({ matchId, clubs, players, matches, onClose, onSa
                 width: 400,
                 height: graphicRatio === '1:1' ? 400 : 500,
                 background: backgroundImage 
-                  ? `linear-gradient(rgba(9, 13, 22, 0.75), rgba(9, 13, 22, 0.75)), url(${backgroundImage}) center/cover no-repeat` 
-                  : 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
+                  ? `linear-gradient(rgba(10, 10, 10, 0.15) 0%, rgba(10, 10, 10, 0.5) 45%, rgba(10, 10, 10, 0.95) 90%), url(${backgroundImage}) center/cover no-repeat` 
+                  : 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
                 color: 'white',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                padding: 24,
-                borderRadius: 12,
+                padding: 16,
                 boxShadow: 'var(--shadow-lg)',
                 position: 'relative',
-                fontFamily: 'system-ui, sans-serif',
+                fontFamily: 'Inter, system-ui, sans-serif',
                 overflow: 'hidden'
               }}
             >
-              {/* Glowing Accents - only show if there is no background image to keep custom backdrops clean */}
+              {/* Glowing accents (if no background image) */}
               {!backgroundImage && (
                 <>
-                  <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
-                  <div style={{ position: 'absolute', top: '-20%', right: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(15,159,154,0.12) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
+                  <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
+                  <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
                 </>
               )}
-              
+
+              {/* Gold Top Bar decoration */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', zIndex: 3 }} />
+
               {/* Header */}
-              <div style={{ zIndex: 2, textAlign: 'center', display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 10, width: '100%' }}>
-                <span style={{ fontSize: 9, fontWeight: 800, color: '#0F9F9A', letterSpacing: 1.5 }}>
-                  {match.competition || 'LIGA NUSANTARA UTAMA'}
-                </span>
-                <span style={{ fontSize: 10, fontWeight: 700, backgroundColor: '#0F9F9A', color: '#090d16', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>
-                  {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
-                </span>
-              </div>
-
-              {/* Scores & Names Matchup */}
-              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: graphicRatio === '1:1' ? '16px 0' : '28px 0', width: '100%' }}>
-                {/* Home */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                  <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {match.homeLogo && match.homeLogo.startsWith('http') ? (
-                      <img src={match.homeLogo} alt={match.homeClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
-                    ) : (
-                      <span style={{ fontSize: 44 }}>{match.homeLogo || '⚽'}</span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
-                    {match.homeClubName.split(' ')[0]}
-                  </span>
-                </div>
-
-                {/* Score Box */}
-                <div style={{ display: 'flex', alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '0 16px' }}>
-                  <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>
-                    {graphicType === 'HT' 
-                      ? ((halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0) 
-                      : ((homeScore as any) !== '' ? homeScore : 0)}
-                  </span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#475569' }}>-</span>
-                  <span style={{ fontSize: 44, fontWeight: 900, color: '#0F9F9A' }}>
-                    {graphicType === 'HT' 
-                      ? ((halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0) 
-                      : ((awayScore as any) !== '' ? awayScore : 0)}
-                  </span>
-                </div>
-
-                {/* Away */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                  <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {match.awayLogo && match.awayLogo.startsWith('http') ? (
-                      <img src={match.awayLogo} alt={match.awayClubName} crossOrigin="anonymous" style={{ width: 56, height: 56, objectFit: 'contain' }} />
-                    ) : (
-                      <span style={{ fontSize: 44 }}>{match.awayLogo || '⚽'}</span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 800, marginTop: 8, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
-                    {match.awayClubName.split(' ')[0]}
-                  </span>
-                </div>
-              </div>
-
-              {/* Sub-text below matchup */}
-              <div style={{ zIndex: 2, textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#94a3b8', marginTop: -8, marginBottom: 10 }}>
-                {graphicType === 'FT' 
-                  ? `HT ${(halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0} - ${(halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0}` 
-                  : (match.venue || 'Stadion Pertandingan')}
-              </div>
-
-              {/* Goals Timeline */}
               <div style={{ 
                 zIndex: 2, 
-                flex: 1, 
-                overflowY: 'auto', 
-                border: '1px solid rgba(255,255,255,0.06)', 
-                borderRadius: 8, 
-                padding: '10px 16px', 
-                backgroundColor: 'rgba(255,255,255,0.01)', 
                 display: 'flex', 
-                flexDirection: 'column', 
-                gap: 6, 
-                width: '100%', 
-                minHeight: graphicRatio === '1:1' ? 80 : 150 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                backgroundColor: 'rgba(10, 10, 10, 0.65)', 
+                backdropFilter: 'blur(4px)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                border: '1px solid rgba(255, 255, 255, 0.05)',
+                marginTop: 4
               }}>
-                {events.filter(e => e.type === 'goal' && (graphicType === 'FT' || e.minute <= 45)).map((evt) => (
-                  <div key={evt.id} style={{ display: 'flex', justifyContent: evt.clubId === match.homeClubId ? 'flex-start' : 'flex-end', fontSize: 11, color: '#e2e8f0' }}>
-                    {evt.clubId === match.homeClubId ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
-                        <span>⚽ {evt.playerName}</span>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span>{evt.playerName} ⚽</span>
-                        <span style={{ fontWeight: 700, color: '#0F9F9A' }}>{evt.minute}'</span>
-                      </div>
-                    )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {(() => {
+                    const comp = competitions.find(c => c.name === match.competition);
+                    return comp?.logoUrl && comp.logoUrl.startsWith('http')
+                      ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1 }} />
+                      : <div style={{ width: 18, height: 18, background: 'rgba(200,168,75,0.12)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
+                        </div>;
+                  })()}
+                  <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                    {match.competition || 'LIGA NUSANTARA UTAMA'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
+                  </span>
+                  <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain' }} />
+                </div>
+              </div>
+
+              {/* Middle Clear Space */}
+              <div style={{ flex: 1 }} />
+
+              {/* Bottom Card Panel (Overlay container for matchup, scores and timeline) */}
+              <div style={{
+                zIndex: 2,
+                backgroundColor: 'rgba(10, 10, 10, 0.85)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: 10,
+                border: '1px solid rgba(200, 168, 75, 0.25)',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                width: '100%',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)'
+              }}>
+                {/* Matchup & Scores inside the bottom card */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  {/* Home Team */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                    <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {match.homeLogo && match.homeLogo.startsWith('http') ? (
+                        <img src={match.homeLogo} alt="" crossOrigin="anonymous" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                      ) : (
+                        <span style={{ fontSize: 24 }}>{match.homeLogo || '⚽'}</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        {match.homeClubName.split(' ')[0]}
+                      </span>
+                      <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 600 }}>HOME</span>
+                    </div>
                   </div>
-                ))}
+
+                  {/* Score Box */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                      {graphicType === 'HT' 
+                        ? ((halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0) 
+                        : ((homeScore as any) !== '' ? homeScore : 0)}
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#555' }}>-</span>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                      {graphicType === 'HT' 
+                        ? ((halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0) 
+                        : ((awayScore as any) !== '' ? awayScore : 0)}
+                    </span>
+                  </div>
+
+                  {/* Away Team */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, flexDirection: 'row-reverse' }}>
+                    <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {match.awayLogo && match.awayLogo.startsWith('http') ? (
+                        <img src={match.awayLogo} alt="" crossOrigin="anonymous" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                      ) : (
+                        <span style={{ fontSize: 24 }}>{match.awayLogo || '⚽'}</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>
+                        {match.awayClubName.split(' ')[0]}
+                      </span>
+                      <span style={{ fontSize: 8, color: '#c8a84b', fontWeight: 600 }}>AWAY</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-text HT Score or Venue */}
+                <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#888', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>
+                  {graphicType === 'FT' 
+                    ? `HALF TIME: ${(halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0} - ${(halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0}` 
+                    : (match.venue || 'Stadion Pertandingan')}
+                </div>
+
+                {/* Scorers Side-by-Side (Professional Editorial Layout) */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, width: '100%', fontSize: 9 }}>
+                  {/* Home Scorers (Left Aligned) */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {events
+                      .filter(e => e.type === 'goal' && e.clubId === match.homeClubId && (graphicType === 'FT' || e.minute <= 45))
+                      .map((evt) => (
+                        <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0' }}>
+                          <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
+                          <span>⚽ {evt.playerName}</span>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Away Scorers (Right Aligned) */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
+                    {events
+                      .filter(e => e.type === 'goal' && e.clubId === match.awayClubId && (graphicType === 'FT' || e.minute <= 45))
+                      .map((evt) => (
+                        <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse' }}>
+                          <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
+                          <span>{evt.playerName} ⚽</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* If no goals at all */}
                 {events.filter(e => e.type === 'goal' && (graphicType === 'FT' || e.minute <= 45)).length === 0 && (
-                  <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center', marginTop: 12 }}>Tidak ada gol tercipta</div>
+                  <div style={{ fontSize: 9, color: '#555', textAlign: 'center', fontStyle: 'italic', padding: '2px 0' }}>Tidak ada gol tercipta</div>
                 )}
               </div>
 
               {/* Footer */}
-              <div style={{ zIndex: 2, display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10, fontSize: 9, color: '#64748b', fontWeight: 600, marginTop: 12, width: '100%' }}>
+              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 6, fontSize: 8, color: '#555', fontWeight: 600, marginTop: 8, width: '100%' }}>
                 <span>{APP_HANDLE}</span>
-                <span style={{ color: '#0F9F9A' }}>{graphicType === 'HT' ? 'INSTAGRAM HALF TIME FEED' : 'INSTAGRAM LIVE FEED'}</span>
+                <span style={{ color: '#c8a84b', letterSpacing: 0.5 }}>{graphicType === 'HT' ? 'HALF TIME REPORT' : 'FULL TIME REPORT'}</span>
               </div>
             </div>
           </>
