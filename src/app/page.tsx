@@ -126,6 +126,11 @@ const hasPublishedLineupSnapshot = (match: Match) => (
   (match.awayStarters?.length || 0) >= 11
 );
 
+const getEffectiveLineupStatus = (match: Match): Match['lineupStatus'] => {
+  if (match.publicationStatus === 'Published' || match.lineupStatus === 'Complete') return 'Complete';
+  return match.lineupStatus;
+};
+
 const getEffectiveMatchStatus = (match: Match): Match['status'] => {
   if (match.status !== 'Scheduled') return match.status;
 
@@ -740,7 +745,7 @@ export default function Home() {
                     triggerToast('Buat jadwal pertandingan terlebih dahulu. Lineup mengikuti ID jadwal.', 'warning');
                   }
                   else if (activeMenu === 'results') {
-                    const readyMatch = matches.find(m => m.lineupStatus === 'Complete' && getEffectiveMatchStatus(m) === 'Live');
+                    const readyMatch = matches.find(m => getEffectiveLineupStatus(m) === 'Complete' && getEffectiveMatchStatus(m) === 'Live');
                     if (readyMatch) setEditingResultId(readyMatch.id);
                     else triggerToast('Input hasil hanya tersedia untuk pertandingan Live yang lineup-nya lengkap.', 'warning');
                   }
@@ -1411,10 +1416,10 @@ interface DashboardProps {
 function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate, onEditLineup, onEditResult }: DashboardProps) {
   // KPI Calculations
   const totalMatchesToday = matches.filter(m => getEffectiveMatchStatus(m) === 'Live').length;
-  const incompleteLineups = matches.filter(m => m.lineupStatus !== 'Complete').length;
+  const incompleteLineups = matches.filter(m => getEffectiveLineupStatus(m) !== 'Complete').length;
   const resultsPendingReview = matches.filter(m => {
     const effectiveStatus = getEffectiveMatchStatus(m);
-    return effectiveStatus !== 'Finished' && (effectiveStatus === 'Live' || m.lineupStatus === 'Needs Review');
+    return effectiveStatus !== 'Finished' && (effectiveStatus === 'Live' || getEffectiveLineupStatus(m) === 'Needs Review');
   }).length;
   const draftRumors = rumors.filter(r => r.publicationStatus === 'Draft').length;
 
@@ -1497,7 +1502,9 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
                 </tr>
               </thead>
               <tbody>
-                {matches.map(match => (
+                {matches.map(match => {
+                  const effectiveLineupStatus = getEffectiveLineupStatus(match);
+                  return (
                   <tr key={match.id}>
                     <td>
                       <div className="flex align-center gap-12">
@@ -1513,8 +1520,8 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
                       <div className="text-muted" style={{ fontSize: 11 }}>{match.venue}</div>
                     </td>
                     <td>
-                      <span className={`badge ${match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`}>
-                        {match.lineupStatus}
+                      <span className={`badge ${effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`}>
+                        {effectiveLineupStatus}
                       </span>
                     </td>
                     <td>
@@ -1533,7 +1540,8 @@ function DashboardView({ matches, rumors, clubs, players, auditLogs, onNavigate,
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1652,8 +1660,8 @@ function ScheduleListView({ matches, players, competitions, onCreateNew, onEdit,
   const upcoming = filtered.filter(m => ['Scheduled','Live','Postponed'].includes(getEffectiveMatchStatus(m)));
   const played   = filtered.filter(m => ['Finished','Cancelled'].includes(getEffectiveMatchStatus(m)));
   const scheduledCount = matches.filter(m => getEffectiveMatchStatus(m) === 'Scheduled').length;
-  const lineupReadyCount = matches.filter(m => m.lineupStatus === 'Complete').length;
-  const resultReadyCount = matches.filter(m => m.lineupStatus === 'Complete' && ['Live','Finished'].includes(getEffectiveMatchStatus(m))).length;
+  const lineupReadyCount = matches.filter(m => getEffectiveLineupStatus(m) === 'Complete').length;
+  const resultReadyCount = matches.filter(m => getEffectiveLineupStatus(m) === 'Complete' && ['Live','Finished'].includes(getEffectiveMatchStatus(m))).length;
   const competitionBuckets = competitions
     .map(comp => ({ comp, count: matches.filter(m => m.competition === comp.name).length }))
     .filter(item => item.count > 0 || item.comp.isActive);
@@ -1730,7 +1738,8 @@ function ScheduleListView({ matches, players, competitions, onCreateNew, onEdit,
   const renderRow = (m: Match) => {
     const isToday = new Date(m.kickoff).toDateString() === new Date().toDateString();
     const effectiveStatus = getEffectiveMatchStatus(m);
-    const canResult = effectiveStatus === 'Live' && m.lineupStatus === 'Complete';
+    const effectiveLineupStatus = getEffectiveLineupStatus(m);
+    const canResult = effectiveStatus === 'Live' && effectiveLineupStatus === 'Complete';
     const hasLineupData = hasSavedLineupSelection(m);
     const canOpenPublishedLineup = hasPublishedLineupSnapshot(m);
     const canLineup = ['Scheduled','Live'].includes(effectiveStatus) || canOpenPublishedLineup;
@@ -1768,7 +1777,7 @@ function ScheduleListView({ matches, players, competitions, onCreateNew, onEdit,
           <div className="text-muted" style={{ fontSize: 11 }}>{new Date(m.kickoff).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</div>
         </td>
         <td><span className={`badge ${statusClass(effectiveStatus)}`}>{statusLabel(effectiveStatus)}</span></td>
-        <td><span className={`badge ${lineupClass(m.lineupStatus)}`}>{lineupLabel(m.lineupStatus)}</span></td>
+        <td><span className={`badge ${lineupClass(effectiveLineupStatus)}`}>{lineupLabel(effectiveLineupStatus)}</span></td>
         <td style={{ fontSize: 13, fontWeight: 700 }}>
           {effectiveStatus === 'Finished' && m.homeScore !== undefined ? `${m.homeScore} - ${m.awayScore}` : <span className="text-muted">-</span>}
         </td>
@@ -2277,11 +2286,13 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
   const [previewMatch, setPreviewMatch] = useState<Match | null>(null);
   const lineupStatusLabel = (match: Match) => {
     if (getEffectiveMatchStatus(match) === 'Finished') return 'Selesai';
-    return match.lineupStatus === 'Complete' ? 'Siap' : match.lineupStatus === 'Needs Review' ? 'Review' : 'Belum';
+    const effectiveLineupStatus = getEffectiveLineupStatus(match);
+    return effectiveLineupStatus === 'Complete' ? 'Siap' : effectiveLineupStatus === 'Needs Review' ? 'Review' : 'Belum';
   };
   const lineupStatusClass = (match: Match) => {
     if (getEffectiveMatchStatus(match) === 'Finished') return 'badge-success';
-    return match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+    const effectiveLineupStatus = getEffectiveLineupStatus(match);
+    return effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
   };
 
   const filteredMatches = matches.filter(match => {
@@ -3444,17 +3455,19 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
   const [selectedComp, setSelectedComp] = useState('Semua');
   const [timelineMatch, setTimelineMatch] = useState<Match | null>(null);
   const filteredMatches = matches
-    .filter(match => match.lineupStatus === 'Complete' || getEffectiveMatchStatus(match) === 'Finished' || hasResultProgress(match))
+    .filter(match => getEffectiveLineupStatus(match) === 'Complete' || getEffectiveMatchStatus(match) === 'Finished' || hasResultProgress(match))
     .filter(match => selectedComp === 'Semua' || match.competition === selectedComp)
     .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
   const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
   const lineupStatusLabel = (match: Match) => {
     if (getEffectiveMatchStatus(match) === 'Finished') return 'Selesai';
-    return match.lineupStatus === 'Complete' ? 'Siap' : match.lineupStatus === 'Needs Review' ? 'Review' : 'Belum';
+    const effectiveLineupStatus = getEffectiveLineupStatus(match);
+    return effectiveLineupStatus === 'Complete' ? 'Siap' : effectiveLineupStatus === 'Needs Review' ? 'Review' : 'Belum';
   };
   const lineupStatusClass = (match: Match) => {
     if (getEffectiveMatchStatus(match) === 'Finished') return 'badge-success';
-    return match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+    const effectiveLineupStatus = getEffectiveLineupStatus(match);
+    return effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
   };
 
   return (
@@ -3498,7 +3511,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
             {filteredMatches.map(match => {
               const effectiveStatus = getEffectiveMatchStatus(match);
               const hasSavedHalfTime = hasSavedHalfTimeResult(match);
-              const canInputResult = (effectiveStatus === 'Live' || hasSavedHalfTime) && (match.lineupStatus === 'Complete' || hasSavedHalfTime);
+              const canInputResult = (effectiveStatus === 'Live' || hasSavedHalfTime) && (getEffectiveLineupStatus(match) === 'Complete' || hasSavedHalfTime);
               return (
                 <tr key={match.id}>
                   <td>
@@ -4186,6 +4199,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       backgroundDim,
       halfTimeSaved: shouldPersistHalfTime,
     };
+    const nextLineupStatus: Match['lineupStatus'] =
+      storedStatus === 'Finished' || getEffectiveLineupStatus(match) === 'Complete'
+        ? 'Complete'
+        : match.lineupStatus;
     const updatedMatch: Match = {
       ...match,
       // Save FT scores as null if showFullTime is not active (halftime score only)
@@ -4194,7 +4211,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       halfTimeHomeScore: shouldPersistHalfTime ? (halfTimeHomeScore === '' ? null : (halfTimeHomeScore as any)) : null,
       halfTimeAwayScore: shouldPersistHalfTime ? (halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any)) : null,
       status: storedStatus,
-      lineupStatus: storedStatus === 'Finished' ? 'Complete' : safetyReason ? 'Needs Review' : 'Complete',
+      lineupStatus: nextLineupStatus,
       timeline: getTimelineWithResultGraphicSettings(events, nextGraphicSettings),
     };
     if (safetyReason) {
@@ -4962,7 +4979,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
           <div className="modal-content">
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--danger-600)' }}>Konfirmasi Perubahan Skor Published</h3>
             <p style={{ fontSize: 13, color: 'var(--neutral-700)', marginBottom: 16 }}>
-              Hasil pertandingan ini sebelumnya telah dipublikasikan. Mengubah skor akhir akan mencatat audit trail khusus dan mereset status data menjadi <b>Needs Review</b>.
+              Hasil pertandingan ini sebelumnya telah dipublikasikan. Mengubah skor akhir akan mencatat audit trail khusus.
             </p>
             <div className="form-group">
               <label className="form-label">Alasan Perubahan Skor <span className="required">*</span></label>
