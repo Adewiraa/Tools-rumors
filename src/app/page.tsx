@@ -1006,6 +1006,7 @@ export default function Home() {
                     onCreateNew={() => setEditingResultId('new')}
                     onEdit={setEditingResultId}
                     hasPermission={hasPermission}
+                    triggerToast={triggerToast}
                   />
                 )
               )}
@@ -2487,15 +2488,15 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
                 <h3 className="output-preview-title">Gambar Lineup</h3>
                 <div className="output-preview-meta">{previewMatch.homeClubName} vs {previewMatch.awayClubName} - ID Jadwal: {previewMatch.id}</div>
               </div>
-              <div className="flex gap-8" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <button className="btn btn-sm btn-primary" onClick={() => shareLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
-                  <Share2 size={14} /> Bagikan
-                </button>
-                <button className="btn btn-sm btn-secondary" onClick={() => downloadLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
-                  <Download size={14} /> Unduh
-                </button>
-                <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></button>
-              </div>
+              <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></button>
+            </div>
+            <div className="output-preview-toolbar">
+              <button className="btn btn-sm btn-primary" onClick={() => shareLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
+                <Share2 size={14} /> Bagikan Lineup
+              </button>
+              <button className="btn btn-sm btn-secondary" onClick={() => downloadLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
+                <Download size={14} /> Unduh Lineup
+              </button>
             </div>
             <div className="output-preview-stage">
               <PublishedLineupStoryCard
@@ -3526,11 +3527,13 @@ interface MatchResultsListProps {
   onCreateNew: () => void;
   onEdit: (id: string) => void;
   hasPermission: (module: string, action: any) => boolean;
+  triggerToast: (msg: string, type?: any) => void;
 }
 
-function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: MatchResultsListProps) {
+function MatchResultsListView({ matches, competitions, onEdit, hasPermission, triggerToast }: MatchResultsListProps) {
   const [selectedComp, setSelectedComp] = useState('Semua');
   const [timelineMatch, setTimelineMatch] = useState<Match | null>(null);
+  const [isExportingResultOutput, setIsExportingResultOutput] = useState(false);
   const filteredMatches = matches
     .filter(match => getEffectiveLineupStatus(match) === 'Complete' || getEffectiveMatchStatus(match) === 'Finished' || hasResultProgress(match))
     .filter(match => selectedComp === 'Semua' || match.competition === selectedComp)
@@ -3545,6 +3548,70 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
     if (getEffectiveMatchStatus(match) === 'Finished') return 'badge-success';
     const effectiveLineupStatus = getEffectiveLineupStatus(match);
     return effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+  };
+  const getResultOutputElementId = (matchId: string, type: 'HT' | 'FT') => `result-output-card-${matchId}-${type.toLowerCase()}`;
+  const getResultOutputFileName = (match: Match, type: 'HT' | 'FT') => `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
+
+  const createResultOutputImage = async (match: Match, type: 'HT' | 'FT') => {
+    const node = document.getElementById(getResultOutputElementId(match.id, type));
+    if (!node) throw new Error('Gambar hasil belum siap.');
+    const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    return { dataUrl, blob, fileName: getResultOutputFileName(match, type) };
+  };
+
+  const downloadResultOutput = async (match: Match, type: 'HT' | 'FT') => {
+    try {
+      setIsExportingResultOutput(true);
+      triggerToast(`Membuat gambar ${type}...`);
+      const { dataUrl, fileName } = await createResultOutputImage(match, type);
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast(`Gambar ${type} berhasil diunduh!`);
+    } catch (err) {
+      console.warn('Result output download failed:', err);
+      triggerToast(`Gagal mengunduh gambar ${type}.`, 'error');
+    } finally {
+      setIsExportingResultOutput(false);
+    }
+  };
+
+  const shareResultOutput = async (match: Match, type: 'HT' | 'FT') => {
+    try {
+      setIsExportingResultOutput(true);
+      triggerToast(`Membuat gambar ${type}...`);
+      const { blob, dataUrl, fileName } = await createResultOutputImage(match, type);
+      const file = new File([blob], fileName, { type: 'image/png' });
+      const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+      const shareData: ShareData = {
+        files: [file],
+        title: `${type} ${match.homeClubName} vs ${match.awayClubName}`,
+        text: `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName}`,
+      };
+
+      if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
+        await nav.share(shareData);
+        triggerToast(`Gambar ${type} siap dibagikan.`);
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.', 'warning');
+    } catch (err) {
+      const error = err as { name?: string };
+      if (error?.name !== 'AbortError') {
+        console.warn('Result output share failed:', err);
+        triggerToast(`Gagal membagikan gambar ${type}.`, 'error');
+      }
+    } finally {
+      setIsExportingResultOutput(false);
+    }
   };
 
   return (
@@ -3670,9 +3737,17 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                       <ResultOutputGraphicCard
                         match={timelineMatch}
                         competitions={competitions}
-                        elementId={`result-output-card-${timelineMatch.id}-ht`}
+                        elementId={getResultOutputElementId(timelineMatch.id, 'HT')}
                         graphicType="HT"
                       />
+                      <div className="output-preview-actions">
+                        <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'HT')} disabled={isExportingResultOutput}>
+                          <Share2 size={14} /> Bagikan HT
+                        </button>
+                        <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'HT')} disabled={isExportingResultOutput}>
+                          <Download size={14} /> Unduh HT
+                        </button>
+                      </div>
                     </div>
                   )}
                 <div className="output-preview-item">
@@ -3680,9 +3755,17 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                   <ResultOutputGraphicCard
                     match={timelineMatch}
                     competitions={competitions}
-                    elementId={`result-output-card-${timelineMatch.id}-ft`}
+                    elementId={getResultOutputElementId(timelineMatch.id, 'FT')}
                     graphicType="FT"
                   />
+                  <div className="output-preview-actions">
+                    <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'FT')} disabled={isExportingResultOutput}>
+                      <Share2 size={14} /> Bagikan FT
+                    </button>
+                    <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'FT')} disabled={isExportingResultOutput}>
+                      <Download size={14} /> Unduh FT
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
