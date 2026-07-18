@@ -3459,11 +3459,14 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   };
 
   // Editor states
-  const [homeScore, setHomeScore] = useState<number | ''>(match.homeScore !== undefined && match.homeScore !== null ? match.homeScore : '');
-  const [awayScore, setAwayScore] = useState<number | ''>(match.awayScore !== undefined && match.awayScore !== null ? match.awayScore : '');
-  const [halfTimeHomeScore, setHalfTimeHomeScore] = useState<number | ''>(match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null ? match.halfTimeHomeScore : '');
-  const [halfTimeAwayScore, setHalfTimeAwayScore] = useState<number | ''>(match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? match.halfTimeAwayScore : '');
+  const [homeScore, setHomeScore] = useState<number | ''>(match.homeScore !== undefined && match.homeScore !== null ? match.homeScore : 0);
+  const [awayScore, setAwayScore] = useState<number | ''>(match.awayScore !== undefined && match.awayScore !== null ? match.awayScore : 0);
+  const [halfTimeHomeScore, setHalfTimeHomeScore] = useState<number | ''>(match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null ? match.halfTimeHomeScore : 0);
+  const [halfTimeAwayScore, setHalfTimeAwayScore] = useState<number | ''>(match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? match.halfTimeAwayScore : 0);
   const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(match.status);
+  const [showFullTime, setShowFullTime] = useState<boolean>(
+    match.status === 'Finished' || (match.homeScore !== undefined && match.homeScore !== null && match.homeScore !== 0)
+  );
 
   // Instagram graphic options
   // Instagram graphic options - default to 'HT' (Half Time) first to prevent UX confusion
@@ -3612,45 +3615,114 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
         <div className="card" style={{ gridColumn: 'span 7' }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Skor Half Time, Full Time & Status</h3>
 
-          <div className="flex align-center justify-between" style={{ padding: '24px 0', borderBottom: '1px solid var(--neutral-100)' }}>
-            {/* Home score */}
+          <div className="flex align-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid var(--neutral-100)' }}>
+            {/* Home score HT */}
             <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
                 {match.homeLogo && match.homeLogo.startsWith('http') ? (
-                  <img src={match.homeLogo} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
+                  <img src={match.homeLogo} alt="" style={{ width: 50, height: 50, objectFit: 'contain' }} />
                 ) : (
-                  <span style={{ fontSize: 36 }}>{match.homeLogo || '⚽'}</span>
+                  <span style={{ fontSize: 30 }}>{match.homeLogo || '⚽'}</span>
                 )}
               </div>
-              <div className="semibold" style={{ fontSize: 15, margin: '8px 0' }}>{match.homeClubName}</div>
-              <label className="form-label" style={{ textAlign: 'center', marginTop: 10 }}>HT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeHomeScore} onChange={(e) => setHalfTimeHomeScore(e.target.value === '' ? '' : Number(e.target.value))} />
-              <label className="form-label" style={{ textAlign: 'center' }}>FT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={homeScore} onChange={(e) => setHomeScore(e.target.value === '' ? '' : Number(e.target.value))} />
+              <div className="semibold" style={{ fontSize: 14, margin: '4px 0' }}>{match.homeClubName}</div>
+              <label className="form-label" style={{ textAlign: 'center', marginTop: 6, fontSize: 11 }}>Skor Babak Pertama (HT)</label>
+              <input 
+                type="number" 
+                min={0} 
+                className="form-input" 
+                style={{ width: 85, fontSize: 18, textAlign: 'center' }} 
+                value={halfTimeHomeScore} 
+                onChange={(e) => setHalfTimeHomeScore(e.target.value === '' ? '' : Number(e.target.value))} 
+              />
             </div>
 
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--neutral-300)' }}>VS</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--neutral-300)' }}>VS</div>
 
-            {/* Away score */}
+            {/* Away score HT */}
             <div style={{ textAlign: 'center', flex: 1 }}>
-              <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <div style={{ height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
                 {match.awayLogo && match.awayLogo.startsWith('http') ? (
-                  <img src={match.awayLogo} alt="" style={{ width: 60, height: 60, objectFit: 'contain' }} />
+                  <img src={match.awayLogo} alt="" style={{ width: 50, height: 50, objectFit: 'contain' }} />
                 ) : (
-                  <span style={{ fontSize: 36 }}>{match.awayLogo || '⚽'}</span>
+                  <span style={{ fontSize: 30 }}>{match.awayLogo || '⚽'}</span>
                 )}
               </div>
-              <div className="semibold" style={{ fontSize: 15, margin: '8px 0' }}>{match.awayClubName}</div>
-              <label className="form-label" style={{ textAlign: 'center', marginTop: 10 }}>HT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 18, textAlign: 'center', marginBottom: 10 }} value={halfTimeAwayScore} onChange={(e) => setHalfTimeAwayScore(e.target.value === '' ? '' : Number(e.target.value))} />
-              <label className="form-label" style={{ textAlign: 'center' }}>FT</label>
-              <input type="number" min={0} className="form-input" style={{ width: 80, fontSize: 24, textAlign: 'center' }} value={awayScore} onChange={(e) => setAwayScore(e.target.value === '' ? '' : Number(e.target.value))} />
+              <div className="semibold" style={{ fontSize: 14, margin: '4px 0' }}>{match.awayClubName}</div>
+              <label className="form-label" style={{ textAlign: 'center', marginTop: 6, fontSize: 11 }}>Skor Babak Pertama (HT)</label>
+              <input 
+                type="number" 
+                min={0} 
+                className="form-input" 
+                style={{ width: 85, fontSize: 18, textAlign: 'center' }} 
+                value={halfTimeAwayScore} 
+                onChange={(e) => setHalfTimeAwayScore(e.target.value === '' ? '' : Number(e.target.value))} 
+              />
             </div>
           </div>
 
+          {/* Full Time score toggle */}
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '14px 0', borderBottom: '1px solid var(--neutral-100)', paddingBottom: 14 }}>
+            <label className="flex align-center gap-8 semibold cursor-pointer" style={{ fontSize: 13, userSelect: 'none' }}>
+              <input 
+                type="checkbox" 
+                checked={showFullTime} 
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setShowFullTime(checked);
+                  if (checked) {
+                    setMatchStatus('Finished');
+                  } else {
+                    setMatchStatus('Live');
+                  }
+                }} 
+              />
+              Pertandingan Selesai? Masukkan Skor Akhir (Full Time)
+            </label>
+          </div>
+
+          {/* Full Time score inputs (shown progressively) */}
+          {showFullTime && (
+            <div className="flex align-center justify-between" style={{ padding: '14px 0', backgroundColor: 'var(--neutral-50)', borderRadius: 8, marginBottom: 16 }}>
+              <div style={{ textAlign: 'center', flex: 1 }}>
+                <label className="form-label" style={{ textAlign: 'center', fontSize: 11 }}>Skor Akhir Home (FT)</label>
+                <input 
+                  type="number" 
+                  min={0} 
+                  className="form-input" 
+                  style={{ width: 85, fontSize: 22, textAlign: 'center', fontWeight: 'bold' }} 
+                  value={homeScore} 
+                  onChange={(e) => setHomeScore(e.target.value === '' ? '' : Number(e.target.value))} 
+                />
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--neutral-300)' }}>FT</div>
+              <div style={{ textAlign: 'center', flex: 1 }}>
+                <label className="form-label" style={{ textAlign: 'center', fontSize: 11 }}>Skor Akhir Away (FT)</label>
+                <input 
+                  type="number" 
+                  min={0} 
+                  className="form-input" 
+                  style={{ width: 85, fontSize: 22, textAlign: 'center', fontWeight: 'bold' }} 
+                  value={awayScore} 
+                  onChange={(e) => setAwayScore(e.target.value === '' ? '' : Number(e.target.value))} 
+                />
+              </div>
+            </div>
+          )}
+
           <div style={{ marginTop: 20 }}>
             <label className="form-label">Status Pertandingan</label>
-            <select className="form-select" value={matchStatus} onChange={(e: any) => setMatchStatus(e.target.value)}>
+            <select 
+              className="form-select" 
+              value={matchStatus} 
+              onChange={(e: any) => {
+                const val = e.target.value;
+                setMatchStatus(val);
+                if (val === 'Finished') {
+                  setShowFullTime(true);
+                }
+              }}
+            >
               <option value="Scheduled">Scheduled</option>
               <option value="Live">Live (Dalam Pertandingan)</option>
               <option value="Finished">Finished (Selesai)</option>
