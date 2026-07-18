@@ -180,7 +180,22 @@ const getTimelineWithResultGraphicSettings = (events: any[], settings: ResultGra
   },
 ]);
 
-const hasSavedHalfTimeResult = (match: Match) => getResultGraphicSettings(match).halfTimeSaved === true;
+const hasHalfTimeScoreValues = (match: Match) => (
+  match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null &&
+  match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null
+);
+
+const hasSavedHalfTimeResult = (match: Match) => {
+  const settings = getResultGraphicSettings(match);
+  if (settings.halfTimeSaved === true) return true;
+  if (settings.halfTimeSaved === false) return false;
+  return match.status !== 'Finished' && hasHalfTimeScoreValues(match);
+};
+
+const hasResultProgress = (match: Match) => (
+  hasSavedHalfTimeResult(match) ||
+  (match.homeScore !== undefined && match.homeScore !== null && match.awayScore !== undefined && match.awayScore !== null)
+);
 
 const storyNormalizeCountryValue = (value?: string) => (value || '').trim().toLowerCase();
 
@@ -3429,7 +3444,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
   const [selectedComp, setSelectedComp] = useState('Semua');
   const [timelineMatch, setTimelineMatch] = useState<Match | null>(null);
   const filteredMatches = matches
-    .filter(match => match.lineupStatus === 'Complete' || getEffectiveMatchStatus(match) === 'Finished')
+    .filter(match => match.lineupStatus === 'Complete' || getEffectiveMatchStatus(match) === 'Finished' || hasResultProgress(match))
     .filter(match => selectedComp === 'Semua' || match.competition === selectedComp)
     .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime());
   const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
@@ -3482,8 +3497,8 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
           <tbody>
             {filteredMatches.map(match => {
               const effectiveStatus = getEffectiveMatchStatus(match);
-              const canInputResult = effectiveStatus === 'Live' && match.lineupStatus === 'Complete';
               const hasSavedHalfTime = hasSavedHalfTimeResult(match);
+              const canInputResult = (effectiveStatus === 'Live' || hasSavedHalfTime) && (match.lineupStatus === 'Complete' || hasSavedHalfTime);
               return (
                 <tr key={match.id}>
                   <td>
@@ -3500,7 +3515,7 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
                   </td>
                   <td>{match.competition}</td>
                   <td>
-                    {hasSavedHalfTime && match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null && match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? (
+                    {hasSavedHalfTime && hasHalfTimeScoreValues(match) ? (
                       <span className="semibold">{match.halfTimeHomeScore} - {match.halfTimeAwayScore}</span>
                     ) : (
                       <span className="text-muted">-</span>
