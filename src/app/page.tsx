@@ -3459,14 +3459,22 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   };
 
   // Editor states
-  const [homeScore, setHomeScore] = useState<number | ''>(match.homeScore !== undefined && match.homeScore !== null ? match.homeScore : 0);
-  const [awayScore, setAwayScore] = useState<number | ''>(match.awayScore !== undefined && match.awayScore !== null ? match.awayScore : 0);
-  const [halfTimeHomeScore, setHalfTimeHomeScore] = useState<number | ''>(match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null ? match.halfTimeHomeScore : 0);
-  const [halfTimeAwayScore, setHalfTimeAwayScore] = useState<number | ''>(match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? match.halfTimeAwayScore : 0);
-  const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(match.status);
-  const [showFullTime, setShowFullTime] = useState<boolean>(
-    match.status === 'Finished' || (match.homeScore !== undefined && match.homeScore !== null && match.homeScore !== 0)
+  // Initialize FT scores to 0 if match is not Finished (to keep it clean and locked)
+  const [homeScore, setHomeScore] = useState<number | ''>(
+    match.status === 'Finished' && match.homeScore !== undefined && match.homeScore !== null ? match.homeScore : 0
   );
+  const [awayScore, setAwayScore] = useState<number | ''>(
+    match.status === 'Finished' && match.awayScore !== undefined && match.awayScore !== null ? match.awayScore : 0
+  );
+  const [halfTimeHomeScore, setHalfTimeHomeScore] = useState<number | ''>(
+    match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null ? match.halfTimeHomeScore : 0
+  );
+  const [halfTimeAwayScore, setHalfTimeAwayScore] = useState<number | ''>(
+    match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null ? match.halfTimeAwayScore : 0
+  );
+  const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(match.status);
+  // Lock Full Time inputs by default unless the match is already marked as Finished
+  const [showFullTime, setShowFullTime] = useState<boolean>(match.status === 'Finished');
 
   // Instagram graphic options
   // Instagram graphic options - default to 'HT' (Half Time) first to prevent UX confusion
