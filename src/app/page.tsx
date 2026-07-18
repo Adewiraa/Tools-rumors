@@ -4363,16 +4363,16 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               {/* Bottom Card Panel (Overlay container for matchup, scores and timeline) */}
               <div style={{
                 zIndex: 2,
-                backgroundColor: 'rgba(10, 10, 10, 0.85)',
-                backdropFilter: 'blur(8px)',
+                backgroundColor: backgroundImage ? 'rgba(10, 10, 10, 0.48)' : 'rgba(10, 10, 10, 0.85)',
+                backdropFilter: backgroundImage ? 'blur(2px) saturate(115%)' : 'blur(8px)',
                 borderRadius: 10,
-                border: '1px solid rgba(200, 168, 75, 0.25)',
+                border: backgroundImage ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid rgba(200, 168, 75, 0.25)',
                 padding: '12px 14px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 8,
                 width: '100%',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)'
+                boxShadow: backgroundImage ? '0 10px 24px rgba(0, 0, 0, 0.28)' : '0 8px 32px rgba(0, 0, 0, 0.6)'
               }}>
                 {/* Matchup & Scores inside the bottom card */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
