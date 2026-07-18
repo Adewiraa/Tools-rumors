@@ -3481,6 +3481,15 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(match.status === 'Finished' ? 'FT' : 'HT');
   const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [pendingBackgroundImage, setPendingBackgroundImage] = useState<string | null>(null);
+  const [backgroundPositionX, setBackgroundPositionX] = useState(50);
+  const [backgroundPositionY, setBackgroundPositionY] = useState(50);
+  const [backgroundZoom, setBackgroundZoom] = useState(100);
+  const [backgroundDim, setBackgroundDim] = useState(20);
+  const [pendingBackgroundPositionX, setPendingBackgroundPositionX] = useState(50);
+  const [pendingBackgroundPositionY, setPendingBackgroundPositionY] = useState(50);
+  const [pendingBackgroundZoom, setPendingBackgroundZoom] = useState(100);
+  const [pendingBackgroundDim, setPendingBackgroundDim] = useState(20);
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
   const isFullTimeGraphic = showFullTime || matchStatus === 'Finished';
   const effectiveGraphicType: 'HT' | 'FT' = isFullTimeGraphic ? 'FT' : graphicType;
@@ -3495,6 +3504,24 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       setGraphicType('FT');
     }
   }, [graphicType, isFullTimeGraphic]);
+
+  const applyPendingBackgroundImage = () => {
+    if (!pendingBackgroundImage) return;
+    setBackgroundImage(pendingBackgroundImage);
+    setBackgroundPositionX(pendingBackgroundPositionX);
+    setBackgroundPositionY(pendingBackgroundPositionY);
+    setBackgroundZoom(pendingBackgroundZoom);
+    setBackgroundDim(pendingBackgroundDim);
+    triggerToast('Gambar background diterapkan.');
+  };
+
+  const resetBackgroundImageDraft = () => {
+    setPendingBackgroundImage(null);
+    setPendingBackgroundPositionX(backgroundPositionX);
+    setPendingBackgroundPositionY(backgroundPositionY);
+    setPendingBackgroundZoom(backgroundZoom);
+    setPendingBackgroundDim(backgroundDim);
+  };
 
   // Safety confirmation states
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -4123,7 +4150,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               {/* Background Image Upload */}
               <div style={{ flex: '1 1 180px' }}>
                 <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>Gambar Background</label>
-                <div className="flex gap-8 align-center" style={{ display: 'flex', alignItems: 'center' }}>
+                <div className="flex gap-8 align-center" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                   <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <span>📁</span> {backgroundImage ? 'Ganti Bg' : 'Pilih Gambar'}
                     <input
@@ -4136,8 +4163,12 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                           const reader = new FileReader();
                           reader.onload = (event) => {
                             if (event.target?.result) {
-                              setBackgroundImage(event.target.result as string);
-                              triggerToast('Gambar background berhasil diunggah!');
+                              setPendingBackgroundImage(event.target.result as string);
+                              setPendingBackgroundPositionX(backgroundPositionX);
+                              setPendingBackgroundPositionY(backgroundPositionY);
+                              setPendingBackgroundZoom(backgroundZoom);
+                              setPendingBackgroundDim(backgroundDim);
+                              triggerToast('Gambar siap diatur. Klik Terapkan jika sudah pas.');
                             }
                           };
                           reader.readAsDataURL(file);
@@ -4152,6 +4183,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => {
                         setBackgroundImage(null);
+                        resetBackgroundImageDraft();
                         triggerToast('Gambar background dihapus.');
                       }}
                     >
@@ -4161,6 +4193,57 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 </div>
               </div>
             </div>
+
+            {pendingBackgroundImage && (
+              <div style={{ width: '100%', maxWidth: 500, border: '1px solid var(--neutral-200)', borderRadius: 8, padding: 12, backgroundColor: 'var(--neutral-50)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                  <label className="form-label" style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Preview & Atur Background</label>
+                  <div className="flex gap-8">
+                    <button type="button" className="btn btn-sm btn-primary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={applyPendingBackgroundImage}>
+                      Terapkan
+                    </button>
+                    <button type="button" className="btn btn-sm btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={resetBackgroundImageDraft}>
+                      Batal
+                    </button>
+                  </div>
+                </div>
+                <div style={{ position: 'relative', height: 180, overflow: 'hidden', borderRadius: 8, backgroundColor: '#111', marginBottom: 12 }}>
+                  <img
+                    src={pendingBackgroundImage}
+                    alt=""
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: `${pendingBackgroundPositionX}% ${pendingBackgroundPositionY}%`,
+                      transform: `scale(${pendingBackgroundZoom / 100})`,
+                      transformOrigin: `${pendingBackgroundPositionX}% ${pendingBackgroundPositionY}%`,
+                    }}
+                  />
+                  <div style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0, 0, 0, ${pendingBackgroundDim / 100})`, pointerEvents: 'none' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                    Posisi X
+                    <input type="range" className="w-full" min="0" max="100" value={pendingBackgroundPositionX} onChange={(e) => setPendingBackgroundPositionX(Number(e.target.value))} />
+                  </label>
+                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                    Posisi Y
+                    <input type="range" className="w-full" min="0" max="100" value={pendingBackgroundPositionY} onChange={(e) => setPendingBackgroundPositionY(Number(e.target.value))} />
+                  </label>
+                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                    Zoom
+                    <input type="range" className="w-full" min="100" max="180" value={pendingBackgroundZoom} onChange={(e) => setPendingBackgroundZoom(Number(e.target.value))} />
+                  </label>
+                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                    Gelap Overlay
+                    <input type="range" className="w-full" min="0" max="55" value={pendingBackgroundDim} onChange={(e) => setPendingBackgroundDim(Number(e.target.value))} />
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-12" style={{ width: '100%' }}>
@@ -4188,9 +4271,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               style={{
                 width: 400,
                 height: graphicRatio === '1:1' ? 400 : 500,
-                background: backgroundImage 
-                  ? `linear-gradient(rgba(10, 10, 10, 0.15) 0%, rgba(10, 10, 10, 0.5) 45%, rgba(10, 10, 10, 0.95) 90%), url(${backgroundImage}) center/cover no-repeat` 
-                  : 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
+                background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
                 color: 'white',
                 display: 'flex',
                 flexDirection: 'column',
@@ -4202,6 +4283,35 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 overflow: 'hidden'
               }}
             >
+              {backgroundImage && (
+                <>
+                  <img
+                    src={backgroundImage}
+                    alt=""
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: `${backgroundPositionX}% ${backgroundPositionY}%`,
+                      transform: `scale(${backgroundZoom / 100})`,
+                      transformOrigin: `${backgroundPositionX}% ${backgroundPositionY}%`,
+                      zIndex: 0,
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: `linear-gradient(rgba(10, 10, 10, ${Math.max(backgroundDim - 12, 0) / 100}) 0%, rgba(10, 10, 10, ${backgroundDim / 100}) 45%, rgba(10, 10, 10, ${Math.min(backgroundDim + 45, 85) / 100}) 90%)`,
+                      zIndex: 1,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                </>
+              )}
+
               {/* Glowing accents (if no background image) */}
               {!backgroundImage && (
                 <>
