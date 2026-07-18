@@ -2047,28 +2047,6 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
   const selectedCompetition = competitions.find(c => c.name === competition);
   const eligibleClubs = selectedCompetition ? clubs.filter(c => c.competitionIds?.includes(selectedCompetition.id)) : clubs;
   const clubOptions = eligibleClubs.length >= 2 ? eligibleClubs : clubs;
-  const statusGuidance: Record<Match['status'], { title: string; description: string }> = {
-    Scheduled: {
-      title: 'Dijadwalkan',
-      description: 'Pertandingan baru dibuat sebagai jadwal. Lineup bisa disiapkan, tetapi hasil pertandingan belum bisa diinput.',
-    },
-    Live: {
-      title: 'Live',
-      description: 'Pertandingan sedang berlangsung. Jika lineup sudah lengkap, menu Hasil Pertandingan akan membuka input HT/FT dan timeline.',
-    },
-    Finished: {
-      title: 'Selesai',
-      description: 'Pertandingan dianggap final. Lineup dan Hasil akan tampil sebagai output gambar, bukan form edit/input.',
-    },
-    Postponed: {
-      title: 'Ditunda',
-      description: 'Pertandingan belum dimainkan karena jadwal mundur. Simpan status ini sampai tanggal kickoff baru ditentukan.',
-    },
-    Cancelled: {
-      title: 'Dibatalkan',
-      description: 'Pertandingan tidak dilanjutkan. Data tetap tersimpan sebagai arsip jadwal dan tidak masuk alur input hasil.',
-    },
-  };
 
   useEffect(() => {
     if (!existing?.venue) {
@@ -2189,20 +2167,6 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
               <option value="Postponed">Ditunda</option>
               <option value="Cancelled">Dibatalkan</option>
             </select>
-            <div style={{
-              marginTop: 8,
-              padding: '10px 12px',
-              border: '1px solid var(--neutral-200)',
-              borderRadius: 8,
-              background: 'var(--neutral-50)',
-            }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 3 }}>
-                {statusGuidance[status].title}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--neutral-600)', lineHeight: 1.45 }}>
-                {statusGuidance[status].description}
-              </div>
-            </div>
           </div>
         </div>
 
