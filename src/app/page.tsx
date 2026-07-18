@@ -2212,38 +2212,6 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
     const matchesComp = selectedComp === 'Semua' || match.competition === selectedComp;
     return matchesSearch && matchesComp;
   });
-  const getPlayerLabel = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    return player ? `#${player.shirtNumber} ${player.displayName || player.fullName}` : playerId;
-  };
-  const renderLineupColumn = (title: string, starters: string[] = [], subs: string[] = [], foreignPlayers: { id: string; name: string; no: number; pos: string }[] = []) => (
-    <div style={{ flex: 1, minWidth: 260 }}>
-      <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{title}</h4>
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-500)', marginBottom: 6 }}>Starter</div>
-      {starters.length > 0 ? starters.map((id, index) => (
-        <div key={`starter-${id}-${index}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--neutral-100)' }}>
-          <span>{index + 1}. {getPlayerLabel(id)}</span>
-        </div>
-      )) : <div className="text-muted" style={{ fontSize: 12, marginBottom: 10 }}>Belum ada starter.</div>}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-500)', margin: '12px 0 6px' }}>Cadangan</div>
-      {subs.length > 0 ? subs.map((id, index) => (
-        <div key={`sub-${id}-${index}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--neutral-100)' }}>
-          <span>{index + 1}. {getPlayerLabel(id)}</span>
-        </div>
-      )) : <div className="text-muted" style={{ fontSize: 12 }}>Belum ada cadangan.</div>}
-      {foreignPlayers.length > 0 && (
-        <>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-500)', margin: '12px 0 6px' }}>Pemain Tambahan</div>
-          {foreignPlayers.map(player => (
-            <div key={player.id} style={{ padding: '6px 0', borderBottom: '1px solid var(--neutral-100)' }}>
-              #{player.no} {player.name} <span className="text-muted">({player.pos})</span>
-            </div>
-          ))}
-        </>
-      )}
-    </div>
-  );
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="page-header">
@@ -2352,17 +2320,21 @@ function LineupsListView({ matches, players, competitions, onEdit, hasPermission
       )}
       {previewMatch && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: 860 }}>
+          <div className="modal-content" style={{ maxWidth: 520 }}>
             <div className="flex justify-between align-center" style={{ marginBottom: 16 }}>
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Susunan Pemain</h3>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Gambar Lineup</h3>
                 <div className="text-muted" style={{ fontSize: 12 }}>{previewMatch.homeClubName} vs {previewMatch.awayClubName} - ID Jadwal: {previewMatch.id}</div>
               </div>
               <button className="btn btn-sm btn-secondary" onClick={() => setPreviewMatch(null)}><X size={14} /> Tutup</button>
             </div>
-            <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              {renderLineupColumn(previewMatch.homeClubName, previewMatch.homeStarters, previewMatch.homeSubs, previewMatch.homeAsing)}
-              {renderLineupColumn(previewMatch.awayClubName, previewMatch.awayStarters, previewMatch.awaySubs, previewMatch.awayAsing)}
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <PublishedLineupStoryCard
+                match={previewMatch}
+                players={players}
+                competitions={competitions}
+                elementId={`lineup-output-card-${previewMatch.id}`}
+              />
             </div>
           </div>
         </div>
@@ -3369,21 +3341,6 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
     if (match.status === 'Finished') return 'badge-success';
     return match.lineupStatus === 'Complete' ? 'badge-success' : match.lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
   };
-  type TimelineOutputEvent = { id?: string; minute?: number; type?: string; playerName?: string; clubId?: string };
-  const getTimelineEvents = (match: Match) => (
-    Array.isArray(match.timeline) ? (match.timeline as TimelineOutputEvent[]).slice().sort((a, b) => (a.minute || 0) - (b.minute || 0)) : []
-  );
-  const eventLabel = (type?: string) => ({
-    goal: 'Gol',
-    yellow_card: 'Kartu Kuning',
-    red_card: 'Kartu Merah',
-    substitution: 'Pergantian',
-  }[type || ''] || 'Event');
-  const eventClubLabel = (match: Match, clubId?: string) => {
-    if (String(clubId) === String(match.homeClubId)) return 'Home';
-    if (String(clubId) === String(match.awayClubId)) return 'Away';
-    return '-';
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -3488,39 +3445,173 @@ function MatchResultsListView({ matches, competitions, onEdit, hasPermission }: 
       </div>
       {timelineMatch && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: 720 }}>
+          <div className="modal-content" style={{ maxWidth: 560 }}>
             <div className="flex justify-between align-center" style={{ marginBottom: 16 }}>
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Timeline Pertandingan</h3>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Gambar Hasil Pertandingan</h3>
                 <div className="text-muted" style={{ fontSize: 12 }}>{timelineMatch.homeClubName} vs {timelineMatch.awayClubName} - ID Jadwal: {timelineMatch.id}</div>
               </div>
               <button className="btn btn-sm btn-secondary" onClick={() => setTimelineMatch(null)}><X size={14} /> Tutup</button>
             </div>
-            <div className="flex justify-between align-center" style={{ padding: '12px 16px', border: '1px solid var(--neutral-200)', borderRadius: 8, marginBottom: 16 }}>
-              <div className="semibold">{timelineMatch.homeClubName}</div>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>
-                {timelineMatch.homeScore ?? '-'} - {timelineMatch.awayScore ?? '-'}
-              </div>
-              <div className="semibold">{timelineMatch.awayClubName}</div>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <ResultOutputGraphicCard
+                match={timelineMatch}
+                competitions={competitions}
+                elementId={`result-output-card-${timelineMatch.id}`}
+              />
             </div>
-            {getTimelineEvents(timelineMatch).length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {getTimelineEvents(timelineMatch).map((event, index) => (
-                  <div key={event.id || `${event.minute}-${event.playerName}-${index}`} style={{ display: 'grid', gridTemplateColumns: '56px 1fr 80px', gap: 12, alignItems: 'center', padding: '10px 12px', border: '1px solid var(--neutral-100)', borderRadius: 8 }}>
-                    <span style={{ fontWeight: 800, color: 'var(--primary-700)' }}>{event.minute ?? '-'}'</span>
-                    <span><span className="semibold">{eventLabel(event.type)}</span> - {event.playerName || 'Tanpa nama pemain'}</span>
-                    <span className="text-muted" style={{ textAlign: 'right', fontSize: 12 }}>{eventClubLabel(timelineMatch, event.clubId)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="card" style={{ padding: 24, textAlign: 'center' }}>
-                <div className="text-muted">Belum ada timeline pertandingan yang tersimpan.</div>
-              </div>
-            )}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ResultOutputGraphicCard({ match, competitions, elementId }: {
+  match: Match;
+  competitions: Competition[];
+  elementId: string;
+}) {
+  type TimelineOutputEvent = { id?: string; minute?: number; type?: string; playerName?: string; clubId?: string };
+  const events = Array.isArray(match.timeline)
+    ? (match.timeline as TimelineOutputEvent[]).slice().sort((a, b) => (a.minute || 0) - (b.minute || 0))
+    : [];
+  const goalEvents = events.filter(event => event.type === 'goal');
+  const comp = competitions.find(c => c.name === match.competition);
+  const scoreHome = match.homeScore ?? 0;
+  const scoreAway = match.awayScore ?? 0;
+  const hasHalfTimeScore = match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null &&
+    match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null;
+  const renderLogo = (logo: string, fallback: string) => (
+    logo && logo.startsWith('http')
+      ? <img src={logo} alt="" crossOrigin="anonymous" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+      : <span style={{ fontSize: 24 }}>{logo || fallback}</span>
+  );
+
+  return (
+    <div id={elementId} style={{
+      width: 400,
+      height: 500,
+      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      padding: 16,
+      boxShadow: '0 30px 60px rgba(0,0,0,0.8)',
+      position: 'relative',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      overflow: 'hidden',
+    }}>
+      <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', zIndex: 3 }} />
+
+      <div style={{
+        zIndex: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: 'rgba(10, 10, 10, 0.65)',
+        backdropFilter: 'blur(4px)',
+        borderRadius: 8,
+        padding: '8px 12px',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        marginTop: 4,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {comp?.logoUrl && comp.logoUrl.startsWith('http')
+            ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1 }} />
+            : <div style={{ width: 18, height: 18, background: 'rgba(200,168,75,0.12)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
+              </div>}
+          <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            {match.competition || 'LIGA NUSANTARA UTAMA'}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            FULL TIME
+          </span>
+          <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain' }} />
+        </div>
+      </div>
+
+      <div style={{ flex: 1 }} />
+
+      <div style={{
+        zIndex: 2,
+        backgroundColor: 'rgba(10, 10, 10, 0.85)',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 10,
+        border: '1px solid rgba(200, 168, 75, 0.25)',
+        padding: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        width: '100%',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+            <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {renderLogo(match.homeLogo, 'H')}
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {match.homeClubName.split(' ')[0] || 'HOME'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{scoreHome}</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#555' }}>-</span>
+            <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{scoreAway}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, flexDirection: 'row-reverse' }}>
+            <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {renderLogo(match.awayLogo, 'A')}
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>
+              {match.awayClubName.split(' ')[0] || 'AWAY'}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#888', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>
+          {hasHalfTimeScore
+            ? `HALF TIME: ${match.halfTimeHomeScore} - ${match.halfTimeAwayScore}`
+            : (match.venue || 'Stadion Pertandingan')}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, width: '100%', fontSize: 9 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {goalEvents
+              .filter(event => String(event.clubId) === String(match.homeClubId))
+              .map((event, index) => (
+                <div key={event.id || `home-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0' }}>
+                  <span style={{ color: '#c8a84b', fontWeight: 700 }}>{event.minute}'</span>
+                  <span>Goal {event.playerName}</span>
+                </div>
+              ))}
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
+            {goalEvents
+              .filter(event => String(event.clubId) === String(match.awayClubId))
+              .map((event, index) => (
+                <div key={event.id || `away-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse' }}>
+                  <span style={{ color: '#c8a84b', fontWeight: 700 }}>{event.minute}'</span>
+                  <span>{event.playerName} Goal</span>
+                </div>
+              ))}
+          </div>
+        </div>
+        {goalEvents.length === 0 && (
+          <div style={{ fontSize: 9, color: '#555', textAlign: 'center', fontStyle: 'italic', padding: '2px 0' }}>Tidak ada gol tercipta</div>
+        )}
+      </div>
+
+      <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 6, fontSize: 8, color: '#555', fontWeight: 600, marginTop: 8, width: '100%' }}>
+        <span>{APP_HANDLE}</span>
+      </div>
     </div>
   );
 }
