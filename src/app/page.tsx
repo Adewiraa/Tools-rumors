@@ -3732,8 +3732,9 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const submitUpdate = () => {
     const updatedMatch: Match = {
       ...match,
-      homeScore: homeScore === '' ? null : (homeScore as any),
-      awayScore: awayScore === '' ? null : (awayScore as any),
+      // Save FT scores as null if showFullTime is not active (halftime score only)
+      homeScore: showFullTime ? (homeScore === '' ? null : (homeScore as any)) : null,
+      awayScore: showFullTime ? (awayScore === '' ? null : (awayScore as any)) : null,
       halfTimeHomeScore: halfTimeHomeScore === '' ? null : (halfTimeHomeScore as any),
       halfTimeAwayScore: halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any),
       status: matchStatus,
