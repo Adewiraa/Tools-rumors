@@ -3605,18 +3605,18 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
     // Validation for goal counts in timeline vs pre-filled HT / FT scores
     if (newEventType === 'goal') {
-      const isHome = newEventClub === match.homeClubId;
+      const isHome = String(newEventClub) === String(match.homeClubId);
       const limitHT = isHome ? halfTimeHomeScore : halfTimeAwayScore;
       const limitFT = isHome ? homeScore : awayScore;
 
       // Count goals in HT (<= 45 mins)
       const currentHTGoalsCount = events.filter(
-        e => e.type === 'goal' && e.clubId === newEventClub && e.minute <= 45
+        e => e.type === 'goal' && String(e.clubId) === String(newEventClub) && e.minute <= 45
       ).length;
 
       // Count total goals
       const currentTotalGoalsCount = events.filter(
-        e => e.type === 'goal' && e.clubId === newEventClub
+        e => e.type === 'goal' && String(e.clubId) === String(newEventClub)
       ).length;
 
       if (newEventMinute <= 45) {
@@ -3680,8 +3680,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
     }
 
     // Goal count validation on save
-    const htHomeGoals = events.filter(e => e.type === 'goal' && e.clubId === match.homeClubId && e.minute <= 45).length;
-    const htAwayGoals = events.filter(e => e.type === 'goal' && e.clubId === match.awayClubId && e.minute <= 45).length;
+    const htHomeGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId) && e.minute <= 45).length;
+    const htAwayGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId) && e.minute <= 45).length;
     
     const targetHtHome = halfTimeHomeScore === '' ? 0 : Number(halfTimeHomeScore);
     const targetHtAway = halfTimeAwayScore === '' ? 0 : Number(halfTimeAwayScore);
@@ -3696,8 +3696,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
     }
 
     if (showFullTime || matchStatus === 'Finished') {
-      const ftHomeGoals = events.filter(e => e.type === 'goal' && e.clubId === match.homeClubId).length;
-      const ftAwayGoals = events.filter(e => e.type === 'goal' && e.clubId === match.awayClubId).length;
+      const ftHomeGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId)).length;
+      const ftAwayGoals = events.filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId)).length;
       
       const targetFtHome = homeScore === '' ? 0 : Number(homeScore);
       const targetFtAway = awayScore === '' ? 0 : Number(awayScore);
@@ -4294,7 +4294,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {/* Home Scorers (Left Aligned) */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {events
-                      .filter(e => e.type === 'goal' && e.clubId === match.homeClubId && (graphicType === 'FT' || e.minute <= 45))
+                      .filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId) && (graphicType === 'FT' || e.minute <= 45))
                       .map((evt) => (
                         <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0' }}>
                           <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
@@ -4306,7 +4306,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {/* Away Scorers (Right Aligned) */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
                     {events
-                      .filter(e => e.type === 'goal' && e.clubId === match.awayClubId && (graphicType === 'FT' || e.minute <= 45))
+                      .filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId) && (graphicType === 'FT' || e.minute <= 45))
                       .map((evt) => (
                         <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse' }}>
                           <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
