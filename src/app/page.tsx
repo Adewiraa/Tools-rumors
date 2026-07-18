@@ -3466,9 +3466,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
   const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(match.status);
 
   // Instagram graphic options
-  const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(
-    match.homeScore !== undefined && match.homeScore !== null ? 'FT' : 'HT'
-  );
+  // Instagram graphic options - default to 'HT' (Half Time) first to prevent UX confusion
+  const [graphicType, setGraphicType] = useState<'HT' | 'FT'>('HT');
   const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const isHtScoresFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined && halfTimeHomeScore !== null &&
