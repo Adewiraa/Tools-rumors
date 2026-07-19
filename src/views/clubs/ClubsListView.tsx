@@ -30,6 +30,29 @@ const buildClubCode = (name?: string, code?: string) => (
   (code || (name || '').split(/\s+/).map(part => part[0]).join('')).slice(0, 3).toUpperCase()
 );
 
+const normalizeClubName = (name?: string) => (
+  (name || '').trim().toLowerCase().replace(/\s+/g, ' ')
+);
+
+const normalizeClubCode = (code?: string) => (
+  (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)
+);
+
+const createUniqueClubCode = (baseCode: string, clubs: Club[]) => {
+  const existingCodes = new Set(clubs.map(club => normalizeClubCode(club.code)).filter(Boolean));
+  const normalizedBase = normalizeClubCode(baseCode) || 'CLB';
+
+  if (!existingCodes.has(normalizedBase)) return normalizedBase;
+
+  for (let index = 2; index <= 99; index += 1) {
+    const suffix = String(index);
+    const candidate = `${normalizedBase.slice(0, Math.max(1, 3 - suffix.length))}${suffix}`;
+    if (!existingCodes.has(candidate)) return candidate;
+  }
+
+  return normalizedBase;
+};
+
 const createClubFromApiTeam = (candidate: ApiTeamCandidate): Club => {
   const teamName = candidate.team?.name || 'Klub API';
   const club: Club = {
@@ -90,16 +113,20 @@ export default function ClubsListView() {
   };
 
   const addApiTeamToMaster = async (candidate: ApiTeamCandidate) => {
-    const newClub = createClubFromApiTeam(candidate);
-    const duplicate = clubs.find(club =>
-      club.name.trim().toLowerCase() === newClub.name.trim().toLowerCase() ||
-      (newClub.code && club.code.trim().toLowerCase() === newClub.code.trim().toLowerCase())
+    const apiClub = createClubFromApiTeam(candidate);
+    const duplicateByName = clubs.find(club =>
+      normalizeClubName(club.name) === normalizeClubName(apiClub.name)
     );
 
-    if (duplicate) {
-      triggerToast(`${newClub.name} sudah ada di Master Klub.`, 'warning');
+    if (duplicateByName) {
+      triggerToast(`${apiClub.name} sudah ada di Master Klub.`, 'warning');
       return;
     }
+
+    const newClub = {
+      ...apiClub,
+      code: createUniqueClubCode(apiClub.code, clubs),
+    };
 
     setAddingApiTeamId(candidate.team?.id || null);
     try {
