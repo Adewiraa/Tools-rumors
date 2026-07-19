@@ -244,17 +244,6 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
               </label>
             </div>
           </div>
-          <div className="grid-12" style={{ gap: 10 }}>
-            {(['homeColor', 'awayColor', 'thirdColor'] as const).map(key => (
-              <div key={key} style={{ gridColumn: 'span 12' }}>
-                <label className="form-label">{key === 'homeColor' ? 'Home Color' : key === 'awayColor' ? 'Away Color' : 'Third Color'}</label>
-                <div className="flex gap-8">
-                  <input type="color" value={club[key]} onChange={event => updateClub(key, event.target.value)} />
-                  <input className="form-input" value={club[key]} onChange={event => updateClub(key, event.target.value)} />
-                </div>
-              </div>
-            ))}
-          </div>
           <div>
             <label className="form-label">Kompetisi</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
