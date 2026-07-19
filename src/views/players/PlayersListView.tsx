@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Club, Player, calculatePlayerCompleteness } from '@/lib/mockData';
 import { countriesList } from '@/lib/countriesData';
-import { ChevronRight, Edit, Plus, Search, Trash2, Users } from 'lucide-react';
+import { Activity, ChevronRight, Edit, Flag, Hash, Plus, Search, Shield, Trash2, UserRound, Users } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
 import { generateUUID } from '@/logic/utils';
@@ -107,6 +107,31 @@ const createPlayerFromApiSquad = (apiPlayer: ApiSquadPlayer, club: Club, apiProf
   };
 };
 
+const getPlayerInitials = (name: string) => (
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('') || 'P'
+);
+
+const getAvailabilityLabel = (availability: Player['availability']) => {
+  const labelMap: Record<Player['availability'], string> = {
+    available: 'Tersedia',
+    injured: 'Cedera',
+    suspended: 'Skorsing',
+    international_duty: 'Timnas',
+    doubtful: 'Diragukan',
+  };
+
+  return labelMap[availability] || availability;
+};
+
+const getAvailabilityBadgeClass = (availability: Player['availability']) => (
+  availability === 'available' ? 'badge-success' : availability === 'injured' || availability === 'suspended' ? 'badge-danger' : 'badge-warning'
+);
+
 export default function PlayersListView() {
   const router = useRouter();
   const { players, setPlayers, clubs, hasPermission, logAction, triggerToast } = useApp();
@@ -128,6 +153,13 @@ export default function PlayersListView() {
     const matchPosition = selectedPosition === 'Semua' || player.position === selectedPosition;
     return matchClub && matchPosition;
   });
+  const selectedClub = selectedClubId === 'Semua' ? undefined : clubs.find(club => club.id === selectedClubId);
+  const selectedClubName = selectedClub?.name || 'Semua Klub';
+  const selectedClubPlayersCount = selectedClubId === 'Semua' ? players.length : players.filter(player => player.clubId === selectedClubId).length;
+  const positionSummary = (['Goalkeeper', 'Defender', 'Midfielder', 'Forward'] as Player['position'][]).map(position => ({
+    position,
+    count: filteredPlayers.filter(player => player.position === position).length,
+  }));
 
   const searchClubsFromApi = async () => {
     const query = apiClubSearch.trim();
@@ -378,54 +410,166 @@ export default function PlayersListView() {
         </div>
       )}
 
-      <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        <select className="form-select" style={{ maxWidth: 280 }} value={selectedClubId} onChange={event => setSelectedClubId(event.target.value)}>
-          <option value="Semua">Semua Klub</option>
-          {clubs.map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
-        </select>
-        <select className="form-select" style={{ maxWidth: 220 }} value={selectedPosition} onChange={event => setSelectedPosition(event.target.value)}>
-          <option value="Semua">Semua Posisi</option>
-          <option value="Goalkeeper">Goalkeeper</option>
-          <option value="Defender">Defender</option>
-          <option value="Midfielder">Midfielder</option>
-          <option value="Forward">Forward</option>
-        </select>
+      <div className="card" style={{ padding: 18, display: 'grid', gap: 14 }}>
+        <div className="flex justify-between align-center" style={{ gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div className="semibold" style={{ fontSize: 14 }}>Pilih Klub</div>
+            <div className="text-muted" style={{ fontSize: 12 }}>Klik logo klub untuk melihat pemain yang terdaftar.</div>
+          </div>
+          <select className="form-select" style={{ maxWidth: 220 }} value={selectedPosition} onChange={event => setSelectedPosition(event.target.value)}>
+            <option value="Semua">Semua Posisi</option>
+            <option value="Goalkeeper">Goalkeeper</option>
+            <option value="Defender">Defender</option>
+            <option value="Midfielder">Midfielder</option>
+            <option value="Forward">Forward</option>
+          </select>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(154px, 1fr))', gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => setSelectedClubId('Semua')}
+            style={{
+              border: selectedClubId === 'Semua' ? '1px solid var(--primary-600)' : '1px solid var(--neutral-200)',
+              background: selectedClubId === 'Semua' ? 'var(--primary-50)' : 'var(--white)',
+              borderRadius: 8,
+              padding: 12,
+              cursor: 'pointer',
+              display: 'grid',
+              gap: 8,
+              textAlign: 'left',
+            }}
+          >
+            <span style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--neutral-950)', color: 'white', display: 'grid', placeItems: 'center' }}>
+              <Shield size={22} />
+            </span>
+            <span className="semibold" style={{ fontSize: 13 }}>Semua Klub</span>
+            <span className="text-muted" style={{ fontSize: 11 }}>{players.length} pemain</span>
+          </button>
+
+          {clubs.map(club => {
+            const clubPlayersCount = players.filter(player => player.clubId === club.id).length;
+            const isActiveClub = selectedClubId === club.id;
+            return (
+              <button
+                key={club.id}
+                type="button"
+                onClick={() => setSelectedClubId(club.id)}
+                style={{
+                  border: isActiveClub ? '1px solid var(--primary-600)' : '1px solid var(--neutral-200)',
+                  background: isActiveClub ? 'var(--primary-50)' : 'var(--white)',
+                  borderRadius: 8,
+                  padding: 12,
+                  cursor: 'pointer',
+                  display: 'grid',
+                  gap: 8,
+                  textAlign: 'left',
+                  minWidth: 0,
+                }}
+              >
+                <span style={{ width: 48, height: 48, borderRadius: 8, background: 'var(--white)', border: '1px solid var(--neutral-200)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+                  {club.logoUrl?.startsWith('http') ? (
+                    <img src={club.logoUrl} alt={club.name} style={{ width: 38, height: 38, objectFit: 'contain' }} />
+                  ) : (
+                    <span style={{ fontSize: 18 }}>{club.logoUrl || club.code}</span>
+                  )}
+                </span>
+                <span className="semibold" style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{club.name}</span>
+                <span className="text-muted" style={{ fontSize: 11 }}>{clubPlayersCount} pemain</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Negara</th>
-              <th>Nama</th>
-              <th>Klub</th>
-              <th>Posisi</th>
-              <th>No</th>
-              <th>Availability</th>
-              <th>Kelengkapan</th>
-              <th className="text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPlayers.length > 0 ? (
-              filteredPlayers.map(player => (
-                <tr key={player.id}>
-                  <td>{player.flagUrl?.startsWith('http') ? <img src={player.flagUrl} alt={player.nationality} style={{ width: 24, height: 16, objectFit: 'cover', borderRadius: 2 }} /> : player.flagUrl}</td>
-                  <td><span className="semibold">{player.fullName}</span><div className="text-muted" style={{ fontSize: 11 }}>{player.displayName}</div></td>
-                  <td>{clubs.find(club => club.id === player.clubId)?.name || player.clubName || 'Free Agent'}</td>
-                  <td>{player.position}</td>
-                  <td>#{player.shirtNumber}</td>
-                  <td><span className={`badge ${player.availability === 'available' ? 'badge-success' : 'badge-warning'}`}>{player.availability}</span></td>
-                  <td>
-                    <div className="flex align-center gap-8">
-                      <div style={{ width: 70, height: 6, background: 'var(--neutral-200)', borderRadius: 4, overflow: 'hidden' }}>
+      <div className="card" style={{ padding: 18, display: 'grid', gap: 16 }}>
+        <div className="flex justify-between align-center" style={{ gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div className="breadcrumb" style={{ marginBottom: 6 }}>
+              <span>Master Pemain</span> <ChevronRight size={10} /> <span>{selectedClubName}</span>
+            </div>
+            <h2 style={{ margin: 0, fontSize: 24, letterSpacing: 0 }}>{selectedClubName}</h2>
+            <div className="text-muted" style={{ fontSize: 13, marginTop: 4 }}>
+              {selectedClubPlayersCount} pemain terdaftar, {filteredPlayers.length} tampil sesuai filter.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {positionSummary.map(item => (
+              <span key={item.position} className="badge badge-info" style={{ minHeight: 28 }}>
+                {item.position}: {item.count}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {filteredPlayers.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+            {filteredPlayers.map(player => {
+              const playerClub = clubs.find(club => club.id === player.clubId);
+              return (
+                <div
+                  key={player.id}
+                  style={{
+                    border: '1px solid var(--neutral-200)',
+                    borderRadius: 8,
+                    background: 'var(--white)',
+                    overflow: 'hidden',
+                    display: 'grid',
+                    minHeight: 238,
+                  }}
+                >
+                  <div style={{ padding: 14, display: 'grid', gap: 12 }}>
+                    <div className="flex justify-between align-center" style={{ gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <div style={{ width: 54, height: 54, borderRadius: 8, background: 'var(--neutral-950)', color: 'white', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 18, flexShrink: 0 }}>
+                          {getPlayerInitials(player.displayName || player.fullName)}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="semibold" style={{ fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.fullName}</div>
+                          <div className="text-muted" style={{ fontSize: 12 }}>{player.displayName}</div>
+                        </div>
+                      </div>
+                      <div style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid var(--neutral-200)', display: 'grid', placeItems: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {playerClub?.logoUrl?.startsWith('http') ? (
+                          <img src={playerClub.logoUrl} alt={playerClub.name} style={{ width: 26, height: 26, objectFit: 'contain' }} />
+                        ) : (
+                          <span style={{ fontSize: 12, fontWeight: 800 }}>{playerClub?.code || '-'}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                      <div style={{ border: '1px solid var(--neutral-200)', borderRadius: 8, padding: 10 }}>
+                        <div className="text-muted" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}><Hash size={12} /> Nomor</div>
+                        <div className="semibold" style={{ fontSize: 18 }}>#{player.shirtNumber}</div>
+                      </div>
+                      <div style={{ border: '1px solid var(--neutral-200)', borderRadius: 8, padding: 10 }}>
+                        <div className="text-muted" style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}><UserRound size={12} /> Posisi</div>
+                        <div className="semibold" style={{ fontSize: 13 }}>{player.position}</div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <span className={`badge ${getAvailabilityBadgeClass(player.availability)}`}><Activity size={12} /> {getAvailabilityLabel(player.availability)}</span>
+                      <span className="badge badge-draft"><Flag size={12} /> {player.nationality}</span>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between align-center" style={{ marginBottom: 6 }}>
+                        <span className="text-muted" style={{ fontSize: 11 }}>Kelengkapan</span>
+                        <span className="semibold" style={{ fontSize: 11 }}>{player.completeness}%</span>
+                      </div>
+                      <div style={{ height: 7, background: 'var(--neutral-200)', borderRadius: 999, overflow: 'hidden' }}>
                         <div style={{ width: `${player.completeness}%`, height: '100%', background: player.completeness >= 80 ? 'var(--success-600)' : 'var(--warning-600)' }} />
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 700 }}>{player.completeness}%</span>
                     </div>
-                  </td>
-                  <td className="text-right">
-                    <div style={{ display: 'inline-flex', gap: 6 }}>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--neutral-100)', padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, background: 'var(--neutral-50)' }}>
+                    <span className="text-muted" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {playerClub?.name || player.clubName || 'Free Agent'}
+                    </span>
+                    <div style={{ display: 'inline-flex', gap: 6, flexShrink: 0 }}>
                       <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/players?edit=${player.id}`)}><Edit size={13} /> Edit</button>
                       {hasPermission('Master', 'delete') && (confirmDeleteId === player.id ? (
                         <>
@@ -436,18 +580,18 @@ export default function PlayersListView() {
                         <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(player.id)}><Trash2 size={13} /></button>
                       ))}
                     </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '28px 16px', color: 'var(--neutral-500)' }}>
-                  Tidak ada data pemain untuk filter ini.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ border: '1px dashed var(--neutral-300)', borderRadius: 8, padding: '34px 16px', textAlign: 'center', color: 'var(--neutral-500)' }}>
+            <Users size={32} style={{ marginBottom: 10 }} />
+            <div className="semibold" style={{ color: 'var(--neutral-700)' }}>Belum ada pemain untuk pilihan ini</div>
+            <div style={{ fontSize: 13, marginTop: 4 }}>Pilih klub lain, ubah filter posisi, atau tambahkan pemain baru.</div>
+          </div>
+        )}
       </div>
     </div>
   );
