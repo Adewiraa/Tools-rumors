@@ -152,6 +152,12 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     }
   };
 
+  const handleMenuNavigate = (event: React.MouseEvent<HTMLAnchorElement>, menuId: string) => {
+    event.preventDefault();
+    setMobileDrawerOpen(false);
+    router.replace(`/${menuId}`);
+  };
+
   return (
     <div className="app-container">
       {/* Dynamic Header Alert for Unsaved Changes or Offline status */}
@@ -193,7 +199,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                         key={item.id}
                         href={`/${item.id}`}
                         className={`menu-item mobile-drawer-item ${activeMenu === item.id ? 'active' : ''}`}
-                        onClick={() => setMobileDrawerOpen(false)}
+                        onClick={(event) => handleMenuNavigate(event, item.id)}
                       >
                         <Icon size={18} />
                         <span>{item.label}</span>
@@ -256,6 +262,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                     className={`menu-item ${item.mobileHidden ? 'mobile-hidden' : ''} ${activeMenu === item.id ? 'active' : ''}`}
                     title={item.label}
                     aria-label={item.label}
+                    onClick={(event) => handleMenuNavigate(event, item.id)}
                   >
                     <Icon size={18} />
                     {!sidebarCollapsed && <span>{item.label}</span>}
