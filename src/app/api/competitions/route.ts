@@ -14,6 +14,22 @@ const supabaseAdmin = createClient(
   }
 );
 
+const getDeleteId = async (request: Request) => {
+  const { searchParams } = new URL(request.url);
+  const queryId = searchParams.get('id');
+  if (queryId) return queryId;
+
+  const rawBody = await request.text();
+  if (!rawBody.trim()) return '';
+
+  try {
+    const body = JSON.parse(rawBody);
+    return typeof body.id === 'string' ? body.id : '';
+  } catch {
+    return '';
+  }
+};
+
 // GET /api/competitions — ambil semua kompetisi
 export async function GET() {
   try {
@@ -142,8 +158,7 @@ export async function POST(request: Request) {
 // DELETE /api/competitions — hapus kompetisi by id
 export async function DELETE(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = await getDeleteId(request);
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });

@@ -32,6 +32,22 @@ const toLineupForeignEntries = (value: any) => (
     : []
 );
 
+const getDeleteId = async (request: Request) => {
+  const { searchParams } = new URL(request.url);
+  const queryId = searchParams.get('id');
+  if (queryId) return queryId;
+
+  const rawBody = await request.text();
+  if (!rawBody.trim()) return '';
+
+  try {
+    const body = JSON.parse(rawBody);
+    return typeof body.id === 'string' ? body.id : '';
+  } catch {
+    return '';
+  }
+};
+
 // GET /api/matches — ambil semua matches, urut kickoff terbaru
 export async function GET() {
   try {
@@ -158,8 +174,7 @@ export async function POST(request: Request) {
 // DELETE /api/matches — hapus satu match by id
 export async function DELETE(request: Request) {
   try {
-    const body = await request.json();
-    const { id } = body;
+    const id = await getDeleteId(request);
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });

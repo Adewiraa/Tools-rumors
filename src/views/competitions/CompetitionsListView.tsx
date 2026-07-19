@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { AlertCircle, ChevronRight, Edit, Plus, Trash2, Trophy } from 'lucide-react';
+import { apiRequest } from '@/logic/apiClient';
 
 export default function CompetitionsListView() {
   const router = useRouter();
@@ -18,8 +19,14 @@ export default function CompetitionsListView() {
     return matchType && matchActive;
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const competition = competitions.find(item => item.id === id);
+    const result = await apiRequest(`/api/competitions?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!result.success) {
+      triggerToast(`Gagal menghapus kompetisi: ${result.error}`, 'error');
+      return;
+    }
+
     setCompetitions(prev => prev.filter(item => item.id !== id));
     logAction('DELETE_COMPETITION', 'Master Kompetisi', competition?.name || id);
     triggerToast('Kompetisi berhasil dihapus.');

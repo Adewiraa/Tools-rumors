@@ -6,6 +6,7 @@ import { useApp } from '@/logic/AppContext';
 import { Competition } from '@/lib/mockData';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
+import { apiRequest } from '@/logic/apiClient';
 
 const slugify = (value: string) => value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
@@ -48,7 +49,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!competition.name.trim() || !competition.shortName.trim()) {
       triggerToast('Nama kompetisi dan kode wajib diisi.', 'error');
       return;
@@ -57,6 +58,17 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
       ...competition,
       slug: competition.slug || slugify(competition.name),
     };
+    const result = await apiRequest('/api/competitions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsert', competition: savedCompetition }),
+    });
+
+    if (!result.success) {
+      triggerToast(`Gagal menyimpan kompetisi: ${result.error}`, 'error');
+      return;
+    }
+
     setCompetitions(prev => isNew ? [...prev, savedCompetition] : prev.map(item => item.id === savedCompetition.id ? savedCompetition : item));
     logAction(isNew ? 'CREATE_COMPETITION' : 'UPDATE_COMPETITION', 'Master Kompetisi', savedCompetition.name);
     triggerToast('Kompetisi berhasil disimpan.');

@@ -7,6 +7,7 @@ import { Player, calculatePlayerCompleteness } from '@/lib/mockData';
 import { countriesList } from '@/lib/countriesData';
 import { ArrowLeft, CheckCircle, Save, Search } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
+import { apiRequest } from '@/logic/apiClient';
 
 export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
   }, [countryQuery]);
   const updatePlayer = <K extends keyof Player>(key: K, value: Player[K]) => setPlayer(prev => ({ ...prev, [key]: value }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!player.fullName.trim() || !player.displayName.trim()) {
       triggerToast('Nama lengkap dan display name wajib diisi.', 'error');
       return;
@@ -51,6 +52,17 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
       clubName: selectedClub?.name || '',
       completeness: liveCompleteness,
     };
+    const result = await apiRequest('/api/players', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsert', player: savedPlayer }),
+    });
+
+    if (!result.success) {
+      triggerToast(`Gagal menyimpan pemain: ${result.error}`, 'error');
+      return;
+    }
+
     setPlayers(prev => isNew ? [...prev, savedPlayer] : prev.map(item => item.id === savedPlayer.id ? savedPlayer : item));
     logAction(isNew ? 'CREATE_PLAYER' : 'UPDATE_PLAYER', 'Master Pemain', savedPlayer.fullName);
     triggerToast('Pemain berhasil disimpan.');

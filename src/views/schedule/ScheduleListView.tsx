@@ -29,6 +29,7 @@ import {
   APP_HANDLE,
   APP_LOGO_SRC
 } from '@/logic/utils';
+import { apiRequest } from '@/logic/apiClient';
 
 export default function ScheduleListView() {
   const router = useRouter();
@@ -138,8 +139,7 @@ export default function ScheduleListView() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/matches?id=${id}`, { method: 'DELETE' });
-      const result = await res.json();
+      const result = await apiRequest(`/api/matches?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!result.success) {
         triggerToast(`Gagal menghapus jadwal: ${result.error}`, 'error');
         return;

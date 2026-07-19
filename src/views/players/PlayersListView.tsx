@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
+import { apiRequest } from '@/logic/apiClient';
 
 export default function PlayersListView() {
   const router = useRouter();
@@ -24,8 +25,14 @@ export default function PlayersListView() {
     return matchClub && matchPosition;
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const player = players.find(item => item.id === id);
+    const result = await apiRequest(`/api/players?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!result.success) {
+      triggerToast(`Gagal menghapus pemain: ${result.error}`, 'error');
+      return;
+    }
+
     setPlayers(prev => prev.filter(item => item.id !== id));
     logAction('DELETE_PLAYER', 'Master Pemain', player?.fullName || id);
     triggerToast('Pemain berhasil dihapus.');

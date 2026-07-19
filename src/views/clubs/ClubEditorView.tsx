@@ -6,6 +6,7 @@ import { useApp } from '@/logic/AppContext';
 import { Club, calculateClubCompleteness } from '@/lib/mockData';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
+import { apiRequest } from '@/logic/apiClient';
 
 export default function ClubEditorView({ clubId }: { clubId: string }) {
   const router = useRouter();
@@ -54,12 +55,37 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!club.name.trim() || !club.shortName.trim() || !club.code.trim()) {
       triggerToast('Nama, short name, dan kode klub wajib diisi.', 'error');
       return;
     }
     const savedClub = { ...club, completeness: calculateClubCompleteness(club) };
+    const saveClubResult = await apiRequest('/api/clubs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ club: savedClub }),
+    });
+
+    if (!saveClubResult.success) {
+      triggerToast(`Gagal menyimpan klub: ${saveClubResult.error}`, 'error');
+      return;
+    }
+
+    const saveCompetitionsResult = await apiRequest('/api/competitions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'save_club_competitions',
+        clubId: savedClub.id,
+        competitionIds: savedClub.competitionIds || [],
+      }),
+    });
+
+    if (!saveCompetitionsResult.success) {
+      triggerToast(`Klub tersimpan, tapi relasi kompetisi gagal: ${saveCompetitionsResult.error}`, 'warning');
+    }
+
     setClubs(prev => isNew ? [...prev, savedClub] : prev.map(item => item.id === savedClub.id ? savedClub : item));
     logAction(isNew ? 'CREATE_CLUB' : 'UPDATE_CLUB', 'Master Klub', savedClub.name);
     triggerToast('Klub berhasil disimpan.');

@@ -4,14 +4,21 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
+import { apiRequest } from '@/logic/apiClient';
 
 export default function ClubsListView() {
   const router = useRouter();
   const { clubs, setClubs, hasPermission, logAction, triggerToast } = useApp();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const club = clubs.find(item => item.id === id);
+    const result = await apiRequest(`/api/clubs?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!result.success) {
+      triggerToast(`Gagal menghapus klub: ${result.error}`, 'error');
+      return;
+    }
+
     setClubs(prev => prev.filter(item => item.id !== id));
     logAction('DELETE_CLUB', 'Master Klub', club?.name || id);
     triggerToast('Klub berhasil dihapus.');
