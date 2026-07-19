@@ -1,15 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Match } from '@/lib/mockData';
 import { ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { getEditableScheduleStatus } from '@/logic/utils';
 
 export default function ScheduleEditorView({ matchId }: { matchId: string }) {
-  const router = useRouter();
   const {
     clubs,
     competitions,
@@ -33,6 +30,10 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
   const selectedCompetition = competitions.find(c => c.name === competition);
   const eligibleClubs = selectedCompetition ? clubs.filter(c => c.competitionIds?.includes(selectedCompetition.id)) : clubs;
   const clubOptions = eligibleClubs.length >= 2 ? eligibleClubs : clubs;
+
+  const goToScheduleList = () => {
+    window.location.replace('/schedule');
+  };
 
   useEffect(() => {
     if (!existing?.venue) {
@@ -85,7 +86,7 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
         logAction('UPDATE_SCHEDULE', 'Jadwal Pertandingan', `Memperbarui jadwal: ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
         triggerToast('Jadwal berhasil diperbarui!');
       }
-      router.push('/schedule');
+      goToScheduleList();
     } catch (err: any) {
       triggerToast('Terjadi kesalahan saat menyimpan jadwal.', 'error');
     }
@@ -111,9 +112,9 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
     <div className="schedule-editor-container">
       <div className="schedule-editor-header">
         <div className="schedule-editor-header-left">
-          <Link href="/schedule" replace className="btn btn-sm btn-secondary schedule-editor-back-btn">
+          <button type="button" className="btn btn-sm btn-secondary schedule-editor-back-btn" onClick={goToScheduleList}>
             <ArrowLeft size={16} /> Kembali
-          </Link>
+          </button>
           <div>
             <div className="breadcrumb"><span>Jadwal</span> <ChevronRight size={10} /> <span>{isNew ? 'Tambah Jadwal' : 'Edit Jadwal'}</span></div>
             <h2 className="schedule-editor-title">{isNew ? 'Tambah Jadwal Baru' : `Edit: ${existing?.homeClubName} vs ${existing?.awayClubName}`}</h2>
