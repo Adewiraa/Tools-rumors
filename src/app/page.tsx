@@ -3837,6 +3837,19 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
               zIndex: 0,
             }}
           />
+          {/* Subtle top header overlay for legibility on light background images */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '80px',
+              background: 'linear-gradient(to bottom, rgba(10, 10, 10, 0.45) 0%, rgba(10, 10, 10, 0) 100%)',
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}
+          />
           <div
             style={{
               position: 'absolute',
@@ -3869,19 +3882,19 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {comp?.logoUrl && comp.logoUrl.startsWith('http')
-            ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1 }} />
-            : <div style={{ width: 18, height: 18, background: 'rgba(200,168,75,0.12)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.3)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+            : <div style={{ width: 18, height: 18, background: 'rgba(10, 10, 10, 0.65)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
                 <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
               </div>}
-          <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase', textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
             {match.competition || 'LIGA NUSANTARA UTAMA'}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
             {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
           </span>
-          <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain' }} />
+          <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
         </div>
       </div>
 
@@ -4962,6 +4975,19 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       zIndex: 0,
                     }}
                   />
+                  {/* Subtle top header overlay for legibility on light background images */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '80px',
+                      background: 'linear-gradient(to bottom, rgba(10, 10, 10, 0.45) 0%, rgba(10, 10, 10, 0) 100%)',
+                      zIndex: 1,
+                      pointerEvents: 'none',
+                    }}
+                  />
                   <div
                     style={{
                       position: 'absolute',
@@ -5002,20 +5028,20 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {(() => {
                     const comp = competitions.find(c => c.name === match.competition);
                     return comp?.logoUrl && comp.logoUrl.startsWith('http')
-                      ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1 }} />
-                      : <div style={{ width: 18, height: 18, background: 'rgba(200,168,75,0.12)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.3)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+                      : <div style={{ width: 18, height: 18, background: 'rgba(10, 10, 10, 0.65)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
                           <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
                         </div>;
                   })()}
-                  <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase', textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
                     {match.competition || 'LIGA NUSANTARA UTAMA'}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                     {effectiveGraphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
                   </span>
-                  <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain' }} />
+                  <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
                 </div>
               </div>
 
