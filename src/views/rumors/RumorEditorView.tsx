@@ -283,10 +283,26 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
               flexDirection: 'column',
             }}
           >
-            <div style={{ height: 4, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 75% 18%, rgba(200,168,75,0.18), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.04), transparent 45%)', pointerEvents: 'none' }} />
+            <div style={{ height: 4, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', position: 'relative', zIndex: 4 }} />
+            {form.playerImageUrl ? (
+              <img
+                src={form.playerImageUrl}
+                crossOrigin="anonymous"
+                alt=""
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
+              />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#5f5f5f', background: 'linear-gradient(135deg, #101010, #1f1f1f)', zIndex: 0 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <ImageIcon size={42} />
+                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.4, marginTop: 8, textTransform: 'uppercase' }}>Foto Pemain</div>
+                </div>
+              </div>
+            )}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.56) 0%, rgba(0,0,0,0.08) 34%, rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.84) 100%)', pointerEvents: 'none', zIndex: 1 }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 82% 18%, rgba(200,168,75,0.2), transparent 35%)', pointerEvents: 'none', zIndex: 1 }} />
 
-            <div style={{ position: 'relative', zIndex: 2, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ position: 'relative', zIndex: 3, margin: '14px 16px 0', padding: '10px 12px', borderRadius: 9, background: 'rgba(8,8,8,0.62)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', placeItems: 'center' }}>
                 <img src={APP_LOGO_SRC} alt="Gosball" style={{ width: 26, height: 26, objectFit: 'contain' }} />
               </div>
@@ -299,26 +315,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
               </div>
             </div>
 
-            <div style={{ position: 'relative', zIndex: 1, margin: '0 16px', height: 188, borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(200,168,75,0.28)', background: '#141414' }}>
-              {form.playerImageUrl ? (
-                <img src={form.playerImageUrl} crossOrigin="anonymous" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#555', background: 'linear-gradient(135deg, #101010, #1f1f1f)' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <ImageIcon size={34} />
-                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.4, marginTop: 8, textTransform: 'uppercase' }}>Foto Pemain</div>
-                  </div>
-                </div>
-              )}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.72) 100%)' }} />
-              {destinationClub?.logoUrl ? (
-                <div style={{ position: 'absolute', right: 14, bottom: 12, width: 64, height: 64, borderRadius: 10, background: 'rgba(255,255,255,0.92)', display: 'grid', placeItems: 'center', boxShadow: '0 14px 30px rgba(0,0,0,0.45)' }}>
-                  <img src={destinationClub.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 52, height: 52, objectFit: 'contain' }} />
-                </div>
-              ) : null}
-            </div>
-
-            <div style={{ position: 'relative', zIndex: 2, padding: '14px 18px 0', display: 'grid', gap: 10 }}>
+            <div style={{ position: 'relative', zIndex: 3, margin: 'auto 16px 12px', padding: 14, display: 'grid', gap: 10, borderRadius: 10, background: 'rgba(8,8,8,0.72)', backdropFilter: 'blur(12px)', border: '1px solid rgba(200,168,75,0.3)', boxShadow: '0 18px 40px rgba(0,0,0,0.45)' }}>
               <div>
                 <div style={{ fontSize: 8, fontWeight: 900, letterSpacing: 1.8, color: '#c8a84b', textTransform: 'uppercase' }}>Target Player</div>
                 <div style={{ fontSize: 26, lineHeight: 1.02, fontWeight: 950, letterSpacing: 0, textTransform: 'uppercase', marginTop: 3 }}>
@@ -327,9 +324,15 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(200,168,75,0.14)', border: '1px solid rgba(200,168,75,0.35)', display: 'grid', placeItems: 'center', color: '#e8cc6a', fontSize: 10, fontWeight: 900 }}>
-                  IN
-                </div>
+                {destinationClub?.logoUrl ? (
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.9)', display: 'grid', placeItems: 'center' }}>
+                    <img src={destinationClub.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                  </div>
+                ) : (
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(200,168,75,0.14)', border: '1px solid rgba(200,168,75,0.35)', display: 'grid', placeItems: 'center', color: '#e8cc6a', fontSize: 10, fontWeight: 900 }}>
+                    IN
+                  </div>
+                )}
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 7, color: '#777', fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase' }}>Diminati Oleh</div>
                   <div style={{ fontSize: 14, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff' }}>{destinationClub?.name || form.destinationClub || '-'}</div>
@@ -350,7 +353,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
               </div>
             </div>
 
-            <div style={{ marginTop: 'auto', position: 'relative', zIndex: 2, padding: '0 18px 14px', display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
+            <div style={{ position: 'relative', zIndex: 3, padding: '0 18px 14px', display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ fontSize: 8, color: '#595959', fontWeight: 700, letterSpacing: 1.2 }}>{APP_HANDLE}</div>
                 <div style={{ fontSize: 8, color: '#454545', marginTop: 2 }}>Gosball Transfer Desk</div>
