@@ -27,6 +27,9 @@ export const viewport: Viewport = {
   themeColor: "#0A0A0A",
 };
 
+import { AppContextProvider } from "@/context/AppContext";
+import AdminLayoutWrapper from "@/components/layout/AdminLayoutWrapper";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,7 +42,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
       <body>
-        {children}
+        <AppContextProvider>
+          <AdminLayoutWrapper>
+            {children}
+          </AdminLayoutWrapper>
+        </AppContextProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `
