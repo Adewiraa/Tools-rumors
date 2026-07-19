@@ -14,6 +14,8 @@ const resourceEndpointMap: Record<string, string> = {
   lineups: '/fixtures/lineups',
   teams: '/teams',
   players: '/players',
+  playerSquads: '/players/squads',
+  playerProfiles: '/players/profiles',
   leagues: '/leagues',
 };
 
