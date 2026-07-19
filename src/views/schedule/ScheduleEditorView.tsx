@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { Match } from '@/lib/mockData';
 import { ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
-import { getEditableScheduleStatus, getHybridSyncMeta, getTimelineWithHybridSyncMeta } from '@/logic/utils';
+import { getEditableScheduleStatus } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function ScheduleEditorView({ matchId }: { matchId: string }) {
@@ -19,7 +19,6 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
 
   const isNew = matchId === 'new';
   const existing = matches.find(m => m.id === matchId);
-  const existingHybridMeta = existing ? getHybridSyncMeta(existing) : {};
   const firstComp = competitions.find(c => c.isActive) || competitions[0];
 
   const [competition, setCompetition] = useState(existing?.competition || firstComp?.name || '');
@@ -29,7 +28,6 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
   const [venue, setVenue]             = useState(existing?.venue || '');
   const [status, setStatus]           = useState<Match['status']>(getEditableScheduleStatus(existing));
   const [isSaving, setIsSaving]       = useState(false);
-  const [apiFootballFixtureId, setApiFootballFixtureId] = useState(existingHybridMeta.apiFootballFixtureId || '');
   
   const selectedCompetition = competitions.find(c => c.name === competition);
   const eligibleClubs = selectedCompetition ? clubs.filter(c => c.competitionIds?.includes(selectedCompetition.id)) : clubs;
@@ -67,11 +65,7 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
       halfTimeHomeScore: existing?.halfTimeHomeScore, halfTimeAwayScore: existing?.halfTimeAwayScore,
       lineupStatus: existing?.lineupStatus || 'Draft',
       publicationStatus: existing?.publicationStatus || 'Draft',
-      timeline: getTimelineWithHybridSyncMeta(existing?.timeline || [], {
-        ...existingHybridMeta,
-        apiFootballFixtureId: apiFootballFixtureId.trim(),
-        dataSource: apiFootballFixtureId.trim() ? (existingHybridMeta.dataSource || 'mixed') : existingHybridMeta.dataSource,
-      }),
+      timeline: existing?.timeline || [],
       editor: 'Admin', lastUpdated: 'Baru saja',
     };
 
@@ -207,22 +201,10 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
             <input type="text" className="form-input" placeholder="Nama stadion..." value={venue} onChange={e => setVenue(e.target.value)} />
           </div>
 
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">API-Football Fixture ID <span style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400 }}>(opsional)</span></label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Contoh: 1234567"
-              value={apiFootballFixtureId}
-              onChange={e => setApiFootballFixtureId(e.target.value.replace(/[^0-9]/g, ''))}
-            />
-            <span className="form-helper">Data manual tetap menjadi data final. Fixture ID ini hanya dipakai untuk sync/review dari API.</span>
-          </div>
-
           <div className="schedule-editor-summary">
             <span>Flow Jadwal</span>
             <strong>{homeClub?.shortName || 'Home'} vs {awayClub?.shortName || 'Away'}</strong>
-            <p>{competition || 'Kompetisi'} - {venue || 'Venue belum diisi'}{apiFootballFixtureId ? ` - API #${apiFootballFixtureId}` : ''}</p>
+            <p>{competition || 'Kompetisi'} - {venue || 'Venue belum diisi'}</p>
           </div>
         </div>
       </div>

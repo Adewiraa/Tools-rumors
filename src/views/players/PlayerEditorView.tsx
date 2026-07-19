@@ -10,6 +10,38 @@ import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
 
+type ApiPlayerCandidate = {
+  player?: {
+    id?: number;
+    name?: string;
+    firstname?: string;
+    lastname?: string;
+    age?: number;
+    nationality?: string;
+    photo?: string;
+  };
+  statistics?: Array<{
+    team?: {
+      id?: number;
+      name?: string;
+      logo?: string;
+    };
+    games?: {
+      number?: number;
+      position?: string;
+    };
+  }>;
+};
+
+const mapApiPosition = (position?: string): Player['position'] => {
+  const normalized = (position || '').toLowerCase();
+  if (normalized.includes('goalkeeper')) return 'Goalkeeper';
+  if (normalized.includes('defender')) return 'Defender';
+  if (normalized.includes('midfielder')) return 'Midfielder';
+  if (normalized.includes('attacker') || normalized.includes('forward')) return 'Forward';
+  return 'Midfielder';
+};
+
 export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const router = useRouter();
   const { players, setPlayers, clubs, logAction, triggerToast } = useApp();
@@ -18,6 +50,10 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const [countryQuery, setCountryQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [apiSearch, setApiSearch] = useState(existing?.fullName || '');
+  const [apiSeason, setApiSeason] = useState('2026');
+  const [apiPlayers, setApiPlayers] = useState<ApiPlayerCandidate[]>([]);
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
   const [player, setPlayer] = useState<Player>(existing || {
     id: generateUUID(),
     fullName: '',
@@ -43,6 +79,53 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
     return q ? countriesList.filter(country => country.name.toLowerCase().includes(q)) : countriesList;
   }, [countryQuery]);
   const updatePlayer = <K extends keyof Player>(key: K, value: Player[K]) => setPlayer(prev => ({ ...prev, [key]: value }));
+
+  const searchPlayersFromApi = async () => {
+    const query = apiSearch.trim();
+    if (query.length < 3) {
+      triggerToast('Masukkan minimal 3 karakter untuk mencari pemain API.', 'warning');
+      return;
+    }
+
+    setIsSearchingApi(true);
+    try {
+      const params = new URLSearchParams({
+        resource: 'players',
+        search: query,
+        season: apiSeason || '2026',
+      });
+      const response = await fetch(`/api/integrations/api-football?${params.toString()}`);
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Gagal mencari pemain dari API.');
+
+      const candidates = Array.isArray(result.data?.response) ? result.data.response : [];
+      setApiPlayers(candidates.slice(0, 8));
+      triggerToast(`${candidates.length} kandidat pemain ditemukan dari API.`);
+    } catch (error: any) {
+      triggerToast(error.message || 'Gagal mencari pemain dari API.', 'error');
+    } finally {
+      setIsSearchingApi(false);
+    }
+  };
+
+  const applyApiPlayer = (candidate: ApiPlayerCandidate) => {
+    const apiPlayer = candidate.player || {};
+    const firstStats = candidate.statistics?.[0];
+    const nationality = apiPlayer.nationality || player.nationality;
+    const country = countriesList.find(item => item.name.toLowerCase() === nationality.toLowerCase());
+
+    setPlayer(prev => ({
+      ...prev,
+      fullName: apiPlayer.name || prev.fullName,
+      displayName: apiPlayer.name || prev.displayName,
+      age: Number(apiPlayer.age) || prev.age,
+      nationality,
+      flagUrl: country?.flagUrl || prev.flagUrl,
+      position: mapApiPosition(firstStats?.games?.position),
+      shirtNumber: Number(firstStats?.games?.number) || prev.shirtNumber,
+    }));
+    triggerToast('Data pemain dari API diterapkan ke form. Review lalu simpan manual.');
+  };
 
   const handleSave = async () => {
     if (isSaving) return;
@@ -94,6 +177,39 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
 
       <div className="grid-12">
         <div className="card" style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
+          <div style={{ gridColumn: 'span 12', padding: 14, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--neutral-50)' }}>
+            <label className="form-label">Cari Data Pemain dari API-Football</label>
+            <div className="flex gap-8" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <input className="form-input" style={{ flex: '1 1 260px' }} placeholder="Cari nama pemain..." value={apiSearch} onChange={event => setApiSearch(event.target.value)} />
+              <input className="form-input" style={{ width: 96 }} placeholder="Season" value={apiSeason} onChange={event => setApiSeason(event.target.value.replace(/[^0-9]/g, '').slice(0, 4))} />
+              <LoadingButton className="btn btn-sm btn-secondary" onClick={searchPlayersFromApi} loading={isSearchingApi} loadingLabel="Mencari...">Cari API</LoadingButton>
+            </div>
+            {apiPlayers.length > 0 && (
+              <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+                {apiPlayers.map(candidate => {
+                  const stats = candidate.statistics?.[0];
+                  return (
+                    <button
+                      key={`${candidate.player?.id}-${candidate.player?.name}-${stats?.team?.id || 'team'}`}
+                      type="button"
+                      onClick={() => applyApiPlayer(candidate)}
+                      style={{ width: '100%', border: '1px solid var(--neutral-200)', background: 'var(--white)', borderRadius: 8, padding: 10, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      {candidate.player?.photo && <img src={candidate.player.photo} alt="" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '50%' }} />}
+                      <span style={{ flex: 1 }}>
+                        <span className="semibold" style={{ display: 'block', fontSize: 13 }}>{candidate.player?.name}</span>
+                        <span className="text-muted" style={{ fontSize: 11 }}>
+                          {candidate.player?.nationality || '-'}{stats?.team?.name ? ` - ${stats.team.name}` : ''}{stats?.games?.position ? ` - ${stats.games.position}` : ''}
+                        </span>
+                      </span>
+                      <span className="badge badge-info">Terapkan</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <span className="form-helper">API hanya membantu mengisi profil dasar. Klub lokal tetap dipilih manual dari database Gosball.</span>
+          </div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Nama Lengkap</label><input className="form-input" value={player.fullName} onChange={event => updatePlayer('fullName', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Display Name</label><input className="form-input" value={player.displayName} onChange={event => updatePlayer('displayName', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Klub</label><select className="form-select" value={player.clubId} onChange={event => updatePlayer('clubId', event.target.value)}>{clubs.map(club => <option key={club.id} value={club.id}>{club.name}</option>)}</select></div>

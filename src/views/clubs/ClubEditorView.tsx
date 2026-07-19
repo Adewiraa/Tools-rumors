@@ -9,6 +9,24 @@ import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
 
+type ApiTeamCandidate = {
+  team?: {
+    id?: number;
+    name?: string;
+    code?: string;
+    country?: string;
+    logo?: string;
+  };
+  venue?: {
+    name?: string;
+    city?: string;
+  };
+};
+
+const buildClubCode = (name?: string, code?: string) => (
+  (code || (name || '').split(/\s+/).map(part => part[0]).join('')).slice(0, 3).toUpperCase()
+);
+
 export default function ClubEditorView({ clubId }: { clubId: string }) {
   const router = useRouter();
   const { clubs, setClubs, competitions, logAction, triggerToast } = useApp();
@@ -34,8 +52,48 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
   });
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [apiSearch, setApiSearch] = useState(existing?.name || '');
+  const [apiTeams, setApiTeams] = useState<ApiTeamCandidate[]>([]);
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
 
   const updateClub = <K extends keyof Club>(key: K, value: Club[K]) => setClub(prev => ({ ...prev, [key]: value }));
+
+  const searchTeamsFromApi = async () => {
+    const query = apiSearch.trim();
+    if (query.length < 3) {
+      triggerToast('Masukkan minimal 3 karakter untuk mencari klub API.', 'warning');
+      return;
+    }
+
+    setIsSearchingApi(true);
+    try {
+      const response = await fetch(`/api/integrations/api-football?resource=teams&search=${encodeURIComponent(query)}`);
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Gagal mencari klub dari API.');
+
+      const teams = Array.isArray(result.data?.response) ? result.data.response : [];
+      setApiTeams(teams.slice(0, 8));
+      triggerToast(`${teams.length} kandidat klub ditemukan dari API.`);
+    } catch (error: any) {
+      triggerToast(error.message || 'Gagal mencari klub dari API.', 'error');
+    } finally {
+      setIsSearchingApi(false);
+    }
+  };
+
+  const applyApiTeam = (candidate: ApiTeamCandidate) => {
+    const nextName = candidate.team?.name || club.name;
+    setClub(prev => ({
+      ...prev,
+      name: nextName,
+      shortName: prev.shortName || nextName,
+      code: buildClubCode(nextName, candidate.team?.code),
+      city: candidate.venue?.city || prev.city,
+      stadium: candidate.venue?.name || prev.stadium,
+      logoUrl: candidate.team?.logo || prev.logoUrl,
+    }));
+    triggerToast('Data klub dari API diterapkan ke form. Review lalu simpan manual.');
+  };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -114,6 +172,33 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
 
       <div className="grid-12">
         <div className="card" style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
+          <div style={{ gridColumn: 'span 12', padding: 14, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--neutral-50)' }}>
+            <label className="form-label">Cari Data Klub dari API-Football</label>
+            <div className="flex gap-8" style={{ alignItems: 'center' }}>
+              <input className="form-input" placeholder="Cari nama klub..." value={apiSearch} onChange={event => setApiSearch(event.target.value)} />
+              <LoadingButton className="btn btn-sm btn-secondary" onClick={searchTeamsFromApi} loading={isSearchingApi} loadingLabel="Mencari...">Cari API</LoadingButton>
+            </div>
+            {apiTeams.length > 0 && (
+              <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+                {apiTeams.map(candidate => (
+                  <button
+                    key={`${candidate.team?.id}-${candidate.team?.name}`}
+                    type="button"
+                    onClick={() => applyApiTeam(candidate)}
+                    style={{ width: '100%', border: '1px solid var(--neutral-200)', background: 'var(--white)', borderRadius: 8, padding: 10, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    {candidate.team?.logo && <img src={candidate.team.logo} alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />}
+                    <span style={{ flex: 1 }}>
+                      <span className="semibold" style={{ display: 'block', fontSize: 13 }}>{candidate.team?.name}</span>
+                      <span className="text-muted" style={{ fontSize: 11 }}>{candidate.team?.country || '-'}{candidate.venue?.name ? ` - ${candidate.venue.name}` : ''}</span>
+                    </span>
+                    <span className="badge badge-info">Terapkan</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <span className="form-helper">API hanya membantu mengisi logo/nama/stadion. Data final tetap dari tombol Simpan Klub.</span>
+          </div>
           <div style={{ gridColumn: 'span 8' }}><label className="form-label">Nama Klub</label><input className="form-input" value={club.name} onChange={event => updateClub('name', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Kode</label><input className="form-input" value={club.code} maxLength={3} onChange={event => updateClub('code', event.target.value.toUpperCase())} /></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Short Name</label><input className="form-input" value={club.shortName} onChange={event => updateClub('shortName', event.target.value)} /></div>
