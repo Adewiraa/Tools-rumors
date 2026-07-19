@@ -14,6 +14,35 @@ const supabaseAdmin = createClient(
   }
 );
 
+const positionFromRoster = (position?: string) => {
+  const positionMap: Record<string, string> = {
+    GK: 'Goalkeeper',
+    DF: 'Defender',
+    MF: 'Midfielder',
+    FW: 'Forward',
+    Goalkeeper: 'Goalkeeper',
+    Defender: 'Defender',
+    Midfielder: 'Midfielder',
+    Forward: 'Forward'
+  };
+
+  return positionMap[position || ''] || 'Defender';
+};
+
+const calculatePlayerCompleteness = (player: any) => {
+  const fields = [
+    { val: player.fullName, weight: 35 },
+    { val: player.displayName, weight: 25 },
+    { val: player.clubId, weight: 15 },
+    { val: player.position, weight: 15 },
+    { val: player.shirtNumber, weight: 10 },
+  ];
+
+  return fields.reduce((total, field) => {
+    return field.val !== undefined && field.val !== null && field.val !== '' ? total + field.weight : total;
+  }, 0);
+};
+
 const getDeleteId = async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const queryId = searchParams.get('id');
@@ -29,6 +58,72 @@ const getDeleteId = async (request: Request) => {
     return '';
   }
 };
+
+export async function GET() {
+  try {
+    const [
+      { data: playersData, error: playersError },
+      { data: rostersData, error: rostersError },
+      { data: clubSeasonsData, error: clubSeasonsError },
+      { data: clubsData, error: clubsError },
+    ] = await Promise.all([
+      supabaseAdmin.from('players').select('*'),
+      supabaseAdmin.from('club_rosters').select('*'),
+      supabaseAdmin.from('club_seasons').select('*'),
+      supabaseAdmin.from('clubs').select('id, name'),
+    ]);
+
+    if (playersError) throw playersError;
+    if (rostersError) throw rostersError;
+    if (clubSeasonsError) throw clubSeasonsError;
+    if (clubsError) throw clubsError;
+
+    const clubSeasonById = new Map((clubSeasonsData || []).map((season: any) => [String(season.id), season]));
+    const clubNameById = new Map((clubsData || []).map((club: any) => [String(club.id), club.name]));
+    const rosterByPlayerId = new Map<string, any>();
+
+    (rostersData || []).forEach((roster: any) => {
+      const playerId = String(roster.player_id || '');
+      if (playerId && !rosterByPlayerId.has(playerId)) {
+        rosterByPlayerId.set(playerId, roster);
+      }
+    });
+
+    const mappedPlayers = (playersData || []).map((player: any) => {
+      const roster = rosterByPlayerId.get(String(player.id));
+      const clubSeason = roster?.club_season_id ? clubSeasonById.get(String(roster.club_season_id)) : undefined;
+      const clubId = player.club_id || clubSeason?.club_id || '';
+      const mappedPlayer = {
+        id: player.id,
+        fullName: player.full_name,
+        displayName: player.display_name || player.full_name,
+        clubId,
+        clubName: player.club_name || (clubId ? clubNameById.get(String(clubId)) : '') || '',
+        position: positionFromRoster(roster?.position || player.position),
+        shirtNumber: Number(roster?.shirt_number ?? player.shirt_number) || 0,
+        nationality: player.country_name || player.nationality || 'Indonesia',
+        countryCode: player.country_code || undefined,
+        flagUrl: player.country_flag_url || player.flag_url || 'https://flags.restcountries.com/v5/svg/id.svg',
+        age: Number(player.age) || 20,
+        contractStart: player.contract_start || '',
+        contractEnd: player.contract_end || '',
+        status: player.status || (clubId ? 'active' : 'free_agent'),
+        availability: player.availability || 'available',
+        completeness: 0
+      };
+
+      return {
+        ...mappedPlayer,
+        completeness: calculatePlayerCompleteness(mappedPlayer)
+      };
+    });
+
+    return NextResponse.json({ success: true, data: mappedPlayers });
+  } catch (err: any) {
+    console.error('Player GET error:', err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {

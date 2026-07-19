@@ -219,46 +219,15 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setCompetitions(sortedComp);
         }
 
-        // 3. Fetch Players
-        const { data: playersData, error: playersError } = await supabase.from('players').select('*');
-        if (playersError) throw playersError;
-        if (playersData && playersData.length > 0) {
-          const calculatePlayerCompleteness = (player: any) => {
-            const fields = [
-              { val: player.full_name, weight: 35 },
-              { val: player.display_name, weight: 25 },
-              { val: player.club_id, weight: 15 },
-              { val: player.position, weight: 15 },
-              { val: player.shirt_number, weight: 10 },
-            ];
-            let filled = 0;
-            fields.forEach(f => {
-              if (f.val !== undefined && f.val !== null && f.val !== '') filled += f.weight;
-            });
-            return filled;
-          };
-          const mappedPlayers: Player[] = playersData.map((p: any) => {
-            const mappedPlayer: Player = {
-              id: p.id,
-              fullName: p.full_name,
-              displayName: p.display_name,
-              clubId: p.club_id || '',
-              clubName: p.club_name || '',
-              position: p.position || 'Defender',
-              shirtNumber: Number(p.shirt_number) || 0,
-              nationality: p.nationality || 'Indonesia',
-              flagUrl: p.flag_url || 'https://flags.restcountries.com/v5/svg/id.svg',
-              age: Number(p.age) || 20,
-              contractStart: p.contract_start || '',
-              contractEnd: p.contract_end || '',
-              status: p.status || 'active',
-              availability: p.availability || 'available',
-              completeness: 0
-            };
-            mappedPlayer.completeness = calculatePlayerCompleteness(p);
-            return mappedPlayer;
-          });
-          setPlayers(mappedPlayers);
+        // 3. Fetch Players via API route so roster and club-season relations are mapped consistently
+        try {
+          const playerRes = await fetch('/api/players');
+          const playerJson = await playerRes.json();
+          if (playerJson.success && playerJson.data && playerJson.data.length > 0) {
+            setPlayers(playerJson.data);
+          }
+        } catch (playerErr) {
+          console.warn('Gagal load players dari Supabase, pakai data lokal:', playerErr);
         }
 
         // 4. Fetch Matches via API route
