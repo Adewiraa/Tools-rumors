@@ -107,15 +107,6 @@ const createPlayerFromApiSquad = (apiPlayer: ApiSquadPlayer, club: Club, apiProf
   };
 };
 
-const getPlayerInitials = (name: string) => (
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(part => part[0]?.toUpperCase())
-    .join('') || 'P'
-);
-
 const getAvailabilityLabel = (availability: Player['availability']) => {
   const labelMap: Record<Player['availability'], string> = {
     available: 'Tersedia',
@@ -520,14 +511,9 @@ export default function PlayersListView() {
                 >
                   <div style={{ padding: 14, display: 'grid', gap: 12 }}>
                     <div className="flex justify-between align-center" style={{ gap: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                        <div style={{ width: 54, height: 54, borderRadius: 8, background: 'var(--neutral-950)', color: 'white', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 18, flexShrink: 0 }}>
-                          {getPlayerInitials(player.displayName || player.fullName)}
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div className="semibold" style={{ fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.fullName}</div>
-                          <div className="text-muted" style={{ fontSize: 12 }}>{player.displayName}</div>
-                        </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="semibold" style={{ fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.fullName}</div>
+                        <div className="text-muted" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</div>
                       </div>
                       <div style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid var(--neutral-200)', display: 'grid', placeItems: 'center', overflow: 'hidden', flexShrink: 0 }}>
                         {playerClub?.logoUrl?.startsWith('http') ? (
