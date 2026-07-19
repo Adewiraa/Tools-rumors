@@ -4410,12 +4410,18 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       isSavingFullTime
         ? 'Finished'
         : (matchStatus === 'Postponed' || matchStatus === 'Cancelled' ? matchStatus : 'Scheduled');
+    const finalBgImage = pendingBackgroundImage !== null ? pendingBackgroundImage : backgroundImage;
+    const finalPositionX = pendingBackgroundImage !== null ? pendingBackgroundPositionX : backgroundPositionX;
+    const finalPositionY = pendingBackgroundImage !== null ? pendingBackgroundPositionY : backgroundPositionY;
+    const finalZoom = pendingBackgroundImage !== null ? pendingBackgroundZoom : backgroundZoom;
+    const finalDim = pendingBackgroundImage !== null ? pendingBackgroundDim : backgroundDim;
+
     const nextGraphicSettings: ResultGraphicSettings = {
-      backgroundImage,
-      backgroundPositionX,
-      backgroundPositionY,
-      backgroundZoom,
-      backgroundDim,
+      backgroundImage: finalBgImage,
+      backgroundPositionX: finalPositionX,
+      backgroundPositionY: finalPositionY,
+      backgroundZoom: finalZoom,
+      backgroundDim: finalDim,
       halfTimeSaved: shouldPersistHalfTime,
     };
     const nextLineupStatus: Match['lineupStatus'] =
