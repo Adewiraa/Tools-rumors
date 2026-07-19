@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import RumorsListView from '@/components/rumors/RumorsListView';
-import RumorEditorView from '@/components/rumors/RumorEditorView';
+import RumorsListView from '@/views/rumors/RumorsListView';
+import RumorEditorView from '@/views/rumors/RumorEditorView';
 
 function RumorsContent() {
   const searchParams = useSearchParams();

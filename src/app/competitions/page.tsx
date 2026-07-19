@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import CompetitionsListView from '@/components/competitions/CompetitionsListView';
-import CompetitionEditorView from '@/components/competitions/CompetitionEditorView';
+import CompetitionsListView from '@/views/competitions/CompetitionsListView';
+import CompetitionEditorView from '@/views/competitions/CompetitionEditorView';
 
 function CompetitionsContent() {
   const searchParams = useSearchParams();

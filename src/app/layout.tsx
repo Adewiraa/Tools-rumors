@@ -27,8 +27,8 @@ export const viewport: Viewport = {
   themeColor: "#0A0A0A",
 };
 
-import { AppContextProvider } from "@/context/AppContext";
-import AdminLayoutWrapper from "@/components/layout/AdminLayoutWrapper";
+import { AppContextProvider } from "@/logic/AppContext";
+import AdminLayoutWrapper from "@/views/layout/AdminLayoutWrapper";
 
 export default function RootLayout({
   children,

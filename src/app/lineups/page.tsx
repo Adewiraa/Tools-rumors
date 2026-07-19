@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import LineupsListView from '@/components/lineups/LineupsListView';
-import LineupEditorView from '@/components/lineups/LineupEditorView';
+import LineupsListView from '@/views/lineups/LineupsListView';
+import LineupEditorView from '@/views/lineups/LineupEditorView';
 
 function LineupsContent() {
   const searchParams = useSearchParams();

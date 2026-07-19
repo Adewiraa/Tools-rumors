@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import PlayersListView from '@/components/players/PlayersListView';
-import PlayerEditorView from '@/components/players/PlayerEditorView';
+import PlayersListView from '@/views/players/PlayersListView';
+import PlayerEditorView from '@/views/players/PlayerEditorView';
 
 function PlayersContent() {
   const searchParams = useSearchParams();

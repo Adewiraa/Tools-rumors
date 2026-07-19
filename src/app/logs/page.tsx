@@ -1,4 +1,4 @@
-import AuditLogsView from '@/components/logs/AuditLogsView';
+import AuditLogsView from '@/views/logs/AuditLogsView';
 
 export default function LogsPage() {
   return <AuditLogsView />;

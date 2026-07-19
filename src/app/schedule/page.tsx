@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import ScheduleListView from '@/components/schedule/ScheduleListView';
-import ScheduleEditorView from '@/components/schedule/ScheduleEditorView';
+import ScheduleListView from '@/views/schedule/ScheduleListView';
+import ScheduleEditorView from '@/views/schedule/ScheduleEditorView';
 
 function ScheduleContent() {
   const searchParams = useSearchParams();

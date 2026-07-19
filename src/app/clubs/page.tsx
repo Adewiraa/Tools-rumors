@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import ClubsListView from '@/components/clubs/ClubsListView';
-import ClubEditorView from '@/components/clubs/ClubEditorView';
+import ClubsListView from '@/views/clubs/ClubsListView';
+import ClubEditorView from '@/views/clubs/ClubEditorView';
 
 function ClubsContent() {
   const searchParams = useSearchParams();

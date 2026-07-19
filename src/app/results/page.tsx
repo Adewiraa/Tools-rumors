@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import ResultsListView from '@/components/results/ResultsListView';
-import ResultEditorView from '@/components/results/ResultEditorView';
+import ResultsListView from '@/views/results/ResultsListView';
+import ResultEditorView from '@/views/results/ResultEditorView';
 
 function ResultsContent() {
   const searchParams = useSearchParams();
