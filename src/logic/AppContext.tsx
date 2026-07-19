@@ -12,7 +12,8 @@ import {
   INITIAL_PLAYERS,
   INITIAL_RUMORS,
   INITIAL_AUDIT_LOGS,
-  INITIAL_COMPETITIONS
+  INITIAL_COMPETITIONS,
+  calculateClubCompleteness
 } from '@/lib/mockData';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -155,6 +156,45 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Fetch Supabase data on mount
   useEffect(() => {
+    const mapClubFromSupabase = (club: any): Club => {
+      const mappedClub: Club = {
+        id: club.id,
+        name: club.name || '',
+        shortName: club.shortName || club.short_name || club.name || '',
+        code: club.code || club.slug?.toUpperCase?.()?.slice(0, 3) || club.short_name?.toUpperCase?.()?.slice(0, 3) || '',
+        city: club.city || '',
+        stadium: club.stadium || '',
+        founded: Number(club.founded) || 2026,
+        homeColor: club.homeColor || club.home_color || club.primary_color || '#66756A',
+        awayColor: club.awayColor || club.away_color || club.secondary_color || '#E2E8F0',
+        thirdColor: club.thirdColor || club.third_color || '#111827',
+        logoUrl: club.logoUrl || club.logo_url || club.logo_public_url || club.logo || '',
+        coach: club.coach || '',
+        activePlayersCount: Number(club.activePlayersCount || club.active_players_count) || 0,
+        completeness: 0,
+        status: club.status || 'active',
+        competitionIds: Array.isArray(club.competitionIds)
+          ? club.competitionIds
+          : Array.isArray(club.competition_ids)
+            ? club.competition_ids
+            : [],
+      };
+      mappedClub.completeness = Number(club.completeness) || calculateClubCompleteness(mappedClub);
+      return mappedClub;
+    };
+
+    const mapCompetitionFromSupabase = (competition: any): Competition => ({
+      id: competition.id,
+      name: competition.name || '',
+      shortName: competition.shortName || competition.short_name || '',
+      slug: competition.slug || '',
+      type: competition.type || 'league',
+      country: competition.country || 'Indonesia',
+      logoUrl: competition.logoUrl || competition.logo_url || competition.logo_public_url || '',
+      season: competition.season || '',
+      isActive: competition.isActive !== undefined ? competition.isActive : competition.is_active !== undefined ? competition.is_active : true,
+    });
+
     async function loadSupabaseData() {
       try {
         setUiState('loading');
@@ -163,7 +203,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const { data: clubsData, error: clubsError } = await supabase.from('clubs').select('*');
         if (clubsError) throw clubsError;
         if (clubsData) {
-          const sortedClubs = [...clubsData].sort((a, b) => a.name.localeCompare(b.name));
+          const sortedClubs = clubsData
+            .map(mapClubFromSupabase)
+            .sort((a, b) => a.name.localeCompare(b.name));
           setClubs(sortedClubs);
         }
         
@@ -171,7 +213,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const { data: compData, error: compError } = await supabase.from('competitions').select('*');
         if (compError) throw compError;
         if (compData) {
-          const sortedComp = [...compData].sort((a, b) => a.name.localeCompare(b.name));
+          const sortedComp = compData
+            .map(mapCompetitionFromSupabase)
+            .sort((a, b) => a.name.localeCompare(b.name));
           setCompetitions(sortedComp);
         }
 
