@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Match } from '@/lib/mockData';
@@ -110,7 +111,9 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
     <div className="schedule-editor-container">
       <div className="schedule-editor-header">
         <div className="schedule-editor-header-left">
-          <button className="btn btn-sm btn-secondary schedule-editor-back-btn" onClick={() => router.push('/schedule')}><ArrowLeft size={16} /> Kembali</button>
+          <Link href="/schedule" replace className="btn btn-sm btn-secondary schedule-editor-back-btn">
+            <ArrowLeft size={16} /> Kembali
+          </Link>
           <div>
             <div className="breadcrumb"><span>Jadwal</span> <ChevronRight size={10} /> <span>{isNew ? 'Tambah Jadwal' : 'Edit Jadwal'}</span></div>
             <h2 className="schedule-editor-title">{isNew ? 'Tambah Jadwal Baru' : `Edit: ${existing?.homeClubName} vs ${existing?.awayClubName}`}</h2>
