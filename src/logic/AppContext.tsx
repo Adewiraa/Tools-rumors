@@ -222,7 +222,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // 3. Fetch Players
         const { data: playersData, error: playersError } = await supabase.from('players').select('*');
         if (playersError) throw playersError;
-        if (playersData) {
+        if (playersData && playersData.length > 0) {
           const calculatePlayerCompleteness = (player: any) => {
             const fields = [
               { val: player.full_name, weight: 35 },

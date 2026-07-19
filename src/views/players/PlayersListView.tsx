@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
@@ -12,12 +12,6 @@ export default function PlayersListView() {
   const [selectedClubId, setSelectedClubId] = useState('Semua');
   const [selectedPosition, setSelectedPosition] = useState('Semua');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if ((selectedClubId === 'Semua' || !selectedClubId) && clubs.length > 0) {
-      setSelectedClubId(clubs[0].id);
-    }
-  }, [clubs, selectedClubId]);
 
   const filteredPlayers = players.filter(player => {
     const matchClub = selectedClubId === 'Semua' || player.clubId === selectedClubId;
@@ -80,37 +74,45 @@ export default function PlayersListView() {
             </tr>
           </thead>
           <tbody>
-            {filteredPlayers.map(player => (
-              <tr key={player.id}>
-                <td>{player.flagUrl?.startsWith('http') ? <img src={player.flagUrl} alt={player.nationality} style={{ width: 24, height: 16, objectFit: 'cover', borderRadius: 2 }} /> : player.flagUrl}</td>
-                <td><span className="semibold">{player.fullName}</span><div className="text-muted" style={{ fontSize: 11 }}>{player.displayName}</div></td>
-                <td>{clubs.find(club => club.id === player.clubId)?.name || player.clubName || 'Free Agent'}</td>
-                <td>{player.position}</td>
-                <td>#{player.shirtNumber}</td>
-                <td><span className={`badge ${player.availability === 'available' ? 'badge-success' : 'badge-warning'}`}>{player.availability}</span></td>
-                <td>
-                  <div className="flex align-center gap-8">
-                    <div style={{ width: 70, height: 6, background: 'var(--neutral-200)', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ width: `${player.completeness}%`, height: '100%', background: player.completeness >= 80 ? 'var(--success-600)' : 'var(--warning-600)' }} />
+            {filteredPlayers.length > 0 ? (
+              filteredPlayers.map(player => (
+                <tr key={player.id}>
+                  <td>{player.flagUrl?.startsWith('http') ? <img src={player.flagUrl} alt={player.nationality} style={{ width: 24, height: 16, objectFit: 'cover', borderRadius: 2 }} /> : player.flagUrl}</td>
+                  <td><span className="semibold">{player.fullName}</span><div className="text-muted" style={{ fontSize: 11 }}>{player.displayName}</div></td>
+                  <td>{clubs.find(club => club.id === player.clubId)?.name || player.clubName || 'Free Agent'}</td>
+                  <td>{player.position}</td>
+                  <td>#{player.shirtNumber}</td>
+                  <td><span className={`badge ${player.availability === 'available' ? 'badge-success' : 'badge-warning'}`}>{player.availability}</span></td>
+                  <td>
+                    <div className="flex align-center gap-8">
+                      <div style={{ width: 70, height: 6, background: 'var(--neutral-200)', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ width: `${player.completeness}%`, height: '100%', background: player.completeness >= 80 ? 'var(--success-600)' : 'var(--warning-600)' }} />
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>{player.completeness}%</span>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700 }}>{player.completeness}%</span>
-                  </div>
-                </td>
-                <td className="text-right">
-                  <div style={{ display: 'inline-flex', gap: 6 }}>
-                    <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/players?edit=${player.id}`)}><Edit size={13} /> Edit</button>
-                    {hasPermission('Master', 'delete') && (confirmDeleteId === player.id ? (
-                      <>
-                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(player.id)}>Ya</button>
-                        <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
-                      </>
-                    ) : (
-                      <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(player.id)}><Trash2 size={13} /></button>
-                    ))}
-                  </div>
+                  </td>
+                  <td className="text-right">
+                    <div style={{ display: 'inline-flex', gap: 6 }}>
+                      <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/players?edit=${player.id}`)}><Edit size={13} /> Edit</button>
+                      {hasPermission('Master', 'delete') && (confirmDeleteId === player.id ? (
+                        <>
+                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(player.id)}>Ya</button>
+                          <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                        </>
+                      ) : (
+                        <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(player.id)}><Trash2 size={13} /></button>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '28px 16px', color: 'var(--neutral-500)' }}>
+                  Tidak ada data pemain untuk filter ini.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
