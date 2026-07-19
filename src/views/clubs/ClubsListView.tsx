@@ -98,26 +98,26 @@ export default function ClubsListView() {
       </div>
 
       {hasPermission('Master', 'create_edit') && (
-        <div className="card" style={{ padding: '16px 24px', display: 'grid', gap: 12 }}>
-          <div className="flex justify-between align-center gap-12" style={{ flexWrap: 'wrap' }}>
-            <div>
+        <div className="card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
+            <div style={{ minWidth: 0 }}>
               <div className="semibold" style={{ fontSize: 14 }}>Ambil Data Klub dari API-Football</div>
               <div className="text-muted" style={{ fontSize: 12 }}>Cari klub, pilih kandidat, lalu review di form tambah klub sebelum disimpan.</div>
             </div>
-            <div className="flex gap-8" style={{ flex: '1 1 340px', justifyContent: 'flex-end' }}>
-              <div className="search-input-wrapper" style={{ maxWidth: 360, width: '100%' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8, alignItems: 'center' }}>
+              <label className="search-input-wrapper" style={{ maxWidth: 'none', margin: 0 }}>
                 <Search className="search-icon" size={16} />
                 <input
-                  className="search-input"
-                  placeholder="Cari nama klub API..."
+                  className="form-input"
+                  placeholder="Contoh: Borneo, Persib, Arema"
                   value={apiSearch}
                   onChange={event => setApiSearch(event.target.value)}
                   onKeyDown={event => {
                     if (event.key === 'Enter') searchTeamsFromApi();
                   }}
                 />
-              </div>
-              <LoadingButton className="btn btn-sm btn-secondary" onClick={searchTeamsFromApi} loading={isSearchingApi} loadingLabel="Mencari...">
+              </label>
+              <LoadingButton className="btn btn-md btn-secondary" onClick={searchTeamsFromApi} loading={isSearchingApi} loadingLabel="Mencari...">
                 Cari API
               </LoadingButton>
             </div>

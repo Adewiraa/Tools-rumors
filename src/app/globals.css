@@ -923,6 +923,7 @@ a {
 }
 
 .search-input-wrapper input {
+  width: 100%;
   padding-left: 36px;
 }
 

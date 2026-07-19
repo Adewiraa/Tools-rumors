@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const API_FOOTBALL_BASE_URL = 'https://v3.football.api-sports.io';
 
@@ -33,8 +36,26 @@ const allowedParams = new Set([
   'page',
 ]);
 
+const readApiKeyFromLocalEnv = () => {
+  try {
+    const envPath = join(process.cwd(), '.env.local');
+    if (!existsSync(envPath)) return '';
+
+    const envContent = readFileSync(envPath, 'utf8');
+    const line = envContent
+      .split(/\r?\n/)
+      .find(item => item.trim().startsWith('API_FOOTBALL_KEY=') || item.trim().startsWith('APISPORTS_KEY='));
+
+    if (!line) return '';
+    const [, ...valueParts] = line.split('=');
+    return valueParts.join('=').trim().replace(/^["']|["']$/g, '');
+  } catch {
+    return '';
+  }
+};
+
 export async function GET(request: Request) {
-  const apiKey = process.env.API_FOOTBALL_KEY || process.env.APISPORTS_KEY || '';
+  const apiKey = process.env.API_FOOTBALL_KEY || process.env.APISPORTS_KEY || readApiKeyFromLocalEnv();
 
   if (!apiKey) {
     return NextResponse.json(
