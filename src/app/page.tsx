@@ -1780,8 +1780,19 @@ function ScheduleListView({ matches, players, competitions, onCreateNew, onEdit,
         </td>
         <td><span className={`badge ${statusClass(effectiveStatus)}`}>{statusLabel(effectiveStatus)}</span></td>
         <td><span className={`badge ${lineupClass(effectiveLineupStatus)}`}>{lineupLabel(effectiveLineupStatus)}</span></td>
-        <td style={{ fontSize: 13, fontWeight: 700 }}>
-          {effectiveStatus === 'Finished' && m.homeScore !== undefined ? `${m.homeScore} - ${m.awayScore}` : <span className="text-muted">-</span>}
+        <td>
+          {m.halfTimeHomeScore !== undefined && m.halfTimeHomeScore !== null && m.halfTimeAwayScore !== undefined && m.halfTimeAwayScore !== null ? (
+            <span className="semibold" style={{ fontSize: 12 }}>{m.halfTimeHomeScore} - {m.halfTimeAwayScore}</span>
+          ) : (
+            <span className="text-muted" style={{ fontSize: 12 }}>-</span>
+          )}
+        </td>
+        <td>
+          {m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null ? (
+            <span style={{ fontSize: 13, fontWeight: 700 }}>{m.homeScore} - {m.awayScore}</span>
+          ) : (
+            <span className="text-muted" style={{ fontSize: 12 }}>-</span>
+          )}
         </td>
         <td className="text-right">
           <div style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -1825,7 +1836,8 @@ function ScheduleListView({ matches, players, competitions, onCreateNew, onEdit,
               <th>Kickoff</th>
               <th>Status</th>
               <th>Lineup</th>
-              <th>Skor</th>
+              <th>HT</th>
+              <th>FT</th>
               <th className="text-right">Aksi</th>
             </tr>
           </thead>
