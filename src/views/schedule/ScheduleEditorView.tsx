@@ -125,8 +125,8 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
         </button>
       </div>
 
-      <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div className="form-group">
+      <div className="card schedule-editor-card">
+        <div className="form-group schedule-editor-competition-field">
           <label className="form-label">Kompetisi <span className="required">*</span></label>
           <select className="form-select" value={competition} onChange={e => handleCompetitionChange(e.target.value)}>
             {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} ({c.season})</option>)}
@@ -137,45 +137,45 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
           </span>
         </div>
 
-        <div className="form-row-2col">
-          <div className="form-group">
-            <label className="form-label">Tim Home <span className="required">*</span></label>
-            <select className="form-select" value={homeClubId} onChange={e => setHomeClubId(e.target.value)}>
-              {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Tim Away <span className="required">*</span></label>
-            <select className="form-select" value={awayClubId} onChange={e => setAwayClubId(e.target.value)}>
-              {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-        </div>
-
-        {homeClubId && awayClubId && homeClubId !== awayClubId && (
-          <div className="schedule-matchup-preview">
-            <div className="schedule-matchup-team">
-              {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
-                ? <img src={homeClub.logoUrl} alt="" className="schedule-matchup-logo" />
-                : <div className="schedule-matchup-logo-placeholder">{homeClub?.logoUrl || 'H'}</div>}
-              <div className="schedule-matchup-name">{homeClub?.shortName}</div>
+        <div className="schedule-editor-form-grid">
+          <div className="form-row-2col schedule-editor-team-fields">
+            <div className="form-group">
+              <label className="form-label">Tim Home <span className="required">*</span></label>
+              <select className="form-select" value={homeClubId} onChange={e => setHomeClubId(e.target.value)}>
+                {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
             </div>
-            <div className="schedule-matchup-vs">VS</div>
-            <div className="schedule-matchup-team">
-              {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
-                ? <img src={awayClub.logoUrl} alt="" className="schedule-matchup-logo" />
-                : <div className="schedule-matchup-logo-placeholder">{awayClub?.logoUrl || 'A'}</div>}
-              <div className="schedule-matchup-name">{awayClub?.shortName}</div>
+            <div className="form-group">
+              <label className="form-label">Tim Away <span className="required">*</span></label>
+              <select className="form-select" value={awayClubId} onChange={e => setAwayClubId(e.target.value)}>
+                {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
             </div>
           </div>
-        )}
 
-        <div className="form-row-2col">
-          <div className="form-group">
+          {homeClubId && awayClubId && homeClubId !== awayClubId && (
+            <div className="schedule-matchup-preview">
+              <div className="schedule-matchup-team">
+                {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
+                  ? <img src={homeClub.logoUrl} alt="" className="schedule-matchup-logo" />
+                  : <div className="schedule-matchup-logo-placeholder">{homeClub?.logoUrl || 'H'}</div>}
+                <div className="schedule-matchup-name">{homeClub?.shortName}</div>
+              </div>
+              <div className="schedule-matchup-vs">VS</div>
+              <div className="schedule-matchup-team">
+                {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
+                  ? <img src={awayClub.logoUrl} alt="" className="schedule-matchup-logo" />
+                  : <div className="schedule-matchup-logo-placeholder">{awayClub?.logoUrl || 'A'}</div>}
+                <div className="schedule-matchup-name">{awayClub?.shortName}</div>
+              </div>
+            </div>
+          )}
+
+          <div className="form-group schedule-editor-kickoff-field">
             <label className="form-label">Tanggal & Waktu Kickoff <span className="required">*</span></label>
             <input type="datetime-local" className="form-input" value={kickoff} onChange={e => setKickoff(e.target.value)} />
           </div>
-          <div className="form-group">
+          <div className="form-group schedule-editor-status-field">
             <label className="form-label">Status Pertandingan</label>
             {status === 'Finished' ? (
               <input className="form-input" value="Selesai" disabled readOnly />
@@ -188,11 +188,17 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
             )}
             <span className="form-helper">Live otomatis saat tanggal kickoff masuk hari pertandingan.</span>
           </div>
-        </div>
 
-        <div className="form-group">
-          <label className="form-label">Venue / Stadion <span style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400 }}>(auto dari home club)</span></label>
-          <input type="text" className="form-input" placeholder="Nama stadion..." value={venue} onChange={e => setVenue(e.target.value)} />
+          <div className="form-group schedule-editor-venue-field">
+            <label className="form-label">Venue / Stadion <span style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400 }}>(auto dari home club)</span></label>
+            <input type="text" className="form-input" placeholder="Nama stadion..." value={venue} onChange={e => setVenue(e.target.value)} />
+          </div>
+
+          <div className="schedule-editor-summary">
+            <span>Flow Jadwal</span>
+            <strong>{homeClub?.shortName || 'Home'} vs {awayClub?.shortName || 'Away'}</strong>
+            <p>{competition || 'Kompetisi'} - {venue || 'Venue belum diisi'}</p>
+          </div>
         </div>
       </div>
     </div>

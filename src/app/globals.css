@@ -1514,7 +1514,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 720px;
+  max-width: 1180px;
   margin: 0 auto;
   width: 100%;
 }
@@ -1555,6 +1555,78 @@ a {
   flex-shrink: 0;
 }
 
+.schedule-editor-card {
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.schedule-editor-competition-field {
+  margin: 0;
+}
+
+.schedule-editor-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.72fr);
+  gap: 18px 22px;
+  align-items: stretch;
+}
+
+.schedule-editor-team-fields {
+  grid-column: 1;
+  margin: 0;
+}
+
+.schedule-editor-kickoff-field {
+  grid-column: 1;
+  margin: 0;
+}
+
+.schedule-editor-status-field {
+  grid-column: 1;
+  margin: 0;
+}
+
+.schedule-editor-venue-field {
+  grid-column: 1;
+  margin: 0;
+}
+
+.schedule-editor-summary {
+  grid-column: 2;
+  padding: 18px 20px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  background: var(--neutral-50);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 94px;
+}
+
+.schedule-editor-summary span {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--neutral-500);
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.schedule-editor-summary strong {
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--neutral-950);
+}
+
+.schedule-editor-summary p {
+  margin: 0;
+  color: var(--neutral-600);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .form-row-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1563,16 +1635,20 @@ a {
 
 /* VS Card / Matchup preview */
 .schedule-matchup-preview {
+  grid-column: 2;
+  grid-row: 1 / span 3;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 32px;
-  padding: 24px;
+  padding: 28px;
   background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
   border-radius: var(--radius-lg);
   border: 1px solid var(--neutral-200);
   position: relative;
   overflow: hidden;
+  min-height: 248px;
+  height: 100%;
 }
 
 .schedule-matchup-team {
@@ -1585,15 +1661,15 @@ a {
 }
 
 .schedule-matchup-logo {
-  width: 48px;
-  height: 48px;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.06));
 }
 
 .schedule-matchup-logo-placeholder {
-  width: 48px;
-  height: 48px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: var(--white);
   border: 1px solid var(--neutral-200);
@@ -1683,9 +1759,29 @@ a {
     gap: 12px;
   }
 
+  .schedule-editor-card {
+    padding: 20px;
+  }
+
+  .schedule-editor-form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .schedule-editor-team-fields,
+  .schedule-editor-kickoff-field,
+  .schedule-editor-status-field,
+  .schedule-editor-venue-field,
+  .schedule-editor-summary,
+  .schedule-matchup-preview {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
   .schedule-matchup-preview {
     gap: 20px;
     padding: 16px;
+    min-height: 148px;
   }
 
   .schedule-matchup-logo {
@@ -1699,4 +1795,3 @@ a {
     font-size: 18px;
   }
 }
-
