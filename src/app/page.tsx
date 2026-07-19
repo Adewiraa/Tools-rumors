@@ -2181,14 +2181,16 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--neutral-200)', paddingBottom: 14 }}>
-        <button className="btn btn-sm btn-secondary" onClick={onClose}><ArrowLeft size={16} /> Kembali</button>
+    <div className="schedule-editor-container">
+      <div className="schedule-editor-header">
+        <div className="schedule-editor-header-left">
+          <button className="btn btn-sm btn-secondary schedule-editor-back-btn" onClick={onClose}><ArrowLeft size={16} /> Kembali</button>
         <div>
           <div className="breadcrumb"><span>Jadwal</span> <ChevronRight size={10} /> <span>{isNew ? 'Tambah Jadwal' : 'Edit Jadwal'}</span></div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{isNew ? 'Tambah Jadwal Baru' : `Edit: ${existing?.homeClubName} vs ${existing?.awayClubName}`}</h2>
+          <h2 className="schedule-editor-title">{isNew ? 'Tambah Jadwal Baru' : `Edit: ${existing?.homeClubName} vs ${existing?.awayClubName}`}</h2>
         </div>
-        <button className="btn btn-md btn-primary" style={{ marginLeft: 'auto' }} onClick={handleSave}>
+        </div>
+        <button className="btn btn-md btn-primary schedule-editor-save-btn" onClick={handleSave}>
           <CheckCircle size={14} /> {isNew ? 'Simpan Jadwal' : 'Update Jadwal'}
         </button>
       </div>
@@ -2205,7 +2207,7 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="form-row-2col">
           <div className="form-group">
             <label className="form-label">Tim Home <span className="required">*</span></label>
             <select className="form-select" value={homeClubId} onChange={e => setHomeClubId(e.target.value)}>
@@ -2221,25 +2223,25 @@ function ScheduleEditorView({ matchId, clubs, competitions, matches, onClose, on
         </div>
 
         {homeClubId && awayClubId && homeClubId !== awayClubId && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '14px 0',
-            background: 'var(--neutral-50)', borderRadius: 8, border: '1px solid var(--neutral-200)' }}>
-            <div style={{ textAlign: 'center' }}>
+          <div className="schedule-matchup-preview">
+
+            <div className="schedule-matchup-team">
               {homeClub?.logoUrl && homeClub.logoUrl.startsWith('http')
-                ? <img src={homeClub.logoUrl} alt="" style={{ width: 40, height: 40, objectFit: 'contain' }} />
-                : <span style={{ fontSize: 32 }}>{homeClub?.logoUrl || 'H'}</span>}
-              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{homeClub?.shortName}</div>
+                ? <img src={homeClub.logoUrl} alt="" className="schedule-matchup-logo" />
+                : <div className="schedule-matchup-logo-placeholder">{homeClub?.logoUrl || 'H'}</div>}
+              <div className="schedule-matchup-name">{homeClub?.shortName}</div>
             </div>
-            <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--neutral-400)' }}>VS</span>
-            <div style={{ textAlign: 'center' }}>
+            <div className="schedule-matchup-vs">VS</div>
+            <div className="schedule-matchup-team">
               {awayClub?.logoUrl && awayClub.logoUrl.startsWith('http')
-                ? <img src={awayClub.logoUrl} alt="" style={{ width: 40, height: 40, objectFit: 'contain' }} />
-                : <span style={{ fontSize: 32 }}>{awayClub?.logoUrl || 'A'}</span>}
-              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{awayClub?.shortName}</div>
+                ? <img src={awayClub.logoUrl} alt="" className="schedule-matchup-logo" />
+                : <div className="schedule-matchup-logo-placeholder">{awayClub?.logoUrl || 'A'}</div>}
+              <div className="schedule-matchup-name">{awayClub?.shortName}</div>
             </div>
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="form-row-2col">
           <div className="form-group">
             <label className="form-label">Tanggal & Waktu Kickoff <span className="required">*</span></label>
             <input type="datetime-local" className="form-input" value={kickoff} onChange={e => setKickoff(e.target.value)} />
