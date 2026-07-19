@@ -3860,11 +3860,11 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(10, 10, 10, 0.65)',
-        backdropFilter: 'blur(4px)',
-        borderRadius: 8,
-        padding: '8px 12px',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
+        backgroundColor: 'transparent',
+
+
+        padding: '8px 0',
+
         marginTop: 4,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -4991,11 +4991,11 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center', 
-                backgroundColor: 'rgba(10, 10, 10, 0.65)', 
-                backdropFilter: 'blur(4px)',
-                borderRadius: 8,
-                padding: '8px 12px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'transparent', 
+
+
+                padding: '8px 0',
+
                 marginTop: 4
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
