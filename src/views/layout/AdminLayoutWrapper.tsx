@@ -7,7 +7,6 @@ import { useApp, UserRole } from '@/logic/AppContext';
 import {
   Search,
   Bell,
-  Plus,
   CheckCircle,
   AlertCircle,
   X,
@@ -27,9 +26,7 @@ import {
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
 import {
   APP_NAME,
-  APP_LOGO_SRC,
-  getEffectiveLineupStatus,
-  getEffectiveMatchStatus
+  APP_LOGO_SRC
 } from '@/logic/utils';
 
 type NavSection = {
@@ -91,8 +88,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     sidebarCollapsed,
     setSidebarCollapsed,
     mobileDrawerOpen,
-    setMobileDrawerOpen,
-    hasPermission
+    setMobileDrawerOpen
   } = useApp();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -124,33 +120,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setGlobalSearchOpen]);
-
-  // Handle Quick Create button click
-  const handleQuickCreate = () => {
-    if (activeMenu === 'schedule') {
-      router.push('/schedule?edit=new');
-    } else if (activeMenu === 'lineups') {
-      router.push('/schedule?edit=new');
-      triggerToast('Buat jadwal pertandingan terlebih dahulu. Lineup mengikuti ID jadwal.', 'warning');
-    } else if (activeMenu === 'results') {
-      const readyMatch = matches.find(m => getEffectiveLineupStatus(m) === 'Complete' && getEffectiveMatchStatus(m) === 'Live');
-      if (readyMatch) {
-        router.push(`/results?edit=${readyMatch.id}`);
-      } else {
-        triggerToast('Input hasil hanya tersedia untuk pertandingan Live yang lineup-nya lengkap.', 'warning');
-      }
-    } else if (activeMenu === 'rumors') {
-      router.push('/rumors?edit=new');
-    } else if (activeMenu === 'clubs') {
-      router.push('/clubs?edit=new');
-    } else if (activeMenu === 'players') {
-      router.push('/players?edit=new');
-    } else if (activeMenu === 'competitions') {
-      router.push('/competitions?edit=new');
-    } else {
-      router.push('/schedule?edit=new');
-    }
-  };
 
   const handleMenuNavigate = (event: React.MouseEvent<HTMLAnchorElement>, menuId: string) => {
     event.preventDefault();
@@ -326,15 +295,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           </div>
 
           <div className="flex align-center gap-16">
-            {/* Quick Actions Button */}
-            {hasPermission('Lineup Pertandingan', 'create_edit') && (
-              <div style={{ position: 'relative' }}>
-                <button className="btn btn-sm btn-primary" onClick={handleQuickCreate}>
-                  <Plus size={14} /> Buat Baru
-                </button>
-              </div>
-            )}
-
             {/* Notification Center */}
             <div style={{ position: 'relative' }}>
               <button className="btn btn-sm btn-secondary" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setNotificationsOpen(!notificationsOpen)}>
