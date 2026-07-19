@@ -3895,11 +3895,22 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {comp?.logoUrl && comp.logoUrl.startsWith('http')
-            ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
+            ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 32, height: 32, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
             : <div style={{ width: 18, height: 18, background: 'rgba(10, 10, 10, 0.65)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
                 <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
               </div>}
-          <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase', textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
+          <span style={{ 
+            fontSize: 8, 
+            fontWeight: 800, 
+            color: '#c8a84b', 
+            letterSpacing: 1.2, 
+            textTransform: 'uppercase', 
+            textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)',
+            display: 'inline-block',
+            maxWidth: 120,
+            lineHeight: 1.2,
+            wordBreak: 'break-word'
+          }}>
             {match.competition || 'LIGA NUSANTARA UTAMA'}
           </span>
         </div>
@@ -3907,7 +3918,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
           <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
             {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
           </span>
-          <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
+          <img src={APP_LOGO_SRC} alt="" style={{ height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
         </div>
       </div>
 
@@ -4156,14 +4167,15 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
       });
       const response = await fetch(dataUrl);
       const blob = await response.blob();
-      const fileName = `Result_${effectiveGraphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const graphicLabel = effectiveGraphicType === 'HT' ? 'Halftime' : 'Fulltime';
+      const fileName = `Result_${graphicLabel}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
       const file = new File([blob], fileName, { type: 'image/png' });
       
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
       const shareData: ShareData = {
         files: [file],
-        title: `${match.homeClubName} vs ${match.awayClubName}`,
-        text: `Hasil pertandingan ${match.homeClubName} vs ${match.awayClubName}`,
+        title: `${match.homeClubName} vs ${match.awayClubName} (${graphicLabel})`,
+        text: `Hasil pertandingan ${match.homeClubName} vs ${match.awayClubName} - ${graphicLabel}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
@@ -4199,7 +4211,8 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
         cacheBust: true,
         pixelRatio: 2.7,
       });
-      const fileName = `Result_${effectiveGraphicType}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const graphicLabel = effectiveGraphicType === 'HT' ? 'Halftime' : 'Fulltime';
+      const fileName = `Result_${graphicLabel}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
       const link = document.createElement('a');
       link.download = fileName;
       link.href = dataUrl;
@@ -4960,7 +4973,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 onClick={shareResultGraphic}
                 disabled={isExportingGraphic}
               >
-                <Share2 size={16} /> Bagikan Gambar ({effectiveGraphicType})
+                <Share2 size={16} /> Bagikan Gambar ({effectiveGraphicType === 'HT' ? 'Halftime' : 'Fulltime'})
               </button>
               <button
                 className="btn btn-md btn-secondary flex-1 flex align-center justify-center gap-8"
@@ -5073,12 +5086,23 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {(() => {
                     const comp = competitions.find(c => c.name === match.competition);
                     return comp?.logoUrl && comp.logoUrl.startsWith('http')
-                      ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
+                      ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 32, height: 32, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
                       : <div style={{ width: 18, height: 18, background: 'rgba(10, 10, 10, 0.65)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
                           <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
                         </div>;
                   })()}
-                  <span style={{ fontSize: 8, fontWeight: 800, color: '#c8a84b', letterSpacing: 1.2, textTransform: 'uppercase', textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
+                  <span style={{ 
+                    fontSize: 8, 
+                    fontWeight: 800, 
+                    color: '#c8a84b', 
+                    letterSpacing: 1.2, 
+                    textTransform: 'uppercase', 
+                    textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)',
+                    display: 'inline-block',
+                    maxWidth: 120,
+                    lineHeight: 1.2,
+                    wordBreak: 'break-word'
+                  }}>
                     {match.competition || 'LIGA NUSANTARA UTAMA'}
                   </span>
                 </div>
@@ -5086,7 +5110,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                     {effectiveGraphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
                   </span>
-                  <img src={APP_LOGO_SRC} alt="" style={{ height: 14, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
+                  <img src={APP_LOGO_SRC} alt="" style={{ height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
                 </div>
               </div>
 
