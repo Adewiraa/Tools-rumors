@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -38,8 +38,18 @@ const allowedParams = new Set([
 
 const readApiKeyFromLocalEnv = () => {
   try {
-    const envPath = join(process.cwd(), '.env.local');
-    if (!existsSync(envPath)) return '';
+    let currentDir = process.cwd();
+    const envPaths: string[] = [];
+
+    for (let index = 0; index < 6; index += 1) {
+      envPaths.push(join(currentDir, '.env.local'));
+      const nextDir = dirname(currentDir);
+      if (nextDir === currentDir) break;
+      currentDir = nextDir;
+    }
+
+    const envPath = envPaths.find(path => existsSync(path));
+    if (!envPath) return '';
 
     const envContent = readFileSync(envPath, 'utf8');
     const line = envContent
@@ -59,7 +69,7 @@ export async function GET(request: Request) {
 
   if (!apiKey) {
     return NextResponse.json(
-      { success: false, error: 'API_FOOTBALL_KEY belum diatur di environment server.' },
+      { success: false, error: 'API_FOOTBALL_KEY belum terbaca oleh server. Pastikan .env.local ada lalu restart dev server.' },
       { status: 500 }
     );
   }
