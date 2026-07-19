@@ -364,6 +364,56 @@ a {
   padding: 24px;
 }
 
+.player-club-card,
+.player-roster-card {
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+  will-change: transform;
+}
+
+.player-club-card:hover,
+.player-club-card:focus-visible,
+.player-roster-card:hover,
+.player-roster-card:focus-within {
+  transform: translateY(-3px);
+  border-color: var(--primary-600) !important;
+  box-shadow: var(--shadow-md);
+}
+
+.player-club-card:active {
+  transform: translateY(-1px);
+}
+
+.player-club-logo {
+  transition: transform 160ms ease;
+}
+
+.player-club-card:hover .player-club-logo,
+.player-club-card:focus-visible .player-club-logo {
+  transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-club-card,
+  .player-roster-card,
+  .player-club-logo {
+    transition: none;
+  }
+
+  .player-club-card:hover,
+  .player-club-card:focus-visible,
+  .player-roster-card:hover,
+  .player-roster-card:focus-within,
+  .player-club-card:active,
+  .player-club-card:hover .player-club-logo,
+  .player-club-card:focus-visible .player-club-logo {
+    transform: none;
+  }
+}
+
 /* Badges */
 .badge {
   display: inline-flex;

@@ -419,6 +419,7 @@ export default function PlayersListView() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(154px, 1fr))', gap: 10 }}>
           <button
             type="button"
+            className="player-club-card"
             onClick={() => setSelectedClubId('Semua')}
             style={{
               border: selectedClubId === 'Semua' ? '1px solid var(--primary-600)' : '1px solid var(--neutral-200)',
@@ -431,7 +432,7 @@ export default function PlayersListView() {
               textAlign: 'left',
             }}
           >
-            <span style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--neutral-950)', color: 'white', display: 'grid', placeItems: 'center' }}>
+            <span className="player-club-logo" style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--neutral-950)', color: 'white', display: 'grid', placeItems: 'center' }}>
               <Shield size={22} />
             </span>
             <span className="semibold" style={{ fontSize: 13 }}>Semua Klub</span>
@@ -445,6 +446,7 @@ export default function PlayersListView() {
               <button
                 key={club.id}
                 type="button"
+                className="player-club-card"
                 onClick={() => setSelectedClubId(club.id)}
                 style={{
                   border: isActiveClub ? '1px solid var(--primary-600)' : '1px solid var(--neutral-200)',
@@ -458,7 +460,7 @@ export default function PlayersListView() {
                   minWidth: 0,
                 }}
               >
-                <span style={{ width: 48, height: 48, borderRadius: 8, background: 'var(--white)', border: '1px solid var(--neutral-200)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+                <span className="player-club-logo" style={{ width: 48, height: 48, borderRadius: 8, background: 'var(--white)', border: '1px solid var(--neutral-200)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
                   {club.logoUrl?.startsWith('http') ? (
                     <img src={club.logoUrl} alt={club.name} style={{ width: 38, height: 38, objectFit: 'contain' }} />
                   ) : (
@@ -500,6 +502,7 @@ export default function PlayersListView() {
               return (
                 <div
                   key={player.id}
+                  className="player-roster-card"
                   style={{
                     border: '1px solid var(--neutral-200)',
                     borderRadius: 8,
