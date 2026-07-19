@@ -926,7 +926,7 @@ export default function Home() {
                         logAction('UPDATE_LINEUP', 'Lineup Pertandingan', `Memperbarui lineup ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
                         triggerToast(isPublishedLineup ? 'Lineup berhasil dipublish. Share/download story sudah tersedia.' : 'Lineup berhasil disimpan!');
                       }
-                      setEditingLineupId(isPublishedLineup ? updatedMatch.id : null);
+                      setEditingLineupId(null);
                     }}
                     triggerToast={triggerToast}
                     logAction={logAction}
