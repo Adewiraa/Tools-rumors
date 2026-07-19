@@ -3882,7 +3882,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {comp?.logoUrl && comp.logoUrl.startsWith('http')
-            ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.3)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+            ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
             : <div style={{ width: 18, height: 18, background: 'rgba(10, 10, 10, 0.65)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
                 <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
               </div>}
@@ -4066,6 +4066,13 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                           awayScore !== '' && awayScore !== undefined && awayScore !== null;
   const isGraphicScoresFilled = effectiveGraphicType === 'FT' ? isFtScoresFilled : isHtScoresFilled;
   const shouldShowHalfTimeInFullTimeGraphic = halfTimeWasSaved && isHtScoresFilled;
+
+  // Active live preview background values (combines saved and pending/unsaved states)
+  const currentShowImage = pendingBackgroundImage || backgroundImage;
+  const currentShowPositionX = pendingBackgroundImage ? pendingBackgroundPositionX : backgroundPositionX;
+  const currentShowPositionY = pendingBackgroundImage ? pendingBackgroundPositionY : backgroundPositionY;
+  const currentShowZoom = pendingBackgroundImage ? pendingBackgroundZoom : backgroundZoom;
+  const currentShowDim = pendingBackgroundImage ? pendingBackgroundDim : backgroundDim;
 
   useEffect(() => {
     if (isFullTimeGraphic && graphicType !== 'FT') {
@@ -4851,6 +4858,22 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       }}
                     />
                   </label>
+                  {backgroundImage && !pendingBackgroundImage && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary"
+                      style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      onClick={() => {
+                        setPendingBackgroundImage(backgroundImage);
+                        setPendingBackgroundPositionX(backgroundPositionX);
+                        setPendingBackgroundPositionY(backgroundPositionY);
+                        setPendingBackgroundZoom(backgroundZoom);
+                        setPendingBackgroundDim(backgroundDim);
+                      }}
+                    >
+                      <span>⚙️</span> Atur Posisi
+                    </button>
+                  )}
                   {backgroundImage && (
                     <button
                       type="button"
@@ -4958,10 +4981,10 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 overflow: 'hidden'
               }}
             >
-              {backgroundImage && (
+              {currentShowImage && (
                 <>
                   <img
-                    src={backgroundImage}
+                    src={currentShowImage}
                     alt=""
                     style={{
                       position: 'absolute',
@@ -4969,9 +4992,9 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      objectPosition: `${backgroundPositionX}% ${backgroundPositionY}%`,
-                      transform: `scale(${backgroundZoom / 100})`,
-                      transformOrigin: `${backgroundPositionX}% ${backgroundPositionY}%`,
+                      objectPosition: `${currentShowPositionX}% ${currentShowPositionY}%`,
+                      transform: `scale(${currentShowZoom / 100})`,
+                      transformOrigin: `${currentShowPositionX}% ${currentShowPositionY}%`,
                       zIndex: 0,
                     }}
                   />
@@ -4992,7 +5015,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      background: `linear-gradient(rgba(10, 10, 10, ${Math.max(backgroundDim - 12, 0) / 100}) 0%, rgba(10, 10, 10, ${backgroundDim / 100}) 45%, rgba(10, 10, 10, ${Math.min(backgroundDim + 45, 85) / 100}) 90%)`,
+                      background: `linear-gradient(rgba(10, 10, 10, ${Math.max(currentShowDim - 12, 0) / 100}) 0%, rgba(10, 10, 10, ${currentShowDim / 100}) 45%, rgba(10, 10, 10, ${Math.min(currentShowDim + 45, 85) / 100}) 90%)`,
                       zIndex: 1,
                       pointerEvents: 'none',
                     }}
@@ -5001,7 +5024,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               )}
 
               {/* Glowing accents (if no background image) */}
-              {!backgroundImage && (
+              {!currentShowImage && (
                 <>
                   <div style={{ position: 'absolute', bottom: '-20%', left: '-20%', width: '60%', height: '60%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
                   <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(200,168,75,0.08) 0%, rgba(0,0,0,0) 70%)', pointerEvents: 'none' }}></div>
@@ -5028,7 +5051,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                   {(() => {
                     const comp = competitions.find(c => c.name === match.competition);
                     return comp?.logoUrl && comp.logoUrl.startsWith('http')
-                      ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 20, height: 20, objectFit: 'contain', background: 'white', borderRadius: 3, padding: 1, boxShadow: '0 2px 4px rgba(0,0,0,0.3)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }} />
+                      ? <img src={comp.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
                       : <div style={{ width: 18, height: 18, background: 'rgba(10, 10, 10, 0.65)', borderRadius: 3, border: '1px solid rgba(200,168,75,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.35)' }}>
                           <div style={{ width: 6, height: 6, background: '#c8a84b', borderRadius: 1 }} />
                         </div>;
