@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Club, calculateClubCompleteness } from '@/lib/mockData';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
@@ -42,7 +41,6 @@ const mapApiTeamToClub = (baseClub: Club, candidate: ApiTeamCandidate): Club => 
 };
 
 export default function ClubEditorView({ clubId }: { clubId: string }) {
-  const router = useRouter();
   const { clubs, setClubs, competitions, logAction, triggerToast } = useApp();
   const isNew = clubId === 'new';
   const existing = clubs.find(item => item.id === clubId);
@@ -71,6 +69,9 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
   const [isSearchingApi, setIsSearchingApi] = useState(false);
 
   const updateClub = <K extends keyof Club>(key: K, value: Club[K]) => setClub(prev => ({ ...prev, [key]: value }));
+  const goToClubsList = () => {
+    window.location.replace('/clubs');
+  };
 
   useEffect(() => {
     if (!isNew || typeof window === 'undefined') return;
@@ -175,7 +176,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
       setClubs(prev => isNew ? [...prev, savedClub] : prev.map(item => item.id === savedClub.id ? savedClub : item));
       logAction(isNew ? 'CREATE_CLUB' : 'UPDATE_CLUB', 'Master Klub', savedClub.name);
       triggerToast('Klub berhasil disimpan.');
-      router.push('/clubs');
+      goToClubsList();
     } catch (error: any) {
       triggerToast(error.message || 'Terjadi kesalahan saat menyimpan klub.', 'error');
     } finally {
@@ -187,7 +188,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button className="btn btn-sm btn-secondary" onClick={() => router.push('/clubs')}><ArrowLeft size={16} /> Kembali</button>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={goToClubsList}><ArrowLeft size={16} /> Kembali</button>
           <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Klub' : 'Edit Klub'}</h1>
         </div>
         <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan..."><Save size={16} /> Simpan Klub</LoadingButton>
