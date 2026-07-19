@@ -3837,6 +3837,19 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
               zIndex: 0,
             }}
           />
+          {/* Subtle bottom scoreboard overlay for legibility on light background images */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '180px',
+              background: 'linear-gradient(to top, rgba(10, 10, 10, 0.7) 0%, rgba(10, 10, 10, 0.35) 50%, rgba(10, 10, 10, 0) 100%)',
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}
+          />
           {/* Subtle top header overlay for legibility on light background images */}
           <div
             style={{
@@ -3902,42 +3915,38 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
 
       <div style={{
         zIndex: 2,
-        backgroundColor: backgroundImage ? 'rgba(10, 10, 10, 0.48)' : 'rgba(10, 10, 10, 0.85)',
-        backdropFilter: backgroundImage ? 'blur(2px) saturate(115%)' : 'blur(8px)',
-        borderRadius: 10,
-        border: backgroundImage ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid rgba(200, 168, 75, 0.25)',
-        padding: '12px 14px',
+        backgroundColor: 'transparent',
+        padding: '12px 0',
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
         width: '100%',
-        boxShadow: backgroundImage ? '0 10px 24px rgba(0, 0, 0, 0.28)' : '0 8px 32px rgba(0, 0, 0, 0.6)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
             <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {renderLogo(match.homeLogo, 'H')}
             </div>
-            <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
               {match.homeClubName.split(' ')[0] || 'HOME'}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{scoreHome}</span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#555' }}>-</span>
-            <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{scoreAway}</span>
+            <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.7)' }}>{scoreHome}</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#e2e8f0', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>-</span>
+            <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.7)' }}>{scoreAway}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, flexDirection: 'row-reverse' }}>
             <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {renderLogo(match.awayLogo, 'A')}
             </div>
-            <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right', textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
               {match.awayClubName.split(' ')[0] || 'AWAY'}
             </span>
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#888', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>
+        <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#e2e8f0', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
           {graphicType === 'FT' && hasHalfTimeScore
             ? `HALF TIME: ${match.halfTimeHomeScore} - ${match.halfTimeAwayScore}`
             : (match.venue || 'Stadion Pertandingan')}
@@ -3948,7 +3957,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
             {goalEvents
               .filter(event => String(event.clubId) === String(match.homeClubId))
               .map((event, index) => (
-                <div key={event.id || `home-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0' }}>
+                <div key={event.id || `home-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
                   <span style={{ color: '#c8a84b', fontWeight: 700 }}>{event.minute}'</span>
                   <span>Goal {event.playerName}</span>
                 </div>
@@ -3958,7 +3967,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
             {goalEvents
               .filter(event => String(event.clubId) === String(match.awayClubId))
               .map((event, index) => (
-                <div key={event.id || `away-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse' }}>
+                <div key={event.id || `away-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
                   <span style={{ color: '#c8a84b', fontWeight: 700 }}>{event.minute}'</span>
                   <span>{event.playerName} Goal</span>
                 </div>
@@ -3966,11 +3975,11 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
           </div>
         </div>
         {goalEvents.length === 0 && (
-          <div style={{ fontSize: 9, color: '#555', textAlign: 'center', fontStyle: 'italic', padding: '2px 0' }}>Tidak ada gol tercipta</div>
+          <div style={{ fontSize: 9, color: '#a0aec0', textAlign: 'center', fontStyle: 'italic', padding: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>Tidak ada gol tercipta</div>
         )}
       </div>
 
-      <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 6, fontSize: 8, color: '#555', fontWeight: 600, marginTop: 8, width: '100%' }}>
+      <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
         <span>{APP_HANDLE}</span>
       </div>
     </div>
@@ -4998,6 +5007,19 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       zIndex: 0,
                     }}
                   />
+                  {/* Subtle bottom scoreboard overlay for legibility on light background images */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '180px',
+                      background: 'linear-gradient(to top, rgba(10, 10, 10, 0.7) 0%, rgba(10, 10, 10, 0.35) 50%, rgba(10, 10, 10, 0) 100%)',
+                      zIndex: 1,
+                      pointerEvents: 'none',
+                    }}
+                  />
                   {/* Subtle top header overlay for legibility on light background images */}
                   <div
                     style={{
@@ -5074,16 +5096,12 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
               {/* Bottom Card Panel (Overlay container for matchup, scores and timeline) */}
               <div style={{
                 zIndex: 2,
-                backgroundColor: backgroundImage ? 'rgba(10, 10, 10, 0.48)' : 'rgba(10, 10, 10, 0.85)',
-                backdropFilter: backgroundImage ? 'blur(2px) saturate(115%)' : 'blur(8px)',
-                borderRadius: 10,
-                border: backgroundImage ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid rgba(200, 168, 75, 0.25)',
-                padding: '12px 14px',
+                backgroundColor: 'transparent',
+                padding: '12px 0',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 8,
                 width: '100%',
-                boxShadow: backgroundImage ? '0 10px 24px rgba(0, 0, 0, 0.28)' : '0 8px 32px rgba(0, 0, 0, 0.6)'
               }}>
                 {/* Matchup & Scores inside the bottom card */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -5097,7 +5115,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
                         {match.homeClubName.split(' ')[0]}
                       </span>
                     </div>
@@ -5105,13 +5123,13 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
                   {/* Score Box */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.7)' }}>
                       {effectiveGraphicType === 'HT'
                         ? ((halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0) 
                         : ((homeScore as any) !== '' ? homeScore : 0)}
                     </span>
-                    <span style={{ fontSize: 12, fontWeight: 800, color: '#555' }}>-</span>
-                    <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: '#e2e8f0', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>-</span>
+                    <span style={{ fontSize: 32, fontWeight: 900, color: '#e8cc6a', textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 4px 12px rgba(0,0,0,0.7)' }}>
                       {effectiveGraphicType === 'HT'
                         ? ((halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0) 
                         : ((awayScore as any) !== '' ? awayScore : 0)}
@@ -5128,7 +5146,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                       )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: 'white', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'right', textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.7)' }}>
                         {match.awayClubName.split(' ')[0]}
                       </span>
                     </div>
@@ -5136,7 +5154,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                 </div>
 
                 {/* Sub-text HT Score or Venue */}
-                <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#888', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>
+                <div style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color: '#e2e8f0', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
                   {effectiveGraphicType === 'FT' && shouldShowHalfTimeInFullTimeGraphic
                     ? `HALF TIME: ${(halfTimeHomeScore as any) !== '' ? halfTimeHomeScore : 0} - ${(halfTimeAwayScore as any) !== '' ? halfTimeAwayScore : 0}` 
                     : (match.venue || 'Stadion Pertandingan')}
@@ -5149,7 +5167,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                     {events
                       .filter(e => e.type === 'goal' && String(e.clubId) === String(match.homeClubId) && (effectiveGraphicType === 'FT' || e.minute <= 45))
                       .map((evt) => (
-                        <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0' }}>
+                        <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
                           <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
                           <span>⚽ {evt.playerName}</span>
                         </div>
@@ -5161,7 +5179,7 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
                     {events
                       .filter(e => e.type === 'goal' && String(e.clubId) === String(match.awayClubId) && (effectiveGraphicType === 'FT' || e.minute <= 45))
                       .map((evt) => (
-                        <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse' }}>
+                        <div key={evt.id} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
                           <span style={{ color: '#c8a84b', fontWeight: 700 }}>{evt.minute}'</span>
                           <span>{evt.playerName} ⚽</span>
                         </div>
@@ -5171,12 +5189,12 @@ function MatchResultEditorView({ matchId, clubs, players, matches, competitions,
 
                 {/* If no goals at all */}
                 {events.filter(e => e.type === 'goal' && (effectiveGraphicType === 'FT' || e.minute <= 45)).length === 0 && (
-                  <div style={{ fontSize: 9, color: '#555', textAlign: 'center', fontStyle: 'italic', padding: '2px 0' }}>Tidak ada gol tercipta</div>
+                  <div style={{ fontSize: 9, color: '#a0aec0', textAlign: 'center', fontStyle: 'italic', padding: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>Tidak ada gol tercipta</div>
                 )}
               </div>
 
               {/* Footer */}
-              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 6, fontSize: 8, color: '#555', fontWeight: 600, marginTop: 8, width: '100%' }}>
+              <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
                 <span>{APP_HANDLE}</span>
               </div>
             </div>
