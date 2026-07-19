@@ -66,28 +66,85 @@ export type ResultGraphicSettings = {
 };
 
 export const RESULT_GRAPHIC_META_TYPE = '__result_graphic_settings';
+export const HYBRID_SYNC_META_TYPE = '__hybrid_sync_meta';
+
+export type HybridSyncMeta = {
+  apiFootballFixtureId?: string;
+  apiFootballLastSyncedAt?: string;
+  apiFootballRemainingRequests?: string;
+  dataSource?: 'manual' | 'api' | 'mixed';
+  apiFootballSnapshot?: {
+    fixture?: any;
+    events?: any[];
+    lineups?: any[];
+  };
+};
+
+const isTimelineMetaType = (item: any, type: string) => (
+  item && typeof item === 'object' && item.type === type
+);
+
+const isInternalTimelineMeta = (item: any) => (
+  isTimelineMetaType(item, RESULT_GRAPHIC_META_TYPE) ||
+  isTimelineMetaType(item, HYBRID_SYNC_META_TYPE)
+);
 
 export const getResultGraphicSettings = (match: Match): ResultGraphicSettings => {
   const timeline = Array.isArray(match.timeline) ? match.timeline : [];
-  const meta = timeline.find(item => item && typeof item === 'object' && item.type === RESULT_GRAPHIC_META_TYPE);
+  const meta = timeline.find(item => isTimelineMetaType(item, RESULT_GRAPHIC_META_TYPE));
   const settings = meta && typeof meta.settings === 'object' ? meta.settings : (match as any).resultGraphic;
+  return settings && typeof settings === 'object' ? settings : {};
+};
+
+export const getHybridSyncMeta = (match: Match): HybridSyncMeta => {
+  const timeline = Array.isArray(match.timeline) ? match.timeline : [];
+  const meta = timeline.find(item => isTimelineMetaType(item, HYBRID_SYNC_META_TYPE));
+  const settings = meta && typeof meta.settings === 'object' ? meta.settings : (match as any).hybridSync;
   return settings && typeof settings === 'object' ? settings : {};
 };
 
 export const getMatchTimelineEvents = (timeline?: any[]) => (
   Array.isArray(timeline)
-    ? timeline.filter(item => item && typeof item === 'object' && item.type !== RESULT_GRAPHIC_META_TYPE)
+    ? timeline.filter(item => item && typeof item === 'object' && !isInternalTimelineMeta(item))
     : []
 );
 
-export const getTimelineWithResultGraphicSettings = (events: any[], settings: ResultGraphicSettings) => ([
-  ...getMatchTimelineEvents(events),
-  {
-    id: RESULT_GRAPHIC_META_TYPE,
-    type: RESULT_GRAPHIC_META_TYPE,
-    settings,
-  },
-]);
+export const getTimelineWithResultGraphicSettings = (timeline: any[], settings: ResultGraphicSettings) => {
+  const preservedTimeline = Array.isArray(timeline)
+    ? timeline.filter(item => !isTimelineMetaType(item, RESULT_GRAPHIC_META_TYPE))
+    : [];
+
+  return [
+    ...preservedTimeline,
+    {
+      id: RESULT_GRAPHIC_META_TYPE,
+      type: RESULT_GRAPHIC_META_TYPE,
+      settings,
+    },
+  ];
+};
+
+export const getTimelineWithHybridSyncMeta = (timeline: any[], settings: HybridSyncMeta) => {
+  const preservedTimeline = Array.isArray(timeline)
+    ? timeline.filter(item => !isTimelineMetaType(item, HYBRID_SYNC_META_TYPE))
+    : [];
+  const hasUsefulHybridData = Boolean(
+    settings.apiFootballFixtureId ||
+    settings.apiFootballLastSyncedAt ||
+    settings.apiFootballSnapshot
+  );
+
+  if (!hasUsefulHybridData) return preservedTimeline;
+
+  return [
+    ...preservedTimeline,
+    {
+      id: HYBRID_SYNC_META_TYPE,
+      type: HYBRID_SYNC_META_TYPE,
+      settings,
+    },
+  ];
+};
 
 export const hasHalfTimeScoreValues = (match: Match) => (
   match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null &&

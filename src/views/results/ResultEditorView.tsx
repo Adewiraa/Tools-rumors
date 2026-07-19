@@ -12,9 +12,12 @@ import {
   hasSavedHalfTimeResult,
   getMatchTimelineEvents,
   getTimelineWithResultGraphicSettings,
+  getTimelineWithHybridSyncMeta,
   hasHalfTimeScoreValues,
   getEffectiveLineupStatus,
+  getHybridSyncMeta,
   ResultGraphicSettings,
+  HybridSyncMeta,
   APP_LOGO_SRC,
   APP_NAME,
   APP_HANDLE
@@ -28,6 +31,35 @@ interface MatchEvent {
   playerName: string;
   clubId: string;
 }
+
+type ApiResultPreview = {
+  syncedAt: string;
+  remainingRequests?: string;
+  fixture: any;
+  rawEvents: any[];
+  suggestedStatus: Match['status'];
+  halfTimeHomeScore: number | null;
+  halfTimeAwayScore: number | null;
+  fullTimeHomeScore: number | null;
+  fullTimeAwayScore: number | null;
+  events: MatchEvent[];
+};
+
+const mapApiFixtureStatus = (shortStatus?: string): Match['status'] => {
+  if (['FT', 'AET', 'PEN'].includes(shortStatus || '')) return 'Finished';
+  if (['PST', 'SUSP', 'INT'].includes(shortStatus || '')) return 'Postponed';
+  if (['CANC', 'ABD', 'AWD', 'WO'].includes(shortStatus || '')) return 'Cancelled';
+  if (['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE'].includes(shortStatus || '')) return 'Live';
+  return 'Scheduled';
+};
+
+const mapApiEventType = (eventType?: string, detail?: string): MatchEvent['type'] | null => {
+  if (eventType === 'Goal') return 'goal';
+  if (eventType === 'Card' && detail === 'Yellow Card') return 'yellow_card';
+  if (eventType === 'Card' && detail === 'Red Card') return 'red_card';
+  if (eventType === 'Subst') return 'substitution';
+  return null;
+};
 
 export default function ResultEditorView({ matchId }: { matchId: string }) {
   const router = useRouter();
@@ -65,6 +97,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   const effectiveInitialStatus = getEffectiveMatchStatus(match);
   const initialResultGraphicSettings = getResultGraphicSettings(match);
   const halfTimeWasSaved = hasSavedHalfTimeResult(match);
+  const initialHybridMeta = getHybridSyncMeta(match);
 
   // Editor states
   const [homeScore, setHomeScore] = useState<number | ''>(
@@ -82,6 +115,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(effectiveInitialStatus);
   const [showFullTime, setShowFullTime] = useState<boolean>(effectiveInitialStatus === 'Finished');
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncingApi, setIsSyncingApi] = useState(false);
+  const [apiPreview, setApiPreview] = useState<ApiResultPreview | null>(null);
+  const [hybridMeta, setHybridMeta] = useState<HybridSyncMeta>(initialHybridMeta);
 
   // Instagram graphic options
   const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(effectiveInitialStatus === 'Finished' ? 'FT' : 'HT');
@@ -147,6 +183,112 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       ? getMatchTimelineEvents(match.timeline) as MatchEvent[]
       : []
   );
+
+  const buildApiPreview = (fixture: any, rawEvents: any[], remainingRequests?: string): ApiResultPreview => {
+    const homeApiTeamId = fixture?.teams?.home?.id;
+    const awayApiTeamId = fixture?.teams?.away?.id;
+    const mappedEvents = rawEvents
+      .map((event, index) => {
+        const type = mapApiEventType(event?.type, event?.detail);
+        if (!type) return null;
+
+        const apiTeamId = event?.team?.id;
+        const clubId = apiTeamId === homeApiTeamId
+          ? match.homeClubId
+          : apiTeamId === awayApiTeamId
+            ? match.awayClubId
+            : '';
+
+        if (!clubId) return null;
+
+        return {
+          id: `api-${event?.time?.elapsed || 0}-${apiTeamId || 'team'}-${event?.player?.id || index}`,
+          minute: Number(event?.time?.elapsed) || 0,
+          type,
+          playerName: event?.player?.name || event?.assist?.name || 'Unknown Player',
+          clubId,
+        } as MatchEvent;
+      })
+      .filter((event): event is MatchEvent => Boolean(event))
+      .sort((a, b) => a.minute - b.minute);
+
+    return {
+      syncedAt: new Date().toISOString(),
+      remainingRequests,
+      fixture,
+      rawEvents,
+      suggestedStatus: mapApiFixtureStatus(fixture?.fixture?.status?.short),
+      halfTimeHomeScore: fixture?.score?.halftime?.home ?? null,
+      halfTimeAwayScore: fixture?.score?.halftime?.away ?? null,
+      fullTimeHomeScore: fixture?.score?.fulltime?.home ?? fixture?.goals?.home ?? null,
+      fullTimeAwayScore: fixture?.score?.fulltime?.away ?? fixture?.goals?.away ?? null,
+      events: mappedEvents,
+    };
+  };
+
+  const syncResultFromApiFootball = async () => {
+    const fixtureId = hybridMeta.apiFootballFixtureId?.trim();
+    if (!fixtureId) {
+      triggerToast('Tambahkan API-Football Fixture ID di jadwal pertandingan terlebih dahulu.', 'warning');
+      return;
+    }
+
+    setIsSyncingApi(true);
+    try {
+      const [fixtureRes, eventsRes] = await Promise.all([
+        fetch(`/api/integrations/api-football?resource=fixtures&id=${encodeURIComponent(fixtureId)}`),
+        fetch(`/api/integrations/api-football?resource=events&fixture=${encodeURIComponent(fixtureId)}`),
+      ]);
+      const [fixtureJson, eventsJson] = await Promise.all([fixtureRes.json(), eventsRes.json()]);
+
+      if (!fixtureJson.success) throw new Error(fixtureJson.error || 'Gagal mengambil fixture API.');
+      if (!eventsJson.success) throw new Error(eventsJson.error || 'Gagal mengambil events API.');
+
+      const fixture = fixtureJson.data?.response?.[0];
+      const rawEvents = Array.isArray(eventsJson.data?.response) ? eventsJson.data.response : [];
+      if (!fixture) throw new Error('Fixture tidak ditemukan di API-Football.');
+
+      const preview = buildApiPreview(
+        fixture,
+        rawEvents,
+        eventsJson.meta?.remainingRequests || fixtureJson.meta?.remainingRequests
+      );
+      setApiPreview(preview);
+      setHybridMeta(prev => ({
+        ...prev,
+        apiFootballFixtureId: fixtureId,
+        apiFootballLastSyncedAt: preview.syncedAt,
+        apiFootballRemainingRequests: preview.remainingRequests,
+        dataSource: 'mixed',
+        apiFootballSnapshot: {
+          fixture,
+          events: rawEvents,
+        },
+      }));
+      triggerToast('Data API berhasil diambil. Review dulu sebelum diterapkan.');
+    } catch (error: any) {
+      triggerToast(error.message || 'Gagal sync API-Football.', 'error');
+    } finally {
+      setIsSyncingApi(false);
+    }
+  };
+
+  const applyApiPreviewToForm = () => {
+    if (!apiPreview) return;
+
+    if (apiPreview.halfTimeHomeScore !== null) setHalfTimeHomeScore(apiPreview.halfTimeHomeScore);
+    if (apiPreview.halfTimeAwayScore !== null) setHalfTimeAwayScore(apiPreview.halfTimeAwayScore);
+    if (apiPreview.fullTimeHomeScore !== null) setHomeScore(apiPreview.fullTimeHomeScore);
+    if (apiPreview.fullTimeAwayScore !== null) setAwayScore(apiPreview.fullTimeAwayScore);
+
+    setEvents(apiPreview.events);
+    setMatchStatus(apiPreview.suggestedStatus);
+    if (apiPreview.suggestedStatus === 'Finished') {
+      setShowFullTime(true);
+      setGraphicType('FT');
+    }
+    triggerToast('Data API diterapkan ke form. Klik simpan untuk menjadikannya data final.');
+  };
 
   // Helper to load roster players from lineup
   const getLineupPlayersForClub = (clubId: string) => {
@@ -426,6 +568,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       backgroundDim: finalDim,
       halfTimeSaved: shouldPersistHalfTime,
     };
+    const timelineWithHybridMeta = getTimelineWithHybridSyncMeta(events, hybridMeta);
     const nextLineupStatus: Match['lineupStatus'] =
       storedStatus === 'Finished' || getEffectiveLineupStatus(match) === 'Complete'
         ? 'Complete'
@@ -438,7 +581,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       halfTimeAwayScore: shouldPersistHalfTime ? (halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any)) : null,
       status: storedStatus,
       lineupStatus: nextLineupStatus,
-      timeline: getTimelineWithResultGraphicSettings(events, nextGraphicSettings),
+      timeline: getTimelineWithResultGraphicSettings(timelineWithHybridMeta, nextGraphicSettings),
     };
 
     try {
@@ -646,6 +789,57 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               <option value="Postponed">Postponed (Ditunda)</option>
               <option value="Cancelled">Cancelled (Dibatalkan)</option>
             </select>
+          </div>
+
+          <div style={{ marginTop: 16, padding: 14, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--neutral-50)' }}>
+            <div className="flex justify-between align-center gap-12" style={{ marginBottom: 8 }}>
+              <div>
+                <div className="semibold" style={{ fontSize: 13, color: 'var(--neutral-900)' }}>Hybrid API & Manual</div>
+                <div className="text-muted" style={{ fontSize: 11 }}>
+                  {hybridMeta.apiFootballFixtureId
+                    ? `Fixture API #${hybridMeta.apiFootballFixtureId}`
+                    : 'Belum ada Fixture ID API-Football di jadwal.'}
+                </div>
+              </div>
+              <LoadingButton
+                className="btn btn-sm btn-secondary"
+                onClick={syncResultFromApiFootball}
+                loading={isSyncingApi}
+                loadingLabel="Sync..."
+                disabled={!hybridMeta.apiFootballFixtureId}
+              >
+                Sync API
+              </LoadingButton>
+            </div>
+            <div className="text-muted" style={{ fontSize: 11, lineHeight: 1.5 }}>
+              Sync hasil memakai 2 request API. Data API hanya mengisi preview, simpan manual tetap menjadi data final.
+            </div>
+            {apiPreview && (
+              <div style={{ marginTop: 12, display: 'grid', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+                  <div style={{ padding: 10, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--white)' }}>
+                    <div className="text-muted" style={{ fontSize: 10 }}>Status API</div>
+                    <strong style={{ fontSize: 12 }}>{apiPreview.suggestedStatus}</strong>
+                  </div>
+                  <div style={{ padding: 10, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--white)' }}>
+                    <div className="text-muted" style={{ fontSize: 10 }}>HT API</div>
+                    <strong style={{ fontSize: 12 }}>{apiPreview.halfTimeHomeScore ?? '-'} - {apiPreview.halfTimeAwayScore ?? '-'}</strong>
+                  </div>
+                  <div style={{ padding: 10, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--white)' }}>
+                    <div className="text-muted" style={{ fontSize: 10 }}>FT API</div>
+                    <strong style={{ fontSize: 12 }}>{apiPreview.fullTimeHomeScore ?? '-'} - {apiPreview.fullTimeAwayScore ?? '-'}</strong>
+                  </div>
+                </div>
+                <div className="flex justify-between align-center gap-8" style={{ flexWrap: 'wrap' }}>
+                  <span className="text-muted" style={{ fontSize: 11 }}>
+                    {apiPreview.events.length} event terbaca{apiPreview.remainingRequests ? ` - sisa request: ${apiPreview.remainingRequests}` : ''}
+                  </span>
+                  <button type="button" className="btn btn-sm btn-primary" onClick={applyApiPreviewToForm}>
+                    Terapkan ke Form
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
