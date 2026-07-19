@@ -11,17 +11,6 @@ import * as htmlToImage from 'html-to-image';
 
 const RUMOR_GRAPHIC_ELEMENT_ID = 'rumor-transfer-graphic';
 
-const getTierLabel = (tier: Rumor['reliabilityTier']) => {
-  const labels: Record<Rumor['reliabilityTier'], string> = {
-    A: 'Tier A',
-    B: 'Tier B',
-    C: 'Tier C',
-    D: 'Tier D',
-  };
-
-  return labels[tier];
-};
-
 const getTransferStatusLabel = (status: Rumor['transferStatus']) => {
   const labels: Record<Rumor['transferStatus'], string> = {
     Rumor: 'Rumor',
@@ -52,8 +41,8 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     id: `rumor-${Date.now()}`,
     headline: '',
     player: '',
-    fromClub: clubs[0]?.name || '',
-    destinationClub: clubs[1]?.name || '',
+    fromClub: '',
+    destinationClub: '',
     type: 'rumor',
     reliabilityTier: 'C',
     sourceName: '',
@@ -71,8 +60,30 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
   const updateForm = <K extends keyof Rumor>(key: K, value: Rumor[K]) => setForm(prev => ({ ...prev, [key]: value }));
   const destinationClub = clubs.find(club => club.name.trim().toLowerCase() === form.destinationClub.trim().toLowerCase() || club.shortName.trim().toLowerCase() === form.destinationClub.trim().toLowerCase());
-  const fromClub = clubs.find(club => club.name.trim().toLowerCase() === form.fromClub.trim().toLowerCase() || club.shortName.trim().toLowerCase() === form.fromClub.trim().toLowerCase());
-  const graphicCaption = form.graphicCaption || form.shortSummary || form.headline || 'Rumor transfer terbaru dari Gosball.';
+  const graphicCaption = form.shortSummary || form.graphicCaption || form.headline || 'Rumor transfer terbaru dari Gosball.';
+
+  const buildSavedRumor = (): Rumor => {
+    const playerName = form.player.trim();
+    const clubName = form.destinationClub.trim();
+    const description = graphicCaption.trim();
+
+    return {
+      ...form,
+      headline: playerName && clubName ? `${playerName} diminati ${clubName}` : form.headline,
+      fromClub: form.fromClub || 'Belum diketahui',
+      type: 'rumor',
+      reliabilityTier: 'C',
+      sourceName: form.sourceName || 'Gosball',
+      sourceUrl: form.sourceUrl || '',
+      publicationStatus: form.publicationStatus || 'Draft',
+      transferStatus: 'Rumor',
+      probability: 50,
+      shortSummary: description,
+      articleBody: description,
+      graphicCaption: description,
+      author: form.author || 'Rumor Editor',
+    };
+  };
 
   const handlePlayerImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -100,7 +111,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
     const response = await fetch(dataUrl);
     const blob = await response.blob();
-    const fileName = buildRumorFileName(form);
+    const fileName = buildRumorFileName(buildSavedRumor());
 
     return { dataUrl, blob, fileName };
   };
@@ -130,9 +141,10 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       const { blob, dataUrl, fileName } = await createRumorGraphicImage();
       const file = new File([blob], fileName, { type: 'image/png' });
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+      const savedRumor = buildSavedRumor();
       const shareData: ShareData = {
         files: [file],
-        title: form.headline || 'Rumor Transfer Gosball',
+        title: savedRumor.headline || 'Rumor Transfer Gosball',
         text: graphicCaption,
       };
 
@@ -159,15 +171,16 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
 
   const handleSave = async () => {
     if (isSaving) return;
-    if (!form.headline.trim() || !form.player.trim() || !form.sourceName.trim()) {
-      triggerToast('Judul, nama pemain, dan sumber wajib diisi.', 'error');
+    if (!form.player.trim() || !form.destinationClub.trim() || !graphicCaption.trim() || !form.playerImageUrl?.trim()) {
+      triggerToast('Foto pemain, nama pemain, klub peminat, dan deskripsi singkat wajib diisi.', 'error');
       return;
     }
 
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 350));
-    setRumors(prev => isNew ? [form, ...prev] : prev.map(item => item.id === form.id ? form : item));
-    logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', form.headline);
+    const savedRumor = buildSavedRumor();
+    setRumors(prev => isNew ? [savedRumor, ...prev] : prev.map(item => item.id === savedRumor.id ? savedRumor : item));
+    logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', savedRumor.headline);
     triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');
     router.push('/rumors');
   };
@@ -181,7 +194,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
           </button>
           <div>
             <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Rumor' : 'Edit Rumor'}</h1>
-            <p className="page-description" style={{ marginTop: 4 }}>Konten editorial transfer dipisah dari route menu utama.</p>
+            <p className="page-description" style={{ marginTop: 4 }}>Buat output rumor dari foto pemain, klub peminat, dan deskripsi singkat.</p>
           </div>
         </div>
         <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan...">
@@ -190,101 +203,52 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       </div>
 
       <div className="grid-12">
-        <div className="card" style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="form-group">
-            <label className="form-label">Headline <span className="required">*</span></label>
-            <input className="form-input" value={form.headline} onChange={event => updateForm('headline', event.target.value)} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Ringkasan</label>
-            <textarea className="form-textarea" rows={3} value={form.shortSummary} onChange={event => updateForm('shortSummary', event.target.value)} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Caption Gambar</label>
-            <textarea
-              className="form-textarea"
-              rows={4}
-              value={form.graphicCaption || ''}
-              placeholder="Caption singkat untuk gambar rumor..."
-              onChange={event => updateForm('graphicCaption', event.target.value)}
-            />
-            <span className="form-helper">Jika kosong, preview memakai ringkasan atau headline.</span>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Isi Artikel</label>
-            <textarea className="form-textarea" rows={8} value={form.articleBody} onChange={event => updateForm('articleBody', event.target.value)} />
-          </div>
-        </div>
-
-        <div className="card" style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="form-group">
-            <label className="form-label">Foto Pemain untuk Gambar</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8 }}>
-              <input
-                className="form-input"
-                value={form.playerImageUrl || ''}
-                placeholder="URL foto pemain atau upload file"
-                onChange={event => updateForm('playerImageUrl', event.target.value)}
-              />
+        <div className="card" style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
+          <div className="form-group" style={{ gridColumn: 'span 12' }}>
+            <label className="form-label">Foto Pemain <span className="required">*</span></label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer' }}>
                 <Upload size={14} /> Upload
                 <input type="file" accept="image/*" hidden onChange={handlePlayerImageUpload} />
               </label>
+              {form.playerImageUrl ? (
+                <>
+                  <span className="badge badge-success">Foto sudah dipilih</span>
+                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => updateForm('playerImageUrl', '')}>Hapus Foto</button>
+                </>
+              ) : (
+                <span className="text-muted" style={{ fontSize: 12 }}>Belum ada foto pemain.</span>
+              )}
             </div>
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ gridColumn: 'span 6' }}>
             <label className="form-label">Nama Pemain <span className="required">*</span></label>
             <input className="form-input" value={form.player} onChange={event => updateForm('player', event.target.value)} />
           </div>
-          <div className="form-group">
-            <label className="form-label">Klub Asal</label>
-            <input className="form-input" list="rumor-clubs" value={form.fromClub} onChange={event => updateForm('fromClub', event.target.value)} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Klub Tujuan</label>
-            <input className="form-input" list="rumor-clubs" value={form.destinationClub} onChange={event => updateForm('destinationClub', event.target.value)} />
-            <datalist id="rumor-clubs">
-              {clubs.map(club => <option key={club.id} value={club.name} />)}
-            </datalist>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Status Transfer</label>
-            <select className="form-select" value={form.transferStatus} onChange={event => updateForm('transferStatus', event.target.value as Rumor['transferStatus'])}>
-              <option value="Rumor">Rumor</option>
-              <option value="Advanced Talks">Advanced Talks</option>
-              <option value="Here We Go">Here We Go</option>
+          <div className="form-group" style={{ gridColumn: 'span 6' }}>
+            <label className="form-label">Klub Peminat <span className="required">*</span></label>
+            <select className="form-select" value={form.destinationClub} onChange={event => updateForm('destinationClub', event.target.value)}>
+              <option value="">Pilih klub dari Master Klub</option>
+              {clubs.map(club => <option key={club.id} value={club.name}>{club.name}</option>)}
             </select>
           </div>
-          <div className="form-group">
-            <label className="form-label">Reliability Tier</label>
-            <select className="form-select" value={form.reliabilityTier} onChange={event => updateForm('reliabilityTier', event.target.value as Rumor['reliabilityTier'])}>
-              <option value="A">Tier A</option>
-              <option value="B">Tier B</option>
-              <option value="C">Tier C</option>
-              <option value="D">Tier D</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Status Publikasi</label>
-            <select className="form-select" value={form.publicationStatus} onChange={event => updateForm('publicationStatus', event.target.value as Rumor['publicationStatus'])}>
-              <option value="Draft">Draft</option>
-              <option value="Review">Review</option>
-              <option value="Scheduled">Scheduled</option>
-              <option value="Published">Published</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Probabilitas: {form.probability}%</label>
-            <input type="range" min={0} max={100} value={form.probability} onChange={event => updateForm('probability', Number(event.target.value))} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Sumber <span className="required">*</span></label>
-            <input className="form-input" value={form.sourceName} onChange={event => updateForm('sourceName', event.target.value)} />
+          <div className="form-group" style={{ gridColumn: 'span 12' }}>
+            <label className="form-label">Deskripsi Singkat <span className="required">*</span></label>
+            <textarea
+              className="form-textarea"
+              rows={5}
+              value={form.shortSummary || form.graphicCaption || ''}
+              placeholder="Contoh: Arema FC dikabarkan berminat mendatangkan gelandang asal Brasil tersebut."
+              onChange={event => {
+                updateForm('shortSummary', event.target.value);
+                updateForm('graphicCaption', event.target.value);
+              }}
+            />
           </div>
         </div>
       </div>
 
-      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 420px) minmax(260px, 1fr)', gap: 24, alignItems: 'start' }}>
+      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: 12 }}>
           <div>
             <div className="semibold" style={{ fontSize: 14 }}>Output Gambar Rumor</div>
@@ -331,7 +295,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
                 <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.3, textTransform: 'uppercase' }}>Rumor Transfer</div>
               </div>
               <div style={{ padding: '6px 10px', borderRadius: 6, background: '#c8a84b', color: '#080808', fontSize: 8, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
-                {getTransferStatusLabel(form.transferStatus)}
+                {getTransferStatusLabel('Rumor')}
               </div>
             </div>
 
@@ -362,26 +326,21 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 7, color: '#777', fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase' }}>From</div>
-                  <div style={{ fontSize: 11, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fromClub?.name || form.fromClub || '-'}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(200,168,75,0.14)', border: '1px solid rgba(200,168,75,0.35)', display: 'grid', placeItems: 'center', color: '#e8cc6a', fontSize: 10, fontWeight: 900 }}>
+                  IN
                 </div>
-                <div style={{ width: 24, height: 1, background: '#c8a84b' }} />
-                <div style={{ minWidth: 0, textAlign: 'right' }}>
-                  <div style={{ fontSize: 7, color: '#777', fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase' }}>To</div>
-                  <div style={{ fontSize: 11, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{destinationClub?.name || form.destinationClub || '-'}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 7, color: '#777', fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase' }}>Diminati Oleh</div>
+                  <div style={{ fontSize: 14, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff' }}>{destinationClub?.name || form.destinationClub || '-'}</div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ padding: '5px 8px', borderRadius: 6, background: 'rgba(200,168,75,0.14)', border: '1px solid rgba(200,168,75,0.35)', color: '#e8cc6a', fontSize: 9, fontWeight: 900, letterSpacing: 1.2 }}>
-                  {getTierLabel(form.reliabilityTier)}
+                <div style={{ padding: '5px 8px', borderRadius: 6, background: 'rgba(200,168,75,0.14)', border: '1px solid rgba(200,168,75,0.35)', color: '#e8cc6a', fontSize: 9, fontWeight: 900, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                  Transfer Watch
                 </div>
-                <div style={{ flex: 1, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-                  <div style={{ width: `${form.probability}%`, height: '100%', background: 'linear-gradient(90deg, #c8a84b, #f2d36b)' }} />
-                </div>
-                <div style={{ fontSize: 10, color: '#e8cc6a', fontWeight: 900 }}>{form.probability}%</div>
+                <div style={{ flex: 1, height: 1, background: 'rgba(200,168,75,0.26)' }} />
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
@@ -394,7 +353,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
             <div style={{ marginTop: 'auto', position: 'relative', zIndex: 2, padding: '0 18px 14px', display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ fontSize: 8, color: '#595959', fontWeight: 700, letterSpacing: 1.2 }}>{APP_HANDLE}</div>
-                <div style={{ fontSize: 8, color: '#454545', marginTop: 2 }}>{form.sourceName || 'Sumber belum diisi'}</div>
+                <div style={{ fontSize: 8, color: '#454545', marginTop: 2 }}>Gosball Transfer Desk</div>
               </div>
               <div style={{ fontSize: 10, color: '#c8a84b', fontWeight: 900, letterSpacing: 1.5 }}>GOSBALL</div>
             </div>
