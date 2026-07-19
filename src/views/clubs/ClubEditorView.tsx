@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Club, calculateClubCompleteness } from '@/lib/mockData';
@@ -26,6 +26,20 @@ type ApiTeamCandidate = {
 const buildClubCode = (name?: string, code?: string) => (
   (code || (name || '').split(/\s+/).map(part => part[0]).join('')).slice(0, 3).toUpperCase()
 );
+
+const mapApiTeamToClub = (baseClub: Club, candidate: ApiTeamCandidate): Club => {
+  const nextName = candidate.team?.name || baseClub.name;
+
+  return {
+    ...baseClub,
+    name: nextName,
+    shortName: baseClub.shortName || nextName,
+    code: buildClubCode(nextName, candidate.team?.code),
+    city: candidate.venue?.city || baseClub.city,
+    stadium: candidate.venue?.name || baseClub.stadium,
+    logoUrl: candidate.team?.logo || baseClub.logoUrl,
+  };
+};
 
 export default function ClubEditorView({ clubId }: { clubId: string }) {
   const router = useRouter();
@@ -58,6 +72,24 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
 
   const updateClub = <K extends keyof Club>(key: K, value: Club[K]) => setClub(prev => ({ ...prev, [key]: value }));
 
+  useEffect(() => {
+    if (!isNew || typeof window === 'undefined') return;
+
+    const rawDraft = window.sessionStorage.getItem('gosball_api_team_draft');
+    if (!rawDraft) return;
+
+    try {
+      const candidate = JSON.parse(rawDraft) as ApiTeamCandidate;
+      setClub(prev => mapApiTeamToClub(prev, candidate));
+      setApiSearch(candidate.team?.name || '');
+      triggerToast('Draft klub dari API dimuat. Review data sebelum disimpan.');
+    } catch {
+      triggerToast('Draft klub dari API tidak valid.', 'error');
+    } finally {
+      window.sessionStorage.removeItem('gosball_api_team_draft');
+    }
+  }, [isNew, triggerToast]);
+
   const searchTeamsFromApi = async () => {
     const query = apiSearch.trim();
     if (query.length < 3) {
@@ -82,16 +114,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
   };
 
   const applyApiTeam = (candidate: ApiTeamCandidate) => {
-    const nextName = candidate.team?.name || club.name;
-    setClub(prev => ({
-      ...prev,
-      name: nextName,
-      shortName: prev.shortName || nextName,
-      code: buildClubCode(nextName, candidate.team?.code),
-      city: candidate.venue?.city || prev.city,
-      stadium: candidate.venue?.name || prev.stadium,
-      logoUrl: candidate.team?.logo || prev.logoUrl,
-    }));
+    setClub(prev => mapApiTeamToClub(prev, candidate));
     triggerToast('Data klub dari API diterapkan ke form. Review lalu simpan manual.');
   };
 
