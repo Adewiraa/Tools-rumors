@@ -152,6 +152,8 @@ export interface Rumor {
   articleBody: string;
   author: string;
   publishDate?: string;
+  playerImageUrl?: string;
+  graphicCaption?: string;
 }
 
 export interface AuditLog {
