@@ -8,6 +8,7 @@ import { countriesList } from '@/lib/countriesData';
 import { ArrowLeft, CheckCircle, Save, Search } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const existing = players.find(item => item.id === playerId);
   const [countryQuery, setCountryQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [player, setPlayer] = useState<Player>(existing || {
     id: generateUUID(),
     fullName: '',
@@ -43,30 +45,38 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const updatePlayer = <K extends keyof Player>(key: K, value: Player[K]) => setPlayer(prev => ({ ...prev, [key]: value }));
 
   const handleSave = async () => {
+    if (isSaving) return;
     if (!player.fullName.trim() || !player.displayName.trim()) {
       triggerToast('Nama lengkap dan display name wajib diisi.', 'error');
       return;
     }
-    const savedPlayer = {
-      ...player,
-      clubName: selectedClub?.name || '',
-      completeness: liveCompleteness,
-    };
-    const result = await apiRequest('/api/players', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'upsert', player: savedPlayer }),
-    });
+    setIsSaving(true);
+    try {
+      const savedPlayer = {
+        ...player,
+        clubName: selectedClub?.name || '',
+        completeness: liveCompleteness,
+      };
+      const result = await apiRequest('/api/players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'upsert', player: savedPlayer }),
+      });
 
-    if (!result.success) {
-      triggerToast(`Gagal menyimpan pemain: ${result.error}`, 'error');
-      return;
+      if (!result.success) {
+        triggerToast(`Gagal menyimpan pemain: ${result.error}`, 'error');
+        return;
+      }
+
+      setPlayers(prev => isNew ? [...prev, savedPlayer] : prev.map(item => item.id === savedPlayer.id ? savedPlayer : item));
+      logAction(isNew ? 'CREATE_PLAYER' : 'UPDATE_PLAYER', 'Master Pemain', savedPlayer.fullName);
+      triggerToast('Pemain berhasil disimpan.');
+      router.push('/players');
+    } catch (error: any) {
+      triggerToast(error.message || 'Terjadi kesalahan saat menyimpan pemain.', 'error');
+    } finally {
+      setIsSaving(false);
     }
-
-    setPlayers(prev => isNew ? [...prev, savedPlayer] : prev.map(item => item.id === savedPlayer.id ? savedPlayer : item));
-    logAction(isNew ? 'CREATE_PLAYER' : 'UPDATE_PLAYER', 'Master Pemain', savedPlayer.fullName);
-    triggerToast('Pemain berhasil disimpan.');
-    router.push('/players');
   };
 
   return (
@@ -79,7 +89,7 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
             <div className="text-muted" style={{ fontSize: 12 }}>Kelengkapan data: {liveCompleteness}%</div>
           </div>
         </div>
-        <button className="btn btn-md btn-primary" onClick={handleSave}><Save size={16} /> Simpan Pemain</button>
+        <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan..."><Save size={16} /> Simpan Pemain</LoadingButton>
       </div>
 
       <div className="grid-12">

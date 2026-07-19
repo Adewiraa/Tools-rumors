@@ -7,6 +7,7 @@ import { Club, calculateClubCompleteness } from '@/lib/mockData';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function ClubEditorView({ clubId }: { clubId: string }) {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
     competitionIds: [],
   });
   const [uploading, setUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const updateClub = <K extends keyof Club>(key: K, value: Club[K]) => setClub(prev => ({ ...prev, [key]: value }));
 
@@ -56,40 +58,48 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
     if (!club.name.trim() || !club.shortName.trim() || !club.code.trim()) {
       triggerToast('Nama, short name, dan kode klub wajib diisi.', 'error');
       return;
     }
-    const savedClub = { ...club, completeness: calculateClubCompleteness(club) };
-    const saveClubResult = await apiRequest('/api/clubs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ club: savedClub }),
-    });
+    setIsSaving(true);
+    try {
+      const savedClub = { ...club, completeness: calculateClubCompleteness(club) };
+      const saveClubResult = await apiRequest('/api/clubs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ club: savedClub }),
+      });
 
-    if (!saveClubResult.success) {
-      triggerToast(`Gagal menyimpan klub: ${saveClubResult.error}`, 'error');
-      return;
+      if (!saveClubResult.success) {
+        triggerToast(`Gagal menyimpan klub: ${saveClubResult.error}`, 'error');
+        return;
+      }
+
+      const saveCompetitionsResult = await apiRequest('/api/competitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_club_competitions',
+          clubId: savedClub.id,
+          competitionIds: savedClub.competitionIds || [],
+        }),
+      });
+
+      if (!saveCompetitionsResult.success) {
+        triggerToast(`Klub tersimpan, tapi relasi kompetisi gagal: ${saveCompetitionsResult.error}`, 'warning');
+      }
+
+      setClubs(prev => isNew ? [...prev, savedClub] : prev.map(item => item.id === savedClub.id ? savedClub : item));
+      logAction(isNew ? 'CREATE_CLUB' : 'UPDATE_CLUB', 'Master Klub', savedClub.name);
+      triggerToast('Klub berhasil disimpan.');
+      router.push('/clubs');
+    } catch (error: any) {
+      triggerToast(error.message || 'Terjadi kesalahan saat menyimpan klub.', 'error');
+    } finally {
+      setIsSaving(false);
     }
-
-    const saveCompetitionsResult = await apiRequest('/api/competitions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'save_club_competitions',
-        clubId: savedClub.id,
-        competitionIds: savedClub.competitionIds || [],
-      }),
-    });
-
-    if (!saveCompetitionsResult.success) {
-      triggerToast(`Klub tersimpan, tapi relasi kompetisi gagal: ${saveCompetitionsResult.error}`, 'warning');
-    }
-
-    setClubs(prev => isNew ? [...prev, savedClub] : prev.map(item => item.id === savedClub.id ? savedClub : item));
-    logAction(isNew ? 'CREATE_CLUB' : 'UPDATE_CLUB', 'Master Klub', savedClub.name);
-    triggerToast('Klub berhasil disimpan.');
-    router.push('/clubs');
   };
 
   return (
@@ -99,7 +109,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
           <button className="btn btn-sm btn-secondary" onClick={() => router.push('/clubs')}><ArrowLeft size={16} /> Kembali</button>
           <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Klub' : 'Edit Klub'}</h1>
         </div>
-        <button className="btn btn-md btn-primary" onClick={handleSave}><Save size={16} /> Simpan Klub</button>
+        <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan..."><Save size={16} /> Simpan Klub</LoadingButton>
       </div>
 
       <div className="grid-12">

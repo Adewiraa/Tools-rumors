@@ -334,6 +334,27 @@ a {
   cursor: not-allowed;
 }
 
+.btn[aria-busy="true"] {
+  opacity: 0.9;
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  display: inline-block;
+  animation: btn-spin 0.75s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Cards & Panels */
 .card {
   background-color: var(--white);

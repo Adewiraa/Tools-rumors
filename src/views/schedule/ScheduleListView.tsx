@@ -30,6 +30,7 @@ import {
   APP_LOGO_SRC
 } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function ScheduleListView() {
   const router = useRouter();
@@ -47,6 +48,7 @@ export default function ScheduleListView() {
   const [selectedComp, setSelectedComp] = useState('Semua');
   const [selectedStatus, setSelectedStatus] = useState('Semua');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [previewMatch, setPreviewMatch] = useState<Match | null>(null);
   const [isExportingPublishedStory, setIsExportingPublishedStory] = useState(false);
 
@@ -138,7 +140,9 @@ export default function ScheduleListView() {
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
     try {
+      setDeletingId(id);
       const result = await apiRequest(`/api/matches?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!result.success) {
         triggerToast(`Gagal menghapus jadwal: ${result.error}`, 'error');
@@ -147,8 +151,11 @@ export default function ScheduleListView() {
       setMatches(prev => prev.filter(m => m.id !== id));
       logAction('DELETE_SCHEDULE', 'Jadwal Pertandingan', `Menghapus jadwal match id: ${id}`);
       triggerToast('Jadwal berhasil dihapus!');
+      setConfirmDeleteId(null);
     } catch (err: any) {
       triggerToast('Terjadi kesalahan saat menghapus jadwal.', 'error');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -224,8 +231,8 @@ export default function ScheduleListView() {
               confirmDeleteId === m.id ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                   <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
-                  <button className="btn btn-sm btn-danger" style={{ fontSize: 11 }} onClick={() => { handleDelete(m.id); setConfirmDeleteId(null); }}>Ya</button>
-                  <button className="btn btn-sm btn-secondary" style={{ fontSize: 11 }} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                  <LoadingButton className="btn btn-sm btn-danger" style={{ fontSize: 11 }} onClick={() => handleDelete(m.id)} loading={deletingId === m.id} loadingLabel="Menghapus...">Ya</LoadingButton>
+                  <button className="btn btn-sm btn-secondary" disabled={deletingId === m.id} style={{ fontSize: 11 }} onClick={() => setConfirmDeleteId(null)}>Batal</button>
                 </span>
               ) : (
                 <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(m.id)}><Trash2 size={12} /></button>

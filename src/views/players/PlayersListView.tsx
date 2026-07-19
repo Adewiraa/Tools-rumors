@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function PlayersListView() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function PlayersListView() {
   const [selectedClubId, setSelectedClubId] = useState('Semua');
   const [selectedPosition, setSelectedPosition] = useState('Semua');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filteredPlayers = players.filter(player => {
     const matchClub = selectedClubId === 'Semua' || player.clubId === selectedClubId;
@@ -20,16 +22,25 @@ export default function PlayersListView() {
   });
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
     const player = players.find(item => item.id === id);
-    const result = await apiRequest(`/api/players?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (!result.success) {
-      triggerToast(`Gagal menghapus pemain: ${result.error}`, 'error');
-      return;
-    }
+    setDeletingId(id);
+    try {
+      const result = await apiRequest(`/api/players?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!result.success) {
+        triggerToast(`Gagal menghapus pemain: ${result.error}`, 'error');
+        return;
+      }
 
-    setPlayers(prev => prev.filter(item => item.id !== id));
-    logAction('DELETE_PLAYER', 'Master Pemain', player?.fullName || id);
-    triggerToast('Pemain berhasil dihapus.');
+      setPlayers(prev => prev.filter(item => item.id !== id));
+      logAction('DELETE_PLAYER', 'Master Pemain', player?.fullName || id);
+      triggerToast('Pemain berhasil dihapus.');
+      setConfirmDeleteId(null);
+    } catch (error: any) {
+      triggerToast(error.message || 'Terjadi kesalahan saat menghapus pemain.', 'error');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -96,8 +107,8 @@ export default function PlayersListView() {
                       <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/players?edit=${player.id}`)}><Edit size={13} /> Edit</button>
                       {hasPermission('Master', 'delete') && (confirmDeleteId === player.id ? (
                         <>
-                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(player.id)}>Ya</button>
-                          <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                          <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(player.id)} loading={deletingId === player.id} loadingLabel="Menghapus...">Ya</LoadingButton>
+                          <button className="btn btn-sm btn-secondary" disabled={deletingId === player.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
                         </>
                       ) : (
                         <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(player.id)}><Trash2 size={13} /></button>

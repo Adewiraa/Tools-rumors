@@ -19,6 +19,7 @@ import {
   APP_NAME,
   APP_HANDLE
 } from '@/logic/utils';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 interface MatchEvent {
   id: string;
@@ -80,6 +81,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   );
   const [matchStatus, setMatchStatus] = useState<'Scheduled' | 'Live' | 'Finished' | 'Postponed' | 'Cancelled'>(effectiveInitialStatus);
   const [showFullTime, setShowFullTime] = useState<boolean>(effectiveInitialStatus === 'Finished');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Instagram graphic options
   const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(effectiveInitialStatus === 'Finished' ? 'FT' : 'HT');
@@ -334,6 +336,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   }
 
   const handleSaveWithSafetyCheck = () => {
+    if (isSaving) return;
     const isFtHomeFilled = homeScore !== '' && homeScore !== undefined;
     const isFtAwayFilled = awayScore !== '' && awayScore !== undefined;
     const isHtHomeFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined;
@@ -402,6 +405,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   };
 
   const submitUpdate = async () => {
+    if (isSaving) return;
     const isSavingFullTime = showFullTime || matchStatus === 'Finished';
     const shouldPersistHalfTime = !isSavingFullTime || halfTimeWasSaved;
     const storedStatus: Match['status'] =
@@ -438,6 +442,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     };
 
     try {
+      setIsSaving(true);
       const res = await fetch('/api/matches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -460,6 +465,8 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       router.push('/results');
     } catch (err: any) {
       triggerToast('Terjadi kesalahan saat menyimpan hasil.', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -492,9 +499,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
         </div>
 
         <div className="flex gap-12">
-          <button className="btn btn-md btn-primary" onClick={handleSaveWithSafetyCheck}>
+          <LoadingButton className="btn btn-md btn-primary" onClick={handleSaveWithSafetyCheck} loading={isSaving} loadingLabel="Menyimpan...">
             {showFullTime ? 'Simpan Full Time' : 'Simpan Half Time'}
-          </button>
+          </LoadingButton>
         </div>
       </div>
 
@@ -1261,12 +1268,12 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
             </div>
             <div className="flex gap-12 justify-between" style={{ marginTop: 16 }}>
               <button className="btn btn-md btn-secondary" onClick={() => setShowReasonModal(false)}>Batal</button>
-              <button className="btn btn-md btn-danger" disabled={!safetyReason} onClick={() => {
+              <LoadingButton className="btn btn-md btn-danger" disabled={!safetyReason} loading={isSaving} loadingLabel="Menyimpan..." onClick={() => {
                 setShowReasonModal(false);
                 submitUpdate();
               }}>
                 Konfirmasi Perubahan
-              </button>
+              </LoadingButton>
             </div>
           </div>
         </div>

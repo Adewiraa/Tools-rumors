@@ -5,23 +5,34 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function ClubsListView() {
   const router = useRouter();
   const { clubs, setClubs, hasPermission, logAction, triggerToast } = useApp();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
     const club = clubs.find(item => item.id === id);
-    const result = await apiRequest(`/api/clubs?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (!result.success) {
-      triggerToast(`Gagal menghapus klub: ${result.error}`, 'error');
-      return;
-    }
+    setDeletingId(id);
+    try {
+      const result = await apiRequest(`/api/clubs?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!result.success) {
+        triggerToast(`Gagal menghapus klub: ${result.error}`, 'error');
+        return;
+      }
 
-    setClubs(prev => prev.filter(item => item.id !== id));
-    logAction('DELETE_CLUB', 'Master Klub', club?.name || id);
-    triggerToast('Klub berhasil dihapus.');
+      setClubs(prev => prev.filter(item => item.id !== id));
+      logAction('DELETE_CLUB', 'Master Klub', club?.name || id);
+      triggerToast('Klub berhasil dihapus.');
+      setConfirmDeleteId(null);
+    } catch (error: any) {
+      triggerToast(error.message || 'Terjadi kesalahan saat menghapus klub.', 'error');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -73,8 +84,8 @@ export default function ClubsListView() {
                     <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/clubs?edit=${club.id}`)}><Edit size={13} /> Edit</button>
                     {hasPermission('Master', 'delete') && (confirmDeleteId === club.id ? (
                       <>
-                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(club.id)}>Ya</button>
-                        <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                        <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(club.id)} loading={deletingId === club.id} loadingLabel="Menghapus...">Ya</LoadingButton>
+                        <button className="btn btn-sm btn-secondary" disabled={deletingId === club.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
                       </>
                     ) : (
                       <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(club.id)}><Trash2 size={13} /></button>

@@ -5,6 +5,7 @@ import { useApp } from '@/logic/AppContext';
 import { Match } from '@/lib/mockData';
 import { ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { getEditableScheduleStatus } from '@/logic/utils';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function ScheduleEditorView({ matchId }: { matchId: string }) {
   const {
@@ -26,6 +27,7 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
   const [kickoff, setKickoff]         = useState(existing?.kickoff ? existing.kickoff.slice(0, 16) : new Date().toISOString().slice(0, 16));
   const [venue, setVenue]             = useState(existing?.venue || '');
   const [status, setStatus]           = useState<Match['status']>(getEditableScheduleStatus(existing));
+  const [isSaving, setIsSaving]       = useState(false);
   
   const selectedCompetition = competitions.find(c => c.name === competition);
   const eligibleClubs = selectedCompetition ? clubs.filter(c => c.competitionIds?.includes(selectedCompetition.id)) : clubs;
@@ -43,6 +45,7 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
   }, [homeClubId]);
 
   const handleSave = async () => {
+    if (isSaving) return;
     if (!homeClubId || !awayClubId) { triggerToast('Pilih kedua tim.', 'error'); return; }
     if (homeClubId === awayClubId) { triggerToast('Tim home dan away tidak boleh sama.', 'error'); return; }
     if (!kickoff) { triggerToast('Isi tanggal kickoff.', 'error'); return; }
@@ -66,6 +69,7 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
     };
 
     try {
+      setIsSaving(true);
       const res = await fetch('/api/matches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,6 +93,8 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
       goToScheduleList();
     } catch (err: any) {
       triggerToast('Terjadi kesalahan saat menyimpan jadwal.', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -120,9 +126,9 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
             <h2 className="schedule-editor-title">{isNew ? 'Tambah Jadwal Baru' : `Edit: ${existing?.homeClubName} vs ${existing?.awayClubName}`}</h2>
           </div>
         </div>
-        <button className="btn btn-md btn-primary schedule-editor-save-btn" onClick={handleSave}>
+        <LoadingButton className="btn btn-md btn-primary schedule-editor-save-btn" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan...">
           <CheckCircle size={14} /> {isNew ? 'Simpan Jadwal' : 'Update Jadwal'}
-        </button>
+        </LoadingButton>
       </div>
 
       <div className="card schedule-editor-card">

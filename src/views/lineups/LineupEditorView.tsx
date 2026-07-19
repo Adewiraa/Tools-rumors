@@ -24,6 +24,7 @@ import {
   APP_HANDLE,
   APP_LOGO_SRC
 } from '@/logic/utils';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 interface AsingEntry { id: string; name: string; no: number; pos: string; }
 
@@ -51,6 +52,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   const [awayFormation, setAwayFormation] = useState(existingMatch?.awayFormation || '4-2-3-1');
   const [kickoffTime, setKickoffTime] = useState(existingMatch?.kickoff || new Date().toISOString());
   const [venueName, setVenueName] = useState(existingMatch?.venue || '');
+  const [savingAction, setSavingAction] = useState<'draft' | 'publish' | null>(null);
   const FORMATIONS = ['4-3-3','4-2-3-1','3-5-2','4-4-2','5-3-2','3-4-3','4-1-4-1'];
 
   // Auto-fill venue dari home club
@@ -162,6 +164,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   };
 
   const handleSave = async (publish = false) => {
+    if (savingAction) return;
     const homeClub = clubs.find(c => c.id === selectedHomeClub);
     const awayClub = clubs.find(c => c.id === selectedAwayClub);
     const competitionName = existingMatch?.competition || selectedCompetitionName;
@@ -194,6 +197,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
     };
 
     try {
+      setSavingAction(publish ? 'publish' : 'draft');
       const res = await fetch('/api/matches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,6 +215,8 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
       router.push('/lineups');
     } catch (err: any) {
       triggerToast('Terjadi kesalahan saat menyimpan lineup.', 'error');
+    } finally {
+      setSavingAction(null);
     }
   };
 
@@ -681,10 +687,10 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
           <button className="btn btn-sm btn-secondary" onClick={() => setShowPreviewModal(true)}>Preview</button>
-          <button className="btn btn-sm btn-secondary" onClick={() => handleSave(false)}>Draft</button>
-          <button className="btn btn-sm btn-primary" onClick={() => handleSave(true)}>
+          <LoadingButton className="btn btn-sm btn-secondary" onClick={() => handleSave(false)} loading={savingAction === 'draft'} loadingLabel="Menyimpan...">Draft</LoadingButton>
+          <LoadingButton className="btn btn-sm btn-primary" onClick={() => handleSave(true)} loading={savingAction === 'publish'} loadingLabel="Menerbitkan...">
             <Upload size={13} /><span className="hide-mobile"> Terbitkan</span>
-          </button>
+          </LoadingButton>
         </div>
       </div>
 

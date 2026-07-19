@@ -7,6 +7,7 @@ import { Competition } from '@/lib/mockData';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 const slugify = (value: string) => value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
@@ -27,6 +28,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     isActive: true,
   });
   const [uploading, setUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const updateCompetition = <K extends keyof Competition>(key: K, value: Competition[K]) => setCompetition(prev => ({ ...prev, [key]: value }));
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,29 +52,37 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
     if (!competition.name.trim() || !competition.shortName.trim()) {
       triggerToast('Nama kompetisi dan kode wajib diisi.', 'error');
       return;
     }
-    const savedCompetition = {
-      ...competition,
-      slug: competition.slug || slugify(competition.name),
-    };
-    const result = await apiRequest('/api/competitions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'upsert', competition: savedCompetition }),
-    });
+    setIsSaving(true);
+    try {
+      const savedCompetition = {
+        ...competition,
+        slug: competition.slug || slugify(competition.name),
+      };
+      const result = await apiRequest('/api/competitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'upsert', competition: savedCompetition }),
+      });
 
-    if (!result.success) {
-      triggerToast(`Gagal menyimpan kompetisi: ${result.error}`, 'error');
-      return;
+      if (!result.success) {
+        triggerToast(`Gagal menyimpan kompetisi: ${result.error}`, 'error');
+        return;
+      }
+
+      setCompetitions(prev => isNew ? [...prev, savedCompetition] : prev.map(item => item.id === savedCompetition.id ? savedCompetition : item));
+      logAction(isNew ? 'CREATE_COMPETITION' : 'UPDATE_COMPETITION', 'Master Kompetisi', savedCompetition.name);
+      triggerToast('Kompetisi berhasil disimpan.');
+      router.push('/competitions');
+    } catch (error: any) {
+      triggerToast(error.message || 'Terjadi kesalahan saat menyimpan kompetisi.', 'error');
+    } finally {
+      setIsSaving(false);
     }
-
-    setCompetitions(prev => isNew ? [...prev, savedCompetition] : prev.map(item => item.id === savedCompetition.id ? savedCompetition : item));
-    logAction(isNew ? 'CREATE_COMPETITION' : 'UPDATE_COMPETITION', 'Master Kompetisi', savedCompetition.name);
-    triggerToast('Kompetisi berhasil disimpan.');
-    router.push('/competitions');
   };
 
   return (
@@ -82,7 +92,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
           <button className="btn btn-sm btn-secondary" onClick={() => router.push('/competitions')}><ArrowLeft size={16} /> Kembali</button>
           <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Kompetisi' : 'Edit Kompetisi'}</h1>
         </div>
-        <button className="btn btn-md btn-primary" onClick={handleSave}><Save size={16} /> Simpan Kompetisi</button>
+        <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan..."><Save size={16} /> Simpan Kompetisi</LoadingButton>
       </div>
 
       <div className="grid-12">

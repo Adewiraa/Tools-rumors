@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { AlertCircle, ChevronRight, Edit, Plus, Trash2, Trophy } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function CompetitionsListView() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function CompetitionsListView() {
   const [filterType, setFilterType] = useState('Semua');
   const [filterActive, setFilterActive] = useState('Semua');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filtered = competitions.filter(comp => {
     const matchType = filterType === 'Semua' || comp.type === filterType;
@@ -20,16 +22,25 @@ export default function CompetitionsListView() {
   });
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
     const competition = competitions.find(item => item.id === id);
-    const result = await apiRequest(`/api/competitions?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (!result.success) {
-      triggerToast(`Gagal menghapus kompetisi: ${result.error}`, 'error');
-      return;
-    }
+    setDeletingId(id);
+    try {
+      const result = await apiRequest(`/api/competitions?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!result.success) {
+        triggerToast(`Gagal menghapus kompetisi: ${result.error}`, 'error');
+        return;
+      }
 
-    setCompetitions(prev => prev.filter(item => item.id !== id));
-    logAction('DELETE_COMPETITION', 'Master Kompetisi', competition?.name || id);
-    triggerToast('Kompetisi berhasil dihapus.');
+      setCompetitions(prev => prev.filter(item => item.id !== id));
+      logAction('DELETE_COMPETITION', 'Master Kompetisi', competition?.name || id);
+      triggerToast('Kompetisi berhasil dihapus.');
+      setConfirmDeleteId(null);
+    } catch (error: any) {
+      triggerToast(error.message || 'Terjadi kesalahan saat menghapus kompetisi.', 'error');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -104,8 +115,8 @@ export default function CompetitionsListView() {
                         <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/competitions?edit=${comp.id}`)}><Edit size={13} /> Edit</button>
                         {hasPermission('Master', 'delete') && (confirmDeleteId === comp.id ? (
                           <>
-                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(comp.id)}>Ya</button>
-                            <button className="btn btn-sm btn-secondary" onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                            <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(comp.id)} loading={deletingId === comp.id} loadingLabel="Menghapus...">Ya</LoadingButton>
+                            <button className="btn btn-sm btn-secondary" disabled={deletingId === comp.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
                           </>
                         ) : (
                           <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(comp.id)}><Trash2 size={13} /></button>

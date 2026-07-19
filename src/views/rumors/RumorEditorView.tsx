@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
 import { ArrowLeft, Save } from 'lucide-react';
+import LoadingButton from '@/views/shared/LoadingButton';
 
 export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const router = useRouter();
@@ -30,14 +31,18 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   };
 
   const [form, setForm] = useState<Rumor>(base);
+  const [isSaving, setIsSaving] = useState(false);
   const updateForm = <K extends keyof Rumor>(key: K, value: Rumor[K]) => setForm(prev => ({ ...prev, [key]: value }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isSaving) return;
     if (!form.headline.trim() || !form.player.trim() || !form.sourceName.trim()) {
       triggerToast('Judul, nama pemain, dan sumber wajib diisi.', 'error');
       return;
     }
 
+    setIsSaving(true);
+    await new Promise(resolve => setTimeout(resolve, 350));
     setRumors(prev => isNew ? [form, ...prev] : prev.map(item => item.id === form.id ? form : item));
     logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', form.headline);
     triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');
@@ -56,9 +61,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
             <p className="page-description" style={{ marginTop: 4 }}>Konten editorial transfer dipisah dari route menu utama.</p>
           </div>
         </div>
-        <button className="btn btn-md btn-primary" onClick={handleSave}>
+        <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan...">
           <Save size={16} /> Simpan Rumor
-        </button>
+        </LoadingButton>
       </div>
 
       <div className="grid-12">
