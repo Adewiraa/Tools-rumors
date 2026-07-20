@@ -28,6 +28,7 @@ import {
   APP_NAME,
   APP_LOGO_SRC
 } from '@/logic/utils';
+import { Match } from '@/lib/mockData';
 
 type NavSection = {
   title: string;
@@ -92,7 +93,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   } = useApp();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<{ matches: any[], players: any[], clubs: any[] }>({ matches: [], players: [], clubs: [] });
+  const [searchResults, setSearchResults] = useState<{ matches: Match[], players: unknown[], clubs: unknown[] }>({ matches: [], players: [], clubs: [] });
   const [searchTerm, setSearchTerm] = useState('');
 
   // Renders role permissions label badge
@@ -319,9 +320,9 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                     </div>
                     <div style={{ padding: '8px 0', borderBottom: '1px solid var(--neutral-50)' }}>
                       <div className="flex align-center gap-8" style={{ marginBottom: 4 }}>
-                        <span className="badge badge-warning" style={{ padding: '2px 6px', fontSize: 10 }}>Rumor Tier D</span>
+                        <span className="badge badge-warning" style={{ padding: '2px 6px', fontSize: 10 }}>Rumor Draft</span>
                       </div>
-                      <p style={{ fontSize: 12, color: 'var(--neutral-700)' }}>Draft rumor baru dibuat dengan Tier D (Spekulatif) oleh Rumor Editor X.</p>
+                      <p style={{ fontSize: 12, color: 'var(--neutral-700)' }}>Draft rumor baru dibuat oleh Rumor Editor X.</p>
                       <span style={{ fontSize: 10, color: 'var(--neutral-500)' }}>30 menit yang lalu</span>
                     </div>
                   </div>
@@ -390,7 +391,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                 </div>
               ) : searchResults.matches.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--neutral-500)', fontSize: 13 }}>
-                  Tidak ada hasil yang ditemukan untuk "{searchTerm}"
+                  Tidak ada hasil yang ditemukan untuk &quot;{searchTerm}&quot;
                 </div>
               ) : (
                 <div>
