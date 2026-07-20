@@ -4,26 +4,15 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
-import { APP_HANDLE, APP_LOGO_SRC } from '@/logic/utils';
+import { APP_HANDLE } from '@/logic/utils';
 import { ArrowLeft, Download, Image as ImageIcon, Save, Share2, Upload } from 'lucide-react';
 import LoadingButton from '@/views/shared/LoadingButton';
 import * as htmlToImage from 'html-to-image';
 
-const RUMOR_GRAPHIC_ELEMENT_ID = 'rumor-transfer-graphic';
+const GRAPHIC_ID = 'rumor-transfer-graphic';
 
-const getTransferStatusLabel = (status: Rumor['transferStatus']) => {
-  const labels: Record<Rumor['transferStatus'], string> = {
-    Rumor: 'Rumor',
-    'Advanced Talks': 'Advanced Talks',
-    'Here We Go': 'Here We Go',
-  };
-
-  return labels[status];
-};
-
-const buildRumorFileName = (rumor: Rumor) => (
-  `Rumor_${rumor.player || 'Pemain'}_${rumor.destinationClub || 'Klub'}.png`.replace(/[^\w.-]+/g, '_')
-);
+const buildFileName = (rumor: Rumor) =>
+  `Rumor_${rumor.player || 'Pemain'}_${rumor.destinationClub || 'Klub'}.png`.replace(/[^\w.-]+/g, '_');
 
 const getImageAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   const reader = new FileReader();
@@ -37,6 +26,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const { clubs, rumors, setRumors, logAction, triggerToast } = useApp();
   const isNew = rumorId === 'new';
   const existing = rumors.find(item => item.id === rumorId);
+
   const base: Rumor = existing || {
     id: `rumor-${Date.now()}`,
     headline: '',
@@ -57,136 +47,214 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
 
   const [form, setForm] = useState<Rumor>(base);
   const [isSaving, setIsSaving] = useState(false);
-  const [isExportingGraphic, setIsExportingGraphic] = useState(false);
-  const updateForm = <K extends keyof Rumor>(key: K, value: Rumor[K]) => setForm(prev => ({ ...prev, [key]: value }));
-  const destinationClub = clubs.find(club => club.name.trim().toLowerCase() === form.destinationClub.trim().toLowerCase() || club.shortName.trim().toLowerCase() === form.destinationClub.trim().toLowerCase());
-  const graphicCaption = form.shortSummary || form.graphicCaption || form.headline || 'Rumor transfer terbaru dari Gosball.';
+  const [isExporting, setIsExporting] = useState(false);
 
-  const buildSavedRumor = (): Rumor => {
-    const playerName = form.player.trim();
-    const clubName = form.destinationClub.trim();
-    const description = graphicCaption.trim();
+  const update = <K extends keyof Rumor>(key: K, value: Rumor[K]) =>
+    setForm(prev => ({ ...prev, [key]: value }));
 
-    return {
-      ...form,
-      headline: playerName && clubName ? `${playerName} diminati ${clubName}` : form.headline,
-      fromClub: form.fromClub || 'Belum diketahui',
-      type: 'rumor',
-      reliabilityTier: 'C',
-      sourceName: form.sourceName || 'Gosball',
-      sourceUrl: form.sourceUrl || '',
-      publicationStatus: form.publicationStatus || 'Draft',
-      transferStatus: 'Rumor',
-      probability: 50,
-      shortSummary: description,
-      articleBody: description,
-      graphicCaption: description,
-      author: form.author || 'Rumor Editor',
-    };
-  };
+  const destClub = clubs.find(c =>
+    c.name.trim().toLowerCase() === form.destinationClub.trim().toLowerCase() ||
+    c.shortName.trim().toLowerCase() === form.destinationClub.trim().toLowerCase()
+  );
 
-  const handlePlayerImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const caption = (form.shortSummary || form.graphicCaption || form.headline || '').trim();
+
+  const buildSaved = (): Rumor => ({
+    ...form,
+    headline: form.player && form.destinationClub
+      ? `${form.player} diminati ${form.destinationClub}`
+      : form.headline,
+    fromClub: form.fromClub || 'Belum diketahui',
+    type: 'rumor',
+    reliabilityTier: 'C',
+    sourceName: form.sourceName || 'Media Tools',
+    publicationStatus: form.publicationStatus || 'Draft',
+    transferStatus: 'Rumor',
+    probability: 50,
+    shortSummary: caption,
+    articleBody: caption,
+    graphicCaption: caption,
+    author: form.author || 'Rumor Editor',
+  });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      triggerToast('File foto pemain harus berupa gambar.', 'error');
-      return;
-    }
-
+    if (!file.type.startsWith('image/')) { triggerToast('File harus berupa gambar.', 'error'); return; }
     try {
       const dataUrl = await getImageAsDataUrl(file);
-      updateForm('playerImageUrl', dataUrl);
-      triggerToast('Foto pemain diterapkan ke preview rumor.');
-    } catch (error: any) {
-      triggerToast(error.message || 'Gagal membaca foto pemain.', 'error');
-    } finally {
-      event.target.value = '';
-    }
+      update('playerImageUrl', dataUrl);
+      triggerToast('Foto pemain diterapkan ke preview.');
+    } catch (err: any) { triggerToast(err.message || 'Gagal membaca gambar.', 'error'); }
+    finally { e.target.value = ''; }
   };
 
-  const createRumorGraphicImage = async () => {
-    const node = document.getElementById(RUMOR_GRAPHIC_ELEMENT_ID);
-    if (!node) throw new Error('Preview gambar rumor tidak ditemukan.');
-
+  const exportGraphic = async () => {
+    const node = document.getElementById(GRAPHIC_ID);
+    if (!node) throw new Error('Preview tidak ditemukan.');
     const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
-    const response = await fetch(dataUrl);
-    const blob = await response.blob();
-    const fileName = buildRumorFileName(buildSavedRumor());
-
-    return { dataUrl, blob, fileName };
+    const blob = await (await fetch(dataUrl)).blob();
+    return { dataUrl, blob, fileName: buildFileName(buildSaved()) };
   };
 
-  const downloadRumorGraphic = async () => {
+  const handleDownload = async () => {
     try {
-      setIsExportingGraphic(true);
-      triggerToast('Mengunduh gambar rumor...');
-      const { dataUrl, fileName } = await createRumorGraphicImage();
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = dataUrl;
-      link.click();
-      triggerToast('Gambar rumor berhasil diunduh.');
-    } catch (error: any) {
-      console.error('Rumor graphic download failed:', error);
-      triggerToast(error.message || 'Gagal mengunduh gambar rumor.', 'error');
-    } finally {
-      setIsExportingGraphic(false);
-    }
+      setIsExporting(true);
+      triggerToast('Mengunduh gambar...');
+      const { dataUrl, fileName } = await exportGraphic();
+      const a = document.createElement('a');
+      a.download = fileName; a.href = dataUrl; a.click();
+      triggerToast('Gambar berhasil diunduh.');
+    } catch (err: any) { triggerToast(err.message || 'Gagal mengunduh.', 'error'); }
+    finally { setIsExporting(false); }
   };
 
-  const shareRumorGraphic = async () => {
+  const handleShare = async () => {
     try {
-      setIsExportingGraphic(true);
-      triggerToast('Membuat gambar rumor untuk dibagikan...');
-      const { blob, dataUrl, fileName } = await createRumorGraphicImage();
+      setIsExporting(true);
+      triggerToast('Membuat gambar...');
+      const { blob, dataUrl, fileName } = await exportGraphic();
+      const saved = buildSaved();
       const file = new File([blob], fileName, { type: 'image/png' });
-      const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-      const savedRumor = buildSavedRumor();
-      const shareData: ShareData = {
-        files: [file],
-        title: savedRumor.headline || 'Rumor Transfer Gosball',
-        text: graphicCaption,
-      };
-
-      if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
-        await nav.share(shareData);
-        triggerToast('Gambar rumor siap dibagikan.');
-        return;
+      const nav = navigator as any;
+      if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
+        await nav.share({ files: [file], title: saved.headline, text: caption });
+        triggerToast('Siap dibagikan.');
+      } else {
+        const a = document.createElement('a');
+        a.download = fileName; a.href = dataUrl; a.click();
+        triggerToast('Share tidak didukung, PNG diunduh.', 'warning');
       }
-
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = dataUrl;
-      link.click();
-      triggerToast('Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.', 'warning');
-    } catch (error: any) {
-      if (error?.name !== 'AbortError') {
-        console.error('Rumor graphic share failed:', error);
-        triggerToast(error.message || 'Gagal membagikan gambar rumor.', 'error');
-      }
-    } finally {
-      setIsExportingGraphic(false);
-    }
+    } catch (err: any) {
+      if ((err as any)?.name !== 'AbortError') triggerToast(err.message || 'Gagal.', 'error');
+    } finally { setIsExporting(false); }
   };
 
   const handleSave = async () => {
     if (isSaving) return;
-    if (!form.player.trim() || !form.destinationClub.trim() || !graphicCaption.trim() || !form.playerImageUrl?.trim()) {
-      triggerToast('Foto pemain, nama pemain, klub peminat, dan deskripsi singkat wajib diisi.', 'error');
+    if (!form.player.trim() || !form.destinationClub.trim() || !caption || !form.playerImageUrl?.trim()) {
+      triggerToast('Foto pemain, nama pemain, klub peminat, dan caption wajib diisi.', 'error');
       return;
     }
-
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 350));
-    const savedRumor = buildSavedRumor();
-    setRumors(prev => isNew ? [savedRumor, ...prev] : prev.map(item => item.id === savedRumor.id ? savedRumor : item));
-    logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', savedRumor.headline);
+    await new Promise(r => setTimeout(r, 300));
+    const saved = buildSaved();
+    setRumors(prev => isNew ? [saved, ...prev] : prev.map(r => r.id === saved.id ? saved : r));
+    logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', saved.headline);
     triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');
     router.push('/rumors');
   };
 
+  // ── GRAPHIC: 9:16 ratio (360 × 640) ──────────────────────────────────────
+  const graphicCard = (
+    <div
+      id={GRAPHIC_ID}
+      style={{
+        width: 360,
+        height: 640,
+        background: '#0a0a0a',
+        color: 'white',
+        overflow: 'hidden',
+        position: 'relative',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 30px 60px rgba(0,0,0,0.8)',
+      }}
+    >
+      {/* Accent bar top */}
+      <div style={{ height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', flexShrink: 0, zIndex: 5 }} />
+
+      {/* FULL PLAYER IMAGE — 72% tinggi */}
+      <div style={{ position: 'relative', flex: '0 0 72%', overflow: 'hidden' }}>
+        {form.playerImageUrl ? (
+          <img
+            src={form.playerImageUrl}
+            crossOrigin="anonymous"
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
+          />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #111, #1f1f1f)', display: 'grid', placeItems: 'center', color: '#444' }}>
+            <div style={{ textAlign: 'center' }}>
+              <ImageIcon size={48} />
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, marginTop: 10, textTransform: 'uppercase' }}>Upload Foto Pemain</div>
+            </div>
+          </div>
+        )}
+
+        {/* Gradient overlay bawah foto */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to top, #0a0a0a 0%, rgba(10,10,10,0.6) 50%, transparent 100%)', zIndex: 1 }} />
+        {/* Gradient overlay atas foto — untuk branding */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '30%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)', zIndex: 1 }} />
+
+        {/* BRANDING — top left */}
+        <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ padding: '4px 10px', background: '#c8a84b', borderRadius: 5 }}>
+            <span style={{ fontSize: 8, fontWeight: 900, color: '#0a0a0a', letterSpacing: 1.5, textTransform: 'uppercase' }}>TRANSFER WATCH</span>
+          </div>
+        </div>
+
+        {/* KLUB PEMINAT LOGO — top right */}
+        <div style={{ position: 'absolute', top: 12, right: 14, zIndex: 3 }}>
+          {destClub?.logoUrl && destClub.logoUrl.startsWith('http') ? (
+            <div style={{ width: 48, height: 48, background: 'rgba(255,255,255,0.92)', borderRadius: 10, display: 'grid', placeItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', border: '2px solid rgba(200,168,75,0.4)' }}>
+              <img src={destClub.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 38, height: 38, objectFit: 'contain' }} />
+            </div>
+          ) : form.destinationClub ? (
+            <div style={{ padding: '6px 10px', background: 'rgba(200,168,75,0.15)', border: '1px solid rgba(200,168,75,0.4)', borderRadius: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 900, color: '#c8a84b', letterSpacing: 0.5 }}>{form.destinationClub.slice(0, 8).toUpperCase()}</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* NAMA PEMAIN — bottom foto, di atas gradient */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2, padding: '0 16px 14px' }}>
+          <div style={{ fontSize: 8, fontWeight: 700, color: '#c8a84b', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 }}>Target Player</div>
+          <div style={{ fontSize: 28, fontWeight: 950, letterSpacing: -0.5, textTransform: 'uppercase', lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+            {form.player || <span style={{ color: '#444' }}>Nama Pemain</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* CAPTION SECTION — 28% bawah */}
+      <div style={{ flex: '1 1 auto', background: '#0a0a0a', borderTop: '1px solid rgba(200,168,75,0.25)', display: 'flex', flexDirection: 'column', padding: '14px 16px 12px' }}>
+
+        {/* Diminati baris */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ fontSize: 8, fontWeight: 700, color: '#777', letterSpacing: 1.2, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Diminati Oleh</div>
+          <div style={{ flex: 1, height: 1, background: 'rgba(200,168,75,0.2)' }} />
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.3 }}>
+            {destClub?.shortName || form.destinationClub || <span style={{ color: '#444' }}>Klub Tujuan</span>}
+          </div>
+          {destClub?.logoUrl && destClub.logoUrl.startsWith('http') && (
+            <div style={{ width: 22, height: 22, background: 'rgba(255,255,255,0.9)', borderRadius: 5, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <img src={destClub.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+            </div>
+          )}
+        </div>
+
+        {/* Caption / deskripsi */}
+        <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: '#d1d5db', fontWeight: 400 }}>
+          {caption || <span style={{ color: '#444' }}>Caption akan muncul di sini...</span>}
+        </div>
+
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ fontSize: 8, color: '#555', fontWeight: 600, letterSpacing: 1 }}>{APP_HANDLE}</div>
+          <div style={{ fontSize: 9, color: '#c8a84b', fontWeight: 800, letterSpacing: 1.5 }}>MEDIA TOOLS</div>
+        </div>
+      </div>
+
+      {/* Accent bar bottom */}
+      <div style={{ height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', flexShrink: 0 }} />
+    </div>
+  );
+
+  // ── RENDER ────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Header */}
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
           <button className="btn btn-sm btn-secondary" onClick={() => router.push('/rumors')}>
@@ -194,7 +262,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
           </button>
           <div>
             <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Rumor' : 'Edit Rumor'}</h1>
-            <p className="page-description" style={{ marginTop: 4 }}>Buat output rumor dari foto pemain, klub peminat, dan deskripsi singkat.</p>
+            <p className="page-description" style={{ marginTop: 4 }}>
+              Upload foto pemain, pilih klub peminat, dan tulis caption. Preview 9:16 siap unduh.
+            </p>
           </div>
         </div>
         <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan...">
@@ -202,165 +272,102 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
         </LoadingButton>
       </div>
 
-      <div className="grid-12">
-        <div className="card" style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
-          <div className="form-group" style={{ gridColumn: 'span 12' }}>
-            <label className="form-label">Foto Pemain <span className="required">*</span></label>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer' }}>
-                <Upload size={14} /> Upload
-                <input type="file" accept="image/*" hidden onChange={handlePlayerImageUpload} />
-              </label>
-              {form.playerImageUrl ? (
-                <>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'start' }}>
+        {/* ── FORM ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Upload foto */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Foto Pemain</div>
+            {form.playerImageUrl ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <img src={form.playerImageUrl} alt="" style={{ width: 64, height: 80, objectFit: 'cover', borderRadius: 8, objectPosition: 'top' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span className="badge badge-success">Foto sudah dipilih</span>
-                  <button type="button" className="btn btn-sm btn-secondary" onClick={() => updateForm('playerImageUrl', '')}>Hapus Foto</button>
-                </>
-              ) : (
-                <span className="text-muted" style={{ fontSize: 12 }}>Belum ada foto pemain.</span>
+                  <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer' }}>
+                    <Upload size={13} /> Ganti Foto
+                    <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
+                  </label>
+                  <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => update('playerImageUrl', '')}>Hapus</button>
+                </div>
+              </div>
+            ) : (
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '28px 16px', border: '2px dashed var(--neutral-300)', borderRadius: 10, cursor: 'pointer', background: 'var(--neutral-50)' }}>
+                <ImageIcon size={28} color="var(--neutral-400)" />
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-500)' }}>Klik untuk upload foto pemain</span>
+                <span style={{ fontSize: 11, color: 'var(--neutral-400)' }}>JPG, PNG — portrait disarankan</span>
+                <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
+              </label>
+            )}
+          </div>
+
+          {/* Info dasar */}
+          <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>Informasi Transfer</div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Nama Pemain <span className="required">*</span></label>
+              <input className="form-input" placeholder="Contoh: Eliano Reijnders" value={form.player} onChange={e => update('player', e.target.value)} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Klub Peminat <span className="required">*</span></label>
+              <select className="form-select" value={form.destinationClub} onChange={e => update('destinationClub', e.target.value)}>
+                <option value="">Pilih dari Master Klub</option>
+                {clubs.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              </select>
+              {destClub && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                  {destClub.logoUrl && destClub.logoUrl.startsWith('http') && (
+                    <img src={destClub.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                  )}
+                  <span style={{ fontSize: 12, color: 'var(--primary-600)', fontWeight: 600 }}>{destClub.name} ditemukan di Master Klub</span>
+                </div>
               )}
             </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Klub Asal</label>
+              <input className="form-input" placeholder="Contoh: Persib Bandung" value={form.fromClub} onChange={e => update('fromClub', e.target.value)} />
+            </div>
           </div>
-          <div className="form-group" style={{ gridColumn: 'span 6' }}>
-            <label className="form-label">Nama Pemain <span className="required">*</span></label>
-            <input className="form-input" value={form.player} onChange={event => updateForm('player', event.target.value)} />
-          </div>
-          <div className="form-group" style={{ gridColumn: 'span 6' }}>
-            <label className="form-label">Klub Peminat <span className="required">*</span></label>
-            <select className="form-select" value={form.destinationClub} onChange={event => updateForm('destinationClub', event.target.value)}>
-              <option value="">Pilih klub dari Master Klub</option>
-              {clubs.map(club => <option key={club.id} value={club.name}>{club.name}</option>)}
-            </select>
-          </div>
-          <div className="form-group" style={{ gridColumn: 'span 12' }}>
-            <label className="form-label">Deskripsi Singkat <span className="required">*</span></label>
+
+          {/* Caption */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Caption / Deskripsi</div>
+            <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginBottom: 10 }}>
+              Caption tampil di section bawah gambar, terpisah dari foto pemain.
+            </div>
             <textarea
               className="form-textarea"
-              rows={5}
+              rows={4}
+              placeholder="Contoh: Arema FC dikabarkan berminat mendatangkan gelandang asal Belanda ini untuk memperkuat lini tengah mereka di musim 2026/27."
               value={form.shortSummary || form.graphicCaption || ''}
-              placeholder="Contoh: Arema FC dikabarkan berminat mendatangkan gelandang asal Brasil tersebut."
-              onChange={event => {
-                updateForm('shortSummary', event.target.value);
-                updateForm('graphicCaption', event.target.value);
-              }}
+              onChange={e => { update('shortSummary', e.target.value); update('graphicCaption', e.target.value); }}
             />
           </div>
-        </div>
-      </div>
 
-      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, alignItems: 'start' }}>
-        <div style={{ display: 'grid', gap: 12 }}>
-          <div>
-            <div className="semibold" style={{ fontSize: 14 }}>Output Gambar Rumor</div>
-            <div className="text-muted" style={{ fontSize: 12 }}>Preview 4:5 dengan style Gosball untuk konten transfer.</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <LoadingButton className="btn btn-md btn-primary" onClick={shareRumorGraphic} loading={isExportingGraphic} loadingLabel="Membuat...">
-              <Share2 size={14} /> Bagikan Gambar
-            </LoadingButton>
-            <LoadingButton className="btn btn-md btn-secondary" onClick={downloadRumorGraphic} loading={isExportingGraphic} loadingLabel="Mengunduh...">
-              <Download size={14} /> Unduh PNG
-            </LoadingButton>
-          </div>
-          <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
-            Gunakan foto pemain dengan rasio portrait atau medium close-up agar komposisi terlihat kuat. Logo klub tujuan otomatis diambil jika nama klub cocok dengan Master Klub.
+          {/* Download / Share */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Ekspor Gambar</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <LoadingButton className="btn btn-md btn-primary" onClick={handleShare} loading={isExporting} loadingLabel="Membuat...">
+                <Share2 size={14} /> Bagikan
+              </LoadingButton>
+              <LoadingButton className="btn btn-md btn-secondary" onClick={handleDownload} loading={isExporting} loadingLabel="Mengunduh...">
+                <Download size={14} /> Unduh PNG (9:16)
+              </LoadingButton>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--neutral-400)', marginTop: 10, lineHeight: 1.5 }}>
+              Gunakan foto portrait atau medium close-up untuk hasil terbaik. Logo klub otomatis muncul jika nama klub sesuai Master Klub.
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto', paddingBottom: 8 }}>
-          <div
-            id={RUMOR_GRAPHIC_ELEMENT_ID}
-            style={{
-              width: 360,
-              height: 450,
-              background: '#0a0a0a',
-              color: 'white',
-              overflow: 'hidden',
-              position: 'relative',
-              boxShadow: '0 28px 60px rgba(0,0,0,0.55)',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <div style={{ height: 4, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', position: 'relative', zIndex: 4 }} />
-            {form.playerImageUrl ? (
-              <img
-                src={form.playerImageUrl}
-                crossOrigin="anonymous"
-                alt=""
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
-              />
-            ) : (
-              <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#5f5f5f', background: 'linear-gradient(135deg, #101010, #1f1f1f)', zIndex: 0 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <ImageIcon size={42} />
-                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.4, marginTop: 8, textTransform: 'uppercase' }}>Foto Pemain</div>
-                </div>
-              </div>
-            )}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.56) 0%, rgba(0,0,0,0.08) 34%, rgba(0,0,0,0.2) 55%, rgba(0,0,0,0.84) 100%)', pointerEvents: 'none', zIndex: 1 }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 82% 18%, rgba(200,168,75,0.2), transparent 35%)', pointerEvents: 'none', zIndex: 1 }} />
-
-            <div style={{ position: 'relative', zIndex: 3, margin: '14px 16px 0', padding: '10px 12px', borderRadius: 9, background: 'rgba(8,8,8,0.62)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.08)', display: 'grid', placeItems: 'center' }}>
-                <img src={APP_LOGO_SRC} alt="Gosball" style={{ width: 26, height: 26, objectFit: 'contain' }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 8, fontWeight: 800, letterSpacing: 2, color: '#c8a84b', textTransform: 'uppercase' }}>Gosball Transfer Desk</div>
-                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.3, textTransform: 'uppercase' }}>Rumor Transfer</div>
-              </div>
-              <div style={{ padding: '6px 10px', borderRadius: 6, background: '#c8a84b', color: '#080808', fontSize: 8, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
-                {getTransferStatusLabel('Rumor')}
-              </div>
-            </div>
-
-            <div style={{ position: 'relative', zIndex: 3, margin: 'auto 16px 12px', padding: 14, display: 'grid', gap: 10, borderRadius: 10, background: 'rgba(8,8,8,0.72)', backdropFilter: 'blur(12px)', border: '1px solid rgba(200,168,75,0.3)', boxShadow: '0 18px 40px rgba(0,0,0,0.45)' }}>
-              <div>
-                <div style={{ fontSize: 8, fontWeight: 900, letterSpacing: 1.8, color: '#c8a84b', textTransform: 'uppercase' }}>Target Player</div>
-                <div style={{ fontSize: 26, lineHeight: 1.02, fontWeight: 950, letterSpacing: 0, textTransform: 'uppercase', marginTop: 3 }}>
-                  {form.player || 'Nama Pemain'}
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                {destinationClub?.logoUrl ? (
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(255,255,255,0.9)', display: 'grid', placeItems: 'center' }}>
-                    <img src={destinationClub.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                  </div>
-                ) : (
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(200,168,75,0.14)', border: '1px solid rgba(200,168,75,0.35)', display: 'grid', placeItems: 'center', color: '#e8cc6a', fontSize: 10, fontWeight: 900 }}>
-                    IN
-                  </div>
-                )}
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 7, color: '#777', fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase' }}>Diminati Oleh</div>
-                  <div style={{ fontSize: 14, fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff' }}>{destinationClub?.name || form.destinationClub || '-'}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ padding: '5px 8px', borderRadius: 6, background: 'rgba(200,168,75,0.14)', border: '1px solid rgba(200,168,75,0.35)', color: '#e8cc6a', fontSize: 9, fontWeight: 900, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-                  Transfer Watch
-                </div>
-                <div style={{ flex: 1, height: 1, background: 'rgba(200,168,75,0.26)' }} />
-              </div>
-
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
-                <div style={{ fontSize: 12, lineHeight: 1.42, color: '#e8e8e8', fontWeight: 600 }}>
-                  {graphicCaption}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ position: 'relative', zIndex: 3, padding: '0 18px 14px', display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: 8, color: '#595959', fontWeight: 700, letterSpacing: 1.2 }}>{APP_HANDLE}</div>
-                <div style={{ fontSize: 8, color: '#454545', marginTop: 2 }}>Gosball Transfer Desk</div>
-              </div>
-              <div style={{ fontSize: 10, color: '#c8a84b', fontWeight: 900, letterSpacing: 1.5 }}>GOSBALL</div>
-            </div>
-          </div>
+        {/* ── PREVIEW ── */}
+        <div style={{ position: 'sticky', top: 24 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-500)', marginBottom: 10, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>Preview 9:16</div>
+          {graphicCard}
         </div>
       </div>
     </div>
