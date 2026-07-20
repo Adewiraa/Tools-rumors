@@ -152,6 +152,11 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     } finally { setIsExporting(false); }
   };
 
+  const returnToRumorsList = () => {
+    setIsSaving(false);
+    router.replace('/rumors');
+  };
+
   const handleSave = async () => {
     if (isSaving) return;
     if (!form.player.trim() || !form.destinationClub.trim() || !caption || !form.playerImageUrl?.trim()) {
@@ -166,7 +171,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', saved.headline);
       triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');
       setIsSaving(false);
-      router.push('/rumors');
+      router.replace('/rumors');
     } catch (err: unknown) {
       setIsSaving(false);
       triggerToast(getErrorMessage(err, 'Gagal menyimpan rumor.'), 'error');
@@ -294,7 +299,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       {/* Header */}
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button className="btn btn-sm btn-secondary" onClick={() => router.push('/rumors')}>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={returnToRumorsList}>
             <ArrowLeft size={16} /> Kembali
           </button>
           <div>

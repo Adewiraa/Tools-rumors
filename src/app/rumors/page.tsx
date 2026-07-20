@@ -8,7 +8,7 @@ import RumorEditorView from '@/views/rumors/RumorEditorView';
 function RumorsContent() {
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
-  return editId ? <RumorEditorView rumorId={editId} /> : <RumorsListView />;
+  return editId ? <RumorEditorView key={editId} rumorId={editId} /> : <RumorsListView key="list" />;
 }
 
 export default function RumorsPage() {
