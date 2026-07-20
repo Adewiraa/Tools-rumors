@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
-import { APP_HANDLE } from '@/logic/utils';
+import { APP_HANDLE, APP_LOGO_SRC } from '@/logic/utils';
 import { ArrowLeft, Download, Image as ImageIcon, Save, Share2, Upload } from 'lucide-react';
 import LoadingButton from '@/views/shared/LoadingButton';
 import * as htmlToImage from 'html-to-image';
@@ -48,6 +48,11 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const [form, setForm] = useState<Rumor>(base);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  // ── Posisi foto (seperti match result) ────────────────────────────────────
+  const [posX, setPosX] = useState(50);
+  const [posY, setPosY] = useState(20);
+  const [zoom, setZoom] = useState(100);
 
   const update = <K extends keyof Rumor>(key: K, value: Rumor[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
@@ -145,7 +150,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     router.push('/rumors');
   };
 
-  // ── GRAPHIC: 9:16 ratio (360 × 640) ──────────────────────────────────────
+  // ── GRAPHIC 9:16 ─────────────────────────────────────────────────────────
   const graphicCard = (
     <div
       id={GRAPHIC_ID}
@@ -162,17 +167,26 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
         boxShadow: '0 30px 60px rgba(0,0,0,0.8)',
       }}
     >
-      {/* Accent bar top */}
+      {/* Top accent */}
       <div style={{ height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', flexShrink: 0, zIndex: 5 }} />
 
-      {/* FULL PLAYER IMAGE — 72% tinggi */}
+      {/* ── FOTO PEMAIN FULL (72%) ── */}
       <div style={{ position: 'relative', flex: '0 0 72%', overflow: 'hidden' }}>
         {form.playerImageUrl ? (
           <img
             src={form.playerImageUrl}
             crossOrigin="anonymous"
             alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: `${posX}% ${posY}%`,
+              transform: `scale(${zoom / 100})`,
+              transformOrigin: `${posX}% ${posY}%`,
+            }}
           />
         ) : (
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #111, #1f1f1f)', display: 'grid', placeItems: 'center', color: '#444' }}>
@@ -183,70 +197,71 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
           </div>
         )}
 
-        {/* Gradient overlay bawah foto */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to top, #0a0a0a 0%, rgba(10,10,10,0.6) 50%, transparent 100%)', zIndex: 1 }} />
-        {/* Gradient overlay atas foto — untuk branding */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '30%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)', zIndex: 1 }} />
+        {/* Gradient bawah */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, #0a0a0a 0%, rgba(10,10,10,0.55) 55%, transparent 100%)', zIndex: 1 }} />
+        {/* Gradient atas */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '35%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, transparent 100%)', zIndex: 1 }} />
 
-        {/* BRANDING — top left */}
-        <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ padding: '4px 10px', background: '#c8a84b', borderRadius: 5 }}>
+        {/* TRANSFER WATCH badge — top left */}
+        <div style={{ position: 'absolute', top: 14, left: 14, zIndex: 3 }}>
+          <div style={{ padding: '5px 11px', background: '#c8a84b', borderRadius: 5 }}>
             <span style={{ fontSize: 8, fontWeight: 900, color: '#0a0a0a', letterSpacing: 1.5, textTransform: 'uppercase' }}>TRANSFER WATCH</span>
           </div>
         </div>
 
-        {/* KLUB PEMINAT LOGO — top right */}
-        <div style={{ position: 'absolute', top: 12, right: 14, zIndex: 3 }}>
-          {destClub?.logoUrl && destClub.logoUrl.startsWith('http') ? (
-            <div style={{ width: 48, height: 48, background: 'rgba(255,255,255,0.92)', borderRadius: 10, display: 'grid', placeItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', border: '2px solid rgba(200,168,75,0.4)' }}>
-              <img src={destClub.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 38, height: 38, objectFit: 'contain' }} />
-            </div>
-          ) : form.destinationClub ? (
-            <div style={{ padding: '6px 10px', background: 'rgba(200,168,75,0.15)', border: '1px solid rgba(200,168,75,0.4)', borderRadius: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 900, color: '#c8a84b', letterSpacing: 0.5 }}>{form.destinationClub.slice(0, 8).toUpperCase()}</span>
-            </div>
-          ) : null}
-        </div>
+        {/* LOGO KLUB — top right, TRANSPARAN (tidak ada badge putih) */}
+        {destClub?.logoUrl && destClub.logoUrl.startsWith('http') && (
+          <div style={{ position: 'absolute', top: 10, right: 14, zIndex: 3 }}>
+            <img
+              src={destClub.logoUrl}
+              crossOrigin="anonymous"
+              alt=""
+              style={{ width: 52, height: 52, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7))' }}
+            />
+          </div>
+        )}
 
-        {/* NAMA PEMAIN — bottom foto, di atas gradient */}
+        {/* Nama pemain — bottom foto */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2, padding: '0 16px 14px' }}>
-          <div style={{ fontSize: 8, fontWeight: 700, color: '#c8a84b', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 }}>Target Player</div>
-          <div style={{ fontSize: 28, fontWeight: 950, letterSpacing: -0.5, textTransform: 'uppercase', lineHeight: 1, textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+          <div style={{ fontSize: 8, fontWeight: 700, color: '#c8a84b', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 3 }}>
+            Target Player
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 950, letterSpacing: -0.5, textTransform: 'uppercase', lineHeight: 1, textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
             {form.player || <span style={{ color: '#444' }}>Nama Pemain</span>}
           </div>
         </div>
       </div>
 
-      {/* CAPTION SECTION — 28% bawah */}
-      <div style={{ flex: '1 1 auto', background: '#0a0a0a', borderTop: '1px solid rgba(200,168,75,0.25)', display: 'flex', flexDirection: 'column', padding: '14px 16px 12px' }}>
+      {/* ── CAPTION SECTION (28%) ── */}
+      <div style={{ flex: '1 1 auto', background: '#0a0a0a', borderTop: '1px solid rgba(200,168,75,0.25)', display: 'flex', flexDirection: 'column', padding: '13px 16px 10px' }}>
 
-        {/* Diminati baris */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{ fontSize: 8, fontWeight: 700, color: '#777', letterSpacing: 1.2, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Diminati Oleh</div>
+        {/* Diminati oleh */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+          <div style={{ fontSize: 8, fontWeight: 700, color: '#666', letterSpacing: 1.2, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Diminati Oleh</div>
           <div style={{ flex: 1, height: 1, background: 'rgba(200,168,75,0.2)' }} />
           <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.3 }}>
-            {destClub?.shortName || form.destinationClub || <span style={{ color: '#444' }}>Klub Tujuan</span>}
+            {destClub?.shortName || form.destinationClub || <span style={{ color: '#333' }}>Klub Tujuan</span>}
           </div>
-          {destClub?.logoUrl && destClub.logoUrl.startsWith('http') && (
-            <div style={{ width: 22, height: 22, background: 'rgba(255,255,255,0.9)', borderRadius: 5, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-              <img src={destClub.logoUrl} crossOrigin="anonymous" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-            </div>
-          )}
         </div>
 
-        {/* Caption / deskripsi */}
+        {/* Caption */}
         <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: '#d1d5db', fontWeight: 400 }}>
-          {caption || <span style={{ color: '#444' }}>Caption akan muncul di sini...</span>}
+          {caption || <span style={{ color: '#333' }}>Caption akan muncul di sini...</span>}
         </div>
 
-        {/* Footer */}
+        {/* Footer — LOGO APP (bukan teks) */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: 8, color: '#555', fontWeight: 600, letterSpacing: 1 }}>{APP_HANDLE}</div>
-          <div style={{ fontSize: 9, color: '#c8a84b', fontWeight: 800, letterSpacing: 1.5 }}>MEDIA TOOLS</div>
+          <div style={{ fontSize: 8, color: '#444', fontWeight: 600, letterSpacing: 1 }}>{APP_HANDLE}</div>
+          <img
+            src={APP_LOGO_SRC}
+            crossOrigin="anonymous"
+            alt="Media Tools"
+            style={{ height: 22, objectFit: 'contain', opacity: 0.85 }}
+          />
         </div>
       </div>
 
-      {/* Accent bar bottom */}
+      {/* Bottom accent */}
       <div style={{ height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', flexShrink: 0 }} />
     </div>
   );
@@ -263,7 +278,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
           <div>
             <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Rumor' : 'Edit Rumor'}</h1>
             <p className="page-description" style={{ marginTop: 4 }}>
-              Upload foto pemain, pilih klub peminat, dan tulis caption. Preview 9:16 siap unduh.
+              Upload foto pemain, atur posisi, pilih klub peminat, tulis caption.
             </p>
           </div>
         </div>
@@ -273,6 +288,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'start' }}>
+
         {/* ── FORM ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -281,7 +297,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Foto Pemain</div>
             {form.playerImageUrl ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <img src={form.playerImageUrl} alt="" style={{ width: 64, height: 80, objectFit: 'cover', borderRadius: 8, objectPosition: 'top' }} />
+                <img src={form.playerImageUrl} alt="" style={{ width: 60, height: 76, objectFit: 'cover', borderRadius: 8, objectPosition: `${posX}% ${posY}%` }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span className="badge badge-success">Foto sudah dipilih</span>
                   <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer' }}>
@@ -301,7 +317,69 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
             )}
           </div>
 
-          {/* Info dasar */}
+          {/* ── KONTROL POSISI FOTO (seperti match result) ── */}
+          {form.playerImageUrl && (
+            <div className="card" style={{ padding: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Atur Posisi Foto</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-600)' }}>Posisi Horizontal</label>
+                    <span style={{ fontSize: 11, color: 'var(--neutral-500)' }}>{posX}%</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={100} value={posX}
+                    onChange={e => setPosX(Number(e.target.value))}
+                    style={{ width: '100%', accentColor: 'var(--primary-600)' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--neutral-400)', marginTop: 2 }}>
+                    <span>Kiri</span><span>Kanan</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-600)' }}>Posisi Vertikal</label>
+                    <span style={{ fontSize: 11, color: 'var(--neutral-500)' }}>{posY}%</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={100} value={posY}
+                    onChange={e => setPosY(Number(e.target.value))}
+                    style={{ width: '100%', accentColor: 'var(--primary-600)' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--neutral-400)', marginTop: 2 }}>
+                    <span>Atas</span><span>Bawah</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-600)' }}>Zoom</label>
+                    <span style={{ fontSize: 11, color: 'var(--neutral-500)' }}>{zoom}%</span>
+                  </div>
+                  <input
+                    type="range" min={80} max={200} value={zoom}
+                    onChange={e => setZoom(Number(e.target.value))}
+                    style={{ width: '100%', accentColor: 'var(--primary-600)' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--neutral-400)', marginTop: 2 }}>
+                    <span>Jauh</span><span>Dekat</span>
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => { setPosX(50); setPosY(20); setZoom(100); }}
+                  style={{ alignSelf: 'flex-start', fontSize: 11 }}
+                >
+                  Reset Posisi
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Info transfer */}
           <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>Informasi Transfer</div>
 
@@ -319,9 +397,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
               {destClub && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
                   {destClub.logoUrl && destClub.logoUrl.startsWith('http') && (
-                    <img src={destClub.logoUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                    <img src={destClub.logoUrl} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
                   )}
-                  <span style={{ fontSize: 12, color: 'var(--primary-600)', fontWeight: 600 }}>{destClub.name} ditemukan di Master Klub</span>
+                  <span style={{ fontSize: 12, color: 'var(--primary-600)', fontWeight: 600 }}>{destClub.name}</span>
                 </div>
               )}
             </div>
@@ -334,20 +412,20 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
 
           {/* Caption */}
           <div className="card" style={{ padding: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Caption / Deskripsi</div>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Caption</div>
             <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginBottom: 10 }}>
-              Caption tampil di section bawah gambar, terpisah dari foto pemain.
+              Tampil di section bawah, terpisah dari foto pemain.
             </div>
             <textarea
               className="form-textarea"
               rows={4}
-              placeholder="Contoh: Arema FC dikabarkan berminat mendatangkan gelandang asal Belanda ini untuk memperkuat lini tengah mereka di musim 2026/27."
+              placeholder="Contoh: Arema FC dikabarkan berminat mendatangkan gelandang ini untuk memperkuat lini tengah musim 2026/27."
               value={form.shortSummary || form.graphicCaption || ''}
               onChange={e => { update('shortSummary', e.target.value); update('graphicCaption', e.target.value); }}
             />
           </div>
 
-          {/* Download / Share */}
+          {/* Ekspor */}
           <div className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Ekspor Gambar</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -358,15 +436,14 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
                 <Download size={14} /> Unduh PNG (9:16)
               </LoadingButton>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--neutral-400)', marginTop: 10, lineHeight: 1.5 }}>
-              Gunakan foto portrait atau medium close-up untuk hasil terbaik. Logo klub otomatis muncul jika nama klub sesuai Master Klub.
-            </div>
           </div>
         </div>
 
         {/* ── PREVIEW ── */}
         <div style={{ position: 'sticky', top: 24 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-500)', marginBottom: 10, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>Preview 9:16</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--neutral-500)', marginBottom: 10, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Preview 9:16
+          </div>
           {graphicCard}
         </div>
       </div>
