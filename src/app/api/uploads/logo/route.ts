@@ -28,6 +28,36 @@ const slugify = (value: string) =>
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+type StorageErrorLike = {
+  message?: string;
+  statusCode?: string;
+  status?: number;
+};
+
+const isBucketNotFoundError = (error: StorageErrorLike | null) => {
+  const message = error?.message?.toLowerCase() || '';
+  return message.includes('bucket not found') || error?.statusCode === '404' || error?.status === 404;
+};
+
+const isBucketAlreadyExistsError = (error: StorageErrorLike | null) => {
+  const message = error?.message?.toLowerCase() || '';
+  return message.includes('already exists') || error?.statusCode === '409' || error?.status === 409;
+};
+
+const ensurePublicBucket = async (bucket: string) => {
+  const { error } = await supabaseAdmin.storage.createBucket(bucket, {
+    public: true,
+    fileSizeLimit: 1024 * 1024 * 5,
+    allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+  });
+
+  if (error && !isBucketAlreadyExistsError(error)) {
+    return error.message;
+  }
+
+  return null;
+};
+
 export async function POST(request: Request) {
   try {
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -58,7 +88,7 @@ export async function POST(request: Request) {
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${fileExt}`;
     const filePath = `${folder}/${fileName}`;
 
-    const { error } = await supabaseAdmin.storage
+    let uploadResult = await supabaseAdmin.storage
       .from(bucket)
       .upload(filePath, fileEntry, {
         cacheControl: '3600',
@@ -66,8 +96,27 @@ export async function POST(request: Request) {
         upsert: true,
       });
 
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    if (uploadResult.error && isBucketNotFoundError(uploadResult.error)) {
+      const bucketError = await ensurePublicBucket(bucket);
+
+      if (bucketError) {
+        return NextResponse.json(
+          { success: false, error: `Bucket ${bucket} belum ada dan gagal dibuat otomatis: ${bucketError}` },
+          { status: 400 }
+        );
+      }
+
+      uploadResult = await supabaseAdmin.storage
+        .from(bucket)
+        .upload(filePath, fileEntry, {
+          cacheControl: '3600',
+          contentType: fileEntry.type,
+          upsert: true,
+        });
+    }
+
+    if (uploadResult.error) {
+      return NextResponse.json({ success: false, error: uploadResult.error.message }, { status: 400 });
     }
 
     const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(filePath);
