@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
 import { APP_LOGO_SRC } from '@/logic/utils';
-import { ChevronRight, Edit3, Eye, Image as ImageIcon, Plus, X } from 'lucide-react';
+import { ChevronRight, Edit3, Eye, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react';
 
 export default function RumorsListView() {
   const router = useRouter();
-  const { rumors, clubs, hasPermission } = useApp();
+  const { rumors, setRumors, clubs, hasPermission, logAction, triggerToast } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'board'>('board');
   const [selectedRumor, setSelectedRumor] = useState<Rumor | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleCreateNew = () => {
     router.push('/rumors?edit=new');
@@ -19,6 +20,14 @@ export default function RumorsListView() {
 
   const handleEdit = (id: string) => {
     router.push(`/rumors?edit=${id}`);
+  };
+
+  const handleDelete = (rumor: Rumor) => {
+    setRumors(prev => prev.filter(item => item.id !== rumor.id));
+    if (selectedRumor?.id === rumor.id) setSelectedRumor(null);
+    setConfirmDeleteId(null);
+    logAction('DELETE_RUMOR', 'Rumor & Transfer', rumor.headline || rumor.player || rumor.id);
+    triggerToast('Rumor berhasil dihapus.');
   };
 
   const getDestinationClub = (rumor: Rumor) => clubs.find(c =>
@@ -212,21 +221,76 @@ export default function RumorsListView() {
                 </div>
                 <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                   <span style={{ fontSize: 11, color: 'var(--neutral-500)' }}>{rumor.fromClub || 'Asal belum diketahui'}</span>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className="btn btn-sm btn-secondary"
-                    onClick={(event) => { event.stopPropagation(); handleEdit(rumor.id); }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        handleEdit(rumor.id);
-                      }
-                    }}
-                  >
-                    <Edit3 size={13} /> Edit
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {confirmDeleteId === rumor.id ? (
+                      <>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="btn btn-sm btn-danger"
+                          onClick={(event) => { event.stopPropagation(); handleDelete(rumor); }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              handleDelete(rumor);
+                            }
+                          }}
+                        >
+                          Ya
+                        </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="btn btn-sm btn-secondary"
+                          onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(null); }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setConfirmDeleteId(null);
+                            }
+                          }}
+                        >
+                          Batal
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="btn btn-sm btn-secondary"
+                          onClick={(event) => { event.stopPropagation(); handleEdit(rumor.id); }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              handleEdit(rumor.id);
+                            }
+                          }}
+                        >
+                          <Edit3 size={13} /> Edit
+                        </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="btn btn-sm btn-secondary"
+                          style={{ color: 'var(--danger-600)' }}
+                          onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(rumor.id); }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setConfirmDeleteId(rumor.id);
+                            }
+                          }}
+                        >
+                          <Trash2 size={13} /> Hapus
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -260,6 +324,20 @@ export default function RumorsListView() {
                     <button className="btn btn-sm btn-secondary" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); handleEdit(rumor.id); }}>
                       <Edit3 size={13} /> Edit
                     </button>
+                    {confirmDeleteId === rumor.id ? (
+                      <>
+                        <button className="btn btn-sm btn-danger" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); handleDelete(rumor); }}>
+                          Ya
+                        </button>
+                        <button className="btn btn-sm btn-secondary" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(null); }}>
+                          Batal
+                        </button>
+                      </>
+                    ) : (
+                      <button className="btn btn-sm btn-secondary" style={{ marginLeft: 8, color: 'var(--danger-600)' }} onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(rumor.id); }}>
+                        <Trash2 size={13} /> Hapus
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -307,6 +385,20 @@ export default function RumorsListView() {
               <button type="button" className="btn btn-md btn-primary" onClick={() => handleEdit(selectedRumor.id)}>
                 <Edit3 size={15} /> Edit Rumor
               </button>
+              {confirmDeleteId === selectedRumor.id ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" className="btn btn-md btn-danger" onClick={() => handleDelete(selectedRumor)}>
+                    Ya, Hapus
+                  </button>
+                  <button type="button" className="btn btn-md btn-secondary" onClick={() => setConfirmDeleteId(null)}>
+                    Batal
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="btn btn-md btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(selectedRumor.id)}>
+                  <Trash2 size={15} /> Hapus Rumor
+                </button>
+              )}
             </div>
           </div>
         </div>
