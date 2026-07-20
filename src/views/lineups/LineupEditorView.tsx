@@ -19,10 +19,7 @@ import * as htmlToImage from 'html-to-image';
 import {
   getEffectiveMatchStatus,
   getEffectiveLineupStatus,
-  renderPublishedStoryFlag,
-  APP_NAME,
-  APP_HANDLE,
-  APP_LOGO_SRC
+  renderPublishedStoryFlag
 } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
 
@@ -31,6 +28,7 @@ interface AsingEntry { id: string; name: string; no: number; pos: string; }
 export default function LineupEditorView({ matchId }: { matchId: string }) {
   const router = useRouter();
   const {
+    appSettings,
     clubs,
     players,
     matches,
@@ -269,7 +267,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
       const shareData: ShareData = {
         files: [file],
         title: `${homeClub?.shortName || 'HOME'} vs ${awayClub?.shortName || 'AWAY'}`,
-        text: 'Lineup Gosball',
+        text: `Lineup ${appSettings.appName}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
@@ -795,7 +793,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                   <div style={{ fontSize: 12, fontWeight: 800, color: 'white', letterSpacing: 0.3, marginTop: 1 }}>SUSUNAN PEMAIN</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: 48 }}>
-                  <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 44, height: 32, objectFit: 'contain' }} />
+                  <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 44, height: 32, objectFit: 'contain' }} />
                 </div>
               </div>
 
@@ -962,8 +960,8 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                 borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: 7, color: '#3a3a3a', marginTop: 1 }}>{venueName}</div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
-                  <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{APP_HANDLE}</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>{appSettings.appName.toUpperCase()}</div>
+                  <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{appSettings.appHandle}</div>
                 </div>
               </div>
 

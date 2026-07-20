@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
-import { APP_LOGO_SRC } from '@/logic/utils';
 import { ArrowLeft, Download, Image as ImageIcon, Save, Share2, Upload } from 'lucide-react';
 import LoadingButton from '@/views/shared/LoadingButton';
 import * as htmlToImage from 'html-to-image';
@@ -31,7 +30,7 @@ const getErrorMessage = (err: unknown, fallback: string) => (
 
 export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const router = useRouter();
-  const { clubs, rumors, setRumors, logAction, triggerToast } = useApp();
+  const { appSettings, clubs, rumors, setRumors, logAction, triggerToast } = useApp();
   const [draftId] = useState(() => `rumor-${Date.now()}`);
   const isNew = rumorId === 'new';
   const existing = rumors.find(item => item.id === rumorId);
@@ -281,9 +280,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
         {/* Brand logo */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10 }}>
           <img
-            src={APP_LOGO_SRC}
+            src={appSettings.appLogoSrc}
             crossOrigin="anonymous"
-            alt="Media Tools"
+            alt={appSettings.appName}
             style={{ height: 24, objectFit: 'contain', opacity: 0.9, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.75))' }}
           />
         </div>

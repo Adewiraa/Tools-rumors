@@ -4,12 +4,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
-import { APP_LOGO_SRC } from '@/logic/utils';
 import { ChevronRight, Edit3, Eye, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react';
 
 export default function RumorsListView() {
   const router = useRouter();
-  const { rumors, setRumors, clubs, hasPermission, logAction, triggerToast } = useApp();
+  const { appSettings, rumors, setRumors, clubs, hasPermission, logAction, triggerToast } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'board'>('board');
   const [selectedRumor, setSelectedRumor] = useState<Rumor | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -137,9 +136,9 @@ export default function RumorsListView() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10 * scale }}>
             <img
-              src={APP_LOGO_SRC}
+              src={appSettings.appLogoSrc}
               crossOrigin="anonymous"
-              alt="Media Tools"
+              alt={appSettings.appName}
               style={{ height: 24 * scale, objectFit: 'contain', opacity: 0.9, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.75))' }}
             />
           </div>

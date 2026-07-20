@@ -15,6 +15,7 @@ import {
 export default function LineupsListView() {
   const router = useRouter();
   const {
+    appSettings,
     matches,
     players,
     competitions,
@@ -86,7 +87,7 @@ export default function LineupsListView() {
       const shareData: ShareData = {
         files: [file],
         title: `${match.homeClubName} vs ${match.awayClubName}`,
-        text: 'Lineup Gosball',
+        text: `Lineup ${appSettings.appName}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
@@ -246,6 +247,7 @@ export default function LineupsListView() {
                 players={players}
                 competitions={competitions}
                 elementId={getLineupOutputElementId(previewMatch.id)}
+                appSettings={appSettings}
               />
             </div>
           </div>

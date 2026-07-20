@@ -24,10 +24,6 @@ import {
   Radio
 } from 'lucide-react';
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
-import {
-  APP_NAME,
-  APP_LOGO_SRC
-} from '@/logic/utils';
 import { Match } from '@/lib/mockData';
 
 type NavSection = {
@@ -75,6 +71,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   const activeMenu = pathname.split('/')[1] || 'dashboard';
 
   const {
+    appSettings,
     matches,
     currentUserRole,
     uiState,
@@ -150,8 +147,8 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--navy-900)' }}>
               <div className="flex align-center gap-8">
-                <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 30, height: 30, objectFit: 'contain', borderRadius: 8, background: '#050505' }} />
-                <span style={{ fontWeight: 700, color: 'var(--white)', fontSize: 16 }}>{APP_NAME}</span>
+                <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 30, height: 30, objectFit: 'contain', borderRadius: 8, background: '#050505' }} />
+                <span style={{ fontWeight: 700, color: 'var(--white)', fontSize: 16 }}>{appSettings.appName}</span>
               </div>
               <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setMobileDrawerOpen(false)}>
                 <X size={20} />
@@ -186,7 +183,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                   {currentUserRole[0]}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>Admin Gosball</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>Admin {appSettings.appName}</div>
                   <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{currentUserRole}</div>
                 </div>
               </div>
@@ -202,10 +199,10 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           {!sidebarCollapsed ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
+                <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--white)', letterSpacing: 0.3 }}>{APP_NAME}</div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--primary-600)', letterSpacing: 1, marginTop: -1 }}>MEDIA APP</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--white)', letterSpacing: 0.3 }}>{appSettings.appName}</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--primary-600)', letterSpacing: 1, marginTop: -1 }}>{appSettings.appSubtitle}</div>
                 </div>
               </div>
               <button onClick={() => setSidebarCollapsed(true)} style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'flex' }} title="Sembunyikan Sidebar">
@@ -214,7 +211,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             </div>
           ) : (
             <button onClick={() => setSidebarCollapsed(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }} title="Tampilkan Sidebar">
-              <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
+              <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
             </button>
           )}
         </div>
@@ -256,7 +253,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                 {currentUserRole[0]}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Admin Gosball</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Admin {appSettings.appName}</div>
                 <div style={{ fontSize: 10, color: 'var(--neutral-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUserRole}</div>
               </div>
               <Link href="/settings" style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', flexShrink: 0 }} title="Pengaturan">

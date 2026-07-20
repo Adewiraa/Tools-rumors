@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 
-const ALLOWED_BUCKETS = new Set(['club-logos', 'competition-logos']);
+const ALLOWED_BUCKETS = new Set(['club-logos', 'competition-logos', 'brand-logos']);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

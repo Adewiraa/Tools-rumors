@@ -14,10 +14,7 @@ import {
   getTimelineWithResultGraphicSettings,
   hasHalfTimeScoreValues,
   getEffectiveLineupStatus,
-  ResultGraphicSettings,
-  APP_LOGO_SRC,
-  APP_NAME,
-  APP_HANDLE
+  ResultGraphicSettings
 } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
 
@@ -32,6 +29,7 @@ interface MatchEvent {
 export default function ResultEditorView({ matchId }: { matchId: string }) {
   const router = useRouter();
   const {
+    appSettings,
     matches,
     setMatches,
     clubs,
@@ -1167,7 +1165,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                   <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                     {effectiveGraphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
                   </span>
-                  <img src={APP_LOGO_SRC} alt="" style={{ height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
+                  <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
                 </div>
               </div>
 
@@ -1242,7 +1240,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
               {/* Footer */}
               <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
-                <span>{APP_HANDLE}</span>
+                <span>{appSettings.appHandle}</span>
               </div>
             </div>
           </>

@@ -16,6 +16,8 @@ import {
   calculateClubCompleteness
 } from '@/lib/mockData';
 import { supabase } from '@/lib/supabaseClient';
+import { DEFAULT_APP_SETTINGS, normalizeAppSettings } from '@/logic/utils';
+import type { AppSettings } from '@/logic/utils';
 
 export type UserRole = 'Super Admin' | 'Admin Data' | 'Match Editor' | 'Rumor Editor' | 'Reviewer';
 export type ActiveMenu = 'dashboard' | 'schedule' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings';
@@ -34,6 +36,8 @@ interface AppContextType {
   setMatches: React.Dispatch<React.SetStateAction<Match[]>>;
   rumors: Rumor[];
   setRumors: React.Dispatch<React.SetStateAction<Rumor[]>>;
+  appSettings: AppSettings;
+  setAppSettings: (settings: Partial<AppSettings>) => void;
   auditLogs: AuditLog[];
   setAuditLogs: React.Dispatch<React.SetStateAction<AuditLog[]>>;
   competitions: Competition[];
@@ -64,11 +68,15 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const RUMORS_STORAGE_KEY = 'gosball_rumors_cache';
+const APP_SETTINGS_STORAGE_KEY = 'gosball_app_settings';
+
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clubs, setClubs] = useState<Club[]>(INITIAL_CLUBS);
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [rumors, setRumors] = useState<Rumor[]>(INITIAL_RUMORS);
+  const [rumors, setRumorsState] = useState<Rumor[]>(INITIAL_RUMORS);
+  const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [competitions, setCompetitions] = useState<Competition[]>(INITIAL_COMPETITIONS);
   
@@ -82,12 +90,33 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  // Load user role from localStorage if available
+  // Load browser-only preferences and draft assets.
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedRole = localStorage.getItem('gosball_admin_role') as UserRole;
       if (savedRole) {
         setCurrentUserRoleState(savedRole);
+      }
+
+      const savedRumors = localStorage.getItem(RUMORS_STORAGE_KEY);
+      if (savedRumors) {
+        try {
+          const parsedRumors = JSON.parse(savedRumors);
+          if (Array.isArray(parsedRumors)) {
+            setRumorsState(parsedRumors);
+          }
+        } catch (error) {
+          console.warn('Cache rumor tidak bisa dibaca:', error);
+        }
+      }
+
+      const savedSettings = localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
+      if (savedSettings) {
+        try {
+          setAppSettingsState(normalizeAppSettings(JSON.parse(savedSettings)));
+        } catch (error) {
+          console.warn('Cache pengaturan aplikasi tidak bisa dibaca:', error);
+        }
       }
     }
   }, []);
@@ -96,6 +125,32 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setCurrentUserRoleState(role);
     if (typeof window !== 'undefined') {
       localStorage.setItem('gosball_admin_role', role);
+    }
+  };
+
+  const setRumors: React.Dispatch<React.SetStateAction<Rumor[]>> = (value) => {
+    setRumorsState(prev => {
+      const next = typeof value === 'function'
+        ? (value as (prevState: Rumor[]) => Rumor[])(prev)
+        : value;
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(RUMORS_STORAGE_KEY, JSON.stringify(next));
+        } catch (error) {
+          console.warn('Cache rumor tidak bisa disimpan:', error);
+        }
+      }
+
+      return next;
+    });
+  };
+
+  const setAppSettings = (settings: Partial<AppSettings>) => {
+    const nextSettings = normalizeAppSettings(settings);
+    setAppSettingsState(nextSettings);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(nextSettings));
     }
   };
 
@@ -241,6 +296,17 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           console.warn('Gagal load matches dari Supabase, pakai data lokal:', matchErr);
         }
 
+        // 5. Fetch app identity if the settings table already exists.
+        try {
+          const settingsRes = await fetch('/api/settings');
+          const settingsJson = await settingsRes.json();
+          if (settingsJson.success && settingsJson.data) {
+            setAppSettings(settingsJson.data);
+          }
+        } catch (settingsErr) {
+          console.warn('Gagal load pengaturan aplikasi, pakai cache lokal:', settingsErr);
+        }
+
         setUiState('default');
         triggerToast('Berhasil memuat data dari Supabase!', 'success');
       } catch (error) {
@@ -264,6 +330,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setMatches,
         rumors,
         setRumors,
+        appSettings,
+        setAppSettings,
         auditLogs,
         setAuditLogs,
         competitions,

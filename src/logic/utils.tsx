@@ -2,9 +2,30 @@ import React from 'react';
 import { Club, Player, Match, Competition } from '@/lib/mockData';
 import { countriesList } from '@/lib/countriesData';
 
-export const APP_NAME = 'Gosball';
-export const APP_LOGO_SRC = '/brand/gosball-alt.png';
-export const APP_HANDLE = '@GOSBALL';
+export type AppSettings = {
+  appName: string;
+  appHandle: string;
+  appLogoSrc: string;
+  appSubtitle: string;
+};
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  appName: 'Gosball',
+  appHandle: '@GOSBALL',
+  appLogoSrc: '/brand/gosball-alt.png',
+  appSubtitle: 'MEDIA APP',
+};
+
+export const normalizeAppSettings = (value?: Partial<AppSettings> | null): AppSettings => ({
+  appName: value?.appName?.trim() || DEFAULT_APP_SETTINGS.appName,
+  appHandle: value?.appHandle?.trim() || DEFAULT_APP_SETTINGS.appHandle,
+  appLogoSrc: value?.appLogoSrc?.trim() || DEFAULT_APP_SETTINGS.appLogoSrc,
+  appSubtitle: value?.appSubtitle?.trim() || DEFAULT_APP_SETTINGS.appSubtitle,
+});
+
+export const APP_NAME = DEFAULT_APP_SETTINGS.appName;
+export const APP_LOGO_SRC = DEFAULT_APP_SETTINGS.appLogoSrc;
+export const APP_HANDLE = DEFAULT_APP_SETTINGS.appHandle;
 
 export const generateUUID = (): string => {
   if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {

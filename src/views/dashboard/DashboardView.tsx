@@ -5,14 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
 import {
-  APP_NAME,
   getEffectiveLineupStatus,
   getEffectiveMatchStatus
 } from '@/logic/utils';
 
 export default function DashboardView() {
   const router = useRouter();
-  const { matches, rumors, clubs, players, auditLogs } = useApp();
+  const { appSettings, matches, rumors, clubs, players, auditLogs } = useApp();
 
   // KPI Calculations
   const totalMatchesToday = matches.filter(m => getEffectiveMatchStatus(m) === 'Live').length;
@@ -34,7 +33,7 @@ export default function DashboardView() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       {/* Page Title */}
       <div>
-        <h1 className="page-title">{APP_NAME}</h1>
+        <h1 className="page-title">{appSettings.appName}</h1>
         <p className="page-description">Ringkasan operasional media olahraga hari ini: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 

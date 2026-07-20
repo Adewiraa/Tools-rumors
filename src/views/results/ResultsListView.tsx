@@ -13,15 +13,14 @@ import {
   hasSavedHalfTimeResult,
   hasHalfTimeScoreValues,
   getResultGraphicSettings,
-  getMatchTimelineEvents,
-  APP_NAME,
-  APP_HANDLE,
-  APP_LOGO_SRC
+  getMatchTimelineEvents
 } from '@/logic/utils';
+import type { AppSettings } from '@/logic/utils';
 
 export default function ResultsListView() {
   const router = useRouter();
   const {
+    appSettings,
     matches,
     competitions,
     hasPermission,
@@ -251,6 +250,7 @@ export default function ResultsListView() {
                         competitions={competitions}
                         elementId={getResultOutputElementId(timelineMatch.id, 'HT')}
                         graphicType="HT"
+                        appSettings={appSettings}
                       />
                       <div className="output-preview-actions">
                         <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'HT')} disabled={isExportingResultOutput}>
@@ -269,6 +269,7 @@ export default function ResultsListView() {
                     competitions={competitions}
                     elementId={getResultOutputElementId(timelineMatch.id, 'FT')}
                     graphicType="FT"
+                    appSettings={appSettings}
                   />
                   <div className="output-preview-actions">
                     <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'FT')} disabled={isExportingResultOutput}>
@@ -288,11 +289,12 @@ export default function ResultsListView() {
   );
 }
 
-function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }: {
+function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, appSettings }: {
   match: Match;
   competitions: Competition[];
   elementId: string;
   graphicType: 'HT' | 'FT';
+  appSettings: AppSettings;
 }) {
   type TimelineOutputEvent = { id?: string; minute?: number; type?: string; playerName?: string; clubId?: string };
   const events = (getMatchTimelineEvents(match.timeline) as TimelineOutputEvent[]).slice().sort((a, b) => (a.minute || 0) - (b.minute || 0));
@@ -428,7 +430,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
           <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
             {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
           </span>
-          <img src={APP_LOGO_SRC} alt="" style={{ height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
+          <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
         </div>
       </div>
 
@@ -501,7 +503,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType }
       </div>
 
       <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
-        <span>{APP_HANDLE}</span>
+        <span>{appSettings.appHandle}</span>
       </div>
     </div>
   );

@@ -3,20 +3,20 @@
 import React from 'react';
 import { Match, Player, Competition } from '@/lib/mockData';
 import {
+  DEFAULT_APP_SETTINGS,
   renderPublishedStoryFlag,
-  APP_NAME,
-  APP_HANDLE,
-  APP_LOGO_SRC
 } from '@/logic/utils';
+import type { AppSettings } from '@/logic/utils';
 
 interface PublishedLineupStoryCardProps {
   match: Match;
   players: Player[];
   competitions: Competition[];
   elementId: string;
+  appSettings?: AppSettings;
 }
 
-export default function PublishedLineupStoryCard({ match, players, competitions, elementId }: PublishedLineupStoryCardProps) {
+export default function PublishedLineupStoryCard({ match, players, competitions, elementId, appSettings = DEFAULT_APP_SETTINGS }: PublishedLineupStoryCardProps) {
   const positionOrder = ['Goalkeeper', 'Defender', 'Midfielder', 'Forward'];
   const homeSquad = players.filter(p => p.clubId === match.homeClubId);
   const awaySquad = players.filter(p => p.clubId === match.awayClubId);
@@ -119,7 +119,7 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
           <div style={{ fontSize: 7, fontWeight: 700, color: '#c8a84b', letterSpacing: 2, textTransform: 'uppercase' }}>{match.competition}</div>
           <div style={{ fontSize: 12, fontWeight: 800, color: 'white', letterSpacing: 0.3, marginTop: 1 }}>SUSUNAN PEMAIN</div>
         </div>
-        <img src={APP_LOGO_SRC} alt={APP_NAME} style={{ width: 44, height: 32, objectFit: 'contain' }} />
+        <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 44, height: 32, objectFit: 'contain' }} />
       </div>
 
       <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -153,8 +153,8 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
         borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ fontSize: 7, color: '#3a3a3a', marginTop: 1 }}>{match.venue}</div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>GOSBALL</div>
-          <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{APP_HANDLE}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#c8a84b', letterSpacing: 1 }}>{appSettings.appName.toUpperCase()}</div>
+          <div style={{ fontSize: 7, color: '#444', marginTop: 1 }}>{appSettings.appHandle}</div>
         </div>
       </div>
       <div style={{ height: 3, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)' }} />

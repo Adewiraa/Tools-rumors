@@ -23,11 +23,7 @@ import {
   getEffectiveMatchStatus,
   getEffectiveLineupStatus,
   hasSavedLineupSelection,
-  hasPublishedLineupSnapshot,
-  renderPublishedStoryFlag,
-  APP_NAME,
-  APP_HANDLE,
-  APP_LOGO_SRC
+  hasPublishedLineupSnapshot
 } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
@@ -35,6 +31,7 @@ import LoadingButton from '@/views/shared/LoadingButton';
 export default function ScheduleListView() {
   const router = useRouter();
   const {
+    appSettings,
     matches,
     setMatches,
     players,
@@ -114,7 +111,7 @@ export default function ScheduleListView() {
       const shareData: ShareData = {
         files: [file],
         title: `${match.homeClubName} vs ${match.awayClubName}`,
-        text: 'Lineup Gosball',
+        text: `Lineup ${appSettings.appName}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
@@ -381,6 +378,7 @@ export default function ScheduleListView() {
               players={players}
               competitions={competitions}
               elementId={getPublishedStoryElementId(previewMatch.id)}
+              appSettings={appSettings}
             />
           </div>
         </div>
