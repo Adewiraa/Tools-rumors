@@ -153,6 +153,9 @@ export interface Rumor {
   author: string;
   publishDate?: string;
   playerImageUrl?: string;
+  playerImagePositionX?: number;
+  playerImagePositionY?: number;
+  playerImageZoom?: number;
   graphicCaption?: string;
 }
 

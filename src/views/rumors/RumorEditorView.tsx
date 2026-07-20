@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
-import { APP_HANDLE, APP_LOGO_SRC } from '@/logic/utils';
+import { APP_LOGO_SRC } from '@/logic/utils';
 import { ArrowLeft, Download, Image as ImageIcon, Save, Share2, Upload } from 'lucide-react';
 import LoadingButton from '@/views/shared/LoadingButton';
 import * as htmlToImage from 'html-to-image';
@@ -21,14 +21,23 @@ const getImageAsDataUrl = (file: File) => new Promise<string>((resolve, reject) 
   reader.readAsDataURL(file);
 });
 
+type ShareNavigator = Navigator & {
+  canShare?: (data: ShareData) => boolean;
+};
+
+const getErrorMessage = (err: unknown, fallback: string) => (
+  err instanceof Error && err.message ? err.message : fallback
+);
+
 export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const router = useRouter();
   const { clubs, rumors, setRumors, logAction, triggerToast } = useApp();
+  const [draftId] = useState(() => `rumor-${Date.now()}`);
   const isNew = rumorId === 'new';
   const existing = rumors.find(item => item.id === rumorId);
 
   const base: Rumor = existing || {
-    id: `rumor-${Date.now()}`,
+    id: draftId,
     headline: '',
     player: '',
     fromClub: '',
@@ -50,9 +59,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const [isExporting, setIsExporting] = useState(false);
 
   // ── Posisi foto (seperti match result) ────────────────────────────────────
-  const [posX, setPosX] = useState(50);
-  const [posY, setPosY] = useState(20);
-  const [zoom, setZoom] = useState(100);
+  const [posX, setPosX] = useState(base.playerImagePositionX ?? 50);
+  const [posY, setPosY] = useState(base.playerImagePositionY ?? 20);
+  const [zoom, setZoom] = useState(base.playerImageZoom ?? 100);
 
   const update = <K extends keyof Rumor>(key: K, value: Rumor[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
@@ -79,6 +88,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     shortSummary: caption,
     articleBody: caption,
     graphicCaption: caption,
+    playerImagePositionX: posX,
+    playerImagePositionY: posY,
+    playerImageZoom: zoom,
     author: form.author || 'Rumor Editor',
   });
 
@@ -89,8 +101,11 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     try {
       const dataUrl = await getImageAsDataUrl(file);
       update('playerImageUrl', dataUrl);
+      setPosX(50);
+      setPosY(20);
+      setZoom(100);
       triggerToast('Foto pemain diterapkan ke preview.');
-    } catch (err: any) { triggerToast(err.message || 'Gagal membaca gambar.', 'error'); }
+    } catch (err: unknown) { triggerToast(getErrorMessage(err, 'Gagal membaca gambar.'), 'error'); }
     finally { e.target.value = ''; }
   };
 
@@ -110,7 +125,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       const a = document.createElement('a');
       a.download = fileName; a.href = dataUrl; a.click();
       triggerToast('Gambar berhasil diunduh.');
-    } catch (err: any) { triggerToast(err.message || 'Gagal mengunduh.', 'error'); }
+    } catch (err: unknown) { triggerToast(getErrorMessage(err, 'Gagal mengunduh.'), 'error'); }
     finally { setIsExporting(false); }
   };
 
@@ -121,17 +136,19 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       const { blob, dataUrl, fileName } = await exportGraphic();
       const saved = buildSaved();
       const file = new File([blob], fileName, { type: 'image/png' });
-      const nav = navigator as any;
-      if (typeof nav.share === 'function' && nav.canShare?.({ files: [file] })) {
-        await nav.share({ files: [file], title: saved.headline, text: caption });
+      const nav = navigator as ShareNavigator;
+      const shareData: ShareData = { files: [file], title: saved.headline, text: caption };
+      if (typeof nav.share === 'function' && nav.canShare?.(shareData)) {
+        await nav.share(shareData);
         triggerToast('Siap dibagikan.');
       } else {
         const a = document.createElement('a');
         a.download = fileName; a.href = dataUrl; a.click();
         triggerToast('Share tidak didukung, PNG diunduh.', 'warning');
       }
-    } catch (err: any) {
-      if ((err as any)?.name !== 'AbortError') triggerToast(err.message || 'Gagal.', 'error');
+    } catch (err: unknown) {
+      const errorName = err instanceof Error ? err.name : '';
+      if (errorName !== 'AbortError') triggerToast(getErrorMessage(err, 'Gagal.'), 'error');
     } finally { setIsExporting(false); }
   };
 
@@ -249,14 +266,13 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
           {caption || <span style={{ color: '#333' }}>Caption akan muncul di sini...</span>}
         </div>
 
-        {/* Footer — LOGO APP (bukan teks) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: 8, color: '#444', fontWeight: 600, letterSpacing: 1 }}>{APP_HANDLE}</div>
+        {/* Brand logo */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10 }}>
           <img
             src={APP_LOGO_SRC}
             crossOrigin="anonymous"
             alt="Media Tools"
-            style={{ height: 22, objectFit: 'contain', opacity: 0.85 }}
+            style={{ height: 24, objectFit: 'contain', opacity: 0.9, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.75))' }}
           />
         </div>
       </div>
@@ -359,7 +375,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
                     <span style={{ fontSize: 11, color: 'var(--neutral-500)' }}>{zoom}%</span>
                   </div>
                   <input
-                    type="range" min={80} max={200} value={zoom}
+                    type="range" min={100} max={180} value={zoom}
                     onChange={e => setZoom(Number(e.target.value))}
                     style={{ width: '100%', accentColor: 'var(--primary-600)' }}
                   />
