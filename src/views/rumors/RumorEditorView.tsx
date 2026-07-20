@@ -158,13 +158,19 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       triggerToast('Foto pemain, nama pemain, klub peminat, dan caption wajib diisi.', 'error');
       return;
     }
-    setIsSaving(true);
-    await new Promise(r => setTimeout(r, 300));
-    const saved = buildSaved();
-    setRumors(prev => isNew ? [saved, ...prev] : prev.map(r => r.id === saved.id ? saved : r));
-    logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', saved.headline);
-    triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');
-    router.push('/rumors');
+    try {
+      setIsSaving(true);
+      await new Promise(r => setTimeout(r, 300));
+      const saved = buildSaved();
+      setRumors(prev => isNew ? [saved, ...prev] : prev.map(r => r.id === saved.id ? saved : r));
+      logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', saved.headline);
+      triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');
+      setIsSaving(false);
+      router.push('/rumors');
+    } catch (err: unknown) {
+      setIsSaving(false);
+      triggerToast(getErrorMessage(err, 'Gagal menyimpan rumor.'), 'error');
+    }
   };
 
   // ── GRAPHIC 9:16 ─────────────────────────────────────────────────────────
