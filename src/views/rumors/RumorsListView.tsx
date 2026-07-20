@@ -3,12 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
-import { ChevronRight, Plus } from 'lucide-react';
+import { Rumor } from '@/lib/mockData';
+import { APP_LOGO_SRC } from '@/logic/utils';
+import { ChevronRight, Edit3, Eye, Image as ImageIcon, Plus, X } from 'lucide-react';
 
 export default function RumorsListView() {
   const router = useRouter();
-  const { rumors, hasPermission } = useApp();
+  const { rumors, clubs, hasPermission } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'board'>('board');
+  const [selectedRumor, setSelectedRumor] = useState<Rumor | null>(null);
 
   const handleCreateNew = () => {
     router.push('/rumors?edit=new');
@@ -16,6 +19,126 @@ export default function RumorsListView() {
 
   const handleEdit = (id: string) => {
     router.push(`/rumors?edit=${id}`);
+  };
+
+  const getDestinationClub = (rumor: Rumor) => clubs.find(c =>
+    c.name.trim().toLowerCase() === rumor.destinationClub.trim().toLowerCase() ||
+    c.shortName.trim().toLowerCase() === rumor.destinationClub.trim().toLowerCase()
+  );
+
+  const getCaption = (rumor: Rumor) => (
+    rumor.shortSummary || rumor.graphicCaption || rumor.headline || ''
+  ).trim();
+
+  const renderRumorGraphic = (rumor: Rumor, compact = false) => {
+    const destClub = getDestinationClub(rumor);
+    const caption = getCaption(rumor);
+    const posX = rumor.playerImagePositionX ?? 50;
+    const posY = rumor.playerImagePositionY ?? 20;
+    const zoom = rumor.playerImageZoom ?? 100;
+    const width = compact ? 180 : 360;
+    const height = compact ? 320 : 640;
+    const scale = compact ? 0.5 : 1;
+
+    return (
+      <div
+        style={{
+          width,
+          height,
+          background: '#0a0a0a',
+          color: 'white',
+          overflow: 'hidden',
+          position: 'relative',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: compact ? 'none' : '0 30px 60px rgba(0,0,0,0.35)',
+        }}
+      >
+        <div style={{ height: 3 * scale, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', flexShrink: 0, zIndex: 5 }} />
+
+        <div style={{ position: 'relative', flex: '0 0 72%', overflow: 'hidden' }}>
+          {rumor.playerImageUrl ? (
+            <img
+              src={rumor.playerImageUrl}
+              crossOrigin="anonymous"
+              alt=""
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: `${posX}% ${posY}%`,
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: `${posX}% ${posY}%`,
+              }}
+            />
+          ) : (
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #111, #1f1f1f)', display: 'grid', placeItems: 'center', color: '#444' }}>
+              <div style={{ textAlign: 'center' }}>
+                <ImageIcon size={compact ? 28 : 48} />
+                <div style={{ fontSize: compact ? 6 : 10, fontWeight: 800, letterSpacing: 1.5, marginTop: compact ? 6 : 10, textTransform: 'uppercase' }}>Upload Foto Pemain</div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, #0a0a0a 0%, rgba(10,10,10,0.55) 55%, transparent 100%)', zIndex: 1 }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '35%', background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, transparent 100%)', zIndex: 1 }} />
+
+          <div style={{ position: 'absolute', top: 14 * scale, left: 14 * scale, zIndex: 3 }}>
+            <div style={{ padding: `${5 * scale}px ${11 * scale}px`, background: '#c8a84b', borderRadius: 5 * scale }}>
+              <span style={{ fontSize: 8 * scale, fontWeight: 900, color: '#0a0a0a', letterSpacing: compact ? 0.8 : 1.5, textTransform: 'uppercase' }}>TRANSFER WATCH</span>
+            </div>
+          </div>
+
+          {destClub?.logoUrl && destClub.logoUrl.startsWith('http') && (
+            <div style={{ position: 'absolute', top: 10 * scale, right: 14 * scale, zIndex: 3 }}>
+              <img
+                src={destClub.logoUrl}
+                crossOrigin="anonymous"
+                alt=""
+                style={{ width: 52 * scale, height: 52 * scale, objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7))' }}
+              />
+            </div>
+          )}
+
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2, padding: `0 ${16 * scale}px ${14 * scale}px` }}>
+            <div style={{ fontSize: 8 * scale, fontWeight: 700, color: '#c8a84b', letterSpacing: compact ? 1.1 : 2, textTransform: 'uppercase', marginBottom: 3 * scale }}>
+              Target Player
+            </div>
+            <div style={{ fontSize: 28 * scale, fontWeight: 950, textTransform: 'uppercase', lineHeight: 1, textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
+              {rumor.player || <span style={{ color: '#444' }}>Nama Pemain</span>}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ flex: '1 1 auto', background: '#0a0a0a', borderTop: '1px solid rgba(200,168,75,0.25)', display: 'flex', flexDirection: 'column', padding: `${13 * scale}px ${16 * scale}px ${10 * scale}px` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 * scale, marginBottom: 9 * scale }}>
+            <div style={{ fontSize: 8 * scale, fontWeight: 700, color: '#666', letterSpacing: compact ? 0.8 : 1.2, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Diminati Oleh</div>
+            <div style={{ flex: 1, height: 1, background: 'rgba(200,168,75,0.2)' }} />
+            <div style={{ fontSize: 13 * scale, fontWeight: 800, color: '#fff', textTransform: 'uppercase' }}>
+              {destClub?.shortName || rumor.destinationClub || <span style={{ color: '#333' }}>Klub Tujuan</span>}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, fontSize: 12 * scale, lineHeight: 1.5, color: '#d1d5db', fontWeight: 400, overflow: 'hidden' }}>
+            {caption || <span style={{ color: '#333' }}>Caption akan muncul di sini...</span>}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 10 * scale }}>
+            <img
+              src={APP_LOGO_SRC}
+              crossOrigin="anonymous"
+              alt="Media Tools"
+              style={{ height: 24 * scale, objectFit: 'contain', opacity: 0.9, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.75))' }}
+            />
+          </div>
+        </div>
+
+        <div style={{ height: 3 * scale, background: 'linear-gradient(90deg, #c8a84b 0%, #e8cc6a 50%, #c8a84b 100%)', flexShrink: 0 }} />
+      </div>
+    );
   };
 
   return (
@@ -35,7 +158,11 @@ export default function RumorsListView() {
         )}
       </div>
 
-      <div className="card" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+      <div className="card" style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 800 }}>{rumors.length}</div>
+          <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>Rumor aktif untuk terus diperbarui</div>
+        </div>
         <div style={{ border: '1px solid var(--neutral-300)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           <button className={`btn btn-sm ${viewMode === 'board' ? 'btn-primary' : 'btn-secondary'}`} style={{ borderRadius: 0 }} onClick={() => setViewMode('board')}>Board View</button>
           <button className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}`} style={{ borderRadius: 0 }} onClick={() => setViewMode('table')}>Table View</button>
@@ -43,25 +170,64 @@ export default function RumorsListView() {
       </div>
 
       {viewMode === 'board' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
           {rumors.map(rumor => (
             <div
               key={rumor.id}
               className="card"
-              style={{ padding: 16, cursor: 'pointer', minHeight: 148, display: 'flex', flexDirection: 'column', gap: 12 }}
-              onClick={() => handleEdit(rumor.id)}
+              role="button"
+              tabIndex={0}
+              style={{
+                padding: 0,
+                overflow: 'hidden',
+                border: '1px solid var(--neutral-200)',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: 'var(--white)',
+                display: 'grid',
+                gridTemplateColumns: '118px 1fr',
+                minHeight: 190,
+              }}
+              onClick={() => setSelectedRumor(rumor)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setSelectedRumor(rumor);
+                }
+              }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <h4 style={{ fontSize: 14, fontWeight: 800, lineHeight: 1.35 }}>{rumor.headline}</h4>
-                <div style={{ fontSize: 12, color: 'var(--neutral-500)', lineHeight: 1.45 }}>
-                  {rumor.player || 'Pemain belum diisi'} menuju {rumor.destinationClub || 'Klub tujuan'}
-                </div>
+              <div style={{ background: '#0a0a0a', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {renderRumorGraphic(rumor, true)}
               </div>
-              <div
-                style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 11, color: 'var(--neutral-500)' }}
-              >
-                <span>{rumor.fromClub || 'Asal belum diketahui'}</span>
-                <span>{rumor.author}</span>
+              <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.2, textTransform: 'uppercase', color: 'var(--primary-600)' }}>Rumor Watch</span>
+                  <Eye size={16} color="var(--neutral-500)" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 850, lineHeight: 1.25, marginBottom: 8 }}>{rumor.headline || `${rumor.player} menuju ${rumor.destinationClub}`}</h3>
+                  <p style={{ fontSize: 12, color: 'var(--neutral-600)', lineHeight: 1.45 }}>
+                    {rumor.player || 'Pemain belum diisi'} menuju {rumor.destinationClub || 'Klub tujuan'}
+                  </p>
+                </div>
+                <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <span style={{ fontSize: 11, color: 'var(--neutral-500)' }}>{rumor.fromClub || 'Asal belum diketahui'}</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="btn btn-sm btn-secondary"
+                    onClick={(event) => { event.stopPropagation(); handleEdit(rumor.id); }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handleEdit(rumor.id);
+                      }
+                    }}
+                  >
+                    <Edit3 size={13} /> Edit
+                  </span>
+                </div>
               </div>
             </div>
           ))}
@@ -81,21 +247,68 @@ export default function RumorsListView() {
             </thead>
             <tbody>
               {rumors.map(rumor => (
-                <tr key={rumor.id}>
+                <tr key={rumor.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedRumor(rumor)}>
                   <td><span className="semibold">{rumor.headline}</span></td>
                   <td>{rumor.player}</td>
                   <td>{rumor.fromClub}</td>
                   <td>{rumor.destinationClub}</td>
                   <td>{rumor.author}</td>
                   <td className="text-right">
-                    <button className="btn btn-sm btn-secondary" onClick={() => handleEdit(rumor.id)}>
-                      Edit
+                    <button className="btn btn-sm btn-secondary" onClick={(event) => { event.stopPropagation(); setSelectedRumor(rumor); }}>
+                      <Eye size={13} /> Lihat
+                    </button>
+                    <button className="btn btn-sm btn-secondary" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); handleEdit(rumor.id); }}>
+                      <Edit3 size={13} /> Edit
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {selectedRumor && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1600,
+            background: 'rgba(10,10,10,0.72)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
+          onClick={() => setSelectedRumor(null)}
+        >
+          <div
+            style={{ display: 'grid', gridTemplateColumns: 'auto minmax(260px, 360px)', gap: 24, alignItems: 'center', maxWidth: '92vw' }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div style={{ maxHeight: '86vh', overflow: 'auto' }}>
+              {renderRumorGraphic(selectedRumor)}
+            </div>
+            <div style={{ color: 'white', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary"
+                style={{ alignSelf: 'flex-end', background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }}
+                onClick={() => setSelectedRumor(null)}
+              >
+                <X size={14} /> Tutup
+              </button>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, textTransform: 'uppercase', color: '#c8a84b', marginBottom: 8 }}>Preview Gambar Rumor</div>
+                <h2 style={{ fontSize: 28, lineHeight: 1.1, marginBottom: 12 }}>{selectedRumor.headline}</h2>
+                <p style={{ color: '#d1d5db', fontSize: 14, lineHeight: 1.6 }}>{getCaption(selectedRumor) || 'Caption belum diisi.'}</p>
+              </div>
+              <button type="button" className="btn btn-md btn-primary" onClick={() => handleEdit(selectedRumor.id)}>
+                <Edit3 size={15} /> Edit Rumor
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
