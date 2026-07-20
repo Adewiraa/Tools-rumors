@@ -21,7 +21,7 @@ export default function DashboardView() {
     const effectiveStatus = getEffectiveMatchStatus(m);
     return effectiveStatus !== 'Finished' && (effectiveStatus === 'Live' || getEffectiveLineupStatus(m) === 'Needs Review');
   }).length;
-  const draftRumors = rumors.filter(r => r.publicationStatus === 'Draft').length;
+  const activeRumors = rumors.length;
 
   // Data quality warning count
   const dataQualityWarnings = [
@@ -72,11 +72,11 @@ export default function DashboardView() {
 
         <div className="card" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 120 }}>
           <div>
-            <span className="text-muted" style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase' }}>Rumor Draft</span>
-            <div style={{ fontSize: 32, fontWeight: 700, marginTop: 4 }}>{draftRumors}</div>
+            <span className="text-muted" style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase' }}>Rumor Aktif</span>
+            <div style={{ fontSize: 32, fontWeight: 700, marginTop: 4 }}>{activeRumors}</div>
           </div>
           <button style={{ border: 'none', background: 'none', color: 'var(--primary-600)', fontWeight: 600, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: 0 }} onClick={() => router.push('/rumors')}>
-            Lanjutkan Draft <ChevronRight size={12} />
+            Lihat Rumor <ChevronRight size={12} />
           </button>
         </div>
       </div>

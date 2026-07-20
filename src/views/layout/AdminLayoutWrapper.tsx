@@ -320,9 +320,9 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                     </div>
                     <div style={{ padding: '8px 0', borderBottom: '1px solid var(--neutral-50)' }}>
                       <div className="flex align-center gap-8" style={{ marginBottom: 4 }}>
-                        <span className="badge badge-warning" style={{ padding: '2px 6px', fontSize: 10 }}>Rumor Draft</span>
+                        <span className="badge badge-warning" style={{ padding: '2px 6px', fontSize: 10 }}>Rumor Baru</span>
                       </div>
-                      <p style={{ fontSize: 12, color: 'var(--neutral-700)' }}>Draft rumor baru dibuat oleh Rumor Editor X.</p>
+                      <p style={{ fontSize: 12, color: 'var(--neutral-700)' }}>Rumor transfer baru dibuat oleh Rumor Editor X.</p>
                       <span style={{ fontSize: 10, color: 'var(--neutral-500)' }}>30 menit yang lalu</span>
                     </div>
                   </div>
