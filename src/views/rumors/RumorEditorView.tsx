@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
@@ -152,11 +153,6 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     } finally { setIsExporting(false); }
   };
 
-  const returnToRumorsList = () => {
-    setIsSaving(false);
-    router.replace('/rumors');
-  };
-
   const handleSave = async () => {
     if (isSaving) return;
     if (!form.player.trim() || !form.destinationClub.trim() || !caption || !form.playerImageUrl?.trim()) {
@@ -299,9 +295,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       {/* Header */}
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button type="button" className="btn btn-sm btn-secondary" onClick={returnToRumorsList}>
+          <Link href="/rumors" replace className="btn btn-sm btn-secondary" style={{ position: 'relative', zIndex: 10, pointerEvents: 'auto' }}>
             <ArrowLeft size={16} /> Kembali
-          </button>
+          </Link>
           <div>
             <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Rumor' : 'Edit Rumor'}</h1>
             <p className="page-description" style={{ marginTop: 4 }}>
