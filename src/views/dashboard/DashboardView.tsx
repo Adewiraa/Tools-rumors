@@ -257,7 +257,7 @@ export default function DashboardView() {
               {activeRumorsCount}
             </div>
             <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginTop: 2 }}>
-              {hotRumorsCount} rumor berkategori Hot / Tier A
+              Rumor aktif siap di-edit & di-bagikan
             </div>
           </div>
           <button
@@ -473,34 +473,63 @@ export default function DashboardView() {
                     padding: 12,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 8,
-                    backgroundColor: rumor.reliabilityTier === 'A' || rumor.transferStatus === 'Here We Go' ? 'rgba(254, 243, 199, 0.3)' : 'var(--neutral-50)'
+                    gap: 10,
+                    backgroundColor: 'var(--white)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                   }}
                 >
                   <div className="flex justify-between align-center">
-                    <div className="flex align-center gap-6">
-                      <span className={`badge ${rumorTypeBadgeClass(rumor.type)}`} style={{ fontSize: 10, padding: '1px 6px' }}>
-                        {rumor.type.toUpperCase()}
-                      </span>
-                      <span className={`badge ${reliabilityBadgeClass(rumor.reliabilityTier)}`} style={{ fontSize: 10, padding: '1px 6px' }}>
-                        TIER {rumor.reliabilityTier}
-                      </span>
+                    <span style={{
+                      fontSize: 9,
+                      fontWeight: 900,
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                      color: '#0a0a0a',
+                      backgroundColor: '#c8a84b',
+                      padding: '2px 8px',
+                      borderRadius: 4
+                    }}>
+                      TRANSFER WATCH
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--neutral-500)', fontWeight: 500 }}>
+                      By {rumor.author || 'Rumor Editor'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div style={{
+                      width: 42,
+                      height: 52,
+                      borderRadius: 6,
+                      overflow: 'hidden',
+                      background: '#0a0a0a',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      border: '1px solid var(--neutral-200)'
+                    }}>
+                      {rumor.playerImageUrl ? (
+                        <img src={rumor.playerImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Flame size={20} color="#c8a84b" />
+                      )}
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: rumor.probability >= 80 ? 'var(--success-600)' : 'var(--warning-600)' }}>
-                      {rumor.probability}% Probabilitas
-                    </span>
-                  </div>
 
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--neutral-900)', lineHeight: 1.3 }}>
-                    {rumor.headline}
-                  </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--neutral-900)', lineHeight: 1.25, marginBottom: 4 }}>
+                        {rumor.headline || `${rumor.player} menuju ${rumor.destinationClub}`}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--neutral-600)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--neutral-800)' }}>{rumor.player || 'Nama Pemain'}</span>
+                        <span style={{ color: 'var(--neutral-400)' }}>•</span>
+                        <span>{rumor.fromClub || 'Free Agent'} ➔ <strong style={{ color: 'var(--primary-700)' }}>{rumor.destinationClub || 'Klub Tujuan'}</strong></span>
+                      </div>
+                    </div>
 
-                  <div className="flex justify-between align-center" style={{ fontSize: 11, color: 'var(--neutral-600)' }}>
-                    <span>
-                      <strong style={{ color: 'var(--neutral-800)' }}>{rumor.player}</strong>: {rumor.fromClub} ➔ <span style={{ color: 'var(--primary-600)', fontWeight: 600 }}>{rumor.destinationClub}</span>
-                    </span>
                     <button
-                      style={{ border: 'none', background: 'none', color: 'var(--primary-600)', fontWeight: 600, fontSize: 11, cursor: 'pointer', padding: 0 }}
+                      className="btn btn-sm btn-secondary"
+                      style={{ fontSize: 11, padding: '4px 10px', flexShrink: 0 }}
                       onClick={() => router.push(`/rumors?edit=${rumor.id}`)}
                     >
                       Detail ➔
