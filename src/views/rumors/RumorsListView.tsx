@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
-import { ChevronRight, Edit3, Eye, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react';
+import { ChevronRight, Download, Edit3, Eye, Image as ImageIcon, Plus, Share2, Trash2, X } from 'lucide-react';
+import * as htmlToImage from 'html-to-image';
 
 export default function RumorsListView() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function RumorsListView() {
   const [viewMode, setViewMode] = useState<'table' | 'board'>('board');
   const [selectedRumor, setSelectedRumor] = useState<Rumor | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleCreateNew = () => {
     router.push('/rumors?edit=new');
@@ -38,7 +40,68 @@ export default function RumorsListView() {
     rumor.shortSummary || rumor.graphicCaption || rumor.headline || ''
   ).trim();
 
-  const renderRumorGraphic = (rumor: Rumor, compact = false) => {
+  const exportRumorGraphic = async (rumor: Rumor) => {
+    const node = document.getElementById(`rumor-modal-graphic-${rumor.id}`);
+    if (!node) throw new Error('Preview tidak ditemukan.');
+    const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
+    const blob = await (await fetch(dataUrl)).blob();
+    const fileName = `Rumor_${rumor.player || 'Pemain'}_${rumor.destinationClub || 'Klub'}.png`.replace(/[^\w.-]+/g, '_');
+    return { dataUrl, blob, fileName };
+  };
+
+  const handleDownloadRumor = async (rumor: Rumor) => {
+    try {
+      setIsExporting(true);
+      triggerToast('Mengunduh gambar rumor...');
+      const { dataUrl, fileName } = await exportRumorGraphic(rumor);
+      const a = document.createElement('a');
+      a.download = fileName;
+      a.href = dataUrl;
+      a.click();
+      triggerToast('Gambar rumor berhasil diunduh!');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal mengunduh gambar.';
+      triggerToast(msg, 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleShareRumor = async (rumor: Rumor) => {
+    try {
+      setIsExporting(true);
+      triggerToast('Membuat gambar rumor...');
+      const { blob, fileName } = await exportRumorGraphic(rumor);
+      const file = new File([blob], fileName, { type: 'image/png' });
+      const nav = navigator as any;
+      const shareData: ShareData = {
+        files: [file],
+        title: rumor.headline,
+        text: getCaption(rumor),
+      };
+      if (typeof nav.share === 'function' && nav.canShare?.(shareData)) {
+        await nav.share(shareData);
+        triggerToast('Gambar rumor siap dibagikan.');
+      } else {
+        const { dataUrl } = await exportRumorGraphic(rumor);
+        const a = document.createElement('a');
+        a.download = fileName;
+        a.href = dataUrl;
+        a.click();
+        triggerToast('Share langsung belum didukung di perangkat ini. PNG diunduh.', 'warning');
+      }
+    } catch (err: unknown) {
+      const errorName = err instanceof Error ? err.name : '';
+      if (errorName !== 'AbortError') {
+        const msg = err instanceof Error ? err.message : 'Gagal membagikan gambar.';
+        triggerToast(msg, 'error');
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const renderRumorGraphic = (rumor: Rumor, compact = false, elementId?: string) => {
     const destClub = getDestinationClub(rumor);
     const caption = getCaption(rumor);
     const posX = rumor.playerImagePositionX ?? 50;
@@ -50,6 +113,7 @@ export default function RumorsListView() {
 
     return (
       <div
+        id={elementId}
         style={{
           width,
           height,
@@ -361,11 +425,11 @@ export default function RumorsListView() {
           onClick={() => setSelectedRumor(null)}
         >
           <div
-            style={{ display: 'grid', gridTemplateColumns: 'auto minmax(260px, 360px)', gap: 24, alignItems: 'center', maxWidth: '92vw' }}
+            style={{ display: 'grid', gridTemplateColumns: 'auto minmax(280px, 380px)', gap: 24, alignItems: 'center', maxWidth: '92vw' }}
             onClick={(event) => event.stopPropagation()}
           >
             <div style={{ maxHeight: '86vh', overflow: 'auto' }}>
-              {renderRumorGraphic(selectedRumor)}
+              {renderRumorGraphic(selectedRumor, false, `rumor-modal-graphic-${selectedRumor.id}`)}
             </div>
             <div style={{ color: 'white', display: 'flex', flexDirection: 'column', gap: 16 }}>
               <button
@@ -376,28 +440,61 @@ export default function RumorsListView() {
               >
                 <X size={14} /> Tutup
               </button>
+
               <div>
                 <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, textTransform: 'uppercase', color: '#c8a84b', marginBottom: 8 }}>Preview Gambar Rumor</div>
-                <h2 style={{ fontSize: 28, lineHeight: 1.1, marginBottom: 12 }}>{selectedRumor.headline}</h2>
-                <p style={{ color: '#d1d5db', fontSize: 14, lineHeight: 1.6 }}>{getCaption(selectedRumor) || 'Caption belum diisi.'}</p>
+                <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, marginBottom: 10 }}>{selectedRumor.headline}</h2>
+                <p style={{ color: '#d1d5db', fontSize: 13, lineHeight: 1.5 }}>{getCaption(selectedRumor) || 'Caption belum diisi.'}</p>
               </div>
-              <button type="button" className="btn btn-md btn-primary" onClick={() => handleEdit(selectedRumor.id)}>
-                <Edit3 size={15} /> Edit Rumor
-              </button>
-              {confirmDeleteId === selectedRumor.id ? (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="button" className="btn btn-md btn-danger" onClick={() => handleDelete(selectedRumor)}>
-                    Ya, Hapus
+
+              {/* Ekspor Gambar Buttons */}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#f8fafc' }}>Ekspor Gambar</div>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-md btn-primary"
+                    disabled={isExporting}
+                    onClick={() => handleShareRumor(selectedRumor)}
+                  >
+                    <Share2 size={15} /> Bagikan
                   </button>
-                  <button type="button" className="btn btn-md btn-secondary" onClick={() => setConfirmDeleteId(null)}>
-                    Batal
+                  <button
+                    type="button"
+                    className="btn btn-md btn-secondary"
+                    style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }}
+                    disabled={isExporting}
+                    onClick={() => handleDownloadRumor(selectedRumor)}
+                  >
+                    <Download size={15} /> Unduh PNG (9:16)
                   </button>
                 </div>
-              ) : (
-                <button type="button" className="btn btn-md btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(selectedRumor.id)}>
-                  <Trash2 size={15} /> Hapus Rumor
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                <button
+                  type="button"
+                  className="btn btn-md btn-secondary"
+                  style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }}
+                  onClick={() => handleEdit(selectedRumor.id)}
+                >
+                  <Edit3 size={15} /> Edit Rumor
                 </button>
-              )}
+                {confirmDeleteId === selectedRumor.id ? (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" className="btn btn-md btn-danger" style={{ flex: 1 }} onClick={() => handleDelete(selectedRumor)}>
+                      Ya, Hapus
+                    </button>
+                    <button type="button" className="btn btn-md btn-secondary" style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }} onClick={() => setConfirmDeleteId(null)}>
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" className="btn btn-md btn-secondary" style={{ color: '#f87171', background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)' }} onClick={() => setConfirmDeleteId(selectedRumor.id)}>
+                    <Trash2 size={15} /> Hapus Rumor
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
