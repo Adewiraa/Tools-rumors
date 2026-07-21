@@ -329,15 +329,43 @@ export default function DashboardView() {
                     return (
                       <tr key={match.id}>
                         <td>
-                          <div className="flex align-center gap-10">
-                            {renderLogo(match.homeLogo, 'H')}
-                            <span className="semibold" style={{ fontSize: 12 }}>{match.homeClubName}</span>
-                            <span className="text-muted" style={{ fontSize: 11 }}>vs</span>
-                            {renderLogo(match.awayLogo, 'A')}
-                            <span className="semibold" style={{ fontSize: 12 }}>{match.awayClubName}</span>
-                          </div>
-                          <div className="text-muted" style={{ fontSize: 10, marginTop: 2 }}>
-                            {match.competition}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '2px 0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  {renderLogo(match.homeLogo, 'H')}
+                                </div>
+                                <span className="semibold" style={{ fontSize: 13, color: 'var(--neutral-900)' }}>
+                                  {match.homeClubName}
+                                </span>
+                              </div>
+
+                              <span style={{
+                                fontSize: 10,
+                                fontWeight: 800,
+                                color: '#64748b',
+                                backgroundColor: '#f1f5f9',
+                                border: '1px solid #e2e8f0',
+                                padding: '1px 6px',
+                                borderRadius: 4,
+                                textTransform: 'lowercase',
+                                lineHeight: 1
+                              }}>
+                                vs
+                              </span>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  {renderLogo(match.awayLogo, 'A')}
+                                </div>
+                                <span className="semibold" style={{ fontSize: 13, color: 'var(--neutral-900)' }}>
+                                  {match.awayClubName}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-muted" style={{ fontSize: 11, fontWeight: 500, marginTop: 2 }}>
+                              {match.competition}
+                            </div>
                           </div>
                         </td>
                         <td>
