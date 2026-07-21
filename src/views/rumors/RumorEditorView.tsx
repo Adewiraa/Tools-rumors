@@ -165,8 +165,20 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     }
     try {
       setIsSaving(true);
-      await new Promise(r => setTimeout(r, 300));
       const saved = buildSaved();
+
+      // Persist to Supabase via API
+      const res = await fetch('/api/rumors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rumor: saved }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        throw new Error(json.error || 'Gagal menyimpan ke server.');
+      }
+
+      // Update local state (AppContext)
       setRumors(prev => isNew ? [saved, ...prev] : prev.map(r => r.id === saved.id ? saved : r));
       logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', saved.headline);
       triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');

@@ -45,3 +45,37 @@ CREATE POLICY "Allow all actions for club_seasons" ON club_seasons FOR ALL TO pu
 
 -- 6. Tambahkan kolom timeline untuk menyimpan kejadian gol / kartu pertandingan jika belum ada
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS timeline JSONB DEFAULT '[]'::jsonb;
+
+-- 7. Buat tabel 'rumors' untuk menyimpan data rumor & transfer pemain
+CREATE TABLE IF NOT EXISTS rumors (
+  id TEXT PRIMARY KEY,
+  headline TEXT NOT NULL DEFAULT '',
+  player TEXT NOT NULL DEFAULT '',
+  from_club TEXT DEFAULT '',
+  destination_club TEXT DEFAULT '',
+  type TEXT DEFAULT 'rumor',
+  reliability_tier TEXT DEFAULT 'C',
+  source_name TEXT DEFAULT '',
+  source_url TEXT DEFAULT '',
+  publication_status TEXT DEFAULT 'Draft',
+  transfer_status TEXT DEFAULT 'Rumor',
+  probability INTEGER DEFAULT 50,
+  short_summary TEXT DEFAULT '',
+  article_body TEXT DEFAULT '',
+  author TEXT DEFAULT 'Rumor Editor',
+  publish_date TEXT,
+  player_image_url TEXT DEFAULT '',
+  player_image_position_x FLOAT DEFAULT 50,
+  player_image_position_y FLOAT DEFAULT 20,
+  player_image_zoom FLOAT DEFAULT 100,
+  graphic_caption TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. Grant akses dan disable RLS untuk tabel rumors
+GRANT ALL PRIVILEGES ON TABLE rumors TO postgres, service_role, anon, authenticated;
+ALTER TABLE rumors DISABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow all actions for rumors" ON rumors;
+CREATE POLICY "Allow all actions for rumors" ON rumors FOR ALL TO public USING (true) WITH CHECK (true);

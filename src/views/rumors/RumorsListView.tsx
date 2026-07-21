@@ -23,7 +23,18 @@ export default function RumorsListView() {
     router.push(`/rumors?edit=${id}`);
   };
 
-  const handleDelete = (rumor: Rumor) => {
+  const handleDelete = async (rumor: Rumor) => {
+    try {
+      const res = await fetch(`/api/rumors?id=${encodeURIComponent(rumor.id)}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!json.success) {
+        triggerToast(`Gagal menghapus: ${json.error}`, 'error');
+        return;
+      }
+    } catch {
+      triggerToast('Terjadi kesalahan saat menghapus rumor.', 'error');
+      return;
+    }
     setRumors(prev => prev.filter(item => item.id !== rumor.id));
     if (selectedRumor?.id === rumor.id) setSelectedRumor(null);
     setConfirmDeleteId(null);

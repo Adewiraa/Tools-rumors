@@ -296,6 +296,17 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           console.warn('Gagal load matches dari Supabase, pakai data lokal:', matchErr);
         }
 
+        // 5. Fetch Rumors via API route
+        try {
+          const rumorRes = await fetch('/api/rumors');
+          const rumorJson = await rumorRes.json();
+          if (rumorJson.success && Array.isArray(rumorJson.data)) {
+            setRumorsState(rumorJson.data);
+          }
+        } catch (rumorErr) {
+          console.warn('Gagal load rumors dari Supabase, pakai cache lokal:', rumorErr);
+        }
+
         // 5. Fetch app identity if the settings table already exists.
         try {
           const settingsRes = await fetch('/api/settings');
