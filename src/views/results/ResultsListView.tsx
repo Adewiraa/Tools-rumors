@@ -430,7 +430,6 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
           <span style={{ fontSize: 8, fontWeight: 800, backgroundColor: '#c8a84b', color: '#0a0a0a', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase', letterSpacing: 0.5, boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
             {graphicType === 'HT' ? 'HALF TIME' : 'FULL TIME'}
           </span>
-          <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ height: 22, objectFit: 'contain', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }} />
         </div>
       </div>
 
