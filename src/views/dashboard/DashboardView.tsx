@@ -303,132 +303,144 @@ export default function DashboardView() {
             </div>
           </div>
 
-          <div className="table-wrapper" style={{ flex: 1 }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Match</th>
-                  <th>Status / Kickoff</th>
-                  <th>Lineup</th>
-                  <th>Skor (HT/FT)</th>
-                  <th className="text-right">Aksi Cepat</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayedMatches.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center text-muted" style={{ padding: 24 }}>Tidak ada pertandingan pada filter ini.</td>
-                  </tr>
-                ) : (
-                  displayedMatches.map(match => {
-                    const effectiveStatus = getEffectiveMatchStatus(match);
-                    const lineupStatus = getEffectiveLineupStatus(match);
-                    const hasHt = hasHalfTimeScoreValues(match);
-                    const isFt = match.homeScore !== undefined && match.homeScore !== null && match.awayScore !== undefined && match.awayScore !== null;
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, maxHeight: 480, overflowY: 'auto', paddingRight: 4 }}>
+            {displayedMatches.length === 0 ? (
+              <div className="text-center text-muted" style={{ padding: 32, fontSize: 13, background: 'var(--neutral-50)', borderRadius: 'var(--radius-md)' }}>
+                Tidak ada pertandingan pada filter ini.
+              </div>
+            ) : (
+              displayedMatches.map(match => {
+                const effectiveStatus = getEffectiveMatchStatus(match);
+                const lineupStatus = getEffectiveLineupStatus(match);
+                const hasHt = hasHalfTimeScoreValues(match);
+                const isFt = match.homeScore !== undefined && match.homeScore !== null && match.awayScore !== undefined && match.awayScore !== null;
 
-                    return (
-                      <tr key={match.id}>
-                        <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '2px 0' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  {renderLogo(match.homeLogo, 'H')}
-                                </div>
-                                <span className="semibold" style={{ fontSize: 13, color: 'var(--neutral-900)' }}>
-                                  {match.homeClubName}
-                                </span>
+                return (
+                  <div
+                    key={match.id}
+                    style={{
+                      background: 'var(--white)',
+                      border: '1px solid var(--neutral-200)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '14px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                    }}
+                  >
+                    {/* Header: Competition & Badges */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, color: 'var(--primary-700)', background: 'var(--primary-50)', padding: '2px 8px', borderRadius: 4 }}>
+                          🏆 {match.competition}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--neutral-500)', fontWeight: 500 }}>
+                          📅 {new Date(match.kickoff).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span className={`badge ${effectiveStatus === 'Finished' ? 'badge-success' : effectiveStatus === 'Live' ? 'badge-danger' : 'badge-info'}`} style={{ fontSize: 10 }}>
+                          {effectiveStatus === 'Finished' ? 'Selesai' : effectiveStatus === 'Live' ? '● LIVE' : 'Scheduled'}
+                        </span>
+                        <span className={`badge ${lineupStatus === 'Complete' ? 'badge-success' : lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`} style={{ fontSize: 10 }}>
+                          Lineup: {lineupStatus === 'Complete' ? 'Siap' : lineupStatus === 'Needs Review' ? 'Review' : 'Belum'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Match Center: Home vs Away & Score */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr auto 1fr',
+                        alignItems: 'center',
+                        gap: 12,
+                        background: 'var(--neutral-50)',
+                        padding: '10px 14px',
+                        borderRadius: 8,
+                        border: '1px solid var(--neutral-150)',
+                      }}
+                    >
+                      {/* Home Club */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <div style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'white', borderRadius: '50%', padding: 2, border: '1px solid var(--neutral-200)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                          {renderLogo(match.homeLogo, 'H')}
+                        </div>
+                        <span className="semibold" style={{ fontSize: 13, color: 'var(--neutral-900)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {match.homeClubName}
+                        </span>
+                      </div>
+
+                      {/* Score / VS Center */}
+                      <div style={{ textAlign: 'center', padding: '0 8px', minWidth: 80 }}>
+                        {isFt ? (
+                          <div>
+                            <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--neutral-900)', lineHeight: 1 }}>
+                              {match.homeScore} - {match.awayScore}
+                            </div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-500)', marginTop: 3 }}>FULL TIME</div>
+                            {hasHt && (
+                              <div style={{ fontSize: 9, color: 'var(--neutral-400)', marginTop: 1 }}>
+                                (HT {match.halfTimeHomeScore}-{match.halfTimeAwayScore})
                               </div>
-
-                              <span style={{
-                                fontSize: 10,
-                                fontWeight: 800,
-                                color: '#64748b',
-                                backgroundColor: '#f1f5f9',
-                                border: '1px solid #e2e8f0',
-                                padding: '1px 6px',
-                                borderRadius: 4,
-                                textTransform: 'lowercase',
-                                lineHeight: 1
-                              }}>
-                                vs
-                              </span>
-
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  {renderLogo(match.awayLogo, 'A')}
-                                </div>
-                                <span className="semibold" style={{ fontSize: 13, color: 'var(--neutral-900)' }}>
-                                  {match.awayClubName}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-muted" style={{ fontSize: 11, fontWeight: 500, marginTop: 2 }}>
-                              {match.competition}
-                            </div>
+                            )}
                           </div>
-                        </td>
-                        <td>
-                          <span className={`badge ${effectiveStatus === 'Finished' ? 'badge-success' : effectiveStatus === 'Live' ? 'badge-danger' : 'badge-info'}`} style={{ fontSize: 10, marginBottom: 2, display: 'inline-block' }}>
-                            {effectiveStatus === 'Finished' ? 'Selesai' : effectiveStatus === 'Live' ? '● LIVE' : 'Scheduled'}
+                        ) : hasHt ? (
+                          <div>
+                            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary-600)', lineHeight: 1 }}>
+                              HT {match.halfTimeHomeScore} - {match.halfTimeAwayScore}
+                            </div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--primary-500)', marginTop: 3 }}>HALF TIME</div>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', background: '#e2e8f0', padding: '2px 8px', borderRadius: 4, textTransform: 'lowercase' }}>
+                            vs
                           </span>
-                          <div style={{ fontSize: 11, fontWeight: 500 }}>
-                            {new Date(match.kickoff).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`badge ${lineupStatus === 'Complete' ? 'badge-success' : lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`}>
-                            {lineupStatus === 'Complete' ? 'Siap' : lineupStatus === 'Needs Review' ? 'Review' : 'Belum'}
-                          </span>
-                        </td>
-                        <td>
-                          {isFt ? (
-                            <div>
-                              <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--neutral-900)' }}>
-                                FT: {match.homeScore} - {match.awayScore}
-                              </span>
-                              {hasHt && (
-                                <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>
-                                  HT: {match.halfTimeHomeScore} - {match.halfTimeAwayScore}
-                                </div>
-                              )}
-                            </div>
-                          ) : hasHt ? (
-                            <div>
-                              <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--primary-600)' }}>
-                                HT: {match.halfTimeHomeScore} - {match.halfTimeAwayScore}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-muted" style={{ fontSize: 11 }}>-</span>
-                          )}
-                        </td>
-                        <td className="text-right">
-                          <div style={{ display: 'inline-flex', gap: 6 }}>
-                            <button
-                              className="btn btn-sm btn-secondary"
-                              style={{ padding: '4px 8px', fontSize: 11 }}
-                              title="Kelola Lineup Pertandingan"
-                              onClick={() => router.push(`/lineups?edit=${match.id}`)}
-                            >
-                              Lineup
-                            </button>
-                            <button
-                              className="btn btn-sm btn-primary"
-                              style={{ padding: '4px 8px', fontSize: 11 }}
-                              title="Input Skor & Timeline Hasil"
-                              onClick={() => router.push(`/results?edit=${match.id}`)}
-                            >
-                              Hasil
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                        )}
+                      </div>
+
+                      {/* Away Club */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, minWidth: 0 }}>
+                        <span className="semibold" style={{ fontSize: 13, color: 'var(--neutral-900)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {match.awayClubName}
+                        </span>
+                        <div style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'white', borderRadius: '50%', padding: 2, border: '1px solid var(--neutral-200)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                          {renderLogo(match.awayLogo, 'A')}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer: Venue & Action Buttons */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <div style={{ fontSize: 11, color: 'var(--neutral-500)' }}>
+                        📍 {match.venue || 'Stadion belum ditentukan'}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          className="btn btn-sm btn-secondary"
+                          style={{ padding: '4px 10px', fontSize: 11 }}
+                          title="Kelola Lineup Pertandingan"
+                          onClick={() => router.push(`/lineups?edit=${match.id}`)}
+                        >
+                          Lineup
+                        </button>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          style={{ padding: '4px 10px', fontSize: 11 }}
+                          title="Input Skor & Timeline Hasil"
+                          onClick={() => router.push(`/results?edit=${match.id}`)}
+                        >
+                          Hasil
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
