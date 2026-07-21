@@ -139,15 +139,6 @@ export default function SettingsView() {
                   placeholder="Contoh: @GOSBALL"
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label">URL Logo</label>
-                <input
-                  className="form-input"
-                  value={appSettings.appLogoSrc}
-                  onChange={event => updateIdentityDraft('appLogoSrc', event.target.value)}
-                  placeholder="/brand/gosball-alt.png"
-                />
-              </div>
             </div>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 18 }}>
