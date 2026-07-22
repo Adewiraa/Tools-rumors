@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp, UserRole } from '@/logic/AppContext';
+import { isLoggedIn, clearSession } from '@/logic/authSession';
 import {
   Search,
   Bell,
@@ -74,10 +75,12 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   const pathname = usePathname();
   const router = useRouter();
   const activeMenu = pathname.split('/')[1] || 'dashboard';
+  const isLoginPage = pathname === '/login';
 
   const {
     appSettings,
     matches,
+    currentUser,
     currentUserRole,
     uiState,
     setUiState,
@@ -98,6 +101,27 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<{ matches: Match[], players: unknown[], clubs: unknown[] }>({ matches: [], players: [], clubs: [] });
   const [searchTerm, setSearchTerm] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // ── Auth Guard ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isLoginPage) {
+      setAuthChecked(true);
+      return;
+    }
+    if (!isLoggedIn()) {
+      router.replace('/login');
+    } else {
+      setAuthChecked(true);
+    }
+  }, [isLoginPage, router]);
+
+  // Handle logout
+  const handleLogout = () => {
+    clearSession();
+    triggerToast('Berhasil keluar. Sampai jumpa!', 'success');
+    setTimeout(() => router.replace('/login'), 500);
+  };
 
   // Renders role permissions label badge
   const renderRoleBadge = (role: UserRole) => {
@@ -132,6 +156,16 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   };
 
   const isCurrentMenuAllowed = hasMenuAccess(activeMenu);
+
+  // ── Login page: render children directly (no layout) ──────────────────────
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  // ── Auth not yet verified: show nothing to avoid flash ────────────────────
+  if (!authChecked) {
+    return null;
+  }
 
   return (
     <div className="app-container">
@@ -268,21 +302,34 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           {!sidebarCollapsed ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
               <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'white', fontSize: 14, flexShrink: 0 }}>
-                {currentUserRole[0]}
+                {(currentUser?.fullName || currentUser?.username || currentUserRole)[0]?.toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Admin {appSettings.appName}</div>
-                <div style={{ fontSize: 10, color: 'var(--neutral-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUserRole}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {currentUser?.fullName || 'Admin'}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--neutral-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {currentUser?.username ? `@${currentUser.username}` : currentUserRole}
+                </div>
               </div>
-              <Link href="/settings" style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', flexShrink: 0 }} title="Pengaturan">
-                <LogOut size={15} />
-              </Link>
+              <button
+                onClick={handleLogout}
+                style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', flexShrink: 0, padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'color 0.15s' }}
+                title="Keluar"
+                onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--neutral-500)')}
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           ) : (
-            <Link href="/settings" style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'white', fontSize: 14, margin: '0 auto', cursor: 'pointer' }}
-              title="Pengaturan">
-              {currentUserRole[0]}
-            </Link>
+            <button
+              onClick={handleLogout}
+              style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'white', fontSize: 14, margin: '0 auto', cursor: 'pointer', border: 'none' }}
+              title="Keluar"
+            >
+              {(currentUser?.fullName || currentUser?.username || currentUserRole)[0]?.toUpperCase()}
+            </button>
           )}
         </div>
       </aside>

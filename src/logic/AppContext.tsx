@@ -26,6 +26,7 @@ import {
   INITIAL_USERS,
   INITIAL_ROLE_PERMISSIONS
 } from '@/lib/types/auth';
+import { getSessionUser } from '@/logic/authSession';
 
 export type { UserRole, ActiveMenu };
 
@@ -55,6 +56,10 @@ interface AppContextType {
   setUsers: React.Dispatch<React.SetStateAction<AppUser[]>>;
   rolePermissions: RolePermission[];
   setRolePermissions: React.Dispatch<React.SetStateAction<RolePermission[]>>;
+
+  // Currently logged-in user (from session)
+  currentUser: Omit<AppUser, 'password'> | null;
+  setCurrentUser: (user: Omit<AppUser, 'password'> | null) => void;
   
   currentUserRole: UserRole;
   setCurrentUserRole: (role: UserRole) => void;
@@ -105,6 +110,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS);
   const [rolePermissions, setRolePermissions] = useState<RolePermission[]>(INITIAL_ROLE_PERMISSIONS);
 
+  const [currentUser, setCurrentUserState] = useState<Omit<AppUser, 'password'> | null>(null);
   const [currentUserRole, setCurrentUserRoleState] = useState<UserRole>('Super Admin');
   const [uiState, setUiState] = useState<'default' | 'loading' | 'empty' | 'error'>('default');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -118,9 +124,15 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Load browser-only preferences and draft assets.
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedRole = localStorage.getItem('gosball_admin_role') as UserRole;
-      if (savedRole) {
-        setCurrentUserRoleState(savedRole);
+      // Load session user (from login)
+      const sessionUser = getSessionUser();
+      if (sessionUser) {
+        setCurrentUserState(sessionUser);
+        setCurrentUserRoleState(sessionUser.role as UserRole);
+      } else {
+        // Fallback: legacy role from localStorage
+        const savedRole = localStorage.getItem('gosball_admin_role') as UserRole;
+        if (savedRole) setCurrentUserRoleState(savedRole);
       }
 
       const savedRumors = localStorage.getItem(RUMORS_STORAGE_KEY);
@@ -171,6 +183,13 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
+  const setCurrentUser = (user: Omit<AppUser, 'password'> | null) => {
+    setCurrentUserState(user);
+    if (user) {
+      setCurrentUserRoleState(user.role as UserRole);
+    }
+  };
+
   const setRumors: React.Dispatch<React.SetStateAction<Rumor[]>> = (value) => {
     setRumorsState(prev => {
       const next = typeof value === 'function'
@@ -205,10 +224,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const logAction = (action: string, module: string, details: string) => {
+    const actorName = currentUser?.fullName || currentUser?.username || currentUserRole;
     const newLog: AuditLog = {
       id: 'log-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
       timestamp: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB',
-      user: currentUserRole,
+      user: actorName,
       action,
       module,
       details,
@@ -556,6 +576,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setUsers,
         rolePermissions,
         setRolePermissions,
+
+        currentUser,
+        setCurrentUser,
 
         currentUserRole,
         setCurrentUserRole,
