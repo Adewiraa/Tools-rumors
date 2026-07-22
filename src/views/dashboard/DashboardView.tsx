@@ -551,21 +551,128 @@ export default function DashboardView() {
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Audit Kualitas Data</h3>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {dataQualityWarnings.length > 0 ? (
-              dataQualityWarnings.map((warn, index) => (
-                <div key={index} style={{ padding: 12, backgroundColor: '#FEF3C7', borderLeft: '4px solid var(--warning-600)', borderRadius: 6, fontSize: 12, color: '#92400E', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+          {/* Ringkasan statistik entitas */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 8,
+            marginBottom: 12,
+          }}>
+            {[
+              {
+                label: 'Klub',
+                value: clubs.length,
+                sub: `${clubs.filter(c => c.completeness >= 80).length} lengkap`,
+                color: 'var(--primary-600)',
+                bg: 'var(--primary-50)',
+              },
+              {
+                label: 'Pemain',
+                value: players.length,
+                sub: `${players.filter(p => p.completeness >= 80).length} lengkap`,
+                color: 'var(--success-600)',
+                bg: 'var(--success-50, #f0fdf4)',
+              },
+              {
+                label: 'Rumor',
+                value: rumors.length,
+                sub: `${rumors.filter(r => r.publicationStatus === 'Published').length} dipublikasi`,
+                color: '#d97706',
+                bg: '#FEF3C7',
+              },
+            ].map(stat => (
+              <div
+                key={stat.label}
+                style={{
+                  background: stat.bg,
+                  borderRadius: 10,
+                  padding: '10px 12px',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: 22, fontWeight: 800, color: stat.color, lineHeight: 1 }}>
+                  {stat.value}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-700)', marginTop: 2 }}>
+                  {stat.label}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--neutral-500)', marginTop: 2 }}>
+                  {stat.sub}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Health score per modul */}
+          {[
+            {
+              label: 'Kelengkapan Klub',
+              filled: clubs.filter(c => c.completeness >= 80).length,
+              total: clubs.length,
+              icon: '🏟️',
+            },
+            {
+              label: 'Kelengkapan Pemain',
+              filled: players.filter(p => p.completeness >= 80).length,
+              total: players.length,
+              icon: '⚽',
+            },
+            {
+              label: 'Rumor Dipublikasi',
+              filled: rumors.filter(r => r.publicationStatus === 'Published').length,
+              total: rumors.length,
+              icon: '🔥',
+            },
+          ].map(item => {
+            const pct = item.total > 0 ? Math.round((item.filled / item.total) * 100) : 100;
+            const barColor = pct >= 80 ? 'var(--success-600)' : pct >= 50 ? '#d97706' : '#ef4444';
+            return (
+              <div key={item.label} style={{ marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--neutral-700)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span>{item.icon}</span> {item.label}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: barColor }}>
+                    {item.filled}/{item.total} ({pct}%)
+                  </span>
+                </div>
+                <div style={{ height: 6, borderRadius: 99, background: 'var(--neutral-150, #e2e8f0)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: barColor, transition: 'width 0.4s ease' }} />
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Peringatan (hanya jika ada) */}
+          {dataQualityWarnings.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-600)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                ⚠️ Peringatan
+              </div>
+              {dataQualityWarnings.map((warn, index) => (
+                <div key={index} style={{ padding: '8px 12px', backgroundColor: '#FEF3C7', borderLeft: '3px solid var(--warning-600)', borderRadius: 6, fontSize: 11, color: '#92400E', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertTriangle size={13} style={{ flexShrink: 0 }} />
                   <span>{warn}</span>
                 </div>
-              ))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--neutral-500)', fontSize: 13 }}>
-                <CheckCircle2 size={28} color="var(--success-600)" style={{ margin: '0 auto 8px', display: 'block' }} />
-                Semua data klub, pemain, dan rumor tersimpan lengkap.
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              marginTop: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 12px',
+              background: 'var(--success-50, #f0fdf4)',
+              borderRadius: 8,
+              border: '1px solid #bbf7d0',
+            }}>
+              <CheckCircle2 size={15} color="var(--success-600)" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: '#166534', fontWeight: 600 }}>
+                Semua data klub, pemain &amp; rumor tersimpan lengkap.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Audit Log Aktivitas */}
