@@ -1,78 +1,31 @@
 -- ============================================================
--- TABEL app_users DAN role_permissions (COMPLETE SCHEMA MIGRATION)
+-- TABEL app_users DAN role_permissions (GOSBALL MEDIA TOOLS)
 -- Jalankan di Supabase SQL Editor
 -- ============================================================
 
--- 1. FIX TABEL ROLE_PERMISSIONS JIKA SUDAH ADA KOLOM LAMA (seperti menu_key NOT NULL)
-CREATE TABLE IF NOT EXISTS role_permissions (
+-- RE-CREATE TABEL LAMA AGAR TIDAK KONFLIK DENGAN SCHEMA LAIN
+DROP TABLE IF EXISTS app_users CASCADE;
+DROP TABLE IF EXISTS role_permissions CASCADE;
+
+-- 1. TABEL ROLE PERMISSIONS (Matriks Hak Akses Menu)
+CREATE TABLE role_permissions (
   role          TEXT PRIMARY KEY,
   allowed_menus JSONB NOT NULL DEFAULT '[]'::jsonb,
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Memastikan kolom allowed_menus dan updated_at ada
-ALTER TABLE role_permissions ADD COLUMN IF NOT EXISTS allowed_menus JSONB NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE role_permissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
-
--- Melepas NOT NULL constraint pada kolom menu_key lama jika ada
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'role_permissions' AND column_name = 'menu_key'
-  ) THEN
-    ALTER TABLE role_permissions ALTER COLUMN menu_key DROP NOT NULL;
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN NULL;
-END $$;
-
--- Memastikan constraint UNIQUE/PRIMARY KEY pada role_permissions(role)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'role_permissions_pkey' OR conname = 'role_permissions_role_key'
-  ) THEN
-    ALTER TABLE role_permissions ADD CONSTRAINT role_permissions_role_key UNIQUE (role);
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN NULL;
-END $$;
-
 -- 2. TABEL APP USERS (Manajemen User Admin)
-CREATE TABLE IF NOT EXISTS app_users (
+CREATE TABLE app_users (
   id            TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   username      TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   full_name     TEXT NOT NULL,
-  role          TEXT NOT NULL,
+  role          TEXT NOT NULL REFERENCES role_permissions(role) ON UPDATE CASCADE ON DELETE RESTRICT,
   status        TEXT NOT NULL DEFAULT 'active',
   avatar_url    TEXT DEFAULT '',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
--- Memastikan kolom-kolom penting ada
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS username TEXT;
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS password_hash TEXT;
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS full_name TEXT;
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS role TEXT;
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT '';
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
-ALTER TABLE app_users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
--- Memastikan constraint UNIQUE pada app_users(username)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'app_users_username_key' OR conname = 'app_users_username_unique'
-  ) THEN
-    ALTER TABLE app_users ADD CONSTRAINT app_users_username_key UNIQUE (username);
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN NULL;
-END $$;
 
 -- Auto-update trigger for updated_at
 CREATE OR REPLACE FUNCTION update_timestamp_column()
@@ -93,60 +46,39 @@ CREATE TRIGGER trg_app_users_updated_at
   BEFORE UPDATE ON app_users
   FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
--- 3. SEED DATA PERMISSIONS PER ROLE
-INSERT INTO role_permissions (role, allowed_menus)
-SELECT 'Super Admin', '["dashboard", "schedule", "lineups", "results", "rumors", "clubs", "players", "competitions", "users", "permissions", "logs", "settings"]'::jsonb
-WHERE NOT EXISTS (SELECT 1 FROM role_permissions WHERE role = 'Super Admin');
+-- 3. SEED DATA PERMISSIONS PER ROLE DEFAULTS
+INSERT INTO role_permissions (role, allowed_menus) VALUES
+(
+  'Super Admin',
+  '["dashboard", "schedule", "lineups", "results", "rumors", "clubs", "players", "competitions", "users", "permissions", "logs", "settings"]'::jsonb
+),
+(
+  'Admin Data',
+  '["dashboard", "schedule", "clubs", "players", "competitions", "logs"]'::jsonb
+),
+(
+  'Match Editor',
+  '["dashboard", "schedule", "lineups", "results"]'::jsonb
+),
+(
+  'Rumor Editor',
+  '["dashboard", "rumors"]'::jsonb
+),
+(
+  'Reviewer',
+  '["dashboard", "schedule", "lineups", "results", "rumors", "logs"]'::jsonb
+)
+ON CONFLICT (role) DO UPDATE SET allowed_menus = EXCLUDED.allowed_menus;
 
-INSERT INTO role_permissions (role, allowed_menus)
-SELECT 'Admin Data', '["dashboard", "schedule", "clubs", "players", "competitions", "logs"]'::jsonb
-WHERE NOT EXISTS (SELECT 1 FROM role_permissions WHERE role = 'Admin Data');
+-- 4. SEED DATA USERS DEFAULTS
+INSERT INTO app_users (id, username, password_hash, full_name, role, status) VALUES
+('usr-superadmin', 'admin', 'admin123', 'Super Admin Gosball', 'Super Admin', 'active'),
+('usr-editor1', 'match_editor', 'editor123', 'Ahmad Editor Match', 'Match Editor', 'active'),
+('usr-rumoreditor', 'rumor_editor', 'rumor123', 'Budi Rumor Editor', 'Rumor Editor', 'active'),
+('usr-admindata', 'data_admin', 'data123', 'Citra Data Admin', 'Admin Data', 'active')
+ON CONFLICT (username) DO NOTHING;
 
-INSERT INTO role_permissions (role, allowed_menus)
-SELECT 'Match Editor', '["dashboard", "schedule", "lineups", "results"]'::jsonb
-WHERE NOT EXISTS (SELECT 1 FROM role_permissions WHERE role = 'Match Editor');
-
-INSERT INTO role_permissions (role, allowed_menus)
-SELECT 'Rumor Editor', '["dashboard", "rumors"]'::jsonb
-WHERE NOT EXISTS (SELECT 1 FROM role_permissions WHERE role = 'Rumor Editor');
-
-INSERT INTO role_permissions (role, allowed_menus)
-SELECT 'Reviewer', '["dashboard", "schedule", "lineups", "results", "rumors", "logs"]'::jsonb
-WHERE NOT EXISTS (SELECT 1 FROM role_permissions WHERE role = 'Reviewer');
-
--- 4. FOREIGN KEY CONSTRAINT
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_users_role'
-  ) THEN
-    ALTER TABLE app_users
-      ADD CONSTRAINT fk_app_users_role
-      FOREIGN KEY (role) REFERENCES role_permissions(role)
-      ON UPDATE CASCADE ON DELETE RESTRICT;
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN NULL;
-END $$;
-
--- 5. SEED DATA USERS DEFAULTS
-INSERT INTO app_users (id, username, password_hash, full_name, role, status)
-SELECT 'usr-superadmin', 'admin', 'admin123', 'Super Admin Gosball', 'Super Admin', 'active'
-WHERE NOT EXISTS (SELECT 1 FROM app_users WHERE username = 'admin');
-
-INSERT INTO app_users (id, username, password_hash, full_name, role, status)
-SELECT 'usr-editor1', 'match_editor', 'editor123', 'Ahmad Editor Match', 'Match Editor', 'active'
-WHERE NOT EXISTS (SELECT 1 FROM app_users WHERE username = 'match_editor');
-
-INSERT INTO app_users (id, username, password_hash, full_name, role, status)
-SELECT 'usr-rumoreditor', 'rumor_editor', 'rumor123', 'Budi Rumor Editor', 'Rumor Editor', 'active'
-WHERE NOT EXISTS (SELECT 1 FROM app_users WHERE username = 'rumor_editor');
-
-INSERT INTO app_users (id, username, password_hash, full_name, role, status)
-SELECT 'usr-admindata', 'data_admin', 'data123', 'Citra Data Admin', 'Admin Data', 'active'
-WHERE NOT EXISTS (SELECT 1 FROM app_users WHERE username = 'data_admin');
-
--- 6. RLS POLICIES
+-- 5. RLS POLICIES
 ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_users ENABLE ROW LEVEL SECURITY;
 
