@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, LogIn, Shield, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Shield, AlertCircle } from 'lucide-react';
 import { saveSession, isLoggedIn } from '@/logic/authSession';
 import type { AppUser } from '@/lib/types/auth';
 
@@ -14,7 +14,6 @@ export default function LoginView() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isOnline, setIsOnline] = useState(true);
   const [appName, setAppName] = useState('Gosball');
   const [appLogo, setAppLogo] = useState<string>('');
 
@@ -24,18 +23,6 @@ export default function LoginView() {
       router.replace('/dashboard');
     }
   }, [router]);
-
-  // Online/offline status
-  useEffect(() => {
-    const updateOnline = () => setIsOnline(navigator.onLine);
-    window.addEventListener('online', updateOnline);
-    window.addEventListener('offline', updateOnline);
-    updateOnline();
-    return () => {
-      window.removeEventListener('online', updateOnline);
-      window.removeEventListener('offline', updateOnline);
-    };
-  }, []);
 
   // Read app name & logo from localStorage settings
   useEffect(() => {
@@ -100,19 +87,6 @@ export default function LoginView() {
       position: 'relative',
       overflow: 'hidden',
     }}>
-
-      {/* Offline badge */}
-      {!isOnline && (
-        <div style={{
-          position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
-          background: 'var(--danger-600)', color: 'white',
-          padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 700,
-          display: 'flex', alignItems: 'center', gap: 8, zIndex: 100,
-          boxShadow: 'var(--shadow-lg)',
-        }}>
-          <WifiOff size={14} /> Mode Offline — Login menggunakan akun lokal
-        </div>
-      )}
 
       {/* Main Login Card */}
       <div style={{
@@ -318,17 +292,6 @@ export default function LoginView() {
             )}
           </button>
         </form>
-
-        {/* Online indicator */}
-        <div style={{
-          marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          fontSize: 11, color: 'var(--neutral-500)',
-        }}>
-          {isOnline
-            ? <><Wifi size={12} style={{ color: '#4ade80' }} /> Terhubung ke server</>
-            : <><WifiOff size={12} style={{ color: '#f87171' }} /> Mode offline — akun lokal aktif</>
-          }
-        </div>
       </div>
 
       {/* Footer */}
