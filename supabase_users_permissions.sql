@@ -1,5 +1,5 @@
 -- ============================================================
--- TABEL app_users DAN role_permissions (FIXED & SAFE SCRIPT)
+-- TABEL app_users DAN role_permissions (ULTIMATE SAFE MIGRATION)
 -- Jalankan di Supabase SQL Editor
 -- ============================================================
 
@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS role_permissions (
   allowed_menus JSONB NOT NULL DEFAULT '[]'::jsonb,
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Memastikan kolom allowed_menus dan updated_at ada jika tabel role_permissions sudah ada sebelumnya
+ALTER TABLE role_permissions ADD COLUMN IF NOT EXISTS allowed_menus JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE role_permissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
 -- Memastikan constraint PRIMARY KEY / UNIQUE pada role_permissions(role)
 DO $$
@@ -35,20 +39,15 @@ CREATE TABLE IF NOT EXISTS app_users (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Menambahkan Foreign Key secara aman jika belum ada
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_users_role'
-  ) THEN
-    ALTER TABLE app_users
-      ADD CONSTRAINT fk_app_users_role
-      FOREIGN KEY (role) REFERENCES role_permissions(role)
-      ON UPDATE CASCADE ON DELETE RESTRICT;
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN NULL;
-END $$;
+-- Memastikan kolom-kolom penting ada jika tabel app_users sudah ada sebelumnya
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS username TEXT;
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS role TEXT;
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS avatar_url TEXT DEFAULT '';
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- Auto-update trigger for updated_at
 CREATE OR REPLACE FUNCTION update_timestamp_column()
@@ -92,6 +91,21 @@ INSERT INTO role_permissions (role, allowed_menus) VALUES
   '["dashboard", "schedule", "lineups", "results", "rumors", "logs"]'::jsonb
 )
 ON CONFLICT (role) DO UPDATE SET allowed_menus = EXCLUDED.allowed_menus;
+
+-- Menambahkan Foreign Key secara aman jika belum ada
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_users_role'
+  ) THEN
+    ALTER TABLE app_users
+      ADD CONSTRAINT fk_app_users_role
+      FOREIGN KEY (role) REFERENCES role_permissions(role)
+      ON UPDATE CASCADE ON DELETE RESTRICT;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
 
 -- SEED DATA DEFAULTS: USERS DEFAULTS
 INSERT INTO app_users (id, username, password_hash, full_name, role, status) VALUES
