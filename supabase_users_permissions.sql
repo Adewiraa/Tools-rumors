@@ -1,5 +1,5 @@
 -- ============================================================
--- TABEL app_users DAN role_permissions
+-- TABEL app_users DAN role_permissions (FIXED & SAFE SCRIPT)
 -- Jalankan di Supabase SQL Editor
 -- ============================================================
 
@@ -10,18 +10,45 @@ CREATE TABLE IF NOT EXISTS role_permissions (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Memastikan constraint PRIMARY KEY / UNIQUE pada role_permissions(role)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'role_permissions_pkey'
+  ) THEN
+    ALTER TABLE role_permissions ADD PRIMARY KEY (role);
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
+
 -- 2. TABEL APP USERS (Manajemen User Admin)
 CREATE TABLE IF NOT EXISTS app_users (
   id            TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   username      TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   full_name     TEXT NOT NULL,
-  role          TEXT NOT NULL REFERENCES role_permissions(role) ON UPDATE CASCADE ON DELETE RESTRICT,
-  status        TEXT NOT NULL DEFAULT 'active', -- 'active' | 'inactive'
+  role          TEXT NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'active',
   avatar_url    TEXT DEFAULT '',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Menambahkan Foreign Key secara aman jika belum ada
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_users_role'
+  ) THEN
+    ALTER TABLE app_users
+      ADD CONSTRAINT fk_app_users_role
+      FOREIGN KEY (role) REFERENCES role_permissions(role)
+      ON UPDATE CASCADE ON DELETE RESTRICT;
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END $$;
 
 -- Auto-update trigger for updated_at
 CREATE OR REPLACE FUNCTION update_timestamp_column()
@@ -74,12 +101,16 @@ INSERT INTO app_users (id, username, password_hash, full_name, role, status) VAL
 ('usr-admindata', 'data_admin', 'data123', 'Citra Data Admin', 'Admin Data', 'active')
 ON CONFLICT (username) DO NOTHING;
 
--- RLS POLICIES
+-- RLS POLICIES (DROP & CREATE AGAR AMAN DIPANGGIL BERKALI-KALI)
 ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_users ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "role_permissions_select_all" ON role_permissions;
+DROP POLICY IF EXISTS "role_permissions_write_all" ON role_permissions;
 CREATE POLICY "role_permissions_select_all" ON role_permissions FOR SELECT USING (true);
 CREATE POLICY "role_permissions_write_all" ON role_permissions FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "app_users_select_all" ON app_users;
+DROP POLICY IF EXISTS "app_users_write_all" ON app_users;
 CREATE POLICY "app_users_select_all" ON app_users FOR SELECT USING (true);
 CREATE POLICY "app_users_write_all" ON app_users FOR ALL USING (true);
