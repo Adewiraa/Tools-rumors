@@ -18,9 +18,16 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import { DEFAULT_APP_SETTINGS, normalizeAppSettings } from '@/logic/utils';
 import type { AppSettings } from '@/logic/utils';
+import {
+  AppUser,
+  RolePermission,
+  UserRole,
+  ActiveMenu,
+  INITIAL_USERS,
+  INITIAL_ROLE_PERMISSIONS
+} from '@/lib/types/auth';
 
-export type UserRole = 'Super Admin' | 'Admin Data' | 'Match Editor' | 'Rumor Editor' | 'Reviewer';
-export type ActiveMenu = 'dashboard' | 'schedule' | 'lineups' | 'results' | 'rumors' | 'clubs' | 'players' | 'competitions' | 'logs' | 'settings';
+export type { UserRole, ActiveMenu };
 
 export interface ToastMessage {
   message: string;
@@ -42,6 +49,12 @@ interface AppContextType {
   setAuditLogs: React.Dispatch<React.SetStateAction<AuditLog[]>>;
   competitions: Competition[];
   setCompetitions: React.Dispatch<React.SetStateAction<Competition[]>>;
+
+  // Users & Permissions State
+  users: AppUser[];
+  setUsers: React.Dispatch<React.SetStateAction<AppUser[]>>;
+  rolePermissions: RolePermission[];
+  setRolePermissions: React.Dispatch<React.SetStateAction<RolePermission[]>>;
   
   currentUserRole: UserRole;
   setCurrentUserRole: (role: UserRole) => void;
@@ -64,12 +77,21 @@ interface AppContextType {
   
   logAction: (action: string, module: string, details: string) => void;
   hasPermission: (module: string, action: 'read' | 'create_edit' | 'publish' | 'delete' | 'all') => boolean;
+  hasMenuAccess: (menuId: string) => boolean;
+
+  // CRUD Operations for Users & Role Permissions
+  addUser: (user: Omit<AppUser, 'id'>) => Promise<boolean>;
+  updateUser: (user: Partial<AppUser> & { id: string }) => Promise<boolean>;
+  deleteUser: (id: string) => Promise<boolean>;
+  saveRolePermissions: (permissions: RolePermission[]) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const RUMORS_STORAGE_KEY = 'gosball_rumors_cache';
 const APP_SETTINGS_STORAGE_KEY = 'gosball_app_settings';
+const USERS_STORAGE_KEY = 'gosball_users_cache';
+const PERMISSIONS_STORAGE_KEY = 'gosball_permissions_cache';
 
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clubs, setClubs] = useState<Club[]>(INITIAL_CLUBS);
@@ -80,6 +102,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [competitions, setCompetitions] = useState<Competition[]>(INITIAL_COMPETITIONS);
   
+  const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS);
+  const [rolePermissions, setRolePermissions] = useState<RolePermission[]>(INITIAL_ROLE_PERMISSIONS);
+
   const [currentUserRole, setCurrentUserRoleState] = useState<UserRole>('Super Admin');
   const [uiState, setUiState] = useState<'default' | 'loading' | 'empty' | 'error'>('default');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -101,12 +126,10 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const savedRumors = localStorage.getItem(RUMORS_STORAGE_KEY);
       if (savedRumors) {
         try {
-          const parsedRumors = JSON.parse(savedRumors);
-          if (Array.isArray(parsedRumors)) {
-            setRumorsState(parsedRumors);
-          }
-        } catch (error) {
-          console.warn('Cache rumor tidak bisa dibaca:', error);
+          const parsed = JSON.parse(savedRumors);
+          if (Array.isArray(parsed)) setRumorsState(parsed);
+        } catch (e) {
+          console.warn('Cache rumor error:', e);
         }
       }
 
@@ -114,8 +137,28 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (savedSettings) {
         try {
           setAppSettingsState(normalizeAppSettings(JSON.parse(savedSettings)));
-        } catch (error) {
-          console.warn('Cache pengaturan aplikasi tidak bisa dibaca:', error);
+        } catch (e) {
+          console.warn('Cache settings error:', e);
+        }
+      }
+
+      const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+      if (savedUsers) {
+        try {
+          const parsed = JSON.parse(savedUsers);
+          if (Array.isArray(parsed) && parsed.length > 0) setUsers(parsed);
+        } catch (e) {
+          console.warn('Cache users error:', e);
+        }
+      }
+
+      const savedPerms = localStorage.getItem(PERMISSIONS_STORAGE_KEY);
+      if (savedPerms) {
+        try {
+          const parsed = JSON.parse(savedPerms);
+          if (Array.isArray(parsed) && parsed.length > 0) setRolePermissions(parsed);
+        } catch (e) {
+          console.warn('Cache permissions error:', e);
         }
       }
     }
@@ -137,8 +180,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(RUMORS_STORAGE_KEY, JSON.stringify(next));
-        } catch (error) {
-          console.warn('Cache rumor tidak bisa disimpan:', error);
+        } catch (e) {
+          console.warn('Cache rumor error:', e);
         }
       }
 
@@ -209,6 +252,145 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return true;
   };
 
+  const hasMenuAccess = (menuId: string): boolean => {
+    if (currentUserRole === 'Super Admin') return true;
+    const perm = rolePermissions.find(p => p.role === currentUserRole);
+    if (!perm) return true; // fallback default open
+    return perm.allowedMenus.includes(menuId as ActiveMenu);
+  };
+
+  // User CRUD Operations
+  const addUser = async (newUser: Omit<AppUser, 'id'>): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Gagal menambahkan user baru.');
+      }
+      const created: AppUser = json.data;
+      setUsers(prev => {
+        const next = [...prev, created];
+        if (typeof window !== 'undefined') localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+      logAction('CREATE_USER', 'Manajemen User', `Menambahkan user baru ${created.username} (${created.role})`);
+      triggerToast(`User ${created.username} berhasil dibuat!`, 'success');
+      return true;
+    } catch (err: any) {
+      console.warn('API addUser fallback to local state:', err);
+      const fallbackUser: AppUser = {
+        id: 'usr-' + Date.now(),
+        ...newUser,
+      };
+      setUsers(prev => {
+        const next = [...prev, fallbackUser];
+        if (typeof window !== 'undefined') localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+      logAction('CREATE_USER', 'Manajemen User', `Menambahkan user baru ${fallbackUser.username} (${fallbackUser.role})`);
+      triggerToast(`User ${fallbackUser.username} berhasil dibuat (Lokal)!`, 'success');
+      return true;
+    }
+  };
+
+  const updateUser = async (updatedUser: Partial<AppUser> & { id: string }): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Gagal mengupdate user.');
+      }
+      const updated: AppUser = json.data;
+      setUsers(prev => {
+        const next = prev.map(u => u.id === updated.id ? updated : u);
+        if (typeof window !== 'undefined') localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+      logAction('UPDATE_USER', 'Manajemen User', `Mengubah data user ${updated.username}`);
+      triggerToast(`Data user ${updated.username} berhasil diperbarui!`, 'success');
+      return true;
+    } catch (err: any) {
+      console.warn('API updateUser fallback to local state:', err);
+      setUsers(prev => {
+        const next = prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u);
+        if (typeof window !== 'undefined') localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+      logAction('UPDATE_USER', 'Manajemen User', `Mengubah data user ID ${updatedUser.id}`);
+      triggerToast('Data user berhasil diperbarui (Lokal)!', 'success');
+      return true;
+    }
+  };
+
+  const deleteUser = async (id: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/users?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Gagal menghapus user.');
+      }
+      setUsers(prev => {
+        const next = prev.filter(u => u.id !== id);
+        if (typeof window !== 'undefined') localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+      logAction('DELETE_USER', 'Manajemen User', `Menghapus user ID ${id}`);
+      triggerToast('User berhasil dihapus!', 'success');
+      return true;
+    } catch (err: any) {
+      console.warn('API deleteUser fallback to local state:', err);
+      setUsers(prev => {
+        const next = prev.filter(u => u.id !== id);
+        if (typeof window !== 'undefined') localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+      logAction('DELETE_USER', 'Manajemen User', `Menghapus user ID ${id}`);
+      triggerToast('User berhasil dihapus (Lokal)!', 'success');
+      return true;
+    }
+  };
+
+  const saveRolePermissions = async (newPermissions: RolePermission[]): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permissions: newPermissions }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Gagal menyimpan hak akses ke database.');
+      }
+      const saved: RolePermission[] = json.data;
+      setRolePermissions(saved);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(saved));
+      }
+      logAction('UPDATE_PERMISSIONS', 'Manajemen Hak Akses', 'Memperbarui matriks hak akses menu');
+      triggerToast('Matriks Hak Akses berhasil disimpan!', 'success');
+      return true;
+    } catch (err: any) {
+      console.warn('API saveRolePermissions fallback to local state:', err);
+      setRolePermissions(newPermissions);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(newPermissions));
+      }
+      logAction('UPDATE_PERMISSIONS', 'Manajemen Hak Akses', 'Memperbarui matriks hak akses menu (Lokal)');
+      triggerToast('Matriks Hak Akses disimpan di browser!', 'success');
+      return true;
+    }
+  };
+
   // Fetch Supabase data on mount
   useEffect(() => {
     const mapClubFromSupabase = (club: any): Club => {
@@ -274,7 +456,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setCompetitions(sortedComp);
         }
 
-        // 3. Fetch Players via API route so roster and club-season relations are mapped consistently
+        // 3. Fetch Players via API route
         try {
           const playerRes = await fetch('/api/players');
           const playerJson = await playerRes.json();
@@ -307,7 +489,29 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           console.warn('Gagal load rumors dari Supabase, pakai cache lokal:', rumorErr);
         }
 
-        // 5. Fetch app identity if the settings table already exists.
+        // 6. Fetch Users via API route
+        try {
+          const usersRes = await fetch('/api/users');
+          const usersJson = await usersRes.json();
+          if (usersJson.success && Array.isArray(usersJson.data) && usersJson.data.length > 0) {
+            setUsers(usersJson.data);
+          }
+        } catch (usersErr) {
+          console.warn('Gagal load users dari Supabase, pakai cache lokal:', usersErr);
+        }
+
+        // 7. Fetch Role Permissions via API route
+        try {
+          const permRes = await fetch('/api/permissions');
+          const permJson = await permRes.json();
+          if (permJson.success && Array.isArray(permJson.data) && permJson.data.length > 0) {
+            setRolePermissions(permJson.data);
+          }
+        } catch (permErr) {
+          console.warn('Gagal load permissions dari Supabase, pakai cache lokal:', permErr);
+        }
+
+        // 8. Fetch app identity
         try {
           const settingsRes = await fetch('/api/settings');
           const settingsJson = await settingsRes.json();
@@ -348,6 +552,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         competitions,
         setCompetitions,
         
+        users,
+        setUsers,
+        rolePermissions,
+        setRolePermissions,
+
         currentUserRole,
         setCurrentUserRole,
         uiState,
@@ -368,7 +577,13 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setMobileDrawerOpen,
         
         logAction,
-        hasPermission
+        hasPermission,
+        hasMenuAccess,
+
+        addUser,
+        updateUser,
+        deleteUser,
+        saveRolePermissions,
       }}
     >
       {children}

@@ -21,7 +21,10 @@ import {
   Activity,
   Calendar,
   FileText,
-  Radio
+  Radio,
+  Users,
+  Lock,
+  ShieldAlert
 } from 'lucide-react';
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
 import { Match } from '@/lib/mockData';
@@ -59,6 +62,8 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Sistem',
     items: [
+      { id: 'users', label: 'Manajemen User', icon: Users, mobileHidden: true },
+      { id: 'permissions', label: 'Manajemen Hak Akses', icon: Lock, mobileHidden: true },
       { id: 'logs', label: 'Audit Log', icon: History, mobileHidden: true },
       { id: 'settings', label: 'Pengaturan', icon: Settings, mobileHidden: true },
     ],
@@ -86,7 +91,8 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     sidebarCollapsed,
     setSidebarCollapsed,
     mobileDrawerOpen,
-    setMobileDrawerOpen
+    setMobileDrawerOpen,
+    hasMenuAccess,
   } = useApp();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -125,6 +131,8 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     router.replace(`/${menuId}`);
   };
 
+  const isCurrentMenuAllowed = hasMenuAccess(activeMenu);
+
   return (
     <div className="app-container">
       {/* Dynamic Header Alert for Unsaved Changes or Offline status */}
@@ -156,25 +164,30 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             </div>
 
             <nav className="mobile-drawer-menu">
-              {NAV_SECTIONS.map(section => (
-                <div key={section.title}>
-                  <div className="menu-category mobile-drawer-category">{section.title}</div>
-                  {section.items.map(item => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.id}
-                        href={`/${item.id}`}
-                        className={`menu-item mobile-drawer-item ${activeMenu === item.id ? 'active' : ''}`}
-                        onClick={(event) => handleMenuNavigate(event, item.id)}
-                      >
-                        <Icon size={18} />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+              {NAV_SECTIONS.map(section => {
+                const allowedItems = section.items.filter(item => hasMenuAccess(item.id));
+                if (allowedItems.length === 0) return null;
+
+                return (
+                  <div key={section.title}>
+                    <div className="menu-category mobile-drawer-category">{section.title}</div>
+                    {allowedItems.map(item => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.id}
+                          href={`/${item.id}`}
+                          className={`menu-item mobile-drawer-item ${activeMenu === item.id ? 'active' : ''}`}
+                          onClick={(event) => handleMenuNavigate(event, item.id)}
+                        >
+                          <Icon size={18} />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </nav>
 
             <div style={{ padding: '12px 20px', borderTop: '1px solid var(--navy-900)', backgroundColor: '#111417' }}>
@@ -217,27 +230,32 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
         </div>
 
         <nav className="sidebar-menu">
-          {NAV_SECTIONS.map(section => (
-            <div className="sidebar-section" key={section.title}>
-              {!sidebarCollapsed && <div className="menu-category">{section.title}</div>}
-              {section.items.map(item => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.id}
-                    href={`/${item.id}`}
-                    className={`menu-item ${item.mobileHidden ? 'mobile-hidden' : ''} ${activeMenu === item.id ? 'active' : ''}`}
-                    title={item.label}
-                    aria-label={item.label}
-                    onClick={(event) => handleMenuNavigate(event, item.id)}
-                  >
-                    <Icon size={18} />
-                    {!sidebarCollapsed && <span>{item.label}</span>}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+          {NAV_SECTIONS.map(section => {
+            const allowedItems = section.items.filter(item => hasMenuAccess(item.id));
+            if (allowedItems.length === 0) return null;
+
+            return (
+              <div className="sidebar-section" key={section.title}>
+                {!sidebarCollapsed && <div className="menu-category">{section.title}</div>}
+                {allowedItems.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/${item.id}`}
+                      className={`menu-item ${item.mobileHidden ? 'mobile-hidden' : ''} ${activeMenu === item.id ? 'active' : ''}`}
+                      title={item.label}
+                      aria-label={item.label}
+                      onClick={(event) => handleMenuNavigate(event, item.id)}
+                    >
+                      <Icon size={18} />
+                      {!sidebarCollapsed && <span>{item.label}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
 
           <button type="button" className="menu-item mobile-more-btn" onClick={() => setMobileDrawerOpen(true)}>
             <Menu size={18} />
@@ -348,6 +366,19 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             <SkeletonLoading />
           ) : uiState === 'error' ? (
             <ErrorState onRetry={() => setUiState('default')} />
+          ) : !isCurrentMenuAllowed ? (
+            <div className="card" style={{ padding: 48, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 540, margin: '40px auto' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger-500)' }}>
+                <ShieldAlert size={36} />
+              </div>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--white)' }}>Akses Menu Ditolak</h2>
+              <p style={{ color: 'var(--neutral-400)', fontSize: 14, margin: 0 }}>
+                Role Anda saat ini (<strong style={{ color: 'white' }}>{currentUserRole}</strong>) tidak memiliki izin untuk mengakses menu ini. Silakan hubungi Super Admin untuk mengubah hak akses Anda.
+              </p>
+              <button className="btn btn-primary" onClick={() => router.replace('/dashboard')} style={{ marginTop: 8 }}>
+                Kembali ke Dashboard
+              </button>
+            </div>
           ) : (
             children
           )}
