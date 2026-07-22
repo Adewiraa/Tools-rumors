@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp, UserRole } from '@/logic/AppContext';
-import { ChevronRight, Save, Upload } from 'lucide-react';
+import { ChevronRight, Save, Upload, Settings } from 'lucide-react';
 import type { AppSettings } from '@/logic/utils';
 
 const getErrorMessage = (error: unknown, fallback: string) => (
@@ -31,7 +31,6 @@ export default function SettingsView() {
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     try {
       setIsUploadingLogo(true);
       const formData = new FormData();
@@ -59,18 +58,15 @@ export default function SettingsView() {
   const handleSaveIdentity = async () => {
     try {
       setIsSavingIdentity(true);
-
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ settings: appSettings }),
       });
       const result = await response.json();
-
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Pengaturan identitas belum tersimpan ke database.');
       }
-
       setAppSettings(result.data);
       triggerToast('Identitas aplikasi berhasil disimpan');
     } catch (error: unknown) {
@@ -82,34 +78,59 @@ export default function SettingsView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div>
-        <div className="breadcrumb"><span>Dashboard</span> <ChevronRight size={10} /> <span>Pengaturan</span></div>
-        <h1 className="page-title">Pengaturan</h1>
-        <p className="page-description">Master web, akses admin, dan status aplikasi.</p>
+
+      {/* ── Page Header ── */}
+      <div className="page-header">
+        <div>
+          <div className="breadcrumb">
+            <span>Dashboard</span>
+            <ChevronRight size={10} />
+            <span>Pengaturan</span>
+          </div>
+          <h1 className="page-title">Pengaturan</h1>
+          <p className="page-description">Kelola identitas master aplikasi, role akses aktif, dan status sistem.</p>
+        </div>
       </div>
 
-      <div className="card" style={{ maxWidth: 860 }}>
-        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Master Web</h3>
+      {/* ── Master Web Card ── */}
+      <div className="card" style={{ maxWidth: 900 }}>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary-600)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+            Identitas Aplikasi
+          </div>
+          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--neutral-950)' }}>Master Web</h3>
+          <p className="page-description" style={{ marginTop: 2 }}>Logo, nama, subtitle, dan handle watermark pada setiap konten.</p>
+        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0, 1fr)', gap: 24, alignItems: 'start', marginTop: 20 }}>
-          <div style={{
-            width: 168,
-            minHeight: 168,
-            border: '1px solid var(--neutral-200)',
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#0f1515',
-            padding: 18,
-          }}>
-            <img
-              src={appSettings.appLogoSrc}
-              alt={appSettings.appName}
-              style={{ maxWidth: '100%', maxHeight: 118, objectFit: 'contain' }}
-            />
+        <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
+          {/* Logo Preview */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Preview Logo</div>
+            <div style={{
+              width: 168,
+              minHeight: 168,
+              border: '1px solid var(--neutral-200)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#0f1515',
+              padding: 18,
+            }}>
+              <img
+                src={appSettings.appLogoSrc}
+                alt={appSettings.appName}
+                style={{ maxWidth: '100%', maxHeight: 118, objectFit: 'contain' }}
+              />
+            </div>
+            <label className="btn btn-sm btn-secondary" style={{ cursor: isUploadingLogo ? 'wait' : 'pointer', marginTop: 10, width: '100%', justifyContent: 'center' }}>
+              <Upload size={14} />
+              {isUploadingLogo ? 'Mengupload...' : 'Upload Logo'}
+              <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={isUploadingLogo} style={{ display: 'none' }} />
+            </label>
           </div>
 
+          {/* Form Fields */}
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
               <div className="form-group">
@@ -141,13 +162,8 @@ export default function SettingsView() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 18 }}>
-              <label className="btn btn-secondary" style={{ cursor: isUploadingLogo ? 'wait' : 'pointer' }}>
-                <Upload size={16} />
-                {isUploadingLogo ? 'Mengupload...' : 'Upload Logo'}
-                <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={isUploadingLogo} style={{ display: 'none' }} />
-              </label>
-              <button className="btn btn-primary" type="button" onClick={handleSaveIdentity} disabled={isSavingIdentity}>
+            <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--neutral-200)' }}>
+              <button className="btn btn-md btn-primary" type="button" onClick={handleSaveIdentity} disabled={isSavingIdentity}>
                 <Save size={16} />
                 {isSavingIdentity ? 'Menyimpan...' : 'Simpan Identitas'}
               </button>
@@ -156,9 +172,18 @@ export default function SettingsView() {
         </div>
       </div>
 
+      {/* ── Role & Status Card ── */}
       <div className="card" style={{ maxWidth: 640 }}>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary-600)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+            Akses & Simulasi
+          </div>
+          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--neutral-950)' }}>Role Admin & Status Sistem</h3>
+          <p className="page-description" style={{ marginTop: 2 }}>Pengaturan role aktif dan simulasi status aplikasi untuk pengujian.</p>
+        </div>
+
         <div className="form-group">
-          <label className="form-label">Role Admin</label>
+          <label className="form-label">Role Admin Aktif</label>
           <select className="form-select" value={currentUserRole} onChange={event => {
             const role = event.target.value as UserRole;
             setCurrentUserRole(role);
@@ -174,13 +199,13 @@ export default function SettingsView() {
         </div>
 
         <div className="form-group" style={{ marginTop: 24, borderTop: '1px solid var(--neutral-200)', paddingTop: 20 }}>
-          <label className="form-label">Status Aplikasi</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <label className="flex align-center gap-10">
+          <label className="form-label">Simulasi Status Aplikasi</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--neutral-700)' }}>
               <input type="checkbox" checked={hasUnsavedChanges} onChange={event => setHasUnsavedChanges(event.target.checked)} />
               Simulasikan perubahan belum disimpan
             </label>
-            <label className="flex align-center gap-10">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--neutral-700)' }}>
               <input type="checkbox" checked={isOffline} onChange={event => setIsOffline(event.target.checked)} />
               Simulasikan mode offline
             </label>

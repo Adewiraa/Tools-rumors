@@ -2,49 +2,34 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/logic/AppContext';
-import { ChevronRight, Search } from 'lucide-react';
+import { ChevronRight, Search, ClipboardList, RotateCcw, ChevronLeft, ChevronRight as ChevronRightIcon, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
-// ── Tabel translasi kode aksi → label Indonesia yang ramah ───────────────────
 const ACTION_LABEL: Record<string, string> = {
-  // Rumor & Transfer
   PUBLISH_RUMOR:         'Publikasi Rumor',
   UPDATE_PUBLISH_RUMOR:  'Perbarui & Publikasi Rumor',
   CREATE_RUMOR:          'Buat Draft Rumor',
   DELETE_RUMOR:          'Hapus Rumor',
-
-  // Jadwal
   CREATE_SCHEDULE:       'Tambah Jadwal Pertandingan',
   UPDATE_SCHEDULE:       'Perbarui Jadwal Pertandingan',
   DELETE_SCHEDULE:       'Hapus Jadwal Pertandingan',
-
-  // Lineup
   PUBLISH_LINEUP:        'Terbitkan Lineup',
   SAVE_LINEUP_DRAFT:     'Simpan Draft Lineup',
-
-  // Hasil Pertandingan
   SAVE_MATCH_RESULT:     'Simpan Skor Pertandingan',
   PUBLISH_MATCH_RESULT:  'Publikasi Hasil Pertandingan',
   SAFETY_TRIGGERED:      'Audit Keamanan Diaktifkan',
-
-  // Master Pemain
   CREATE_PLAYER:         'Tambah Pemain',
   CREATE_PLAYER_FROM_API:'Import Pemain dari API',
   UPDATE_PLAYER:         'Perbarui Data Pemain',
   DELETE_PLAYER:         'Hapus Pemain',
-
-  // Master Klub
   CREATE_CLUB:           'Tambah Klub',
   CREATE_CLUB_FROM_API:  'Import Klub dari API',
   UPDATE_CLUB:           'Perbarui Data Klub',
   DELETE_CLUB:           'Hapus Klub',
-
-  // Master Kompetisi
   CREATE_COMPETITION:    'Tambah Kompetisi',
   UPDATE_COMPETITION:    'Perbarui Kompetisi',
   DELETE_COMPETITION:    'Hapus Kompetisi',
 };
 
-// ── Kategori aksi untuk pewarnaan badge ──────────────────────────────────────
 type ActionCategory = 'publish' | 'create' | 'update' | 'delete' | 'safety' | 'other';
 
 const getActionCategory = (action: string): ActionCategory => {
@@ -56,28 +41,23 @@ const getActionCategory = (action: string): ActionCategory => {
   return 'other';
 };
 
-const CATEGORY_BADGE: Record<ActionCategory, { label: string; bg: string; color: string }> = {
-  publish: { label: 'Publikasi', bg: '#dcfce7', color: '#166534' },
-  create:  { label: 'Tambah',   bg: '#dbeafe', color: '#1e40af' },
-  update:  { label: 'Perbarui', bg: '#fef9c3', color: '#854d0e' },
-  delete:  { label: 'Hapus',    bg: '#fee2e2', color: '#991b1b' },
-  safety:  { label: 'Keamanan', bg: '#f3e8ff', color: '#6b21a8' },
-  other:   { label: 'Sistem',   bg: '#f1f5f9', color: '#475569' },
+const CATEGORY_BADGE: Record<ActionCategory, { label: string; bg: string; color: string; cssClass: string }> = {
+  publish: { label: 'Publikasi', bg: '#dcfce7', color: '#166534', cssClass: 'badge-success' },
+  create:  { label: 'Tambah',   bg: '#dbeafe', color: '#1e40af', cssClass: 'badge-info' },
+  update:  { label: 'Perbarui', bg: '#fef9c3', color: '#854d0e', cssClass: 'badge-warning' },
+  delete:  { label: 'Hapus',    bg: '#fee2e2', color: '#991b1b', cssClass: 'badge-danger' },
+  safety:  { label: 'Keamanan', bg: '#f3e8ff', color: '#6b21a8', cssClass: 'badge-draft' },
+  other:   { label: 'Sistem',   bg: '#f1f5f9', color: '#475569', cssClass: 'badge-draft' },
 };
 
-const ROW_HIGHLIGHT: Record<ActionCategory, string | undefined> = {
-  delete:  'rgba(239, 68, 68, 0.04)',
-  safety:  'rgba(168, 85, 247, 0.04)',
-  publish: 'rgba(34, 197, 94, 0.04)',
-  create:  undefined,
-  update:  undefined,
-  other:   undefined,
-};
+const PAGE_SIZE = 20;
 
 export default function AuditLogsView() {
   const { auditLogs } = useApp();
   const [search, setSearch] = useState('');
   const [filterModule, setFilterModule] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const modules = Array.from(new Set(auditLogs.map(l => l.module))).sort();
 
@@ -85,59 +65,125 @@ export default function AuditLogsView() {
     const q = search.toLowerCase();
     const matchQ = !q || log.user.toLowerCase().includes(q) || log.details.toLowerCase().includes(q) || log.module.toLowerCase().includes(q);
     const matchM = !filterModule || log.module === filterModule;
-    return matchQ && matchM;
+    const matchCat = !filterCategory || getActionCategory(log.action) === filterCategory;
+    return matchQ && matchM && matchCat;
   });
+
+  const isFilterActive = !!(search || filterModule || filterCategory);
+  const totalEntries = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * PAGE_SIZE;
+  const paginatedLogs = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setFilterModule('');
+    setFilterCategory('');
+    setCurrentPage(1);
+  };
+
+  // Build page window (max 5 pages visible)
+  const pageWindow = Array.from({ length: totalPages }, (_, i) => i + 1)
+    .slice(Math.max(0, safePage - 3), safePage + 2);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header */}
-      <div>
-        <div className="breadcrumb"><span>Dashboard</span> <ChevronRight size={10} /> <span>Audit Log</span></div>
-        <h1 className="page-title">Audit Log</h1>
-        <p className="page-description">Riwayat perubahan data penting dan aktivitas admin.</p>
-      </div>
 
-      {/* Filter bar */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: '1 1 220px' }}>
-          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)' }} />
-          <input
-            className="form-input"
-            style={{ paddingLeft: 32, height: 36, fontSize: 13 }}
-            placeholder="Cari user, detail, modul..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+      {/* ── Page Header ── */}
+      <div className="page-header">
+        <div>
+          <div className="breadcrumb">
+            <span>Dashboard</span>
+            <ChevronRight size={10} />
+            <span>Audit Log</span>
+          </div>
+          <h1 className="page-title">Audit Log</h1>
+          <p className="page-description">Riwayat seluruh perubahan data dan aktivitas admin secara real-time.</p>
         </div>
-        <select
-          className="form-select"
-          style={{ flex: '0 0 200px', height: 36, fontSize: 13 }}
-          value={filterModule}
-          onChange={e => setFilterModule(e.target.value)}
-        >
-          <option value="">Semua Modul</option>
-          {modules.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        {(search || filterModule) && (
-          <button className="btn btn-sm btn-secondary" onClick={() => { setSearch(''); setFilterModule(''); }}>
-            Reset
-          </button>
-        )}
-        <span style={{ fontSize: 12, color: 'var(--neutral-500)', marginLeft: 'auto' }}>
-          {filtered.length} dari {auditLogs.length} entri
-        </span>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Entri</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--neutral-950)', lineHeight: 1.1 }}>{auditLogs.length}</div>
+          </div>
+          {isFilterActive && (
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary-700)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hasil Filter</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--primary-600)', lineHeight: 1.1 }}>{totalEntries}</div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Legenda kategori */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {(Object.entries(CATEGORY_BADGE) as [ActionCategory, typeof CATEGORY_BADGE[ActionCategory]][]).map(([key, val]) => (
-          <span key={key} style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 99, background: val.bg, color: val.color }}>
-            {val.label}
+      {/* ── Filter Bar ── */}
+      <div className="card" style={{ padding: '14px 20px' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)' }} />
+            <input
+              className="form-input"
+              style={{ paddingLeft: 30, height: 38, fontSize: 13 }}
+              placeholder="Cari user, detail, modul..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+            />
+          </div>
+          <select
+            className="form-select"
+            style={{ flex: '0 0 170px', height: 38, fontSize: 13 }}
+            value={filterModule}
+            onChange={e => { setFilterModule(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="">Semua Modul</option>
+            {modules.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <select
+            className="form-select"
+            style={{ flex: '0 0 155px', height: 38, fontSize: 13 }}
+            value={filterCategory}
+            onChange={e => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="">Semua Kategori</option>
+            {(Object.entries(CATEGORY_BADGE) as [ActionCategory, typeof CATEGORY_BADGE[ActionCategory]][]).map(([key, val]) => (
+              <option key={key} value={key}>{val.label}</option>
+            ))}
+          </select>
+          {isFilterActive && (
+            <button className="btn btn-sm btn-secondary" onClick={handleResetFilters} style={{ height: 38, gap: 6, fontSize: 13 }}>
+              <RotateCcw size={14} /> Reset
+            </button>
+          )}
+          <span style={{ fontSize: 12, color: 'var(--neutral-500)', marginLeft: 'auto' }}>
+            {totalEntries} dari {auditLogs.length} entri
           </span>
-        ))}
+        </div>
+
+        {/* Category Badge Filters */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--neutral-200)', alignItems: 'center' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', marginRight: 2 }}>Kategori:</span>
+          {(Object.entries(CATEGORY_BADGE) as [ActionCategory, typeof CATEGORY_BADGE[ActionCategory]][]).map(([key, val]) => (
+            <button
+              key={key}
+              onClick={() => { setFilterCategory(filterCategory === key ? '' : key); setCurrentPage(1); }}
+              className={`badge ${filterCategory === key ? 'badge-success' : val.cssClass}`}
+              style={{
+                cursor: 'pointer',
+                border: '1px solid transparent',
+                fontSize: 11,
+                fontWeight: 700,
+                opacity: filterCategory && filterCategory !== key ? 0.5 : 1,
+                transition: 'all 0.15s ease',
+                background: filterCategory === key ? val.color : val.bg,
+                color: filterCategory === key ? 'white' : val.color,
+              }}
+            >
+              {val.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tabel */}
+      {/* ── Data Table ── */}
       <div className="table-wrapper">
         <table className="data-table">
           <thead>
@@ -151,50 +197,71 @@ export default function AuditLogsView() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {paginatedLogs.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--neutral-400)', fontSize: 13 }}>
-                  Tidak ada log yang sesuai filter.
+                <td colSpan={6} style={{ textAlign: 'center', padding: 48 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <ClipboardList size={32} color="var(--neutral-400)" style={{ margin: '0 auto 4px' }} />
+                    <p style={{ fontWeight: 600, color: 'var(--neutral-700)' }}>Tidak ada log yang sesuai filter</p>
+                    {isFilterActive && (
+                      <button className="btn btn-sm btn-secondary" onClick={handleResetFilters} style={{ marginTop: 4, gap: 6 }}>
+                        <RotateCcw size={13} /> Reset Filter
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
-            ) : filtered.map(log => {
+            ) : paginatedLogs.map(log => {
               const cat = getActionCategory(log.action);
               const badge = CATEGORY_BADGE[cat];
-              const rowBg = ROW_HIGHLIGHT[cat];
               const humanAction = ACTION_LABEL[log.action] || log.action.replace(/_/g, ' ');
 
               return (
-                <tr key={log.id} style={rowBg ? { backgroundColor: rowBg } : undefined}>
-                  <td style={{ whiteSpace: 'nowrap', fontSize: 12, color: 'var(--neutral-600)' }}>{log.timestamp}</td>
+                <tr key={log.id}>
+                  <td style={{ whiteSpace: 'nowrap', fontSize: 12 }} className="text-muted">{log.timestamp}</td>
                   <td><span className="semibold" style={{ fontSize: 13 }}>{log.user}</span></td>
+                  <td><span className="badge badge-info" style={{ fontSize: 11 }}>{log.module}</span></td>
                   <td>
-                    <span className="badge badge-info" style={{ fontSize: 11 }}>{log.module}</span>
-                  </td>
-                  <td>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: 99,
-                      background: badge.bg,
-                      color: badge.color,
-                      whiteSpace: 'nowrap',
-                    }}>
+                    <span className={`badge ${badge.cssClass}`} style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
                       {badge.label}
                     </span>
                   </td>
-                  <td style={{ fontSize: 13, fontWeight: 600, color: 'var(--neutral-800)' }}>
-                    {humanAction}
-                  </td>
-                  <td style={{ fontSize: 12, color: 'var(--neutral-600)', maxWidth: 340 }}>
-                    {log.details}
-                  </td>
+                  <td style={{ fontSize: 13, fontWeight: 600 }}>{humanAction}</td>
+                  <td style={{ fontSize: 12, maxWidth: 320 }} className="text-muted">{log.details}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      {/* ── Pagination ── */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <span style={{ fontSize: 13, color: 'var(--neutral-700)' }}>
+            Menampilkan <strong>{startIndex + 1}</strong>–<strong>{Math.min(startIndex + PAGE_SIZE, totalEntries)}</strong> dari <strong>{totalEntries}</strong> entri
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === 1} onClick={() => setCurrentPage(1)}>
+              <ChevronsLeft size={15} />
+            </button>
+            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+              <ChevronLeft size={15} />
+            </button>
+            {pageWindow.map(page => (
+              <button key={page} className={`btn btn-sm ${safePage === page ? 'btn-primary' : 'btn-secondary'}`} style={{ minWidth: 32, padding: '0 8px', fontSize: 13 }} onClick={() => setCurrentPage(page)}>
+                {page}
+              </button>
+            ))}
+            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+              <ChevronRightIcon size={15} />
+            </button>
+            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === totalPages} onClick={() => setCurrentPage(totalPages)}>
+              <ChevronsRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

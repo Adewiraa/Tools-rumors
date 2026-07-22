@@ -210,139 +210,111 @@ export default function UserManagementView() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <div className="breadcrumb" style={{ fontSize: 12, color: 'var(--neutral-500)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <span>Dashboard</span> <ChevronRight size={10} /> <span style={{ fontWeight: 600, color: 'var(--neutral-700)' }}>Manajemen User</span>
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Users size={26} style={{ color: 'var(--primary-600)' }} /> Manajemen User & Password
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--neutral-700)', margin: '4px 0 0 0' }}>
-            Kelola akun admin, username, password, dan status hak akses pengguna Gosball.
-          </p>
-        </div>
 
-        <button className="btn btn-primary" onClick={handleOpenCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', fontWeight: 700, fontSize: 14 }}>
-          <UserPlus size={18} /> Tambah User Baru
+      {/* ── Page Header ── */}
+      <div className="page-header">
+        <div>
+          <div className="breadcrumb">
+            <span>Dashboard</span> <ChevronRight size={10} /> <span>Manajemen User</span>
+          </div>
+          <h1 className="page-title">Manajemen User & Password</h1>
+          <p className="page-description">Kelola akun admin, username, password, dan status hak akses pengguna Gosball.</p>
+        </div>
+        <button className="btn btn-md btn-primary" onClick={handleOpenCreate}>
+          <UserPlus size={16} /> Tambah User Baru
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-        <div style={{ backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: 'rgba(102, 117, 106, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-600)' }}>
-            <Users size={22} />
-          </div>
+      {/* ── Summary Stats — schedule-flow-grid pattern ── */}
+      <div className="schedule-flow-grid">
+        <div className="schedule-flow-card">
+          <Users size={18} />
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total User Admin</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginTop: 2 }}>{totalUsers}</div>
+            <span>Total User Admin</span>
+            <strong>{totalUsers}</strong>
           </div>
         </div>
-
-        <div style={{ backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: 'rgba(34, 197, 94, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
-            <UserCheck size={22} />
-          </div>
+        <div className="schedule-flow-card">
+          <UserCheck size={18} style={{ color: '#16a34a' }} />
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Status Aktif</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#16a34a', lineHeight: 1.2, marginTop: 2 }}>{activeUsers}</div>
+            <span>Status Aktif</span>
+            <strong style={{ color: '#16a34a' }}>{activeUsers}</strong>
           </div>
         </div>
-
-        <div style={{ backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: 'rgba(239, 68, 68, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>
-            <UserX size={22} />
-          </div>
+        <div className="schedule-flow-card">
+          <UserX size={18} style={{ color: 'var(--danger-600)' }} />
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Non-Aktif</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#dc2626', lineHeight: 1.2, marginTop: 2 }}>{inactiveUsers}</div>
+            <span>Non-Aktif</span>
+            <strong style={{ color: 'var(--danger-600)' }}>{inactiveUsers}</strong>
           </div>
         </div>
       </div>
 
-      {/* DATATABLE CONTAINER CARD */}
-      <div style={{ backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-        
-        {/* Datatable Toolbar / Controls */}
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            
-            {/* Search Input */}
-            <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 380 }}>
-              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-500)' }} />
-              <input
-                type="text"
-                placeholder="Cari nama, username, ID user..."
-                className="form-input"
-                style={{ paddingLeft: 36, paddingRight: searchTerm ? 32 : 12, height: 38, fontSize: 13, backgroundColor: 'var(--white)' }}
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 2 }}
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
 
-            {/* Filters Group */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <SlidersHorizontal size={14} style={{ color: 'var(--neutral-500)' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--neutral-700)' }}>Role:</span>
-                <select
-                  className="form-select"
-                  style={{ height: 38, fontSize: 13, minWidth: 140, paddingRight: 28, backgroundColor: 'var(--white)' }}
-                  value={roleFilter}
-                  onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
-                >
-                  <option value="ALL">Semua Role</option>
-                  <option value="Super Admin">Super Admin</option>
-                  <option value="Admin Data">Admin Data</option>
-                  <option value="Match Editor">Match Editor</option>
-                  <option value="Rumor Editor">Rumor Editor</option>
-                  <option value="Reviewer">Reviewer</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--neutral-700)' }}>Status:</span>
-                <select
-                  className="form-select"
-                  style={{ height: 38, fontSize: 13, minWidth: 130, paddingRight: 28, backgroundColor: 'var(--white)' }}
-                  value={statusFilter}
-                  onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                >
-                  <option value="ALL">Semua Status</option>
-                  <option value="active">Aktif</option>
-                  <option value="inactive">Non-Aktif</option>
-                </select>
-              </div>
-
-              {isFilterActive && (
-                <button
-                  className="btn btn-sm btn-secondary"
-                  onClick={resetFilters}
-                  style={{ height: 38, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--neutral-700)' }}
-                  title="Reset Filter"
-                >
-                  <RotateCcw size={14} /> Reset
-                </button>
-              )}
-            </div>
-          </div>
+      {/* ── Filter Bar ── */}
+      <div className="card" style={{ padding: '12px 20px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Search Input */}
+        <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 320 }}>
+          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)' }} />
+          <input
+            type="text"
+            placeholder="Cari nama, username, ID user..."
+            className="form-input"
+            style={{ paddingLeft: 30, paddingRight: searchTerm ? 32 : 12 }}
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 2 }}
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
-        {/* Datatable Table Body */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
-            <thead>
-              <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid var(--neutral-200)', color: '#334155', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        {/* Role Filter */}
+        <select
+          className="form-select"
+          style={{ maxWidth: 180 }}
+          value={roleFilter}
+          onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+        >
+          <option value="ALL">Semua Role</option>
+          <option value="Super Admin">Super Admin</option>
+          <option value="Admin Data">Admin Data</option>
+          <option value="Match Editor">Match Editor</option>
+          <option value="Rumor Editor">Rumor Editor</option>
+          <option value="Reviewer">Reviewer</option>
+        </select>
+
+        {/* Status Filter */}
+        <select
+          className="form-select"
+          style={{ maxWidth: 150 }}
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+        >
+          <option value="ALL">Semua Status</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Non-Aktif</option>
+        </select>
+
+        {isFilterActive && (
+          <button className="btn btn-sm btn-secondary" onClick={resetFilters}>
+            <RotateCcw size={14} /> Reset
+          </button>
+        )}
+        <span className="text-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>{totalEntries} user</span>
+      </div>
+
+      {/* ── Datatable ── */}
+
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
                 
                 {/* Column: User / Nama Lengkap */}
                 <th
@@ -594,83 +566,46 @@ export default function UserManagementView() {
           </table>
         </div>
 
-        {/* Datatable Footer / Pagination */}
-        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
-          
-          {/* Entries Info & Rows Per Page */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: 'var(--neutral-700)' }}>
-              Menampilkan <strong style={{ color: '#0f172a' }}>{totalEntries > 0 ? startIndex + 1 : 0}</strong> - <strong style={{ color: '#0f172a' }}>{endIndex}</strong> dari <strong style={{ color: '#0f172a' }}>{totalEntries}</strong> user
-            </span>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 12, color: 'var(--neutral-500)' }}>Tampilkan:</span>
-              <select
-                className="form-select"
-                style={{ height: 32, fontSize: 12, padding: '0 24px 0 8px', backgroundColor: 'var(--white)' }}
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Page Navigation Buttons */}
+      {/* ── Pagination ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, color: 'var(--neutral-700)' }}>
+            Menampilkan <strong>{totalEntries > 0 ? startIndex + 1 : 0}</strong>–<strong>{endIndex}</strong> dari <strong>{totalEntries}</strong> user
+          </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              className="btn btn-sm btn-secondary"
-              style={{ height: 32, width: 32, padding: 0, justifyContent: 'center' }}
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(1)}
-              title="Halaman Pertama"
+            <span style={{ fontSize: 12, color: 'var(--neutral-500)' }}>Tampilkan:</span>
+            <select
+              className="form-select"
+              style={{ height: 32, fontSize: 12, padding: '0 24px 0 8px' }}
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
             >
-              <ChevronsLeft size={16} />
-            </button>
-            <button
-              className="btn btn-sm btn-secondary"
-              style={{ height: 32, width: 32, padding: 0, justifyContent: 'center' }}
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              title="Halaman Sebelumnya"
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            {/* Page Number Indicators */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                className={`btn btn-sm ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ height: 32, minWidth: 32, padding: '0 8px', fontSize: 13, fontWeight: currentPage === page ? 700 : 400 }}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </button>
-            ))}
-
-            <button
-              className="btn btn-sm btn-secondary"
-              style={{ height: 32, width: 32, padding: 0, justifyContent: 'center' }}
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              title="Halaman Selanjutnya"
-            >
-              <ChevronRight size={16} />
-            </button>
-            <button
-              className="btn btn-sm btn-secondary"
-              style={{ height: 32, width: 32, padding: 0, justifyContent: 'center' }}
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(totalPages)}
-              title="Halaman Terakhir"
-            >
-              <ChevronsRight size={16} />
-            </button>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
           </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>
+            <ChevronsLeft size={15} />
+          </button>
+          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
+            <ChevronLeft size={15} />
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).slice(Math.max(0, currentPage - 3), currentPage + 2).map(page => (
+            <button key={page} className={`btn btn-sm ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`} style={{ minWidth: 32, padding: '0 8px', fontSize: 13 }} onClick={() => setCurrentPage(page)}>
+              {page}
+            </button>
+          ))}
+          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
+            <ChevronRight size={15} />
+          </button>
+          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)}>
+            <ChevronsRight size={15} />
+          </button>
         </div>
       </div>
 
