@@ -106,7 +106,11 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     setRumors(prev => isNew ? [saved, ...prev] : prev.map(r => r.id === saved.id ? saved : r));
     // Sync form agar status ter-update di UI
     setForm(saved);
-    logAction(isNew ? 'PUBLISH_RUMOR' : 'UPDATE_PUBLISH_RUMOR', 'Rumor & Transfer', saved.headline);
+    logAction(
+      isNew ? 'PUBLISH_RUMOR' : 'UPDATE_PUBLISH_RUMOR',
+      'Rumor & Transfer',
+      `${saved.player} (${saved.fromClub || 'Tanpa Klub'} → ${saved.destinationClub}) — "${saved.headline}"`,
+    );
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

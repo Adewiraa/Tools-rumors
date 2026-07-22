@@ -38,7 +38,7 @@ export default function RumorsListView() {
     setRumors(prev => prev.filter(item => item.id !== rumor.id));
     if (selectedRumor?.id === rumor.id) setSelectedRumor(null);
     setConfirmDeleteId(null);
-    logAction('DELETE_RUMOR', 'Rumor & Transfer', rumor.headline || rumor.player || rumor.id);
+    logAction('DELETE_RUMOR', 'Rumor & Transfer', `${rumor.player || 'Pemain'} (${rumor.fromClub || '-'} → ${rumor.destinationClub || '-'}) — "${rumor.headline || rumor.id}"`);
     triggerToast('Rumor berhasil dihapus.');
   };
 
