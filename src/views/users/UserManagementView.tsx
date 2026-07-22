@@ -559,7 +559,7 @@ export default function UserManagementView() {
                           <button
                             className="btn btn-sm btn-secondary"
                             onClick={() => handleOpenEdit(u)}
-                            style={{ height: 32, padding: '0 10px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            style={{ height: 32, padding: '0 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
                             title="Edit User & Password"
                           >
                             <Edit2 size={13} /> Edit
@@ -569,14 +569,15 @@ export default function UserManagementView() {
                             onClick={() => handleOpenDelete(u)}
                             style={{
                               height: 32,
-                              padding: '0 10px',
+                              padding: '0 12px',
                               fontSize: 12,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: 4,
-                              color: '#dc2626',
-                              backgroundColor: 'transparent',
-                              border: '1px solid rgba(220, 38, 38, 0.3)',
+                              gap: 6,
+                              fontWeight: 600,
+                              color: '#e11d48',
+                              backgroundColor: 'rgba(225, 29, 72, 0.06)',
+                              border: '1px solid rgba(225, 29, 72, 0.25)',
                               borderRadius: 'var(--radius-sm)'
                             }}
                             title="Hapus User"
@@ -864,25 +865,67 @@ export default function UserManagementView() {
         </div>
       )}
 
-      {/* DELETE USER CONFIRMATION MODAL */}
+      {/* DELETE USER CONFIRMATION MODAL (MATCHED WITH SCHEDULE & MATCH RESULT MODAL DESIGN) */}
       {isDeleteModalOpen && selectedUser && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
-          <div style={{ width: '100%', maxWidth: 420, backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', padding: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, color: '#dc2626' }}>
-              <Trash2 size={24} />
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>Konfirmasi Hapus User</h3>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 440, backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
+            
+            {/* Header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--neutral-200)', backgroundColor: '#fff1f2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(225, 29, 72, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e11d48', flexShrink: 0 }}>
+                  <Trash2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#9f1239' }}>Konfirmasi Hapus User</h3>
+                  <div style={{ fontSize: 11, color: '#be123c', marginTop: 1 }}>Tindakan ini tidak dapat dibatalkan</div>
+                </div>
+              </div>
+              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setIsDeleteModalOpen(false)}>
+                <X size={18} />
+              </button>
             </div>
-            <p style={{ color: '#334155', fontSize: 14, marginBottom: 20, lineHeight: 1.5 }}>
-              Apakah Anda yakin ingin menghapus user <strong style={{ color: '#0f172a' }}>{selectedUser.fullName} (@{selectedUser.username})</strong>? Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Batal</button>
+
+            {/* Body */}
+            <div style={{ padding: 20 }}>
+              <p style={{ color: '#334155', fontSize: 14, margin: 0, lineHeight: 1.6 }}>
+                Apakah Anda yakin ingin menghapus akun user <strong style={{ color: '#0f172a' }}>{selectedUser.fullName}</strong> (<span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary-700)' }}>@{selectedUser.username}</span>)?
+              </p>
+
+              <div style={{ marginTop: 14, padding: '12px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecdd3', borderRadius: 8, fontSize: 12, color: '#9f1239', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                <span>Pengguna ini akan kehilangan hak akses ke seluruh sistem Gosball Media Tools.</span>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button
-                className="btn btn-primary"
-                style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+                className="btn btn-secondary"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isSubmitting}
+                style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600 }}
+              >
+                Batal
+              </button>
+              <button
+                className="btn"
                 onClick={handleDeleteSubmit}
                 disabled={isSubmitting}
+                style={{
+                  padding: '8px 18px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: 'white',
+                  backgroundColor: '#e11d48',
+                  borderColor: '#e11d48',
+                  borderRadius: 'var(--radius-md)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
               >
+                <Trash2 size={15} />
                 {isSubmitting ? 'Menghapus...' : 'Ya, Hapus User'}
               </button>
             </div>
