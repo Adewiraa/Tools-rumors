@@ -492,13 +492,53 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                 </div>
               )}
             </div>
-            <div style={{ padding: '8px 16px', borderTop: '1px solid var(--navy-800)', display: 'flex', gap: 16, fontSize: 10, color: 'var(--neutral-500)' }}>
-              <span>ESC untuk keluar</span>
-              <span>↑↓ navigasi</span>
-            </div>
           </div>
         </div>
       )}
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="mobile-bottom-nav">
+        <Link
+          href="/dashboard"
+          className={`mobile-bottom-item ${activeMenu === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setMobileDrawerOpen(false)}
+        >
+          <Activity size={20} />
+          <span>Dashboard</span>
+        </Link>
+        <Link
+          href="/schedule"
+          className={`mobile-bottom-item ${activeMenu === 'schedule' ? 'active' : ''}`}
+          onClick={() => setMobileDrawerOpen(false)}
+        >
+          <Calendar size={20} />
+          <span>Jadwal</span>
+        </Link>
+        <Link
+          href="/lineups"
+          className={`mobile-bottom-item ${activeMenu === 'lineups' ? 'active' : ''}`}
+          onClick={() => setMobileDrawerOpen(false)}
+        >
+          <FileText size={20} />
+          <span>Lineup</span>
+        </Link>
+        <Link
+          href="/rumors"
+          className={`mobile-bottom-item ${activeMenu === 'rumors' ? 'active' : ''}`}
+          onClick={() => setMobileDrawerOpen(false)}
+        >
+          <Radio size={20} />
+          <span>Rumor</span>
+        </Link>
+        <button
+          type="button"
+          className={`mobile-bottom-item ${mobileDrawerOpen ? 'active' : ''}`}
+          onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+        >
+          <Menu size={20} />
+          <span>Menu</span>
+        </button>
+      </nav>
     </div>
   );
 }

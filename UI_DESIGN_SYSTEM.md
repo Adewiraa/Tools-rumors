@@ -208,4 +208,28 @@ Setiap menu/view wajib mengikuti hirarki layout berikut:
 | **Login** | `/login` | Standalone | N/A | N/A | ✅ Sesuai (Transparan) |
 
 ---
+
+## 8. Spesifikasi Tampilan Mobile & Bottom Navigation Bar
+
+### A. Transformatif Datatable Mobile (*Mobile Card View*)
+- **Perilaku**: Pada layar seluler ($\le 768\text{px}$), komponen `.data-table` secara otomatis bertransformasi dari tabel horizontal menjadi deretan **Cards** vertikal yang presisi.
+- **Rules**:
+  - `thead` disembunyikan (`display: none`).
+  - Setiap baris `tr` berubah menjadi `card` independen (`background: var(--white)`, `border-radius: var(--radius-lg)`, `margin-bottom: 12px`, `box-shadow: var(--shadow-sm)`).
+  - Setiap sel `td` menjadi flex-row tersusun rapi dengan border separator tipis antar bidang data.
+  - Baris tombol aksi (`td:last-child`) ditempatkan di bagian bawah card dengan alignment kanan untuk kemudahan akses jempol pengguna.
+
+### B. Mobile Bottom Navigation Bar (`.mobile-bottom-nav`)
+- **Perilaku**: Pada layar seluler ($\le 768\text{px}$), navigasi utama dipindahkan ke bagian bawah layar secara melayang (*fixed bottom navigation*).
+- **Tab Menu Utama**:
+  1. **Dashboard**: `/dashboard` (Icon `Activity`)
+  2. **Jadwal**: `/schedule` (Icon `Calendar`)
+  3. **Lineup**: `/lineups` (Icon `FileText`)
+  4. **Rumor**: `/rumors` (Icon `Radio`)
+  5. **Menu / Lainnya**: Membuka drawer navigasi lengkap untuk akses Master Data, Audit Log, User, Permissions, & Settings (Icon `Menu`).
+- **Styling**: `position: fixed`, `bottom: 0`, `height: 60px`, `background: var(--navy-950)`, `border-top: 1px solid var(--navy-900)`, `z-index: 1000`.
+- **Padding Container**: `.page-container` pada mobile diberi `padding-bottom: 84px` agar konten tidak tertutup oleh bar navigasi bawah.
+
+---
 *Dokumen ini dibuat sebagai standar acuan resmi pengembangan UI/UX Gosball Media Tools.*
+
