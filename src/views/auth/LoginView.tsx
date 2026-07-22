@@ -4,15 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn, Shield, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { saveSession, isLoggedIn } from '@/logic/authSession';
-import type { AppUser, UserRole } from '@/lib/types/auth';
-
-const ROLE_INFO: Record<UserRole, { color: string; bg: string; label: string }> = {
-  'Super Admin':  { color: '#e11d48', bg: 'rgba(225,29,72,0.12)',   label: 'Super Admin' },
-  'Admin Data':   { color: '#059669', bg: 'rgba(5,150,105,0.12)',   label: 'Admin Data' },
-  'Match Editor': { color: '#2563eb', bg: 'rgba(37,99,235,0.12)',   label: 'Match Editor' },
-  'Rumor Editor': { color: '#d97706', bg: 'rgba(217,119,6,0.12)',   label: 'Rumor Editor' },
-  'Reviewer':     { color: '#7c3aed', bg: 'rgba(124,58,237,0.12)',  label: 'Reviewer' },
-};
+import type { AppUser } from '@/lib/types/auth';
 
 export default function LoginView() {
   const router = useRouter();
@@ -86,7 +78,6 @@ export default function LoginView() {
       const user = json.data as Omit<AppUser, 'password'>;
       saveSession(user);
 
-      // Brief success moment before redirect
       await new Promise(r => setTimeout(r, 300));
       router.replace('/dashboard');
     } catch {
@@ -99,7 +90,8 @@ export default function LoginView() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0d1117 0%, #151a1d 50%, #1a2332 100%)',
+      backgroundColor: 'var(--navy-950)',
+      background: 'radial-gradient(circle at top, #1d2428 0%, #151a1d 70%)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -109,34 +101,14 @@ export default function LoginView() {
       overflow: 'hidden',
     }}>
 
-      {/* Background decorative blobs */}
-      <div style={{
-        position: 'absolute', top: '-80px', right: '-80px',
-        width: 340, height: 340, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(102,117,106,0.15) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-100px', left: '-60px',
-        width: 280, height: 280, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(102,117,106,0.10) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute', top: '40%', left: '10%',
-        width: 120, height: 120, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-
       {/* Offline badge */}
       {!isOnline && (
         <div style={{
           position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(155,95,95,0.95)', color: 'white',
+          background: 'var(--danger-600)', color: 'white',
           padding: '8px 20px', borderRadius: 99, fontSize: 13, fontWeight: 700,
           display: 'flex', alignItems: 'center', gap: 8, zIndex: 100,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          boxShadow: 'var(--shadow-lg)',
         }}>
           <WifiOff size={14} /> Mode Offline — Login menggunakan akun lokal
         </div>
@@ -146,53 +118,47 @@ export default function LoginView() {
       <div style={{
         width: '100%',
         maxWidth: 420,
-        background: 'rgba(255,255,255,0.04)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 20,
+        backgroundColor: 'var(--navy-900)',
+        border: '1px solid var(--navy-800)',
+        borderRadius: 'var(--radius-lg)',
         padding: '40px 36px',
-        boxShadow: '0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
         position: 'relative',
         zIndex: 1,
       }}>
 
         {/* Logo & App Name */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
           {appLogo ? (
             <div style={{
-              width: 72, height: 72,
-              borderRadius: 16,
-              background: '#0d1117',
-              border: '1px solid rgba(255,255,255,0.12)',
+              width: 80, height: 80,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 16px',
-              padding: 10,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              background: 'transparent',
             }}>
-              <img src={appLogo} alt={appName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              <img src={appLogo} alt={appName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', background: 'transparent' }} />
             </div>
           ) : (
             <div style={{
               width: 72, height: 72,
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #66756A 0%, #536057 100%)',
+              background: 'var(--primary-600)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 16px',
-              boxShadow: '0 8px 32px rgba(102,117,106,0.4)',
+              boxShadow: '0 8px 24px rgba(102,117,106,0.3)',
             }}>
               <Shield size={32} color="white" />
             </div>
           )}
 
           <h1 style={{
-            fontSize: 22, fontWeight: 800, color: '#f8fafc',
+            fontSize: 24, fontWeight: 800, color: 'var(--white)',
             margin: '0 0 6px',
             letterSpacing: '-0.3px',
           }}>
             {appName}
           </h1>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: 13, color: 'var(--neutral-500)', margin: 0, fontWeight: 500 }}>
             Admin Panel — Masuk untuk melanjutkan
           </p>
         </div>
@@ -201,8 +167,8 @@ export default function LoginView() {
         {error && (
           <div style={{
             background: 'rgba(155,95,95,0.15)',
-            border: '1px solid rgba(155,95,95,0.4)',
-            borderRadius: 10,
+            border: '1px solid var(--danger-600)',
+            borderRadius: 'var(--radius-md)',
             padding: '12px 14px',
             marginBottom: 20,
             display: 'flex', alignItems: 'flex-start', gap: 10,
@@ -216,13 +182,13 @@ export default function LoginView() {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Username */}
           <div>
             <label style={{
               display: 'block', fontSize: 12, fontWeight: 700,
-              color: 'rgba(255,255,255,0.55)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6,
+              color: 'var(--neutral-300)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6,
             }}>
               Username
             </label>
@@ -237,24 +203,24 @@ export default function LoginView() {
               disabled={isLoading}
               style={{
                 width: '100%',
-                height: 48,
-                background: 'rgba(255,255,255,0.06)',
-                border: `1px solid ${error ? 'rgba(155,95,95,0.5)' : 'rgba(255,255,255,0.12)'}`,
-                borderRadius: 10,
+                height: 44,
+                backgroundColor: 'var(--navy-950)',
+                border: `1px solid ${error ? 'var(--danger-600)' : 'var(--navy-800)'}`,
+                borderRadius: 'var(--radius-md)',
                 padding: '0 14px',
                 fontSize: 14,
-                color: '#f8fafc',
+                color: 'var(--white)',
                 outline: 'none',
                 fontFamily: 'inherit',
                 boxSizing: 'border-box',
-                transition: 'border-color 0.15s, box-shadow 0.15s',
+                transition: 'all 0.15s ease',
               }}
               onFocus={e => {
-                e.target.style.borderColor = 'rgba(102,117,106,0.7)';
-                e.target.style.boxShadow = '0 0 0 3px rgba(102,117,106,0.15)';
+                e.target.style.borderColor = 'var(--primary-600)';
+                e.target.style.boxShadow = '0 0 0 3px rgba(102,117,106,0.2)';
               }}
               onBlur={e => {
-                e.target.style.borderColor = error ? 'rgba(155,95,95,0.5)' : 'rgba(255,255,255,0.12)';
+                e.target.style.borderColor = error ? 'var(--danger-600)' : 'var(--navy-800)';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -264,7 +230,7 @@ export default function LoginView() {
           <div>
             <label style={{
               display: 'block', fontSize: 12, fontWeight: 700,
-              color: 'rgba(255,255,255,0.55)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6,
+              color: 'var(--neutral-300)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6,
             }}>
               Password
             </label>
@@ -279,24 +245,24 @@ export default function LoginView() {
                 disabled={isLoading}
                 style={{
                   width: '100%',
-                  height: 48,
-                  background: 'rgba(255,255,255,0.06)',
-                  border: `1px solid ${error ? 'rgba(155,95,95,0.5)' : 'rgba(255,255,255,0.12)'}`,
-                  borderRadius: 10,
+                  height: 44,
+                  backgroundColor: 'var(--navy-950)',
+                  border: `1px solid ${error ? 'var(--danger-600)' : 'var(--navy-800)'}`,
+                  borderRadius: 'var(--radius-md)',
                   padding: '0 44px 0 14px',
                   fontSize: 14,
-                  color: '#f8fafc',
+                  color: 'var(--white)',
                   outline: 'none',
                   fontFamily: 'inherit',
                   boxSizing: 'border-box',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                  transition: 'all 0.15s ease',
                 }}
                 onFocus={e => {
-                  e.target.style.borderColor = 'rgba(102,117,106,0.7)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(102,117,106,0.15)';
+                  e.target.style.borderColor = 'var(--primary-600)';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(102,117,106,0.2)';
                 }}
                 onBlur={e => {
-                  e.target.style.borderColor = error ? 'rgba(155,95,95,0.5)' : 'rgba(255,255,255,0.12)';
+                  e.target.style.borderColor = error ? 'var(--danger-600)' : 'var(--navy-800)';
                   e.target.style.boxShadow = 'none';
                 }}
               />
@@ -306,12 +272,12 @@ export default function LoginView() {
                 tabIndex={-1}
                 style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)',
+                  background: 'none', border: 'none', color: 'var(--neutral-500)',
                   cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center',
                   transition: 'color 0.15s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--white)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--neutral-500)')}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -322,34 +288,15 @@ export default function LoginView() {
           <button
             type="submit"
             disabled={isLoading || !username.trim() || !password.trim()}
+            className="btn btn-primary btn-lg"
             style={{
               width: '100%',
-              height: 50,
-              marginTop: 4,
-              background: isLoading
-                ? 'rgba(102,117,106,0.5)'
-                : 'linear-gradient(135deg, #66756A 0%, #4a6050 100%)',
-              border: 'none',
-              borderRadius: 10,
-              color: 'white',
+              height: 46,
+              marginTop: 6,
               fontSize: 15,
               fontWeight: 700,
-              fontFamily: 'inherit',
-              cursor: isLoading || !username.trim() || !password.trim() ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              transition: 'all 0.2s ease',
+              gap: 10,
               opacity: !username.trim() || !password.trim() ? 0.5 : 1,
-              boxShadow: isLoading ? 'none' : '0 4px 20px rgba(102,117,106,0.35)',
-            }}
-            onMouseEnter={e => {
-              if (!isLoading && username.trim() && password.trim()) {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 28px rgba(102,117,106,0.5)';
-              }
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(102,117,106,0.35)';
             }}
           >
             {isLoading ? (
@@ -372,42 +319,10 @@ export default function LoginView() {
           </button>
         </form>
 
-        {/* Divider */}
-        <div style={{
-          margin: '24px 0 16px',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
-          position: 'relative',
-        }}>
-          <span style={{
-            position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
-            background: 'rgba(21,26,29,0.95)', padding: '0 12px',
-            fontSize: 11, color: 'rgba(255,255,255,0.25)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8,
-          }}>
-            Akun tersedia
-          </span>
-        </div>
-
-        {/* Role Hint Chips */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
-          {(Object.entries(ROLE_INFO) as [UserRole, typeof ROLE_INFO[UserRole]][]).map(([role, info]) => (
-            <span key={role} style={{
-              fontSize: 11,
-              fontWeight: 700,
-              padding: '4px 10px',
-              borderRadius: 99,
-              background: info.bg,
-              color: info.color,
-              border: `1px solid ${info.color}33`,
-            }}>
-              {info.label}
-            </span>
-          ))}
-        </div>
-
         {/* Online indicator */}
         <div style={{
-          marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          fontSize: 11, color: 'rgba(255,255,255,0.25)',
+          marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontSize: 11, color: 'var(--neutral-500)',
         }}>
           {isOnline
             ? <><Wifi size={12} style={{ color: '#4ade80' }} /> Terhubung ke server</>
@@ -417,7 +332,7 @@ export default function LoginView() {
       </div>
 
       {/* Footer */}
-      <p style={{ marginTop: 24, fontSize: 12, color: 'rgba(255,255,255,0.18)', textAlign: 'center' }}>
+      <p style={{ marginTop: 24, fontSize: 12, color: 'var(--neutral-500)', textAlign: 'center' }}>
         {appName} Admin Panel &copy; {new Date().getFullYear()}
       </p>
 
@@ -431,7 +346,7 @@ export default function LoginView() {
         }
         #login-username::placeholder,
         #login-password::placeholder {
-          color: rgba(255,255,255,0.2);
+          color: var(--neutral-500);
         }
       `}</style>
     </div>

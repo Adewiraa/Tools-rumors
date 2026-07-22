@@ -189,7 +189,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--navy-900)' }}>
               <div className="flex align-center gap-8">
-                <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 30, height: 30, objectFit: 'contain', borderRadius: 8, background: '#050505' }} />
+                <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 30, height: 30, objectFit: 'contain', borderRadius: 8, background: 'transparent' }} />
                 <span style={{ fontWeight: 700, color: 'var(--white)', fontSize: 16 }}>{appSettings.appName}</span>
               </div>
               <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setMobileDrawerOpen(false)}>
@@ -246,7 +246,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           {!sidebarCollapsed ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
+                <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: 'transparent', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--white)', letterSpacing: 0.3 }}>{appSettings.appName}</div>
                   <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--primary-600)', letterSpacing: 1, marginTop: -1 }}>{appSettings.appSubtitle}</div>
@@ -258,7 +258,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             </div>
           ) : (
             <button onClick={() => setSidebarCollapsed(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: '100%' }} title="Tampilkan Sidebar">
-              <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: '#050505', flexShrink: 0 }} />
+              <img src={appSettings.appLogoSrc} alt={appSettings.appName} style={{ width: 34, height: 34, objectFit: 'contain', borderRadius: 8, background: 'transparent', flexShrink: 0 }} />
             </button>
           )}
         </div>

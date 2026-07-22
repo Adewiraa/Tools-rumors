@@ -114,13 +114,13 @@ export default function SettingsView() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#0f1515',
+              background: 'transparent',
               padding: 18,
             }}>
               <img
                 src={appSettings.appLogoSrc}
                 alt={appSettings.appName}
-                style={{ maxWidth: '100%', maxHeight: 118, objectFit: 'contain' }}
+                style={{ maxWidth: '100%', maxHeight: 118, objectFit: 'contain', background: 'transparent' }}
               />
             </div>
             <label className="btn btn-sm btn-secondary" style={{ cursor: isUploadingLogo ? 'wait' : 'pointer', marginTop: 10, width: '100%', justifyContent: 'center' }}>
