@@ -81,7 +81,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     type: 'rumor',
     reliabilityTier: 'C',
     sourceName: form.sourceName || 'Media Tools',
-    publicationStatus: form.publicationStatus || 'Draft',
+    publicationStatus: 'Published',
     transferStatus: 'Rumor',
     probability: 50,
     shortSummary: caption,
@@ -91,7 +91,23 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     playerImagePositionY: posY,
     playerImageZoom: zoom,
     author: form.author || 'Rumor Editor',
+    publishDate: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB',
   });
+
+  // Helper: simpan rumor ke Supabase & update local state — selalu Published
+  const persistRumor = async (saved: Rumor) => {
+    const res = await fetch('/api/rumors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rumor: saved }),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Gagal menyimpan ke server.');
+    setRumors(prev => isNew ? [saved, ...prev] : prev.map(r => r.id === saved.id ? saved : r));
+    // Sync form agar status ter-update di UI
+    setForm(saved);
+    logAction(isNew ? 'PUBLISH_RUMOR' : 'UPDATE_PUBLISH_RUMOR', 'Rumor & Transfer', saved.headline);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -117,33 +133,46 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   };
 
   const handleDownload = async () => {
+    if (!form.player.trim() || !form.destinationClub.trim() || !caption || !form.playerImageUrl?.trim()) {
+      triggerToast('Lengkapi data rumor sebelum mengunduh.', 'error');
+      return;
+    }
     try {
       setIsExporting(true);
-      triggerToast('Mengunduh gambar...');
+      triggerToast('Mempublikasi & mengunduh gambar...');
+      const saved = buildSaved();
       const { dataUrl, fileName } = await exportGraphic();
+      // Publish otomatis saat download
+      await persistRumor(saved);
       const a = document.createElement('a');
       a.download = fileName; a.href = dataUrl; a.click();
-      triggerToast('Gambar berhasil diunduh.');
+      triggerToast('Rumor dipublikasi & gambar berhasil diunduh! ✅');
     } catch (err: unknown) { triggerToast(getErrorMessage(err, 'Gagal mengunduh.'), 'error'); }
     finally { setIsExporting(false); }
   };
 
   const handleShare = async () => {
+    if (!form.player.trim() || !form.destinationClub.trim() || !caption || !form.playerImageUrl?.trim()) {
+      triggerToast('Lengkapi data rumor sebelum membagikan.', 'error');
+      return;
+    }
     try {
       setIsExporting(true);
-      triggerToast('Membuat gambar...');
-      const { blob, dataUrl, fileName } = await exportGraphic();
+      triggerToast('Mempublikasi & membuat gambar...');
       const saved = buildSaved();
+      const { blob, dataUrl, fileName } = await exportGraphic();
+      // Publish otomatis saat share
+      await persistRumor(saved);
       const file = new File([blob], fileName, { type: 'image/png' });
       const nav = navigator as ShareNavigator;
       const shareData: ShareData = { files: [file], title: saved.headline, text: caption };
       if (typeof nav.share === 'function' && nav.canShare?.(shareData)) {
         await nav.share(shareData);
-        triggerToast('Siap dibagikan.');
+        triggerToast('Rumor dipublikasi & siap dibagikan! ✅');
       } else {
         const a = document.createElement('a');
         a.download = fileName; a.href = dataUrl; a.click();
-        triggerToast('Share tidak didukung, PNG diunduh.', 'warning');
+        triggerToast('Rumor dipublikasi. Share tidak didukung, PNG diunduh.', 'warning');
       }
     } catch (err: unknown) {
       const errorName = err instanceof Error ? err.name : '';
@@ -165,23 +194,9 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
     }
     try {
       setIsSaving(true);
-      const saved = buildSaved();
-
-      // Persist to Supabase via API
-      const res = await fetch('/api/rumors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rumor: saved }),
-      });
-      const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.error || 'Gagal menyimpan ke server.');
-      }
-
-      // Update local state (AppContext)
-      setRumors(prev => isNew ? [saved, ...prev] : prev.map(r => r.id === saved.id ? saved : r));
-      logAction(isNew ? 'CREATE_RUMOR' : 'UPDATE_RUMOR', 'Rumor & Transfer', saved.headline);
-      triggerToast(isNew ? 'Rumor berhasil dibuat.' : 'Rumor berhasil disimpan.');
+      const saved = buildSaved(); // publicationStatus sudah 'Published'
+      await persistRumor(saved);
+      triggerToast(isNew ? 'Rumor dipublikasi! ✅' : 'Rumor diperbarui & dipublikasi! ✅');
       setIsSaving(false);
       router.replace('/rumors');
     } catch (err: unknown) {
