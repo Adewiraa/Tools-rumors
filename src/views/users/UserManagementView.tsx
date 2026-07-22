@@ -676,191 +676,260 @@ export default function UserManagementView() {
 
       {/* CREATE USER MODAL */}
       {isCreateModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
-          <div style={{ width: '100%', maxWidth: 480, backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 480, backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--neutral-200)', backgroundColor: '#f0fdf4', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <UserPlus size={20} style={{ color: 'var(--primary-600)' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Tambah User Admin Baru</h3>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(22, 163, 74, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a', flexShrink: 0 }}>
+                  <UserPlus size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#14532d' }}>Tambah User Admin Baru</h3>
+                  <div style={{ fontSize: 11, color: '#16a34a', marginTop: 1 }}>Isi semua field yang diperlukan</div>
+                </div>
               </div>
-              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setIsCreateModalOpen(false)}>
+              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4, borderRadius: 4 }} onClick={() => setIsCreateModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Modal Body */}
+            <form id="form-create-user" onSubmit={handleCreateSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
               <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Nama Lengkap</label>
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Nama Lengkap</label>
                 <input
                   type="text"
                   required
                   placeholder="Contoh: Ahmad Subagja"
                   className="form-input"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
                   value={formData.fullName}
                   onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Username</label>
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Username</label>
                 <input
                   type="text"
                   required
                   placeholder="Contoh: ahmad_editor"
                   className="form-input"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
                   value={formData.username}
                   onChange={e => setFormData({ ...formData, username: e.target.value })}
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Password</label>
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Password</label>
                 <div style={{ position: 'relative' }}>
                   <input
-                    type="password"
+                    type={showPassword['create'] ? 'text' : 'password'}
                     required
                     placeholder="Masukkan password baru..."
                     className="form-input"
-                    style={{ backgroundColor: 'var(--white)', color: '#0f172a', paddingRight: 36 }}
+                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 38px 0 12px', width: '100%', boxSizing: 'border-box' }}
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                   />
-                  <Key size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-500)' }} />
+                  <button
+                    type="button"
+                    onClick={() => toggleShowPassword('create')}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4, borderRadius: 4, display: 'flex' }}
+                    title={showPassword['create'] ? 'Sembunyikan Password' : 'Lihat Password'}
+                  >
+                    {showPassword['create'] ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Role Akses</label>
-                <select
-                  className="form-select"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
-                  value={formData.role}
-                  onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
-                >
-                  <option value="Super Admin">Super Admin</option>
-                  <option value="Admin Data">Admin Data</option>
-                  <option value="Match Editor">Match Editor</option>
-                  <option value="Rumor Editor">Rumor Editor</option>
-                  <option value="Reviewer">Reviewer</option>
-                </select>
-              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Role Akses</label>
+                  <select
+                    className="form-select"
+                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                    value={formData.role}
+                    onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
+                  >
+                    <option value="Super Admin">Super Admin</option>
+                    <option value="Admin Data">Admin Data</option>
+                    <option value="Match Editor">Match Editor</option>
+                    <option value="Rumor Editor">Rumor Editor</option>
+                    <option value="Reviewer">Reviewer</option>
+                  </select>
+                </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Status Akun</label>
-                <select
-                  className="form-select"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
-                  value={formData.status}
-                  onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                >
-                  <option value="active">Aktif</option>
-                  <option value="inactive">Non-Aktif</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Batal</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan User'}
-                </button>
+                <div className="form-group">
+                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Status Akun</label>
+                  <select
+                    className="form-select"
+                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                    value={formData.status}
+                    onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                  >
+                    <option value="active">Aktif</option>
+                    <option value="inactive">Non-Aktif</option>
+                  </select>
+                </div>
               </div>
             </form>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsCreateModalOpen(false)}
+                disabled={isSubmitting}
+                style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600 }}
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                form="form-create-user"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+                style={{ padding: '8px 18px', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <UserPlus size={15} />
+                {isSubmitting ? 'Menyimpan...' : 'Simpan User'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* EDIT USER MODAL */}
       {isEditModalOpen && selectedUser && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
-          <div style={{ width: '100%', maxWidth: 480, backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 480, backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+
+            {/* Modal Header */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--neutral-200)', backgroundColor: '#eff6ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Edit2 size={20} style={{ color: 'var(--primary-600)' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>Edit User @{selectedUser.username}</h3>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', backgroundColor: 'rgba(37, 99, 235, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb', flexShrink: 0 }}>
+                  <Edit2 size={17} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#1e3a8a' }}>Edit User Admin</h3>
+                  <div style={{ fontSize: 11, color: '#2563eb', marginTop: 1, fontFamily: 'monospace', fontWeight: 700 }}>@{selectedUser.username}</div>
+                </div>
               </div>
-              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4 }} onClick={() => setIsEditModalOpen(false)}>
+              <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4, borderRadius: 4 }} onClick={() => setIsEditModalOpen(false)}>
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Modal Body */}
+            <form id="form-edit-user" onSubmit={handleEditSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
               <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Nama Lengkap</label>
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Nama Lengkap</label>
                 <input
                   type="text"
                   required
                   className="form-input"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
                   value={formData.fullName}
                   onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Username</label>
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Username</label>
                 <input
                   type="text"
                   required
                   className="form-input"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
                   value={formData.username}
                   onChange={e => setFormData({ ...formData, username: e.target.value })}
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Ganti Password (Opsional)</label>
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>
+                  Ganti Password
+                  <span style={{ fontWeight: 400, color: 'var(--neutral-500)', fontSize: 11, marginLeft: 6 }}>(opsional — kosongkan jika tidak diubah)</span>
+                </label>
                 <div style={{ position: 'relative' }}>
                   <input
-                    type="password"
-                    placeholder="Kosongkan jika tidak ingin mengubah password..."
+                    type={showPassword['edit'] ? 'text' : 'password'}
+                    placeholder="••••••••"
                     className="form-input"
-                    style={{ backgroundColor: 'var(--white)', color: '#0f172a', paddingRight: 36 }}
+                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 38px 0 12px', width: '100%', boxSizing: 'border-box' }}
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                   />
-                  <Key size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-500)' }} />
+                  <button
+                    type="button"
+                    onClick={() => toggleShowPassword('edit')}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', padding: 4, borderRadius: 4, display: 'flex' }}
+                    title={showPassword['edit'] ? 'Sembunyikan' : 'Lihat Password'}
+                  >
+                    {showPassword['edit'] ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Role Akses</label>
-                <select
-                  className="form-select"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
-                  value={formData.role}
-                  onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
-                >
-                  <option value="Super Admin">Super Admin</option>
-                  <option value="Admin Data">Admin Data</option>
-                  <option value="Match Editor">Match Editor</option>
-                  <option value="Rumor Editor">Rumor Editor</option>
-                  <option value="Reviewer">Reviewer</option>
-                </select>
-              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Role Akses</label>
+                  <select
+                    className="form-select"
+                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                    value={formData.role}
+                    onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
+                  >
+                    <option value="Super Admin">Super Admin</option>
+                    <option value="Admin Data">Admin Data</option>
+                    <option value="Match Editor">Match Editor</option>
+                    <option value="Rumor Editor">Rumor Editor</option>
+                    <option value="Reviewer">Reviewer</option>
+                  </select>
+                </div>
 
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 600 }}>Status Akun</label>
-                <select
-                  className="form-select"
-                  style={{ backgroundColor: 'var(--white)', color: '#0f172a' }}
-                  value={formData.status}
-                  onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                >
-                  <option value="active">Aktif</option>
-                  <option value="inactive">Non-Aktif</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>Batal</button>
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? 'Menyimpan...' : 'Perbarui Data User'}
-                </button>
+                <div className="form-group">
+                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Status Akun</label>
+                  <select
+                    className="form-select"
+                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                    value={formData.status}
+                    onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                  >
+                    <option value="active">Aktif</option>
+                    <option value="inactive">Non-Aktif</option>
+                  </select>
+                </div>
               </div>
             </form>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsEditModalOpen(false)}
+                disabled={isSubmitting}
+                style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600 }}
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                form="form-edit-user"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+                style={{ padding: '8px 18px', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <Edit2 size={15} />
+                {isSubmitting ? 'Menyimpan...' : 'Perbarui Data User'}
+              </button>
+            </div>
           </div>
         </div>
       )}
