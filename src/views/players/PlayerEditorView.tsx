@@ -66,8 +66,8 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
     nationality: 'Indonesia',
     flagUrl: 'https://flags.restcountries.com/v5/svg/id.svg',
     age: 25,
-    contractStart: '2026-01-01',
-    contractEnd: '2027-12-31',
+    contractStart: '',
+    contractEnd: '',
     status: 'active',
     availability: 'available',
     completeness: 0,
@@ -219,7 +219,6 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
           <div style={{ gridColumn: 'span 3' }}><label className="form-label">Umur</label><input type="number" className="form-input" value={player.age} onChange={event => updatePlayer('age', Number(event.target.value))} /></div>
           <div style={{ gridColumn: 'span 3' }}><label className="form-label">Status</label><select className="form-select" value={player.status} onChange={event => updatePlayer('status', event.target.value as Player['status'])}><option value="active">Aktif</option><option value="free_agent">Free Agent</option><option value="retired">Pensiun</option></select></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Availability</label><select className="form-select" value={player.availability} onChange={event => updatePlayer('availability', event.target.value as Player['availability'])}><option value="available">Tersedia</option><option value="injured">Cedera</option><option value="suspended">Skorsing</option><option value="international_duty">Tim Nasional</option><option value="doubtful">Diragukan</option></select></div>
-          <div style={{ gridColumn: 'span 6' }}><label className="form-label">Kontrak</label><div className="flex gap-8"><input type="date" className="form-input" value={player.contractStart} onChange={event => updatePlayer('contractStart', event.target.value)} /><input type="date" className="form-input" value={player.contractEnd} onChange={event => updatePlayer('contractEnd', event.target.value)} /></div></div>
         </div>
 
         <aside className="card" style={{ gridColumn: 'span 4', position: 'relative' }}>
