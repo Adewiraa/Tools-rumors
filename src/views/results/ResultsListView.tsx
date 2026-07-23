@@ -17,7 +17,9 @@ import {
   getMatchTimelineEvents
 } from '@/logic/utils';
 import type { AppSettings } from '@/logic/utils';
-import { MatchMediaBadge } from '@/views/shared/MatchMediaAd';
+import { hasMatchMediaPage, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
+
+type ResultOutputType = 'HT' | 'FT' | 'AD';
 
 export default function ResultsListView() {
   const router = useRouter();
@@ -70,52 +72,56 @@ export default function ResultsListView() {
       : <span className="schedule-competition-logo-text" aria-hidden="true">{logo || name?.slice(0, 2).toUpperCase() || 'KO'}</span>
   );
 
-  const getResultOutputElementId = (matchId: string, type: 'HT' | 'FT') => `result-output-card-${matchId}-${type.toLowerCase()}`;
-  const getResultOutputFileName = (match: Match, type: 'HT' | 'FT') => `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
+  const getResultOutputElementId = (matchId: string, type: ResultOutputType) => `result-output-card-${matchId}-${type.toLowerCase()}`;
+  const getResultOutputFileName = (match: Match, type: ResultOutputType) => `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
 
-  const createResultOutputImage = async (match: Match, type: 'HT' | 'FT') => {
+  const createResultOutputImage = async (match: Match, type: ResultOutputType) => {
     const node = document.getElementById(getResultOutputElementId(match.id, type));
-    if (!node) throw new Error('Gambar hasil belum siap.');
+    if (!node) throw new Error(type === 'AD' ? 'Halaman iklan belum siap.' : 'Gambar hasil belum siap.');
     const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     return { dataUrl, blob, fileName: getResultOutputFileName(match, type) };
   };
 
-  const downloadResultOutput = async (match: Match, type: 'HT' | 'FT') => {
+  const downloadResultOutput = async (match: Match, type: ResultOutputType) => {
+    const outputLabel = type === 'AD' ? 'iklan' : type;
     try {
       setIsExportingResultOutput(true);
-      triggerToast(`Membuat gambar ${type}...`);
+      triggerToast(`Membuat gambar ${outputLabel}...`);
       const { dataUrl, fileName } = await createResultOutputImage(match, type);
       const link = document.createElement('a');
       link.download = fileName;
       link.href = dataUrl;
       link.click();
-      triggerToast(`Gambar ${type} berhasil diunduh!`);
+      triggerToast(`Gambar ${outputLabel} berhasil diunduh!`);
     } catch (err) {
       console.warn('Result output download failed:', err);
-      triggerToast(`Gagal mengunduh gambar ${type}.`, 'error');
+      triggerToast(`Gagal mengunduh gambar ${outputLabel}.`, 'error');
     } finally {
       setIsExportingResultOutput(false);
     }
   };
 
-  const shareResultOutput = async (match: Match, type: 'HT' | 'FT') => {
+  const shareResultOutput = async (match: Match, type: ResultOutputType) => {
+    const outputLabel = type === 'AD' ? 'Iklan' : type;
     try {
       setIsExportingResultOutput(true);
-      triggerToast(`Membuat gambar ${type}...`);
+      triggerToast(`Membuat gambar ${outputLabel}...`);
       const { blob, dataUrl, fileName } = await createResultOutputImage(match, type);
       const file = new File([blob], fileName, { type: 'image/png' });
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
       const shareData: ShareData = {
         files: [file],
-        title: `${type} ${match.homeClubName} vs ${match.awayClubName}`,
-        text: `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName}`,
+        title: `${outputLabel} ${match.homeClubName} vs ${match.awayClubName}`,
+        text: type === 'AD'
+          ? `Halaman iklan ${match.homeClubName} vs ${match.awayClubName}`
+          : `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
         await nav.share(shareData);
-        triggerToast(`Gambar ${type} siap dibagikan.`);
+        triggerToast(`Gambar ${outputLabel} siap dibagikan.`);
         return;
       }
 
@@ -128,7 +134,7 @@ export default function ResultsListView() {
       const error = err as { name?: string };
       if (error?.name !== 'AbortError') {
         console.warn('Result output share failed:', err);
-        triggerToast(`Gagal membagikan gambar ${type}.`, 'error');
+        triggerToast(`Gagal membagikan gambar ${outputLabel}.`, 'error');
       }
     } finally {
       setIsExportingResultOutput(false);
@@ -311,6 +317,25 @@ export default function ResultsListView() {
                     </button>
                   </div>
                 </div>
+                {hasMatchMediaPage(getMatchMediaSettings(timelineMatch)) && (
+                  <div className="output-preview-item">
+                    <div className="output-preview-item-label">Media Iklan</div>
+                    <ResultOutputAdCard
+                      match={timelineMatch}
+                      competitions={competitions}
+                      elementId={getResultOutputElementId(timelineMatch.id, 'AD')}
+                      appSettings={appSettings}
+                    />
+                    <div className="output-preview-actions">
+                      <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'AD')} disabled={isExportingResultOutput}>
+                        <Share2 size={14} /> Bagikan Iklan
+                      </button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'AD')} disabled={isExportingResultOutput}>
+                        <Download size={14} /> Unduh Iklan
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -332,7 +357,6 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
   const goalEvents = events.filter(event => event.type === 'goal' && (graphicType === 'FT' || (event.minute || 0) <= 45));
   const comp = competitions.find(c => c.name === match.competition);
   const resultGraphicSettings = getResultGraphicSettings(match);
-  const mediaSettings = getMatchMediaSettings(match);
   const backgroundImage = resultGraphicSettings.backgroundImage || null;
   const backgroundPositionX = resultGraphicSettings.backgroundPositionX ?? 50;
   const backgroundPositionY = resultGraphicSettings.backgroundPositionY ?? 50;
@@ -458,9 +482,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
             {match.competition || 'LIGA NUSANTARA UTAMA'}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <MatchMediaBadge settings={mediaSettings} placement="header-right" variant="result" />
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} />
       </div>
 
       <div style={{ flex: 1 }} />
@@ -539,11 +561,37 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
         )}
       </div>
 
-      <MatchMediaBadge settings={mediaSettings} placement="footer" variant="result" />
-
       <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
         <span>{appSettings.appHandle}</span>
       </div>
     </div>
+  );
+}
+
+function ResultOutputAdCard({ match, competitions, elementId, appSettings }: {
+  match: Match;
+  competitions: Competition[];
+  elementId: string;
+  appSettings: AppSettings;
+}) {
+  const comp = competitions.find(c => c.name === match.competition);
+  const resultGraphicSettings = getResultGraphicSettings(match);
+
+  return (
+    <MatchMediaPageCard
+      elementId={elementId}
+      settings={getMatchMediaSettings(match)}
+      width={400}
+      height={500}
+      appSettings={appSettings}
+      competitionName={match.competition}
+      competitionLogo={comp?.logoUrl}
+      matchTitle={`${match.homeClubName} vs ${match.awayClubName}`}
+      backgroundImage={resultGraphicSettings.backgroundImage || null}
+      backgroundPositionX={resultGraphicSettings.backgroundPositionX ?? 50}
+      backgroundPositionY={resultGraphicSettings.backgroundPositionY ?? 50}
+      backgroundZoom={resultGraphicSettings.backgroundZoom ?? 100}
+      backgroundDim={resultGraphicSettings.backgroundDim ?? 20}
+    />
   );
 }

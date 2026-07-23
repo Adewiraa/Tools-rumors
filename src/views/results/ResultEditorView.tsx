@@ -20,7 +20,7 @@ import {
 } from '@/logic/utils';
 import type { MatchMediaSettings } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
-import { MatchMediaBadge, MatchMediaControls } from '@/views/shared/MatchMediaAd';
+import { hasMatchMediaPage, MatchMediaControls, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
 
 interface MatchEvent {
   id: string;
@@ -116,6 +116,8 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   const currentShowPositionY = pendingBackgroundImage ? pendingBackgroundPositionY : backgroundPositionY;
   const currentShowZoom = pendingBackgroundImage ? pendingBackgroundZoom : backgroundZoom;
   const currentShowDim = pendingBackgroundImage ? pendingBackgroundDim : backgroundDim;
+  const hasMediaAdPage = hasMatchMediaPage(mediaSettings);
+  const mediaAdCardId = 'match-media-ad-card';
 
   useEffect(() => {
     if (isFullTimeGraphic && graphicType !== 'FT') {
@@ -245,6 +247,73 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     } catch (err) {
       console.error('Failed to download result graphic:', err);
       triggerToast('Gagal mengunduh gambar.', 'error');
+    } finally {
+      setIsExportingGraphic(false);
+    }
+  };
+
+  const shareMatchMediaAd = async () => {
+    const node = document.getElementById(mediaAdCardId);
+    if (!node) return;
+    try {
+      setIsExportingGraphic(true);
+      triggerToast('Membuat halaman iklan...');
+      const dataUrl = await htmlToImage.toPng(node, {
+        cacheBust: true,
+        pixelRatio: 2.7,
+      });
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const fileName = `Result_Ad_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const file = new File([blob], fileName, { type: 'image/png' });
+      const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+      const shareData: ShareData = {
+        files: [file],
+        title: `Iklan ${match.homeClubName} vs ${match.awayClubName}`,
+        text: `Halaman iklan hasil pertandingan ${match.homeClubName} vs ${match.awayClubName}`,
+      };
+
+      if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
+        await nav.share(shareData);
+        triggerToast('Halaman iklan siap dibagikan.');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Share langsung belum didukung di perangkat ini. Halaman iklan diunduh sebagai fallback.', 'warning');
+    } catch (err) {
+      const error = err as { name?: string };
+      if (error?.name !== 'AbortError') {
+        console.error('Failed to share ad graphic:', err);
+        triggerToast('Gagal membagikan halaman iklan.', 'error');
+      }
+    } finally {
+      setIsExportingGraphic(false);
+    }
+  };
+
+  const downloadMatchMediaAd = async () => {
+    const node = document.getElementById(mediaAdCardId);
+    if (!node) return;
+    try {
+      setIsExportingGraphic(true);
+      triggerToast('Mengunduh halaman iklan...');
+      const dataUrl = await htmlToImage.toPng(node, {
+        cacheBust: true,
+        pixelRatio: 2.7,
+      });
+      const fileName = `Result_Ad_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+      const link = document.createElement('a');
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      triggerToast('Halaman iklan berhasil diunduh!');
+    } catch (err) {
+      console.error('Failed to download ad graphic:', err);
+      triggerToast('Gagal mengunduh halaman iklan.', 'error');
     } finally {
       setIsExportingGraphic(false);
     }
@@ -1040,7 +1109,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               settings={mediaSettings}
               onChange={setMediaSettings}
               triggerToast={triggerToast}
-              defaultPlacement="header-right"
+              defaultPlacement="footer"
             />
 
             {/* Action Buttons */}
@@ -1062,6 +1131,27 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                 <Download size={16} /> Unduh PNG ({graphicRatio})
               </button>
             </div>
+
+            {hasMediaAdPage && (
+              <div className="flex gap-12" style={{ width: '100%', maxWidth: 500 }}>
+                <button
+                  className="btn btn-md btn-primary flex-1 flex align-center justify-center gap-8"
+                  style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
+                  onClick={shareMatchMediaAd}
+                  disabled={isExportingGraphic}
+                >
+                  <Share2 size={16} /> Bagikan Iklan
+                </button>
+                <button
+                  className="btn btn-md btn-secondary flex-1 flex align-center justify-center gap-8"
+                  style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
+                  onClick={downloadMatchMediaAd}
+                  disabled={isExportingGraphic}
+                >
+                  <Download size={16} /> Unduh Iklan
+                </button>
+              </div>
+            )}
 
             {/* IG Feed Graphic Canvas */}
             <div 
@@ -1177,9 +1267,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                     {match.competition || 'LIGA NUSANTARA UTAMA'}
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <MatchMediaBadge settings={mediaSettings} placement="header-right" variant="result" />
-                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} />
               </div>
 
               <div style={{ flex: 1 }} />
@@ -1259,13 +1347,29 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                 )}
               </div>
 
-              <MatchMediaBadge settings={mediaSettings} placement="footer" variant="result" />
-
               {/* Footer */}
               <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
                 <span>{appSettings.appHandle}</span>
               </div>
             </div>
+
+            {hasMediaAdPage && (
+              <MatchMediaPageCard
+                elementId={mediaAdCardId}
+                settings={mediaSettings}
+                width={400}
+                height={graphicRatio === '1:1' ? 400 : 500}
+                appSettings={appSettings}
+                competitionName={match.competition}
+                competitionLogo={comp?.logoUrl}
+                matchTitle={`${match.homeClubName} vs ${match.awayClubName}`}
+                backgroundImage={currentShowImage}
+                backgroundPositionX={currentShowPositionX}
+                backgroundPositionY={currentShowPositionY}
+                backgroundZoom={currentShowZoom}
+                backgroundDim={currentShowDim}
+              />
+            )}
           </>
         )}
       </div>
