@@ -207,6 +207,15 @@ a {
   font-size: 14px;
 }
 
+.mobile-drawer-logout {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+.header-logout-button {
+  gap: 6px;
+}
+
 /* Main Content Area */
 .main-wrapper {
   display: flex;
@@ -1450,6 +1459,31 @@ a {
 
   .top-header .search-input-wrapper {
     display: none;
+  }
+
+  .top-header > .flex:last-child {
+    gap: 8px !important;
+  }
+
+  .header-logout-button {
+    width: 36px;
+    height: 36px;
+    padding: 0 !important;
+    justify-content: center;
+  }
+
+  .header-logout-button span {
+    display: none;
+  }
+
+  .mobile-drawer-footer {
+    padding: 12px 14px !important;
+  }
+
+  .mobile-drawer-logout {
+    min-width: 82px;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   .page-container {

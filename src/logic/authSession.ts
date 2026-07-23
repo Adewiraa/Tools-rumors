@@ -9,20 +9,30 @@
 import type { AppUser } from '@/lib/types/auth';
 
 const SESSION_KEY = 'gosball_session';
+export const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 export interface SessionData {
   user: Omit<AppUser, 'password'>;
   loginAt: string; // ISO timestamp
+  lastActivityAt?: string; // ISO timestamp
 }
 
 /** Save a user session after successful login. */
 export function saveSession(user: Omit<AppUser, 'password'>): void {
   if (typeof window === 'undefined') return;
+  const now = new Date().toISOString();
   const session: SessionData = {
     user,
-    loginAt: new Date().toISOString(),
+    loginAt: now,
+    lastActivityAt: now,
   };
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+function isSessionExpired(session: SessionData): boolean {
+  const lastActivity = Date.parse(session.lastActivityAt || session.loginAt);
+  if (!Number.isFinite(lastActivity)) return true;
+  return Date.now() - lastActivity > SESSION_IDLE_TIMEOUT_MS;
 }
 
 /** Read the current session. Returns null if not logged in. */
@@ -34,6 +44,10 @@ export function getSession(): SessionData | null {
     const parsed = JSON.parse(raw) as SessionData;
     // Basic validation
     if (!parsed?.user?.id || !parsed?.user?.username) return null;
+    if (isSessionExpired(parsed)) {
+      clearSession();
+      return null;
+    }
     return parsed;
   } catch {
     return null;
@@ -49,6 +63,17 @@ export function isLoggedIn(): boolean {
 export function clearSession(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(SESSION_KEY);
+}
+
+/** Refresh the session activity timestamp after a real user interaction. */
+export function touchSession(): void {
+  if (typeof window === 'undefined') return;
+  const session = getSession();
+  if (!session) return;
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    ...session,
+    lastActivityAt: new Date().toISOString(),
+  }));
 }
 
 /** Get the logged-in user. Returns null if not logged in. */

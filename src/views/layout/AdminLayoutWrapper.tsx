@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp, UserRole } from '@/logic/AppContext';
-import { isLoggedIn, clearSession } from '@/logic/authSession';
+import { isLoggedIn, clearSession, getSession, touchSession, SESSION_IDLE_TIMEOUT_MS } from '@/logic/authSession';
 import {
   Search,
   Bell,
@@ -81,6 +81,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     appSettings,
     matches,
     currentUser,
+    setCurrentUser,
     currentUserRole,
     uiState,
     setUiState,
@@ -103,6 +104,15 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   const [searchTerm, setSearchTerm] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
 
+  const handleLogout = useCallback((message = 'Berhasil keluar. Sampai jumpa!', type: 'success' | 'warning' = 'success') => {
+    clearSession();
+    setCurrentUser(null);
+    setMobileDrawerOpen(false);
+    setGlobalSearchOpen(false);
+    triggerToast(message, type);
+    window.setTimeout(() => router.replace('/login'), 350);
+  }, [router, setCurrentUser, setGlobalSearchOpen, setMobileDrawerOpen, triggerToast]);
+
   // ── Auth Guard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -120,12 +130,57 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     return () => window.clearTimeout(timer);
   }, [isLoginPage, router]);
 
-  // Handle logout
-  const handleLogout = () => {
-    clearSession();
-    triggerToast('Berhasil keluar. Sampai jumpa!', 'success');
-    setTimeout(() => router.replace('/login'), 500);
-  };
+  useEffect(() => {
+    if (isLoginPage || !authChecked) return;
+
+    let inactivityTimer: number | undefined;
+    let lastTouchAt = 0;
+
+    const logoutIfExpired = () => {
+      if (!getSession()) {
+        handleLogout('Session berakhir karena 30 menit tidak ada aktivitas.', 'warning');
+        return true;
+      }
+      return false;
+    };
+
+    const scheduleLogout = () => {
+      window.clearTimeout(inactivityTimer);
+      const session = getSession();
+      if (!session) {
+        handleLogout('Session berakhir karena 30 menit tidak ada aktivitas.', 'warning');
+        return;
+      }
+      const lastActivity = Date.parse(session.lastActivityAt || session.loginAt);
+      const remaining = Math.max(0, SESSION_IDLE_TIMEOUT_MS - (Date.now() - lastActivity));
+      inactivityTimer = window.setTimeout(() => {
+        if (!logoutIfExpired()) {
+          scheduleLogout();
+        }
+      }, remaining + 250);
+    };
+
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastTouchAt < 1000) return;
+      lastTouchAt = now;
+
+      if (logoutIfExpired()) return;
+      touchSession();
+      scheduleLogout();
+    };
+
+    const activityEvents: (keyof WindowEventMap)[] = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'];
+    activityEvents.forEach(eventName => {
+      window.addEventListener(eventName, handleUserActivity, { passive: true });
+    });
+    scheduleLogout();
+
+    return () => {
+      window.clearTimeout(inactivityTimer);
+      activityEvents.forEach(eventName => window.removeEventListener(eventName, handleUserActivity));
+    };
+  }, [authChecked, handleLogout, isLoginPage]);
 
   // Renders role permissions label badge
   const renderRoleBadge = (role: UserRole) => {
@@ -228,15 +283,18 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
               })}
             </nav>
 
-            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--navy-900)', backgroundColor: '#111417' }}>
+            <div className="mobile-drawer-footer" style={{ padding: '12px 20px', borderTop: '1px solid var(--navy-900)', backgroundColor: '#111417' }}>
               <div className="flex align-center gap-8">
                 <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'var(--primary-600)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'white', fontSize: 13 }}>
-                  {currentUserRole[0]}
+                  {(currentUser?.fullName || currentUser?.username || currentUserRole)[0]?.toUpperCase()}
                 </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>Admin {appSettings.appName}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser?.fullName || `Admin ${appSettings.appName}`}</div>
                   <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{currentUserRole}</div>
                 </div>
+                <button className="btn btn-sm btn-secondary mobile-drawer-logout" onClick={() => handleLogout()} title="Logout">
+                  <LogOut size={15} /> Logout
+                </button>
               </div>
             </div>
           </div>
@@ -312,7 +370,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                 </div>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={() => handleLogout()}
                 style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', flexShrink: 0, padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'color 0.15s' }}
                 title="Keluar"
                 onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
@@ -323,7 +381,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             </div>
           ) : (
             <button
-              onClick={handleLogout}
+              onClick={() => handleLogout()}
               style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-600), var(--primary-700))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'white', fontSize: 14, margin: '0 auto', cursor: 'pointer', border: 'none' }}
               title="Keluar"
             >
@@ -395,6 +453,10 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             <div className="flex align-center gap-8">
               {renderRoleBadge(currentUserRole)}
             </div>
+            <button className="btn btn-sm btn-secondary header-logout-button" onClick={() => handleLogout()} title="Logout">
+              <LogOut size={15} />
+              <span>Logout</span>
+            </button>
           </div>
         </header>
 
