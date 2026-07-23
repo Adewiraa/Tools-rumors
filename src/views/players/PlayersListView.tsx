@@ -94,8 +94,6 @@ const createPlayerFromApiSquad = (apiPlayer: ApiSquadPlayer, club: Club, apiProf
     countryCode: country?.code?.toUpperCase() || 'ID',
     flagUrl: country?.flagUrl || 'https://flags.restcountries.com/v5/svg/id.svg',
     age: Number(apiProfile?.age ?? apiPlayer.age) || 20,
-    contractStart: '',
-    contractEnd: '',
     status: 'active',
     availability: 'available',
     completeness: 0,

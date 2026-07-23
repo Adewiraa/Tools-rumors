@@ -102,8 +102,6 @@ export interface Player {
   countryCode?: string;
   flagUrl: string;
   age: number;
-  contractStart: string;
-  contractEnd: string;
   status: 'active' | 'retired' | 'free_agent';
   availability: 'available' | 'injured' | 'suspended' | 'international_duty' | 'doubtful';
   completeness: number; // 0 - 100
@@ -374,8 +372,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Indonesia',
     flagUrl: '🇮🇩',
     age: 23,
-    contractStart: '2024-01-01',
-    contractEnd: '2027-12-31',
     status: 'active',
     availability: 'available',
     completeness: 95,
@@ -391,8 +387,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Indonesia',
     flagUrl: '🇮🇩',
     age: 24,
-    contractStart: '2023-05-01',
-    contractEnd: '2026-05-31',
     status: 'active',
     availability: 'available',
     completeness: 100,
@@ -408,8 +402,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Indonesia',
     flagUrl: '🇮🇩',
     age: 32,
-    contractStart: '2021-06-01',
-    contractEnd: '2025-12-31',
     status: 'active',
     availability: 'injured',
     completeness: 90,
@@ -425,8 +417,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Brazil',
     flagUrl: '🇧🇷',
     age: 29,
-    contractStart: '2024-07-01',
-    contractEnd: '2026-06-30',
     status: 'active',
     availability: 'available',
     completeness: 85,
@@ -442,8 +432,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Indonesia',
     flagUrl: '🇮🇩',
     age: 34,
-    contractStart: '2019-01-01',
-    contractEnd: '2026-12-31',
     status: 'active',
     availability: 'available',
     completeness: 90,
@@ -459,8 +447,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Indonesia',
     flagUrl: '🇮🇩',
     age: 24,
-    contractStart: '2023-01-01',
-    contractEnd: '2026-12-31',
     status: 'active',
     availability: 'available',
     completeness: 95,
@@ -476,8 +462,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Brazil',
     flagUrl: '🇧🇷',
     age: 27,
-    contractStart: '2024-01-01',
-    contractEnd: '2025-12-31',
     status: 'active',
     availability: 'available',
     completeness: 85,
@@ -493,8 +477,6 @@ export const INITIAL_PLAYERS: Player[] = [
     nationality: 'Cape Verde',
     flagUrl: '🇨🇻',
     age: 31,
-    contractStart: '2022-06-01',
-    contractEnd: '2026-06-30',
     status: 'active',
     availability: 'available',
     completeness: 90,

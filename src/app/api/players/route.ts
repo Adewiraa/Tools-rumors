@@ -105,8 +105,6 @@ export async function GET() {
         countryCode: player.country_code || undefined,
         flagUrl: player.country_flag_url || player.flag_url || 'https://flags.restcountries.com/v5/svg/id.svg',
         age: Number(player.age) || 20,
-        contractStart: player.contract_start || '',
-        contractEnd: player.contract_end || '',
         status: player.status || (clubId ? 'active' : 'free_agent'),
         availability: player.availability || 'available',
         completeness: 0

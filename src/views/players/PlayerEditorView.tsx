@@ -66,8 +66,6 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
     nationality: 'Indonesia',
     flagUrl: 'https://flags.restcountries.com/v5/svg/id.svg',
     age: 25,
-    contractStart: '',
-    contractEnd: '',
     status: 'active',
     availability: 'available',
     completeness: 0,
