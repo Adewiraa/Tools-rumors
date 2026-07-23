@@ -2755,6 +2755,10 @@ a {
   min-width: 880px;
 }
 
+.permissions-role-cards {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .api-import-card {
     padding: 14px !important;
@@ -2865,70 +2869,84 @@ a {
   }
 
   .permissions-matrix-wrapper {
-    background: var(--white) !important;
-    border: 1px solid var(--neutral-200) !important;
-    border-radius: var(--radius-md) !important;
-    box-shadow: var(--shadow-sm) !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch;
+    display: none !important;
   }
 
-  .permissions-matrix-table {
-    display: table !important;
-    min-width: 820px !important;
-    width: max-content !important;
-    border-collapse: collapse;
+  .permissions-role-cards {
+    display: grid;
+    gap: 12px;
   }
 
-  .permissions-matrix-table thead {
-    display: table-header-group !important;
-  }
-
-  .permissions-matrix-table tbody {
-    display: table-row-group !important;
-  }
-
-  .permissions-matrix-table tr {
-    display: table-row !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background: transparent;
-  }
-
-  .permissions-matrix-table th,
-  .permissions-matrix-table td {
-    display: table-cell !important;
-    width: auto !important;
-    padding: 10px 12px !important;
-    border-bottom: 1px solid var(--neutral-200) !important;
-    text-align: center !important;
-    vertical-align: middle;
-  }
-
-  .permissions-matrix-table td::before {
-    content: none !important;
-  }
-
-  .permissions-matrix-table th:first-child,
-  .permissions-matrix-table .permissions-menu-cell,
-  .permissions-matrix-table .permissions-category-cell {
-    position: sticky;
-    left: 0;
-    z-index: 2;
-    text-align: left !important;
+  .permissions-role-card {
+    display: grid;
+    gap: 14px;
+    padding: 14px 12px;
     background: var(--white);
+    border: 1px solid rgba(227, 225, 218, 0.92);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(21, 26, 29, 0.04);
   }
 
-  .permissions-matrix-table th:first-child {
-    z-index: 3;
-    background: var(--neutral-50);
+  .permissions-role-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--neutral-100);
   }
 
-  .permissions-matrix-table .permissions-category-cell {
-    background: var(--neutral-50) !important;
+  .permissions-role-card-section {
+    display: grid;
+    gap: 8px;
+  }
+
+  .permissions-role-card-category {
+    color: var(--primary-700);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .permissions-role-card-list {
+    display: grid;
+    gap: 7px;
+  }
+
+  .permissions-menu-toggle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 9px 10px;
+    background: var(--white);
+    color: var(--neutral-500);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-md);
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .permissions-menu-toggle.is-allowed {
+    background: rgba(22, 163, 74, 0.07);
+    color: #15803d;
+    border-color: rgba(22, 163, 74, 0.18);
+  }
+
+  .permissions-menu-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.92;
+  }
+
+  .permissions-menu-toggle span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .permissions-info-card {
