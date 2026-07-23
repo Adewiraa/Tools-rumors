@@ -40,6 +40,18 @@ export default function LineupsListView() {
     return effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
   };
 
+  const renderMatchLogo = (logo?: string) => (
+    logo && logo.startsWith('http')
+      ? <img src={logo} alt="" className="schedule-team-logo" />
+      : <span className="schedule-team-logo-text">{logo || '-'}</span>
+  );
+
+  const renderCompetitionLogo = (logo?: string, name?: string) => (
+    logo && logo.startsWith('http')
+      ? <img src={logo} alt="" className="schedule-competition-logo" />
+      : <span className="schedule-competition-logo-text" aria-hidden="true">{logo || name?.slice(0, 2).toUpperCase() || 'KO'}</span>
+  );
+
   const filteredMatches = matches.filter(match => {
     const matchName = `${match.homeClubName} vs ${match.awayClubName}`.toLowerCase();
     const matchesSearch = matchName.includes(searchTerm.toLowerCase()) || match.venue.toLowerCase().includes(searchTerm.toLowerCase());
@@ -113,7 +125,7 @@ export default function LineupsListView() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="schedule-page-root">
       <div className="page-header">
         <div>
           <div className="breadcrumb">
@@ -125,14 +137,14 @@ export default function LineupsListView() {
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 280 }}>
-          <div className="search-input-wrapper" style={{ maxWidth: 280 }}>
+      <div className="card schedule-filter-card">
+        <div className="schedule-filter-group">
+          <div className="search-input-wrapper schedule-filter-search">
             <Search size={16} className="search-icon" />
             <input type="text" placeholder="Cari klub atau stadion..." className="form-input"
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <select className="form-select" style={{ maxWidth: 220 }} value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
+          <select className="form-select schedule-filter-competition" value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
             <option value="Semua">Semua Kompetisi</option>
             {competitions.filter(c => c.isActive).map(c => (
               <option key={c.id} value={c.name}>{c.name}</option>
@@ -157,8 +169,8 @@ export default function LineupsListView() {
           <p className="text-muted" style={{ marginBottom: 16 }}>Buat jadwal pertandingan terlebih dahulu, lalu kelola lineup dari ID jadwal tersebut.</p>
         </div>
       ) : (
-        <div className="table-wrapper">
-          <table className="data-table">
+        <div className="table-wrapper schedule-table-wrapper">
+          <table className="data-table schedule-table">
             <thead>
               <tr>
                 <th>Pertandingan</th>
@@ -172,48 +184,59 @@ export default function LineupsListView() {
             <tbody>
               {filteredMatches.map(match => {
                 const effectiveStatus = getEffectiveMatchStatus(match);
+                const competition = competitions.find(c => c.name === match.competition);
+                const kickoffDate = new Date(match.kickoff);
+                const kickoffDateLabel = kickoffDate.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' });
+                const kickoffTimeLabel = kickoffDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                 const canViewPublishedLineup = match.publicationStatus === 'Published' || effectiveStatus === 'Finished';
                 return (
                   <tr key={match.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {match.homeLogo && match.homeLogo.startsWith('http')
-                          ? <img src={match.homeLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                          : <span style={{ fontSize: 18 }}>{match.homeLogo}</span>}
-                        <span className="semibold" style={{ fontSize: 13 }}>{match.homeClubName}</span>
-                        <span className="text-muted" style={{ fontSize: 11 }}>vs</span>
-                        {match.awayLogo && match.awayLogo.startsWith('http')
-                          ? <img src={match.awayLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                          : <span style={{ fontSize: 18 }}>{match.awayLogo}</span>}
-                        <span className="semibold" style={{ fontSize: 13 }}>{match.awayClubName}</span>
+                    <td className="schedule-match-cell">
+                      <div className="schedule-match-teams">
+                        <span className="schedule-team schedule-team-home">
+                          {renderMatchLogo(match.homeLogo)}
+                          <span className="schedule-team-name">{match.homeClubName}</span>
+                        </span>
+                        <span className="schedule-versus">vs</span>
+                        <span className="schedule-team schedule-team-away">
+                          {renderMatchLogo(match.awayLogo)}
+                          <span className="schedule-team-name">{match.awayClubName}</span>
+                        </span>
                       </div>
-                      <div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>{match.venue}</div>
-                      <div className="text-muted" style={{ fontSize: 10, marginTop: 2 }}>ID Jadwal: {match.id}</div>
+                      <div className="schedule-match-venue">{match.venue}</div>
+                      <div className="schedule-match-id">ID Jadwal: {match.id}</div>
                     </td>
-                    <td style={{ fontSize: 12 }}>{match.competition}</td>
-                    <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
-                      {new Date(match.kickoff).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
+                    <td className="schedule-info-cell" data-label="Kompetisi">
+                      <span className="schedule-competition-value">
+                        {renderCompetitionLogo(competition?.logoUrl, match.competition)}
+                        <span>{match.competition}</span>
+                      </span>
                     </td>
-                    <td>
+                    <td className="schedule-info-cell schedule-kickoff-cell" data-label="Kickoff">
+                      <span className="schedule-kickoff-value">{kickoffDateLabel}, {kickoffTimeLabel} WIB</span>
+                    </td>
+                    <td className="schedule-info-cell" data-label="Status">
                       <span className={`badge ${lineupStatusClass(match)}`}>
                         {lineupStatusLabel(match)}
                       </span>
                     </td>
-                    <td>
+                    <td className="schedule-info-cell" data-label="Publikasi">
                       <span className={`badge ${match.publicationStatus === 'Published' ? 'badge-success' : 'badge-warning'}`}>
                         {match.publicationStatus}
                       </span>
                     </td>
-                    <td className="text-right">
-                      {canViewPublishedLineup ? (
-                        <button className="btn btn-sm btn-secondary" onClick={() => setPreviewMatch(match)}>
-                          <Info size={13} /> Lihat Lineup
-                        </button>
-                      ) : checkPermission('Lineup Pertandingan', 'create_edit') && (
-                        <button className="btn btn-sm btn-primary" onClick={() => router.push(`/lineups?edit=${match.id}`)}>
-                          <Edit size={13} /> Edit
-                        </button>
-                      )}
+                    <td className="schedule-actions-cell text-right">
+                      <div className="schedule-actions">
+                        {canViewPublishedLineup ? (
+                          <button className="btn btn-sm btn-secondary" onClick={() => setPreviewMatch(match)}>
+                            <Info size={13} /> Lihat Lineup
+                          </button>
+                        ) : checkPermission('Lineup Pertandingan', 'create_edit') && (
+                          <button className="btn btn-sm btn-primary" onClick={() => router.push(`/lineups?edit=${match.id}`)}>
+                            <Edit size={13} /> Edit
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

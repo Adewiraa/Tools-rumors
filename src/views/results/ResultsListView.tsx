@@ -56,6 +56,18 @@ export default function ResultsListView() {
     return effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
   };
 
+  const renderMatchLogo = (logo?: string) => (
+    logo && logo.startsWith('http')
+      ? <img src={logo} alt="" className="schedule-team-logo" />
+      : <span className="schedule-team-logo-text">{logo || '-'}</span>
+  );
+
+  const renderCompetitionLogo = (logo?: string, name?: string) => (
+    logo && logo.startsWith('http')
+      ? <img src={logo} alt="" className="schedule-competition-logo" />
+      : <span className="schedule-competition-logo-text" aria-hidden="true">{logo || name?.slice(0, 2).toUpperCase() || 'KO'}</span>
+  );
+
   const getResultOutputElementId = (matchId: string, type: 'HT' | 'FT') => `result-output-card-${matchId}-${type.toLowerCase()}`;
   const getResultOutputFileName = (match: Match, type: 'HT' | 'FT') => `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
 
@@ -126,7 +138,7 @@ export default function ResultsListView() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="schedule-page-root">
       <div className="page-header">
         <div>
           <div className="breadcrumb">
@@ -138,8 +150,8 @@ export default function ResultsListView() {
       </div>
 
       {/* Filter */}
-      <div className="card" style={{ padding: '16px 24px' }}>
-        <select className="form-select" style={{ maxWidth: 240 }} value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
+      <div className="card schedule-filter-card">
+        <select className="form-select schedule-filter-competition" value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
           <option value="Semua">Semua Kompetisi</option>
           {competitions.map(comp => (
             <option key={comp.id} value={comp.name}>{comp.name}</option>
@@ -148,12 +160,13 @@ export default function ResultsListView() {
       </div>
 
       {/* Data Table */}
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper schedule-table-wrapper">
+        <table className="data-table schedule-table">
           <thead>
             <tr>
               <th>Pertandingan</th>
               <th>Kompetisi</th>
+              <th>Kickoff</th>
               <th>HT</th>
               <th>FT</th>
               <th>Status</th>
@@ -166,61 +179,77 @@ export default function ResultsListView() {
             {filteredMatches.map(match => {
               const effectiveStatus = getEffectiveMatchStatus(match);
               const hasSavedHalfTime = hasSavedHalfTimeResult(match);
+              const competition = competitions.find(c => c.name === match.competition);
+              const kickoffDate = new Date(match.kickoff);
+              const kickoffDateLabel = kickoffDate.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' });
+              const kickoffTimeLabel = kickoffDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
               const canInputResult = (effectiveStatus === 'Live' || hasSavedHalfTime) && (getEffectiveLineupStatus(match) === 'Complete' || hasSavedHalfTime);
               return (
                 <tr key={match.id}>
-                  <td>
-                    <div className="flex align-center gap-12">
-                      {match.homeLogo && match.homeLogo.startsWith('http')
-                        ? <img src={match.homeLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                        : <span style={{ fontSize: 20 }}>{match.homeLogo}</span>}
-                      <span className="semibold">{match.homeClubName} vs {match.awayClubName}</span>
-                      {match.awayLogo && match.awayLogo.startsWith('http')
-                        ? <img src={match.awayLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                        : <span style={{ fontSize: 20 }}>{match.awayLogo}</span>}
+                  <td className="schedule-match-cell">
+                    <div className="schedule-match-teams">
+                      <span className="schedule-team schedule-team-home">
+                        {renderMatchLogo(match.homeLogo)}
+                        <span className="schedule-team-name">{match.homeClubName}</span>
+                      </span>
+                      <span className="schedule-versus">vs</span>
+                      <span className="schedule-team schedule-team-away">
+                        {renderMatchLogo(match.awayLogo)}
+                        <span className="schedule-team-name">{match.awayClubName}</span>
+                      </span>
                     </div>
-                    <div className="text-muted" style={{ fontSize: 10, marginTop: 2 }}>ID Jadwal: {match.id}</div>
+                    <div className="schedule-match-id">ID Jadwal: {match.id}</div>
                   </td>
-                  <td>{match.competition}</td>
-                  <td>
+                  <td className="schedule-info-cell" data-label="Kompetisi">
+                    <span className="schedule-competition-value">
+                      {renderCompetitionLogo(competition?.logoUrl, match.competition)}
+                      <span>{match.competition}</span>
+                    </span>
+                  </td>
+                  <td className="schedule-info-cell schedule-kickoff-cell" data-label="Kickoff">
+                    <span className="schedule-kickoff-value">{kickoffDateLabel}, {kickoffTimeLabel} WIB</span>
+                  </td>
+                  <td className="schedule-info-cell" data-label="HT">
                     {hasSavedHalfTime && hasHalfTimeScoreValues(match) ? (
-                      <span className="semibold">{match.halfTimeHomeScore} - {match.halfTimeAwayScore}</span>
+                      <span className="schedule-score schedule-score-half">{match.halfTimeHomeScore} - {match.halfTimeAwayScore}</span>
                     ) : (
-                      <span className="text-muted">-</span>
+                      <span className="schedule-empty-score">-</span>
                     )}
                   </td>
-                  <td>
+                  <td className="schedule-info-cell" data-label="FT">
                     {match.homeScore !== undefined && match.homeScore !== null && match.awayScore !== undefined && match.awayScore !== null ? (
-                      <span style={{ fontSize: 15, fontWeight: 700 }}>{match.homeScore} - {match.awayScore}</span>
+                      <span className="schedule-score schedule-score-full">{match.homeScore} - {match.awayScore}</span>
                     ) : (
-                      <span className="text-muted">-</span>
+                      <span className="schedule-empty-score">-</span>
                     )}
                   </td>
-                  <td>
+                  <td className="schedule-info-cell" data-label="Status">
                     <span className={`badge ${effectiveStatus === 'Finished' ? 'badge-success' : effectiveStatus === 'Live' ? 'badge-danger' : 'badge-warning'}`}>
                       {statusLabel(effectiveStatus)}
                     </span>
                   </td>
-                  <td>
+                  <td className="schedule-info-cell" data-label="Lineup">
                     <span className={`badge ${lineupStatusClass(match)}`}>
                       {lineupStatusLabel(match)}
                     </span>
                   </td>
-                  <td>
+                  <td className="schedule-info-cell" data-label="Publikasi">
                     <span className={`badge ${match.publicationStatus === 'Published' ? 'badge-success' : 'badge-warning'}`}>
                       {match.publicationStatus}
                     </span>
                   </td>
-                  <td className="text-right">
-                    {effectiveStatus === 'Finished' ? (
-                      <button className="btn btn-sm btn-secondary" onClick={() => setTimelineMatch(match)}>
-                        <Info size={13} /> Lihat Timeline
-                      </button>
-                    ) : hasPermission('Match Result', 'create_edit') && (
-                      <button className="btn btn-sm btn-secondary" disabled={!canInputResult} title={canInputResult ? 'Input hasil HT/FT' : 'Input hasil tersedia saat pertandingan Live dan lineup lengkap'} onClick={() => handleEdit(match.id)}>
-                        Input HT/FT
-                      </button>
-                    )}
+                  <td className="schedule-actions-cell text-right">
+                    <div className="schedule-actions">
+                      {effectiveStatus === 'Finished' ? (
+                        <button className="btn btn-sm btn-secondary" onClick={() => setTimelineMatch(match)}>
+                          <Info size={13} /> Lihat Timeline
+                        </button>
+                      ) : hasPermission('Match Result', 'create_edit') && (
+                        <button className="btn btn-sm btn-secondary" disabled={!canInputResult} title={canInputResult ? 'Input hasil HT/FT' : 'Input hasil tersedia saat pertandingan Live dan lineup lengkap'} onClick={() => handleEdit(match.id)}>
+                          Input HT/FT
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -485,7 +514,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
               .filter(event => String(event.clubId) === String(match.homeClubId))
               .map((event, index) => (
                 <div key={event.id || `home-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
-                  <span style={{ color: '#c8a84b', fontWeight: 700 }}>{event.minute || 0}'</span>
+                  <span style={{ color: '#c8a84b', fontWeight: 700 }}>{`${event.minute || 0}'`}</span>
                   <span>Goal {event.playerName}</span>
                 </div>
               ))}
@@ -495,7 +524,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
               .filter(event => String(event.clubId) === String(match.awayClubId))
               .map((event, index) => (
                 <div key={event.id || `away-${index}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#e2e8f0', flexDirection: 'row-reverse', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
-                  <span style={{ color: '#c8a84b', fontWeight: 700 }}>{event.minute || 0}'</span>
+                  <span style={{ color: '#c8a84b', fontWeight: 700 }}>{`${event.minute || 0}'`}</span>
                   <span>{event.playerName} Goal</span>
                 </div>
               ))}
