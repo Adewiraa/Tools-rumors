@@ -272,7 +272,7 @@ export default function ScheduleListView() {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="schedule-page-root">
       <div className="page-header">
         <div>
           <div className="breadcrumb"><span>Dashboard</span> <ChevronRight size={10} /> <span>Jadwal Pertandingan</span></div>
@@ -322,17 +322,17 @@ export default function ScheduleListView() {
         ))}
       </div>
 
-      <div className="card" style={{ padding: '12px 20px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div className="search-input-wrapper" style={{ maxWidth: 260, flex: 1 }}>
+      <div className="card schedule-filter-card">
+        <div className="search-input-wrapper schedule-filter-search">
           <Search size={14} className="search-icon" />
           <input type="text" className="form-input" placeholder="Cari klub atau stadion..."
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
-        <select className="form-select" style={{ maxWidth: 220 }} value={selectedComp} onChange={e => setSelectedComp(e.target.value)}>
+        <select className="form-select schedule-filter-competition" value={selectedComp} onChange={e => setSelectedComp(e.target.value)}>
           <option value="Semua">Semua Kompetisi</option>
           {competitions.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
         </select>
-        <select className="form-select" style={{ maxWidth: 160 }} value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
+        <select className="form-select schedule-filter-status" value={selectedStatus} onChange={e => setSelectedStatus(e.target.value)}>
           <option value="Semua">Semua Status</option>
           <option value="Scheduled">Dijadwalkan</option>
           <option value="Live">Live</option>
@@ -343,7 +343,7 @@ export default function ScheduleListView() {
         {(searchTerm || selectedComp !== 'Semua' || selectedStatus !== 'Semua') && (
           <button className="btn btn-sm btn-secondary" onClick={() => { setSearchTerm(''); setSelectedComp('Semua'); setSelectedStatus('Semua'); }}>Reset</button>
         )}
-        <span className="text-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>{filtered.length} pertandingan</span>
+        <span className="text-muted schedule-filter-count">{filtered.length} pertandingan</span>
       </div>
 
       {filtered.length === 0 ? (

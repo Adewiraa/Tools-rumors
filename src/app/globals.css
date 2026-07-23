@@ -675,6 +675,38 @@ a {
   color: var(--primary-700);
 }
 
+.schedule-page-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.schedule-filter-card {
+  padding: 12px 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.schedule-filter-search {
+  max-width: 260px;
+  flex: 1;
+}
+
+.schedule-filter-competition {
+  max-width: 220px;
+}
+
+.schedule-filter-status {
+  max-width: 160px;
+}
+
+.schedule-filter-count {
+  font-size: 12px;
+  margin-left: auto;
+}
+
 .schedule-table-title {
   font-size: 12px;
   font-weight: 700;
@@ -1923,7 +1955,62 @@ a {
 
 @media (max-width: 768px) {
   .page-container {
-    padding: 16px !important;
+    padding: 18px 16px 20px !important;
+  }
+
+  .schedule-page-root {
+    gap: 16px;
+  }
+
+  .schedule-flow-grid {
+    gap: 10px;
+  }
+
+  .schedule-flow-card {
+    padding: 13px 16px;
+    min-height: 68px;
+  }
+
+  .competition-schedule-strip {
+    margin: 2px -16px 0;
+    padding: 0 16px 4px;
+  }
+
+  .competition-schedule-pill {
+    min-height: 36px;
+    padding: 7px 10px;
+  }
+
+  .schedule-filter-card {
+    padding: 11px;
+    gap: 10px;
+    align-items: stretch;
+    border-radius: var(--radius-md);
+  }
+
+  .schedule-filter-search {
+    flex: 1 1 108px;
+    min-width: 0;
+  }
+
+  .schedule-filter-competition {
+    flex: 999 1 178px;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .schedule-filter-status {
+    flex: 0 1 172px;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .schedule-filter-count {
+    margin-left: auto;
+    align-self: center;
+    padding: 0 4px;
+    font-size: 12px;
+    line-height: 1.2;
   }
 
   /* Page Header Mobile Adjustments */
@@ -2016,10 +2103,13 @@ a {
 
   .schedule-table-section {
     min-width: 0;
+    margin-top: 2px;
   }
 
   .schedule-table-title {
-    margin-bottom: 10px;
+    margin: 0 2px 8px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
   }
 
   .schedule-table .data-table,
@@ -2032,6 +2122,7 @@ a {
     gap: 0;
     overflow: hidden;
     border-radius: var(--radius-md) !important;
+    border-color: rgba(227, 225, 218, 0.92) !important;
   }
 
   .schedule-table td {
@@ -2042,20 +2133,20 @@ a {
   }
 
   .schedule-match-cell {
-    padding: 14px !important;
+    padding: 12px 12px 10px !important;
     border-bottom: 1px solid var(--neutral-100) !important;
   }
 
   .schedule-match-teams {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
     align-items: center;
-    column-gap: 8px;
+    column-gap: 6px;
     row-gap: 8px;
   }
 
   .schedule-team {
-    gap: 6px;
+    gap: 7px;
     min-width: 0;
   }
 
@@ -2069,6 +2160,7 @@ a {
     text-overflow: clip;
     font-size: 13px;
     line-height: 1.25;
+    font-weight: 700;
   }
 
   .schedule-team-logo,
@@ -2080,6 +2172,7 @@ a {
   .schedule-versus {
     align-self: center;
     text-align: center;
+    justify-self: center;
     font-weight: 700;
     text-transform: uppercase;
   }
@@ -2091,17 +2184,18 @@ a {
   }
 
   .schedule-match-venue {
-    margin-top: 10px;
+    margin-top: 8px;
     font-size: 12px;
     line-height: 1.35;
   }
 
   .schedule-info-cell {
     display: grid !important;
-    grid-template-columns: 94px minmax(0, 1fr);
-    gap: 12px;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 10px;
     align-items: center;
-    padding: 10px 14px !important;
+    min-height: 30px;
+    padding: 7px 12px !important;
     border-bottom: 1px solid var(--neutral-100) !important;
     font-size: 13px;
   }
@@ -2124,18 +2218,24 @@ a {
     margin-top: 2px;
   }
 
+  .schedule-info-cell .badge {
+    justify-self: start;
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .schedule-score-full {
     font-size: 14px;
   }
 
   .schedule-actions-cell {
-    padding: 12px 14px !important;
+    padding: 10px 12px 12px !important;
   }
 
   .schedule-actions {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
-    gap: 8px;
+    gap: 7px;
     width: 100%;
   }
 
