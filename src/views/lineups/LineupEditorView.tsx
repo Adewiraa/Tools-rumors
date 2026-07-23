@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import {
+  areCountriesEquivalent,
   getEffectiveMatchStatus,
   getEffectiveLineupStatus,
   renderPublishedStoryFlag,
@@ -33,8 +34,6 @@ const DEFAULT_LINEUP_REGULATION = {
   minLocalStarters: 0,
   minLocalMatchday: 0,
 };
-
-const normalizeCountryName = (value?: string) => (value || '').trim().toLowerCase();
 
 export default function LineupEditorView({ matchId }: { matchId: string }) {
   const router = useRouter();
@@ -104,16 +103,36 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
 
   const MAX_SUBS          = 15; 
 
-  const getLocalCountry = (club?: Club) => club?.country || selectedCompetition?.country || 'Indonesia';
-  const isLocalPlayer = (player: Player, club?: Club) => (
-    normalizeCountryName(player.nationality) === normalizeCountryName(getLocalCountry(club))
+  const inferLocalCountryFromSquad = (squad: Player[]) => {
+    const counts = new Map<string, number>();
+    squad.forEach(player => {
+      const nationality = player.nationality?.trim();
+      if (!nationality) return;
+      counts.set(nationality, (counts.get(nationality) || 0) + 1);
+    });
+
+    const [country, count] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] || [];
+    const enoughSignal = count >= Math.max(3, Math.ceil(squad.length * 0.35));
+    return enoughSignal ? country : '';
+  };
+  const getLocalCountry = (club?: Club, squad: Player[] = []) => {
+    const clubCountry = club?.country?.trim();
+    if (clubCountry && !areCountriesEquivalent(clubCountry, 'Indonesia')) return clubCountry;
+
+    const inferredCountry = inferLocalCountryFromSquad(squad);
+    if (inferredCountry && !areCountriesEquivalent(inferredCountry, 'Indonesia')) return inferredCountry;
+
+    return clubCountry || selectedCompetition?.country || 'Indonesia';
+  };
+  const isLocalPlayer = (player: Player, club?: Club, squad: Player[] = []) => (
+    areCountriesEquivalent(player.nationality, getLocalCountry(club, squad))
   );
-  const isForeignPlayer = (player: Player, club?: Club) => !isLocalPlayer(player, club);
+  const isForeignPlayer = (player: Player, club?: Club, squad: Player[] = []) => !isLocalPlayer(player, club, squad);
   const countLocalPlayers = (squad: Player[], ids: string[], club?: Club) => (
-    squad.filter(player => ids.includes(player.id) && isLocalPlayer(player, club)).length
+    squad.filter(player => ids.includes(player.id) && isLocalPlayer(player, club, squad)).length
   );
   const countForeignPlayers = (squad: Player[], ids: string[], club?: Club) => (
-    squad.filter(player => ids.includes(player.id) && isForeignPlayer(player, club)).length
+    squad.filter(player => ids.includes(player.id) && isForeignPlayer(player, club, squad)).length
   );
   const getLineupRegulationIssues = (
     label: string,
@@ -176,7 +195,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   ) => {
     const player = squad.find(p => p.id === id);
     if (!player) return;
-    const isForeign = isForeignPlayer(player, club);
+    const isForeign = isForeignPlayer(player, club, squad);
 
     if (isForeign && !lineupRegulation.foreignRegulationFree) {
       const fSt    = countForeignPlayers(squad, starters, club);
@@ -436,7 +455,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
     subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>
   ) => {
-    const isForeign = isForeignPlayer(player, club);
+    const isForeign = isForeignPlayer(player, club, squad);
     const isUnavail = player.availability !== 'available';
     const bg     = isForeign ? '#fefce8' : 'var(--neutral-50)';
     const border = isForeign ? '1px solid #f59e0b' : '1px solid var(--neutral-200)';
@@ -477,13 +496,14 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   const renderSelectedItem = (
     player: Player,
     club: Club | undefined,
+    squad: Player[],
     isStarter: boolean,
     captain: string, setCaptain: React.Dispatch<React.SetStateAction<string>>,
     starters: string[], setStarters: React.Dispatch<React.SetStateAction<string[]>>,
     subs:     string[], setSubs:     React.Dispatch<React.SetStateAction<string[]>>,
     accentColor: string
   ) => {
-    const isForeign = isForeignPlayer(player, club);
+    const isForeign = isForeignPlayer(player, club, squad);
     return (
       <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
         <button
@@ -547,7 +567,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
     const localStarters = countLocalPlayers(squad, starters, club);
     const localDibawa = countLocalPlayers(squad, [...starters, ...subs], club);
 
-    const foreignPool = filteredPool.filter(p => isForeignPlayer(p, club));
+    const foreignPool = filteredPool.filter(p => isForeignPlayer(p, club, squad));
     return (
       <div className="lineup-team-panel">
         <div className="lineup-team-header" style={{ background: accentColor }}>
@@ -626,7 +646,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                 Pilih pemain dari daftar kiri.<br />Klik di sini untuk kembalikan ke pool.
               </div>
             ) : (
-              starterList.map(p => renderSelectedItem(p, club, true, captain, setCaptain, starters, setStarters, subs, setSubs, accentColor))
+              starterList.map(p => renderSelectedItem(p, club, squad, true, captain, setCaptain, starters, setStarters, subs, setSubs, accentColor))
             )}
             {asingList.map(a => (
               <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px',
@@ -655,7 +675,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                 Otomatis terisi setelah 11 starter dipilih
               </div>
             ) : (
-              subList.map(p => renderSelectedItem(p, club, false, captain, setCaptain, starters, setStarters, subs, setSubs, subColor))
+              subList.map(p => renderSelectedItem(p, club, squad, false, captain, setCaptain, starters, setStarters, subs, setSubs, subColor))
             )}
 
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--neutral-100)' }}>
@@ -692,7 +712,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                   ? 'Asing bebas tanpa batas starting, dibawa, dan DSP'
                   : `Asing maks ${lineupRegulation.maxForeignStarters} starting | ${lineupRegulation.maxForeignMatchday} dibawa | ${lineupRegulation.maxForeignSquad} DSP`}
                 {(lineupRegulation.minLocalStarters > 0 || lineupRegulation.minLocalMatchday > 0) && (
-                  <><br />Lokal min {lineupRegulation.minLocalStarters} starting | {lineupRegulation.minLocalMatchday} dibawa ({getLocalCountry(club)}: {localStarters}/{localDibawa})</>
+                  <><br />Lokal min {lineupRegulation.minLocalStarters} starting | {lineupRegulation.minLocalMatchday} dibawa ({getLocalCountry(club, squad)}: {localStarters}/{localDibawa})</>
                 )}
               </div>
             </div>
@@ -871,7 +891,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                     .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)
                                  - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
                     .map(p => {
-                      const isForeign = isForeignPlayer(p, homeClub);
+                      const isForeign = isForeignPlayer(p, homeClub, homeSquad);
                       const isCaptain = p.id === homeCaptain;
                       return (
                         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
@@ -895,7 +915,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                         CADANGAN
                       </div>
                       {homeSquad.filter(p => homeSubs.includes(p.id)).map(p => {
-                        const isForeign = isForeignPlayer(p, homeClub);
+                        const isForeign = isForeignPlayer(p, homeClub, homeSquad);
                         return (
                           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                             <span style={{ fontSize: 7, color: '#555', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
@@ -909,13 +929,13 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                     </>
                   )}
 
-                  {homeSquad.filter(p => !homeStarters.includes(p.id) && !homeSubs.includes(p.id) && isForeignPlayer(p, homeClub)).length > 0 && (
+                  {homeSquad.filter(p => !homeStarters.includes(p.id) && !homeSubs.includes(p.id) && isForeignPlayer(p, homeClub, homeSquad)).length > 0 && (
                     <>
                       <div style={{ fontSize: 7, fontWeight: 700, color: '#333', letterSpacing: 1, textTransform: 'uppercase',
                         margin: '6px 0 3px', paddingTop: 5, borderTop: '1px solid rgba(255,255,255,0.03)' }}>
                         NON-DSP
                       </div>
-                      {homeSquad.filter(p => !homeStarters.includes(p.id) && !homeSubs.includes(p.id) && isForeignPlayer(p, homeClub)).map(p => (
+                      {homeSquad.filter(p => !homeStarters.includes(p.id) && !homeSubs.includes(p.id) && isForeignPlayer(p, homeClub, homeSquad)).map(p => (
                         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                           <span style={{ fontSize: 7, color: '#333', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
                           {renderStoryFlag(p, 10, 7, 8)}
@@ -938,7 +958,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                     .sort((a,b) => ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(a.position)
                                  - ['Goalkeeper','Defender','Midfielder','Forward'].indexOf(b.position))
                     .map(p => {
-                      const isForeign = isForeignPlayer(p, awayClub);
+                      const isForeign = isForeignPlayer(p, awayClub, awaySquad);
                       const isCaptain = p.id === awayCaptain;
                       return (
                         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 3 }}>
@@ -962,7 +982,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                         CADANGAN
                       </div>
                       {awaySquad.filter(p => awaySubs.includes(p.id)).map(p => {
-                        const isForeign = isForeignPlayer(p, awayClub);
+                        const isForeign = isForeignPlayer(p, awayClub, awaySquad);
                         return (
                           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                             <span style={{ fontSize: 7, color: '#555', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
@@ -976,13 +996,13 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                     </>
                   )}
 
-                  {awaySquad.filter(p => !awayStarters.includes(p.id) && !awaySubs.includes(p.id) && isForeignPlayer(p, awayClub)).length > 0 && (
+                  {awaySquad.filter(p => !awayStarters.includes(p.id) && !awaySubs.includes(p.id) && isForeignPlayer(p, awayClub, awaySquad)).length > 0 && (
                     <>
                       <div style={{ fontSize: 7, fontWeight: 700, color: '#333', letterSpacing: 1, textTransform: 'uppercase',
                         margin: '6px 0 3px', paddingTop: 5, borderTop: '1px solid rgba(255,255,255,0.03)' }}>
                         NON-DSP
                       </div>
-                      {awaySquad.filter(p => !awayStarters.includes(p.id) && !awaySubs.includes(p.id) && isForeignPlayer(p, awayClub)).map(p => (
+                      {awaySquad.filter(p => !awayStarters.includes(p.id) && !awaySubs.includes(p.id) && isForeignPlayer(p, awayClub, awaySquad)).map(p => (
                         <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
                           <span style={{ fontSize: 7, color: '#333', fontWeight: 600, minWidth: 22 }}>{p.shirtNumber}</span>
                           {renderStoryFlag(p, 10, 7, 8)}

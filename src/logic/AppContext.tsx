@@ -127,7 +127,7 @@ const writeCache = (key: string, value: unknown) => {
 };
 
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [clubs, setClubs] = useState<Club[]>(INITIAL_CLUBS);
+  const [clubs, setClubsState] = useState<Club[]>(INITIAL_CLUBS);
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
   const [matches, setMatches] = useState<Match[]>([]);
   const [rumors, setRumorsState] = useState<Rumor[]>(INITIAL_RUMORS);
@@ -148,6 +148,16 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  const setClubs: React.Dispatch<React.SetStateAction<Club[]>> = (value) => {
+    setClubsState(prev => {
+      const next = typeof value === 'function'
+        ? (value as (prevState: Club[]) => Club[])(prev)
+        : value;
+      writeCache(CLUBS_STORAGE_KEY, next);
+      return next;
+    });
+  };
 
   // Load browser-only preferences and draft assets.
   useEffect(() => {

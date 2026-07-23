@@ -3,6 +3,7 @@
 import React from 'react';
 import { Match, Player, Competition, Club } from '@/lib/mockData';
 import {
+  areCountriesEquivalent,
   DEFAULT_APP_SETTINGS,
   renderPublishedStoryFlag,
 } from '@/logic/utils';
@@ -17,8 +18,6 @@ interface PublishedLineupStoryCardProps {
   appSettings?: AppSettings;
 }
 
-const normalizeCountryName = (value?: string) => (value || '').trim().toLowerCase();
-
 export default function PublishedLineupStoryCard({ match, players, competitions, clubs = [], elementId, appSettings = DEFAULT_APP_SETTINGS }: PublishedLineupStoryCardProps) {
   const positionOrder = ['Goalkeeper', 'Defender', 'Midfielder', 'Forward'];
   const homeSquad = players.filter(p => p.clubId === match.homeClubId);
@@ -26,10 +25,30 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
   const comp = competitions.find(c => c.name === match.competition);
   const homeClub = clubs.find(club => club.id === match.homeClubId);
   const awayClub = clubs.find(club => club.id === match.awayClubId);
-  const isForeignForSide = (player: Player, side: 'home' | 'away') => {
+  const inferLocalCountryFromSquad = (squad: Player[]) => {
+    const counts = new Map<string, number>();
+    squad.forEach(player => {
+      const nationality = player.nationality?.trim();
+      if (!nationality) return;
+      counts.set(nationality, (counts.get(nationality) || 0) + 1);
+    });
+
+    const [country, count] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0] || [];
+    return count >= Math.max(3, Math.ceil(squad.length * 0.35)) ? country : '';
+  };
+  const getLocalCountryForSide = (side: 'home' | 'away') => {
     const club = side === 'home' ? homeClub : awayClub;
-    const localCountry = club?.country || comp?.country || 'Indonesia';
-    return normalizeCountryName(player.nationality) !== normalizeCountryName(localCountry);
+    const squad = side === 'home' ? homeSquad : awaySquad;
+    const clubCountry = club?.country?.trim();
+    if (clubCountry && !areCountriesEquivalent(clubCountry, 'Indonesia')) return clubCountry;
+
+    const inferredCountry = inferLocalCountryFromSquad(squad);
+    if (inferredCountry && !areCountriesEquivalent(inferredCountry, 'Indonesia')) return inferredCountry;
+
+    return clubCountry || comp?.country || 'Indonesia';
+  };
+  const isForeignForSide = (player: Player, side: 'home' | 'away') => {
+    return !areCountriesEquivalent(player.nationality, getLocalCountryForSide(side));
   };
   const homeStarterIds = match.homeStarters || [];
   const awayStarterIds = match.awayStarters || [];

@@ -237,6 +237,45 @@ export const hasResultProgress = (match: Match) => (
 
 export const storyNormalizeCountryValue = (value?: string) => (value || '').trim().toLowerCase();
 
+const COUNTRY_NAME_ALIASES: Record<string, string> = {
+  singapura: 'singapore',
+  singapore: 'singapore',
+  indonesia: 'indonesia',
+  malaysia: 'malaysia',
+  jepang: 'japan',
+  belanda: 'netherlands',
+  korea: 'south korea',
+};
+
+export const normalizeComparableCountryName = (value?: string) => {
+  const normalized = (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  return COUNTRY_NAME_ALIASES[normalized] || normalized;
+};
+
+export const getComparableCountryKey = (value?: string) => {
+  const normalized = normalizeComparableCountryName(value);
+  if (!normalized) return '';
+  if (/^[a-z]{2}$/.test(normalized)) return normalized;
+
+  const byName = countriesList.find(country => normalizeComparableCountryName(country.name) === normalized);
+  if (byName) return byName.code.toLowerCase().slice(0, 2);
+
+  return normalized;
+};
+
+export const areCountriesEquivalent = (first?: string, second?: string) => {
+  const firstKey = getComparableCountryKey(first);
+  const secondKey = getComparableCountryKey(second);
+  return Boolean(firstKey && secondKey && firstKey === secondKey);
+};
+
 export const storyNormalizeCountryCodeCandidate = (value?: string) => {
   const normalizedValue = storyNormalizeCountryValue(value);
   if (/^[a-z]{2}$/.test(normalizedValue)) return normalizedValue;
