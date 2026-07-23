@@ -290,11 +290,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
               </div>
             );
           })}
-
-          <button type="button" className="menu-item mobile-more-btn" onClick={() => setMobileDrawerOpen(true)}>
-            <Menu size={18} />
-            <span>Lainnya</span>
-          </button>
         </nav>
 
         {/* Footer */}
