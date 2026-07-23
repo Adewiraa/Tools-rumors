@@ -78,6 +78,11 @@ export default function ScheduleListView() {
       ? <img src={logo} alt="" className="schedule-team-logo" />
       : <span className="schedule-team-logo-text">{logo || '-'}</span>
   );
+  const renderCompetitionLogo = (logo?: string, name?: string) => (
+    logo && logo.startsWith('http')
+      ? <img src={logo} alt="" className="schedule-competition-logo" />
+      : <span className="schedule-competition-logo-text" aria-hidden="true">{logo || name?.slice(0, 2).toUpperCase() || 'KO'}</span>
+  );
 
   const createPublishedLineupStoryImage = async (match: Match) => {
     const node = document.getElementById(getPublishedStoryElementId(match.id));
@@ -165,6 +170,10 @@ export default function ScheduleListView() {
     const isToday = new Date(m.kickoff).toDateString() === new Date().toDateString();
     const effectiveStatus = getEffectiveMatchStatus(m);
     const effectiveLineupStatus = getEffectiveLineupStatus(m);
+    const competition = competitions.find(c => c.name === m.competition);
+    const kickoffDate = new Date(m.kickoff);
+    const kickoffDateLabel = kickoffDate.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' });
+    const kickoffTimeLabel = kickoffDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     const canResult = effectiveStatus === 'Live' && effectiveLineupStatus === 'Complete';
     const hasLineupData = hasSavedLineupSelection(m);
     const canOpenPublishedLineup = hasPublishedLineupSnapshot(m);
@@ -197,10 +206,14 @@ export default function ScheduleListView() {
           </div>
           <div className="schedule-match-venue">{m.venue}</div>
         </td>
-        <td className="schedule-info-cell" data-label="Kompetisi">{m.competition}</td>
+        <td className="schedule-info-cell" data-label="Kompetisi">
+          <span className="schedule-competition-value">
+            {renderCompetitionLogo(competition?.logoUrl, m.competition)}
+            <span>{m.competition}</span>
+          </span>
+        </td>
         <td className="schedule-info-cell schedule-kickoff-cell" data-label="Kickoff">
-          <div>{new Date(m.kickoff).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}</div>
-          <div className="schedule-kickoff-time">{new Date(m.kickoff).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</div>
+          <span className="schedule-kickoff-value">{kickoffDateLabel}, {kickoffTimeLabel} WIB</span>
         </td>
         <td className="schedule-info-cell" data-label="Status"><span className={`badge ${statusClass(effectiveStatus)}`}>{statusLabel(effectiveStatus)}</span></td>
         <td className="schedule-info-cell" data-label="Lineup"><span className={`badge ${lineupClass(effectiveLineupStatus)}`}>{lineupLabel(effectiveLineupStatus)}</span></td>
