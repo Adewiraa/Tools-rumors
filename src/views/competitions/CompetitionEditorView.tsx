@@ -24,6 +24,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    foreignRegulationFree: false,
     maxForeignStarters: 7,
     maxForeignMatchday: 9,
     maxForeignSquad: 11,
@@ -111,18 +112,25 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Musim</label><input className="form-input" value={competition.season} onChange={event => updateCompetition('season', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 12', borderTop: '1px solid var(--neutral-200)', paddingTop: 14 }}>
             <div className="semibold" style={{ fontSize: 13, marginBottom: 10 }}>Regulasi Lineup</div>
+            <label className="flex align-center gap-8" style={{ cursor: 'pointer', gridColumn: 'span 12', marginBottom: 12, padding: '10px 12px', border: '1px solid var(--neutral-200)', borderRadius: 8, background: competition.foreignRegulationFree ? '#eef7f0' : 'var(--neutral-50)' }}>
+              <input type="checkbox" checked={Boolean(competition.foreignRegulationFree)} onChange={event => updateCompetition('foreignRegulationFree', event.target.checked)} />
+              <span>
+                <span className="semibold" style={{ display: 'block', fontSize: 13 }}>Bebaskan batas pemain asing</span>
+                <span className="text-muted" style={{ display: 'block', fontSize: 11 }}>Tidak ada batas didaftarkan, starting XI, dan dibawa pertandingan.</span>
+              </span>
+            </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 12 }}>
               <div style={{ gridColumn: 'span 4' }}>
                 <label className="form-label">Maks Asing Starting XI</label>
-                <input className="form-input" type="number" min={0} max={11} value={competition.maxForeignStarters ?? 7} onChange={event => updateCompetition('maxForeignStarters', Number(event.target.value))} />
+                <input className="form-input" type="number" min={0} max={11} disabled={Boolean(competition.foreignRegulationFree)} value={competition.maxForeignStarters ?? 7} onChange={event => updateCompetition('maxForeignStarters', Number(event.target.value))} />
               </div>
               <div style={{ gridColumn: 'span 4' }}>
                 <label className="form-label">Maks Asing Dibawa</label>
-                <input className="form-input" type="number" min={0} max={26} value={competition.maxForeignMatchday ?? 9} onChange={event => updateCompetition('maxForeignMatchday', Number(event.target.value))} />
+                <input className="form-input" type="number" min={0} max={26} disabled={Boolean(competition.foreignRegulationFree)} value={competition.maxForeignMatchday ?? 9} onChange={event => updateCompetition('maxForeignMatchday', Number(event.target.value))} />
               </div>
               <div style={{ gridColumn: 'span 4' }}>
                 <label className="form-label">Maks Asing DSP Liga</label>
-                <input className="form-input" type="number" min={0} max={99} value={competition.maxForeignSquad ?? 11} onChange={event => updateCompetition('maxForeignSquad', Number(event.target.value))} />
+                <input className="form-input" type="number" min={0} max={99} disabled={Boolean(competition.foreignRegulationFree)} value={competition.maxForeignSquad ?? 11} onChange={event => updateCompetition('maxForeignSquad', Number(event.target.value))} />
               </div>
               <div style={{ gridColumn: 'span 6' }}>
                 <label className="form-label">Min Lokal Starting XI</label>

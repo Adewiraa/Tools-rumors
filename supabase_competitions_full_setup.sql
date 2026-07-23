@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.competitions (
   logo_url    TEXT NOT NULL DEFAULT '',
   season      TEXT NOT NULL DEFAULT '',
   is_active   BOOLEAN NOT NULL DEFAULT TRUE,
+  foreign_regulation_free BOOLEAN NOT NULL DEFAULT FALSE,
   max_foreign_starters INTEGER NOT NULL DEFAULT 7,
   max_foreign_matchday INTEGER NOT NULL DEFAULT 9,
   max_foreign_squad INTEGER NOT NULL DEFAULT 11,
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.competitions (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE public.competitions ADD COLUMN IF NOT EXISTS foreign_regulation_free BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE public.competitions ADD COLUMN IF NOT EXISTS max_foreign_starters INTEGER NOT NULL DEFAULT 7;
 ALTER TABLE public.competitions ADD COLUMN IF NOT EXISTS max_foreign_matchday INTEGER NOT NULL DEFAULT 9;
 ALTER TABLE public.competitions ADD COLUMN IF NOT EXISTS max_foreign_squad INTEGER NOT NULL DEFAULT 11;

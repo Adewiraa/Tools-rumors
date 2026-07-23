@@ -48,6 +48,7 @@ CREATE POLICY "Allow all actions for club_seasons" ON club_seasons FOR ALL TO pu
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS timeline JSONB DEFAULT '[]'::jsonb;
 
 -- 6b. Tambahkan kolom regulasi lineup pada tabel competitions jika belum ada
+ALTER TABLE competitions ADD COLUMN IF NOT EXISTS foreign_regulation_free BOOLEAN DEFAULT FALSE;
 ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_starters INTEGER DEFAULT 7;
 ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_matchday INTEGER DEFAULT 9;
 ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_squad INTEGER DEFAULT 11;

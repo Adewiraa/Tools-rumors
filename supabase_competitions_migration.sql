@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS competitions (
   logo_url    TEXT,
   season      TEXT,                    -- contoh: '2026/27'
   is_active   BOOLEAN DEFAULT TRUE,
+  foreign_regulation_free BOOLEAN DEFAULT FALSE,
   max_foreign_starters INTEGER DEFAULT 7,
   max_foreign_matchday INTEGER DEFAULT 9,
   max_foreign_squad INTEGER DEFAULT 11,
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS competitions (
   updated_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE competitions ADD COLUMN IF NOT EXISTS foreign_regulation_free BOOLEAN DEFAULT FALSE;
 ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_starters INTEGER DEFAULT 7;
 ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_matchday INTEGER DEFAULT 9;
 ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_squad INTEGER DEFAULT 11;

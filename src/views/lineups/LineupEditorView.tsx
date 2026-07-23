@@ -26,6 +26,7 @@ import LoadingButton from '@/views/shared/LoadingButton';
 interface AsingEntry { id: string; name: string; no: number; pos: string; }
 
 const DEFAULT_LINEUP_REGULATION = {
+  foreignRegulationFree: false,
   maxForeignStarters: 7,
   maxForeignMatchday: 9,
   maxForeignSquad: 11,
@@ -77,6 +78,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   const awayClub = clubs.find(c => c.id === selectedAwayClub);
   const selectedCompetition = competitions.find(c => c.name === (existingMatch?.competition || selectedCompetitionName));
   const lineupRegulation = {
+    foreignRegulationFree: selectedCompetition?.foreignRegulationFree ?? DEFAULT_LINEUP_REGULATION.foreignRegulationFree,
     maxForeignStarters: selectedCompetition?.maxForeignStarters ?? DEFAULT_LINEUP_REGULATION.maxForeignStarters,
     maxForeignMatchday: selectedCompetition?.maxForeignMatchday ?? DEFAULT_LINEUP_REGULATION.maxForeignMatchday,
     maxForeignSquad: selectedCompetition?.maxForeignSquad ?? DEFAULT_LINEUP_REGULATION.maxForeignSquad,
@@ -127,10 +129,10 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
     const localMatchday = countLocalPlayers(squad, carriedIds, club);
     const issues: string[] = [];
 
-    if (foreignStarters > lineupRegulation.maxForeignStarters) {
+    if (!lineupRegulation.foreignRegulationFree && foreignStarters > lineupRegulation.maxForeignStarters) {
       issues.push(`${label}: asing starting ${foreignStarters}/${lineupRegulation.maxForeignStarters}`);
     }
-    if (foreignMatchday > lineupRegulation.maxForeignMatchday) {
+    if (!lineupRegulation.foreignRegulationFree && foreignMatchday > lineupRegulation.maxForeignMatchday) {
       issues.push(`${label}: asing dibawa ${foreignMatchday}/${lineupRegulation.maxForeignMatchday}`);
     }
     if (lineupRegulation.minLocalStarters > 0 && localStarters < lineupRegulation.minLocalStarters) {
@@ -176,7 +178,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
     if (!player) return;
     const isForeign = isForeignPlayer(player, club);
 
-    if (isForeign) {
+    if (isForeign && !lineupRegulation.foreignRegulationFree) {
       const fSt    = countForeignPlayers(squad, starters, club);
       const fSub   = countForeignPlayers(squad, subs, club);
       const fDibawa = fSt + fSub;
@@ -662,10 +664,10 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                   Tidak Masuk DSP
                 </span>
                 <span style={{ fontSize: 9, fontWeight: 700,
-                  background: fDibawa >= lineupRegulation.maxForeignMatchday ? '#fee2e2' : '#fef3c7',
-                  color: fDibawa >= lineupRegulation.maxForeignMatchday ? '#991b1b' : '#92400e',
+                  background: !lineupRegulation.foreignRegulationFree && fDibawa >= lineupRegulation.maxForeignMatchday ? '#fee2e2' : '#fef3c7',
+                  color: !lineupRegulation.foreignRegulationFree && fDibawa >= lineupRegulation.maxForeignMatchday ? '#991b1b' : '#92400e',
                   padding: '1px 7px', borderRadius: 6 }}>
-                  Dibawa: {fDibawa}/{lineupRegulation.maxForeignMatchday}
+                  Dibawa: {lineupRegulation.foreignRegulationFree ? `${fDibawa} asing` : `${fDibawa}/${lineupRegulation.maxForeignMatchday}`}
                 </span>
               </div>
               {foreignPool.length === 0 ? (
@@ -686,7 +688,9 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
               )}
               <div style={{ marginTop: 8, fontSize: 9, color: 'var(--neutral-400)', lineHeight: 1.5,
                 padding: '5px 7px', background: 'var(--neutral-50)', borderRadius: 6 }}>
-                Asing maks {lineupRegulation.maxForeignStarters} starting | {lineupRegulation.maxForeignMatchday} dibawa | {lineupRegulation.maxForeignSquad} DSP
+                {lineupRegulation.foreignRegulationFree
+                  ? 'Asing bebas tanpa batas starting, dibawa, dan DSP'
+                  : `Asing maks ${lineupRegulation.maxForeignStarters} starting | ${lineupRegulation.maxForeignMatchday} dibawa | ${lineupRegulation.maxForeignSquad} DSP`}
                 {(lineupRegulation.minLocalStarters > 0 || lineupRegulation.minLocalMatchday > 0) && (
                   <><br />Lokal min {lineupRegulation.minLocalStarters} starting | {lineupRegulation.minLocalMatchday} dibawa ({getLocalCountry(club)}: {localStarters}/{localDibawa})</>
                 )}

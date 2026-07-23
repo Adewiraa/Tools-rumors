@@ -8,6 +8,7 @@ export interface Competition {
   logoUrl: string;
   season: string;
   isActive: boolean;
+  foreignRegulationFree?: boolean;
   maxForeignStarters?: number;
   maxForeignMatchday?: number;
   maxForeignSquad?: number;
@@ -186,6 +187,7 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    foreignRegulationFree: false,
     maxForeignStarters: 7,
     maxForeignMatchday: 9,
     maxForeignSquad: 11,
@@ -202,6 +204,7 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026',
     isActive: true,
+    foreignRegulationFree: false,
     maxForeignStarters: 7,
     maxForeignMatchday: 9,
     maxForeignSquad: 11,
@@ -218,6 +221,7 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    foreignRegulationFree: false,
     maxForeignStarters: 7,
     maxForeignMatchday: 9,
     maxForeignSquad: 11,
@@ -234,6 +238,7 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026',
     isActive: false,
+    foreignRegulationFree: false,
     maxForeignStarters: 7,
     maxForeignMatchday: 9,
     maxForeignSquad: 11,
@@ -250,6 +255,7 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    foreignRegulationFree: false,
     maxForeignStarters: 6,
     maxForeignMatchday: 8,
     maxForeignSquad: 10,

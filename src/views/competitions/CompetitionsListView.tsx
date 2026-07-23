@@ -115,7 +115,11 @@ export default function CompetitionsListView() {
                     <td className="master-info-cell" data-label="Musim">{comp.season}</td>
                     <td className="master-info-cell" data-label="Regulasi">
                       <div style={{ display: 'grid', gap: 3, fontSize: 11 }}>
-                        <span>Asing: {comp.maxForeignStarters ?? 7} XI / {comp.maxForeignMatchday ?? 9} dibawa / {comp.maxForeignSquad ?? 11} DSP</span>
+                        <span>
+                          {comp.foreignRegulationFree
+                            ? 'Asing: Bebas tanpa batas'
+                            : `Asing: ${comp.maxForeignStarters ?? 7} XI / ${comp.maxForeignMatchday ?? 9} dibawa / ${comp.maxForeignSquad ?? 11} DSP`}
+                        </span>
                         <span className="text-muted">Lokal min: {comp.minLocalStarters ?? 0} XI / {comp.minLocalMatchday ?? 0} dibawa</span>
                       </div>
                     </td>

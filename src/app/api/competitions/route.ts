@@ -47,6 +47,7 @@ const getCompetitionSchemaErrorMessage = (error: { message?: string; code?: stri
       'logo_url',
       'season',
       'is_active',
+      'foreign_regulation_free',
       'max_foreign_starters',
       'max_foreign_matchday',
       'max_foreign_squad',
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
         logo_url: competition.logoUrl || competition.logo_url || '',
         season: competition.season || '',
         is_active: competition.isActive !== undefined ? competition.isActive : competition.is_active !== undefined ? competition.is_active : true,
+        foreign_regulation_free: competition.foreignRegulationFree !== undefined ? Boolean(competition.foreignRegulationFree) : Boolean(competition.foreign_regulation_free),
         max_foreign_starters: toRegulationNumber(competition.maxForeignStarters ?? competition.max_foreign_starters, 7),
         max_foreign_matchday: toRegulationNumber(competition.maxForeignMatchday ?? competition.max_foreign_matchday, 9),
         max_foreign_squad: toRegulationNumber(competition.maxForeignSquad ?? competition.max_foreign_squad, 11),
@@ -174,6 +176,7 @@ export async function POST(request: Request) {
           season,
           competitions (
             id, name, short_name, slug, type, country, logo_url, season, is_active,
+            foreign_regulation_free,
             max_foreign_starters, max_foreign_matchday, max_foreign_squad,
             min_local_starters, min_local_matchday
           )

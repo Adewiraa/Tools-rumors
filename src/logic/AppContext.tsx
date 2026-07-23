@@ -458,6 +458,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       logoUrl: competition.logoUrl || competition.logo_url || competition.logo_public_url || '',
       season: competition.season || '',
       isActive: competition.isActive !== undefined ? competition.isActive : competition.is_active !== undefined ? competition.is_active : true,
+      foreignRegulationFree: competition.foreignRegulationFree !== undefined ? competition.foreignRegulationFree : Boolean(competition.foreign_regulation_free),
       maxForeignStarters: toRegulationNumber(competition.maxForeignStarters ?? competition.max_foreign_starters, 7),
       maxForeignMatchday: toRegulationNumber(competition.maxForeignMatchday ?? competition.max_foreign_matchday, 9),
       maxForeignSquad: toRegulationNumber(competition.maxForeignSquad ?? competition.max_foreign_squad, 11),
