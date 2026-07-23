@@ -30,6 +30,20 @@ const getDeleteId = async (request: Request) => {
   }
 };
 
+const getClubSchemaErrorMessage = (error: { message?: string; code?: string }) => {
+  const message = error.message || '';
+  const isMissingCountryColumn = (
+    error.code === 'PGRST204' ||
+    message.toLowerCase().includes("could not find the 'country' column")
+  );
+
+  if (isMissingCountryColumn) {
+    return 'Kolom country belum ada di tabel clubs Supabase. Jalankan supabase_clubs_country_migration.sql di SQL Editor, lalu coba simpan lagi.';
+  }
+
+  return message;
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -61,7 +75,7 @@ export async function POST(request: Request) {
       .upsert(supabasePayload, { onConflict: 'id' });
 
     if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+      return NextResponse.json({ success: false, error: getClubSchemaErrorMessage(error) }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });
