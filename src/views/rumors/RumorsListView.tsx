@@ -84,7 +84,7 @@ export default function RumorsListView() {
       triggerToast('Membuat gambar rumor...');
       const { blob, fileName } = await exportRumorGraphic(rumor);
       const file = new File([blob], fileName, { type: 'image/png' });
-      const nav = navigator as any;
+      const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
       const shareData: ShareData = {
         files: [file],
         title: rumor.headline,
@@ -421,47 +421,35 @@ export default function RumorsListView() {
       )}
 
       {selectedRumor && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1600,
-            background: 'rgba(10,10,10,0.72)',
-            backdropFilter: 'blur(6px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-          }}
-          onClick={() => setSelectedRumor(null)}
-        >
-          <div
-            style={{ display: 'grid', gridTemplateColumns: 'auto minmax(280px, 380px)', gap: 24, alignItems: 'center', maxWidth: '92vw' }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div style={{ maxHeight: '86vh', overflow: 'auto' }}>
+        <div className="rumor-modal-overlay" onClick={() => setSelectedRumor(null)}>
+          <div className="rumor-modal-layout" onClick={(event) => event.stopPropagation()}>
+            <div className="rumor-modal-art">
+              {renderRumorGraphic(selectedRumor, false)}
+            </div>
+
+            <div className="rumor-export-node" aria-hidden="true">
               {renderRumorGraphic(selectedRumor, false, `rumor-modal-graphic-${selectedRumor.id}`)}
             </div>
-            <div style={{ color: 'white', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            <div className="rumor-modal-panel">
               <button
                 type="button"
-                className="btn btn-sm btn-secondary"
-                style={{ alignSelf: 'flex-end', background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }}
+                className="btn btn-sm btn-secondary rumor-modal-close"
                 onClick={() => setSelectedRumor(null)}
               >
                 <X size={14} /> Tutup
               </button>
 
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, textTransform: 'uppercase', color: '#c8a84b', marginBottom: 8 }}>Preview Gambar Rumor</div>
-                <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, marginBottom: 10 }}>{selectedRumor.headline}</h2>
-                <p style={{ color: '#d1d5db', fontSize: 13, lineHeight: 1.5 }}>{getCaption(selectedRumor) || 'Caption belum diisi.'}</p>
+              <div className="rumor-modal-copy">
+                <div className="rumor-modal-eyebrow">Preview Gambar Rumor</div>
+                <h2>{selectedRumor.headline}</h2>
+                <p>{getCaption(selectedRumor) || 'Caption belum diisi.'}</p>
               </div>
 
               {/* Ekspor Gambar Buttons */}
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#f8fafc' }}>Ekspor Gambar</div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div className="rumor-modal-section">
+                <div className="rumor-modal-section-title">Ekspor Gambar</div>
+                <div className="rumor-modal-actions-row">
                   <button
                     type="button"
                     className="btn btn-md btn-primary"
@@ -472,8 +460,7 @@ export default function RumorsListView() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-md btn-secondary"
-                    style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }}
+                    className="btn btn-md btn-secondary rumor-modal-secondary"
                     disabled={isExporting}
                     onClick={() => handleDownloadRumor(selectedRumor)}
                   >
@@ -482,26 +469,25 @@ export default function RumorsListView() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              <div className="rumor-modal-manage">
                 <button
                   type="button"
-                  className="btn btn-md btn-secondary"
-                  style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }}
+                  className="btn btn-md btn-secondary rumor-modal-secondary"
                   onClick={() => handleEdit(selectedRumor.id)}
                 >
                   <Edit3 size={15} /> Edit Rumor
                 </button>
                 {confirmDeleteId === selectedRumor.id ? (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" className="btn btn-md btn-danger" style={{ flex: 1 }} onClick={() => handleDelete(selectedRumor)}>
+                  <div className="rumor-modal-confirm">
+                    <button type="button" className="btn btn-md btn-danger" onClick={() => handleDelete(selectedRumor)}>
                       Ya, Hapus
                     </button>
-                    <button type="button" className="btn btn-md btn-secondary" style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)', color: 'white' }} onClick={() => setConfirmDeleteId(null)}>
+                    <button type="button" className="btn btn-md btn-secondary rumor-modal-secondary" onClick={() => setConfirmDeleteId(null)}>
                       Batal
                     </button>
                   </div>
                 ) : (
-                  <button type="button" className="btn btn-md btn-secondary" style={{ color: '#f87171', background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)' }} onClick={() => setConfirmDeleteId(selectedRumor.id)}>
+                  <button type="button" className="btn btn-md btn-secondary rumor-modal-danger" onClick={() => setConfirmDeleteId(selectedRumor.id)}>
                     <Trash2 size={15} /> Hapus Rumor
                   </button>
                 )}

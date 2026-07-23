@@ -1162,6 +1162,135 @@ a {
   flex-wrap: wrap;
 }
 
+.rumor-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  background: rgba(10, 10, 10, 0.72);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rumor-modal-layout {
+  width: min(92vw, 780px);
+  max-height: min(88dvh, 720px);
+  display: grid;
+  grid-template-columns: auto minmax(280px, 380px);
+  gap: 24px;
+  align-items: center;
+  position: relative;
+}
+
+.rumor-modal-art {
+  max-height: 86dvh;
+  overflow: auto;
+  border-radius: var(--radius-md);
+}
+
+.rumor-export-node {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 360px;
+  height: 640px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.rumor-modal-panel {
+  color: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  position: relative;
+}
+
+.rumor-modal-close {
+  align-self: flex-end;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--white);
+}
+
+.rumor-modal-copy {
+  min-width: 0;
+}
+
+.rumor-modal-eyebrow {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #c8a84b;
+  margin-bottom: 8px;
+}
+
+.rumor-modal-copy h2 {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+
+.rumor-modal-copy p {
+  color: #d1d5db;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.rumor-modal-section {
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rumor-modal-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.rumor-modal-actions-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rumor-modal-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.rumor-modal-secondary {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--white);
+}
+
+.rumor-modal-danger {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.rumor-modal-confirm {
+  display: flex;
+  gap: 8px;
+}
+
+.rumor-modal-confirm .btn {
+  flex: 1;
+}
+
 /* Search bar styling */
 .search-input-wrapper {
   position: relative;
@@ -1426,6 +1555,91 @@ a {
   .output-preview-stage {
     max-height: 76dvh;
     padding: 18px 12px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .rumor-modal-overlay {
+    align-items: flex-end;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+  }
+
+  .rumor-modal-layout {
+    width: 100%;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .rumor-modal-art {
+    width: 180px;
+    height: 320px;
+    max-height: 38dvh;
+    margin: 0 auto -22px;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    box-shadow: 0 18px 36px rgba(0,0,0,0.42);
+    position: relative;
+    z-index: 1;
+  }
+
+  .rumor-modal-art > div {
+    transform: scale(0.5);
+    transform-origin: top left;
+  }
+
+  .rumor-modal-panel {
+    width: 100%;
+    max-height: calc(62dvh - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    background: rgba(21, 26, 29, 0.94);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px 18px 14px 14px;
+    box-shadow: 0 18px 54px rgba(0,0,0,0.4);
+    padding: 42px 16px 16px;
+    gap: 14px;
+  }
+
+  .rumor-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    z-index: 2;
+    height: 34px;
+  }
+
+  .rumor-modal-eyebrow {
+    font-size: 10px;
+    margin-bottom: 7px;
+  }
+
+  .rumor-modal-copy h2 {
+    font-size: 20px;
+    line-height: 1.18;
+    margin-bottom: 8px;
+    padding-right: 76px;
+  }
+
+  .rumor-modal-copy p {
+    font-size: 12px;
+  }
+
+  .rumor-modal-section {
+    padding-top: 14px;
+  }
+
+  .rumor-modal-actions-row,
+  .rumor-modal-confirm {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .rumor-modal-actions-row .btn,
+  .rumor-modal-manage .btn,
+  .rumor-modal-confirm .btn {
+    width: 100%;
   }
 
   /* Tab container */
