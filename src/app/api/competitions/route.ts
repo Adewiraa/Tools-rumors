@@ -37,9 +37,16 @@ const toRegulationNumber = (value: any, fallback: number) => {
 
 const getCompetitionSchemaErrorMessage = (error: { message?: string; code?: string }) => {
   const message = error.message || '';
-  const isMissingRegulationColumn = (
+  const isMissingCompetitionColumn = (
     error.code === 'PGRST204' ||
     [
+      'short_name',
+      'slug',
+      'type',
+      'country',
+      'logo_url',
+      'season',
+      'is_active',
       'max_foreign_starters',
       'max_foreign_matchday',
       'max_foreign_squad',
@@ -48,8 +55,8 @@ const getCompetitionSchemaErrorMessage = (error: { message?: string; code?: stri
     ].some(column => message.toLowerCase().includes(`'${column}' column`))
   );
 
-  if (isMissingRegulationColumn) {
-    return 'Kolom regulasi lineup belum ada di tabel competitions Supabase. Jalankan supabase_competitions_regulation_migration.sql di SQL Editor, lalu coba simpan lagi.';
+  if (isMissingCompetitionColumn) {
+    return 'Schema tabel competitions Supabase belum lengkap. Jalankan supabase_competitions_regulation_migration.sql di SQL Editor, lalu coba simpan lagi.';
   }
 
   return message;

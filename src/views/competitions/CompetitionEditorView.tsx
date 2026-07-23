@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Competition } from '@/lib/mockData';
 import { ArrowLeft, Save, Upload } from 'lucide-react';
@@ -12,7 +11,6 @@ import LoadingButton from '@/views/shared/LoadingButton';
 const slugify = (value: string) => value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
 export default function CompetitionEditorView({ competitionId }: { competitionId: string }) {
-  const router = useRouter();
   const { competitions, setCompetitions, logAction, triggerToast } = useApp();
   const isNew = competitionId === 'new';
   const existing = competitions.find(item => item.id === competitionId);
@@ -35,6 +33,9 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const updateCompetition = <K extends keyof Competition>(key: K, value: Competition[K]) => setCompetition(prev => ({ ...prev, [key]: value }));
+  const goToCompetitionsList = () => {
+    window.location.replace('/competitions');
+  };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -82,7 +83,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
       setCompetitions(prev => isNew ? [...prev, savedCompetition] : prev.map(item => item.id === savedCompetition.id ? savedCompetition : item));
       logAction(isNew ? 'CREATE_COMPETITION' : 'UPDATE_COMPETITION', 'Master Kompetisi', savedCompetition.name);
       triggerToast('Kompetisi berhasil disimpan.');
-      router.push('/competitions');
+      goToCompetitionsList();
     } catch (error: any) {
       triggerToast(error.message || 'Terjadi kesalahan saat menyimpan kompetisi.', 'error');
     } finally {
@@ -94,7 +95,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button className="btn btn-sm btn-secondary" onClick={() => router.push('/competitions')}><ArrowLeft size={16} /> Kembali</button>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={goToCompetitionsList}><ArrowLeft size={16} /> Kembali</button>
           <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Kompetisi' : 'Edit Kompetisi'}</h1>
         </div>
         <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan..."><Save size={16} /> Simpan Kompetisi</LoadingButton>
