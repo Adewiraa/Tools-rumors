@@ -16,8 +16,8 @@ import {
   getMatchMediaSettings,
   getMatchTimelineEvents
 } from '@/logic/utils';
-import type { AppSettings } from '@/logic/utils';
-import { hasMatchMediaPage, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
+import type { AppSettings, MatchMediaAdItem } from '@/logic/utils';
+import { getMatchMediaPages, hasMatchMediaPage, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
 
 type ResultOutputType = 'HT' | 'FT' | 'AD';
 
@@ -72,24 +72,32 @@ export default function ResultsListView() {
       : <span className="schedule-competition-logo-text" aria-hidden="true">{logo || name?.slice(0, 2).toUpperCase() || 'KO'}</span>
   );
 
-  const getResultOutputElementId = (matchId: string, type: ResultOutputType) => `result-output-card-${matchId}-${type.toLowerCase()}`;
-  const getResultOutputFileName = (match: Match, type: ResultOutputType) => `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
+  const getResultOutputElementId = (matchId: string, type: ResultOutputType, adIndex = 0) => (
+    type === 'AD'
+      ? `result-output-card-${matchId}-ad-${adIndex + 1}`
+      : `result-output-card-${matchId}-${type.toLowerCase()}`
+  );
+  const getResultOutputFileName = (match: Match, type: ResultOutputType, adIndex = 0) => (
+    type === 'AD'
+      ? `Result_AD_${adIndex + 1}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`
+      : `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`
+  ).replace(/[^\w.-]+/g, '_');
 
-  const createResultOutputImage = async (match: Match, type: ResultOutputType) => {
-    const node = document.getElementById(getResultOutputElementId(match.id, type));
+  const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0) => {
+    const node = document.getElementById(getResultOutputElementId(match.id, type, adIndex));
     if (!node) throw new Error(type === 'AD' ? 'Halaman iklan belum siap.' : 'Gambar hasil belum siap.');
     const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
     const response = await fetch(dataUrl);
     const blob = await response.blob();
-    return { dataUrl, blob, fileName: getResultOutputFileName(match, type) };
+    return { dataUrl, blob, fileName: getResultOutputFileName(match, type, adIndex) };
   };
 
-  const downloadResultOutput = async (match: Match, type: ResultOutputType) => {
-    const outputLabel = type === 'AD' ? 'iklan' : type;
+  const downloadResultOutput = async (match: Match, type: ResultOutputType, adIndex = 0) => {
+    const outputLabel = type === 'AD' ? `iklan ${adIndex + 1}` : type;
     try {
       setIsExportingResultOutput(true);
       triggerToast(`Membuat gambar ${outputLabel}...`);
-      const { dataUrl, fileName } = await createResultOutputImage(match, type);
+      const { dataUrl, fileName } = await createResultOutputImage(match, type, adIndex);
       const link = document.createElement('a');
       link.download = fileName;
       link.href = dataUrl;
@@ -103,20 +111,23 @@ export default function ResultsListView() {
     }
   };
 
-  const shareResultOutput = async (match: Match, type: ResultOutputType) => {
-    const outputLabel = type === 'AD' ? 'Iklan' : type;
+  const shareResultOutput = async (match: Match, type: ResultOutputType, adIndex = 0) => {
+    const outputLabel = type === 'AD' ? `Iklan ${adIndex + 1}` : type;
     try {
       setIsExportingResultOutput(true);
       const shouldIncludeAd = type !== 'AD' && hasMatchMediaPage(getMatchMediaSettings(match));
-      triggerToast(shouldIncludeAd ? `Membuat gambar ${outputLabel} dan iklan...` : `Membuat gambar ${outputLabel}...`);
-      const { blob, dataUrl, fileName } = await createResultOutputImage(match, type);
+      const mediaAdPages = getMatchMediaPages(getMatchMediaSettings(match));
+      triggerToast(shouldIncludeAd ? `Membuat gambar ${outputLabel} dan semua iklan...` : `Membuat gambar ${outputLabel}...`);
+      const { blob, dataUrl, fileName } = await createResultOutputImage(match, type, adIndex);
       const files = [new File([blob], fileName, { type: 'image/png' })];
       const fallbackDownloads = [{ dataUrl, fileName }];
 
       if (shouldIncludeAd) {
-        const adImage = await createResultOutputImage(match, 'AD');
-        files.push(new File([adImage.blob], adImage.fileName, { type: 'image/png' }));
-        fallbackDownloads.push({ dataUrl: adImage.dataUrl, fileName: adImage.fileName });
+        for (let index = 0; index < mediaAdPages.length; index += 1) {
+          const adImage = await createResultOutputImage(match, 'AD', index);
+          files.push(new File([adImage.blob], adImage.fileName, { type: 'image/png' }));
+          fallbackDownloads.push({ dataUrl: adImage.dataUrl, fileName: adImage.fileName });
+        }
       }
 
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
@@ -132,7 +143,7 @@ export default function ResultsListView() {
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
         await nav.share(shareData);
-        triggerToast(shouldIncludeAd ? `Gambar ${outputLabel} dan iklan siap dibagikan.` : `Gambar ${outputLabel} siap dibagikan.`);
+        triggerToast(shouldIncludeAd ? `Gambar ${outputLabel} dan semua iklan siap dibagikan.` : `Gambar ${outputLabel} siap dibagikan.`);
         return;
       }
 
@@ -144,7 +155,7 @@ export default function ResultsListView() {
       });
       triggerToast(
         shouldIncludeAd
-          ? 'Share langsung belum didukung di perangkat ini. PNG hasil dan iklan diunduh sebagai fallback.'
+          ? 'Share langsung belum didukung di perangkat ini. PNG hasil dan semua iklan diunduh sebagai fallback.'
           : 'Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.',
         'warning'
       );
@@ -335,25 +346,28 @@ export default function ResultsListView() {
                     </button>
                   </div>
                 </div>
-                {hasMatchMediaPage(getMatchMediaSettings(timelineMatch)) && (
-                  <div className="output-preview-item">
-                    <div className="output-preview-item-label">Media Iklan</div>
+                {getMatchMediaPages(getMatchMediaSettings(timelineMatch)).map((ad, index, adPages) => (
+                  <div className="output-preview-item" key={ad.id || index}>
+                    <div className="output-preview-item-label">Media Iklan {index + 1}</div>
                     <ResultOutputAdCard
                       match={timelineMatch}
                       competitions={competitions}
-                      elementId={getResultOutputElementId(timelineMatch.id, 'AD')}
+                      elementId={getResultOutputElementId(timelineMatch.id, 'AD', index)}
                       appSettings={appSettings}
+                      ad={ad}
+                      adIndex={index}
+                      adTotal={adPages.length}
                     />
                     <div className="output-preview-actions">
-                      <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'AD')} disabled={isExportingResultOutput}>
+                      <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'AD', index)} disabled={isExportingResultOutput}>
                         <Share2 size={14} /> Bagikan Iklan
                       </button>
-                      <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'AD')} disabled={isExportingResultOutput}>
+                      <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'AD', index)} disabled={isExportingResultOutput}>
                         <Download size={14} /> Unduh Iklan
                       </button>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           </div>
@@ -586,11 +600,14 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
   );
 }
 
-function ResultOutputAdCard({ match, competitions, elementId, appSettings }: {
+function ResultOutputAdCard({ match, competitions, elementId, appSettings, ad, adIndex, adTotal }: {
   match: Match;
   competitions: Competition[];
   elementId: string;
   appSettings: AppSettings;
+  ad: MatchMediaAdItem;
+  adIndex: number;
+  adTotal: number;
 }) {
   const comp = competitions.find(c => c.name === match.competition);
   const resultGraphicSettings = getResultGraphicSettings(match);
@@ -599,6 +616,7 @@ function ResultOutputAdCard({ match, competitions, elementId, appSettings }: {
     <MatchMediaPageCard
       elementId={elementId}
       settings={getMatchMediaSettings(match)}
+      ad={ad}
       width={400}
       height={500}
       appSettings={appSettings}
@@ -610,6 +628,8 @@ function ResultOutputAdCard({ match, competitions, elementId, appSettings }: {
       backgroundPositionY={resultGraphicSettings.backgroundPositionY ?? 50}
       backgroundZoom={resultGraphicSettings.backgroundZoom ?? 100}
       backgroundDim={resultGraphicSettings.backgroundDim ?? 20}
+      slideIndex={adIndex + 1}
+      slideTotal={adTotal}
     />
   );
 }

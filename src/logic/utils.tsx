@@ -88,9 +88,17 @@ export type ResultGraphicSettings = {
 
 export type MatchMediaSettings = {
   enabled?: boolean;
+  ads?: MatchMediaAdItem[];
   image?: string | null;
   label?: string;
   placement?: 'footer' | 'header-right';
+  fit?: 'contain' | 'cover';
+};
+
+export type MatchMediaAdItem = {
+  id?: string;
+  image?: string | null;
+  label?: string;
   fit?: 'contain' | 'cover';
 };
 
@@ -99,6 +107,7 @@ export const MATCH_MEDIA_META_TYPE = '__match_media_settings';
 
 export const DEFAULT_MATCH_MEDIA_SETTINGS: MatchMediaSettings = {
   enabled: false,
+  ads: [],
   image: null,
   label: '',
   placement: 'footer',
@@ -131,6 +140,36 @@ export const getMatchMediaSettings = (match: Match): MatchMediaSettings => {
     : DEFAULT_MATCH_MEDIA_SETTINGS;
 };
 
+export const getMatchMediaAds = (settings?: MatchMediaSettings): MatchMediaAdItem[] => {
+  const ads = Array.isArray(settings?.ads) ? settings.ads : [];
+  const normalizedAds = ads
+    .filter(ad => ad && typeof ad === 'object')
+    .map((ad, index) => ({
+      id: ad.id || `ad-${index + 1}`,
+      image: ad.image || null,
+      label: ad.label || '',
+      fit: ad.fit || settings?.fit || 'contain',
+    }))
+    .filter(ad => ad.image || ad.label.trim());
+
+  if (normalizedAds.length > 0) return normalizedAds;
+
+  if (settings?.image || settings?.label?.trim()) {
+    return [{
+      id: 'ad-1',
+      image: settings.image || null,
+      label: settings.label || '',
+      fit: settings.fit || 'contain',
+    }];
+  }
+
+  return [];
+};
+
+export const hasMatchMediaAds = (settings?: MatchMediaSettings) => (
+  Boolean(settings?.enabled && getMatchMediaAds(settings).length > 0)
+);
+
 export const getMatchTimelineEvents = (timeline?: any[]) => (
   Array.isArray(timeline)
     ? timeline.filter(item => item && typeof item === 'object' && !isTimelineMetaItem(item))
@@ -154,11 +193,12 @@ export const getTimelineWithResultGraphicSettings = (timeline: any[], settings: 
 
 export const getTimelineWithMatchMediaSettings = (timeline: any[], settings: MatchMediaSettings) => {
   const normalizedSettings = { ...DEFAULT_MATCH_MEDIA_SETTINGS, ...settings };
+  const normalizedAds = getMatchMediaAds(normalizedSettings);
   const preservedTimeline = Array.isArray(timeline)
     ? timeline.filter(item => !isTimelineMetaType(item, MATCH_MEDIA_META_TYPE))
     : [];
 
-  if (!normalizedSettings.enabled && !normalizedSettings.image && !normalizedSettings.label?.trim()) {
+  if (!normalizedSettings.enabled && normalizedAds.length === 0) {
     return preservedTimeline;
   }
 
@@ -167,7 +207,13 @@ export const getTimelineWithMatchMediaSettings = (timeline: any[], settings: Mat
     {
       id: MATCH_MEDIA_META_TYPE,
       type: MATCH_MEDIA_META_TYPE,
-      settings: normalizedSettings,
+      settings: {
+        ...normalizedSettings,
+        ads: normalizedAds,
+        image: normalizedAds[0]?.image || null,
+        label: normalizedAds[0]?.label || '',
+        fit: normalizedAds[0]?.fit || normalizedSettings.fit,
+      },
     },
   ];
 };

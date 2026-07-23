@@ -20,7 +20,7 @@ import {
 } from '@/logic/utils';
 import type { MatchMediaSettings } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
-import { hasMatchMediaPage, MatchMediaControls, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
+import { getMatchMediaPages, hasMatchMediaPage, MatchMediaControls, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
 
 interface MatchEvent {
   id: string;
@@ -116,8 +116,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   const currentShowPositionY = pendingBackgroundImage ? pendingBackgroundPositionY : backgroundPositionY;
   const currentShowZoom = pendingBackgroundImage ? pendingBackgroundZoom : backgroundZoom;
   const currentShowDim = pendingBackgroundImage ? pendingBackgroundDim : backgroundDim;
+  const mediaAdPages = getMatchMediaPages(mediaSettings);
   const hasMediaAdPage = hasMatchMediaPage(mediaSettings);
-  const mediaAdCardId = 'match-media-ad-card';
+  const getMediaAdCardId = (index: number) => `match-media-ad-card-${index + 1}`;
 
   useEffect(() => {
     if (isFullTimeGraphic && graphicType !== 'FT') {
@@ -186,7 +187,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     if (!node) return;
     try {
       setIsExportingGraphic(true);
-      triggerToast(hasMediaAdPage ? 'Membuat gambar hasil dan iklan...' : 'Membuat gambar untuk dibagikan...');
+      triggerToast(hasMediaAdPage ? 'Membuat gambar hasil dan semua iklan...' : 'Membuat gambar untuk dibagikan...');
       const dataUrl = await htmlToImage.toPng(node, {
         cacheBust: true,
         pixelRatio: 2.7,
@@ -200,17 +201,19 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       const fallbackDownloads = [{ dataUrl, fileName }];
 
       if (hasMediaAdPage) {
-        const adNode = document.getElementById(mediaAdCardId);
-        if (adNode) {
-          const adDataUrl = await htmlToImage.toPng(adNode, {
-            cacheBust: true,
-            pixelRatio: 2.7,
-          });
-          const adResponse = await fetch(adDataUrl);
-          const adBlob = await adResponse.blob();
-          const adFileName = `Result_Ad_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
-          files.push(new File([adBlob], adFileName, { type: 'image/png' }));
-          fallbackDownloads.push({ dataUrl: adDataUrl, fileName: adFileName });
+        for (let index = 0; index < mediaAdPages.length; index += 1) {
+          const adNode = document.getElementById(getMediaAdCardId(index));
+          if (adNode) {
+            const adDataUrl = await htmlToImage.toPng(adNode, {
+              cacheBust: true,
+              pixelRatio: 2.7,
+            });
+            const adResponse = await fetch(adDataUrl);
+            const adBlob = await adResponse.blob();
+            const adFileName = `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+            files.push(new File([adBlob], adFileName, { type: 'image/png' }));
+            fallbackDownloads.push({ dataUrl: adDataUrl, fileName: adFileName });
+          }
         }
       }
       
@@ -225,7 +228,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
         await nav.share(shareData);
-        triggerToast(hasMediaAdPage ? 'Gambar hasil dan iklan siap dibagikan.' : 'Gambar siap dibagikan.');
+        triggerToast(hasMediaAdPage ? 'Gambar hasil dan semua iklan siap dibagikan.' : 'Gambar siap dibagikan.');
         return;
       }
 
@@ -237,7 +240,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       });
       triggerToast(
         hasMediaAdPage
-          ? 'Share langsung belum didukung di perangkat ini. Gambar hasil dan iklan diunduh sebagai fallback.'
+          ? 'Share langsung belum didukung di perangkat ini. Gambar hasil dan semua iklan diunduh sebagai fallback.'
           : 'Bagikan langsung tidak didukung di perangkat ini. Gambar diunduh sebagai fallback.',
         'warning'
       );
@@ -278,37 +281,47 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   };
 
   const shareMatchMediaAd = async () => {
-    const node = document.getElementById(mediaAdCardId);
-    if (!node) return;
+    if (!hasMediaAdPage) return;
     try {
       setIsExportingGraphic(true);
-      triggerToast('Membuat halaman iklan...');
-      const dataUrl = await htmlToImage.toPng(node, {
-        cacheBust: true,
-        pixelRatio: 2.7,
-      });
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      const fileName = `Result_Ad_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
-      const file = new File([blob], fileName, { type: 'image/png' });
+      triggerToast('Membuat semua halaman iklan...');
+      const files: File[] = [];
+      const fallbackDownloads: { dataUrl: string; fileName: string }[] = [];
+
+      for (let index = 0; index < mediaAdPages.length; index += 1) {
+        const node = document.getElementById(getMediaAdCardId(index));
+        if (!node) continue;
+        const dataUrl = await htmlToImage.toPng(node, {
+          cacheBust: true,
+          pixelRatio: 2.7,
+        });
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const fileName = `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+        files.push(new File([blob], fileName, { type: 'image/png' }));
+        fallbackDownloads.push({ dataUrl, fileName });
+      }
+
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
       const shareData: ShareData = {
-        files: [file],
+        files,
         title: `Iklan ${match.homeClubName} vs ${match.awayClubName}`,
         text: `Halaman iklan hasil pertandingan ${match.homeClubName} vs ${match.awayClubName}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
         await nav.share(shareData);
-        triggerToast('Halaman iklan siap dibagikan.');
+        triggerToast('Semua halaman iklan siap dibagikan.');
         return;
       }
 
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = dataUrl;
-      link.click();
-      triggerToast('Share langsung belum didukung di perangkat ini. Halaman iklan diunduh sebagai fallback.', 'warning');
+      fallbackDownloads.forEach(download => {
+        const link = document.createElement('a');
+        link.download = download.fileName;
+        link.href = download.dataUrl;
+        link.click();
+      });
+      triggerToast('Share langsung belum didukung di perangkat ini. Semua halaman iklan diunduh sebagai fallback.', 'warning');
     } catch (err) {
       const error = err as { name?: string };
       if (error?.name !== 'AbortError') {
@@ -321,21 +334,24 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   };
 
   const downloadMatchMediaAd = async () => {
-    const node = document.getElementById(mediaAdCardId);
-    if (!node) return;
+    if (!hasMediaAdPage) return;
     try {
       setIsExportingGraphic(true);
-      triggerToast('Mengunduh halaman iklan...');
-      const dataUrl = await htmlToImage.toPng(node, {
-        cacheBust: true,
-        pixelRatio: 2.7,
-      });
-      const fileName = `Result_Ad_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = dataUrl;
-      link.click();
-      triggerToast('Halaman iklan berhasil diunduh!');
+      triggerToast('Mengunduh semua halaman iklan...');
+      for (let index = 0; index < mediaAdPages.length; index += 1) {
+        const node = document.getElementById(getMediaAdCardId(index));
+        if (!node) continue;
+        const dataUrl = await htmlToImage.toPng(node, {
+          cacheBust: true,
+          pixelRatio: 2.7,
+        });
+        const fileName = `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = dataUrl;
+        link.click();
+      }
+      triggerToast('Semua halaman iklan berhasil diunduh!');
     } catch (err) {
       console.error('Failed to download ad graphic:', err);
       triggerToast('Gagal mengunduh halaman iklan.', 'error');
@@ -1134,7 +1150,6 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               settings={mediaSettings}
               onChange={setMediaSettings}
               triggerToast={triggerToast}
-              defaultPlacement="footer"
             />
 
             {/* Action Buttons */}
@@ -1165,7 +1180,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                   onClick={shareMatchMediaAd}
                   disabled={isExportingGraphic}
                 >
-                  <Share2 size={16} /> Bagikan Iklan
+                  <Share2 size={16} /> Bagikan Semua Iklan
                 </button>
                 <button
                   className="btn btn-md btn-secondary flex-1 flex align-center justify-center gap-8"
@@ -1173,7 +1188,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                   onClick={downloadMatchMediaAd}
                   disabled={isExportingGraphic}
                 >
-                  <Download size={16} /> Unduh Iklan
+                  <Download size={16} /> Unduh Semua Iklan
                 </button>
               </div>
             )}
@@ -1378,10 +1393,12 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               </div>
             </div>
 
-            {hasMediaAdPage && (
+            {hasMediaAdPage && mediaAdPages.map((ad, index) => (
               <MatchMediaPageCard
-                elementId={mediaAdCardId}
+                key={ad.id || index}
+                elementId={getMediaAdCardId(index)}
                 settings={mediaSettings}
+                ad={ad}
                 width={400}
                 height={graphicRatio === '1:1' ? 400 : 500}
                 appSettings={appSettings}
@@ -1393,8 +1410,10 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                 backgroundPositionY={currentShowPositionY}
                 backgroundZoom={currentShowZoom}
                 backgroundDim={currentShowDim}
+                slideIndex={index + 1}
+                slideTotal={mediaAdPages.length}
               />
-            )}
+            ))}
           </>
         )}
       </div>

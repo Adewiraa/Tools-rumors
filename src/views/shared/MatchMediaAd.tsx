@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { ImagePlus, Megaphone, Trash2 } from 'lucide-react';
-import type { MatchMediaSettings } from '@/logic/utils';
-import { DEFAULT_MATCH_MEDIA_SETTINGS } from '@/logic/utils';
-import type { AppSettings } from '@/logic/utils';
+import type { AppSettings, MatchMediaAdItem, MatchMediaSettings } from '@/logic/utils';
+import { DEFAULT_MATCH_MEDIA_SETTINGS, getMatchMediaAds, hasMatchMediaAds } from '@/logic/utils';
 
 type ToastFn = (message: string, type?: 'success' | 'error' | 'warning') => void;
 
@@ -12,44 +11,65 @@ type MatchMediaControlsProps = {
   settings: MatchMediaSettings;
   onChange: (settings: MatchMediaSettings) => void;
   triggerToast?: ToastFn;
-  defaultPlacement?: MatchMediaSettings['placement'];
 };
 
-const normalizeSettings = (settings?: MatchMediaSettings, defaultPlacement: MatchMediaSettings['placement'] = 'footer') => ({
+const normalizeSettings = (settings?: MatchMediaSettings) => ({
   ...DEFAULT_MATCH_MEDIA_SETTINGS,
-  placement: defaultPlacement,
   ...settings,
+  ads: getMatchMediaAds(settings),
 });
+
+const createAdId = () => (
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `ad-${Date.now()}-${Math.round(Math.random() * 1000)}`
+);
 
 export function MatchMediaControls({
   settings,
   onChange,
   triggerToast,
-  defaultPlacement = 'footer',
 }: MatchMediaControlsProps) {
-  const value = normalizeSettings(settings, defaultPlacement);
+  const value = normalizeSettings(settings);
 
-  const update = (next: Partial<MatchMediaSettings>) => {
-    onChange({ ...value, ...next });
+  const updateAds = (ads: MatchMediaAdItem[], enabled = value.enabled) => {
+    const firstAd = ads[0];
+    onChange({
+      ...value,
+      enabled,
+      ads,
+      image: firstAd?.image || null,
+      label: firstAd?.label || '',
+      fit: firstAd?.fit || value.fit || 'contain',
+      placement: 'footer',
+    });
+  };
+
+  const updateAd = (id: string, next: Partial<MatchMediaAdItem>) => {
+    updateAds(value.ads.map(ad => ad.id === id ? { ...ad, ...next } : ad));
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      const image = loadEvent.target?.result;
-      if (typeof image !== 'string') return;
-      onChange({
-        ...value,
-        enabled: true,
-        image,
-        placement: value.placement || defaultPlacement,
-      });
-      triggerToast?.('Media iklan siap digunakan.');
-    };
-    reader.readAsDataURL(file);
+    Promise.all(files.map(file => new Promise<MatchMediaAdItem>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const image = loadEvent.target?.result;
+        resolve({
+          id: createAdId(),
+          image: typeof image === 'string' ? image : null,
+          label: '',
+          fit: value.fit || 'contain',
+        });
+      };
+      reader.readAsDataURL(file);
+    }))).then(newAds => {
+      updateAds([...value.ads, ...newAds], true);
+      triggerToast?.(`${newAds.length} media iklan siap digunakan.`);
+    });
+
     event.currentTarget.value = '';
   };
 
@@ -64,7 +84,7 @@ export function MatchMediaControls({
           <input
             type="checkbox"
             checked={Boolean(value.enabled)}
-            onChange={(event) => update({ enabled: event.target.checked })}
+            onChange={(event) => onChange({ ...value, enabled: event.target.checked })}
           />
           <span>Tampilkan</span>
         </label>
@@ -72,45 +92,64 @@ export function MatchMediaControls({
 
       <div className="match-media-control-grid">
         <label className="match-media-upload">
-          <input type="file" accept="image/*" onChange={handleFileChange} />
+          <input type="file" accept="image/*" multiple onChange={handleFileChange} />
           <span className="match-media-upload-icon">
             <ImagePlus size={16} />
           </span>
-          <span>{value.image ? 'Ganti Media' : 'Upload Media'}</span>
+          <span>Tambah Media</span>
         </label>
 
-        <input
-          className="form-input match-media-label-input"
-          value={value.label || ''}
-          onChange={(event) => update({ label: event.target.value })}
-          placeholder="Label sponsor, contoh: Didukung oleh..."
-        />
-
         <div className="match-media-static-field">Halaman iklan</div>
+        <div className="match-media-static-field">{value.ads.length} slide</div>
 
         <select
           className="form-select"
           value={value.fit || 'contain'}
-          onChange={(event) => update({ fit: event.target.value as MatchMediaSettings['fit'] })}
+          onChange={(event) => {
+            const fit = event.target.value as MatchMediaAdItem['fit'];
+            updateAds(value.ads.map(ad => ({ ...ad, fit })));
+          }}
         >
           <option value="contain">Logo utuh</option>
           <option value="cover">Isi area</option>
         </select>
       </div>
 
-      {value.image && (
-        <div className="match-media-preview-row">
-          <div className="match-media-preview-box">
-            <img src={value.image} alt="" />
-          </div>
-          <button
-            type="button"
-            className="btn btn-sm btn-secondary"
-            onClick={() => update({ image: null })}
-          >
-            <Trash2 size={13} /> Hapus Media
-          </button>
+      {value.ads.length > 0 ? (
+        <div className="match-media-list">
+          {value.ads.map((ad, index) => (
+            <div className="match-media-ad-item" key={ad.id || index}>
+              <div className="match-media-preview-box">
+                {ad.image ? <img src={ad.image} alt="" /> : <span>{index + 1}</span>}
+              </div>
+              <div className="match-media-ad-fields">
+                <input
+                  className="form-input match-media-label-input"
+                  value={ad.label || ''}
+                  onChange={(event) => updateAd(ad.id || `ad-${index + 1}`, { label: event.target.value })}
+                  placeholder={`Label iklan ${index + 1}, contoh: Didukung oleh...`}
+                />
+                <select
+                  className="form-select"
+                  value={ad.fit || 'contain'}
+                  onChange={(event) => updateAd(ad.id || `ad-${index + 1}`, { fit: event.target.value as MatchMediaAdItem['fit'] })}
+                >
+                  <option value="contain">Logo utuh</option>
+                  <option value="cover">Isi area</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary match-media-remove-btn"
+                onClick={() => updateAds(value.ads.filter(item => item.id !== ad.id))}
+              >
+                <Trash2 size={13} /> Hapus
+              </button>
+            </div>
+          ))}
         </div>
+      ) : (
+        <div className="match-media-empty">Belum ada slide iklan.</div>
       )}
     </div>
   );
@@ -118,6 +157,7 @@ export function MatchMediaControls({
 
 type MatchMediaPageCardProps = {
   settings?: MatchMediaSettings;
+  ad?: MatchMediaAdItem;
   elementId?: string;
   width?: number;
   height?: number;
@@ -130,16 +170,21 @@ type MatchMediaPageCardProps = {
   backgroundPositionY?: number;
   backgroundZoom?: number;
   backgroundDim?: number;
+  slideIndex?: number;
+  slideTotal?: number;
 };
 
 export function hasMatchMediaPage(settings?: MatchMediaSettings) {
-  const value = normalizeSettings(settings);
-  const label = (value.label || '').trim();
-  return Boolean(value.enabled && (value.image || label));
+  return hasMatchMediaAds(settings);
+}
+
+export function getMatchMediaPages(settings?: MatchMediaSettings) {
+  return hasMatchMediaAds(settings) ? getMatchMediaAds(settings) : [];
 }
 
 export function MatchMediaPageCard({
   settings,
+  ad,
   elementId,
   width = 400,
   height = 500,
@@ -152,12 +197,15 @@ export function MatchMediaPageCard({
   backgroundPositionY = 50,
   backgroundZoom = 100,
   backgroundDim = 20,
+  slideIndex = 1,
+  slideTotal = 1,
 }: MatchMediaPageCardProps) {
-  const value = normalizeSettings(settings);
-  const label = (value.label || 'MEDIA PARTNER').trim();
-  if (!hasMatchMediaPage(value)) return null;
+  const selectedAd = ad || getMatchMediaPages(settings)[0];
+  if (!selectedAd) return null;
 
+  const label = (selectedAd.label || 'MEDIA PARTNER').trim();
   const mediaBoxHeight = Math.max(190, Math.round(height * 0.48));
+  const fit = selectedAd.fit || settings?.fit || 'contain';
 
   return (
     <div id={elementId} style={{
@@ -268,23 +316,23 @@ export function MatchMediaPageCard({
           height: mediaBoxHeight,
           border: '1px solid rgba(200,168,75,0.32)',
           borderRadius: 6,
-          background: value.fit === 'cover' ? 'rgba(10, 10, 10, 0.35)' : 'rgba(255,255,255,0.94)',
+          background: fit === 'cover' ? 'rgba(10, 10, 10, 0.35)' : 'rgba(255,255,255,0.94)',
           boxShadow: '0 18px 34px rgba(0,0,0,0.42)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          padding: value.fit === 'cover' ? 0 : 18,
+          padding: fit === 'cover' ? 0 : 18,
         }}>
-          {value.image ? (
+          {selectedAd.image ? (
             <img
-              src={value.image}
+              src={selectedAd.image}
               crossOrigin="anonymous"
               alt=""
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: value.fit || 'contain',
+                objectFit: fit,
                 display: 'block',
               }}
             />
@@ -321,82 +369,8 @@ export function MatchMediaPageCard({
         textShadow: '0 1px 2px rgba(0,0,0,0.9)',
       }}>
         <span>{appSettings.appHandle}</span>
-        <span>ADVERTISEMENT</span>
+        <span>{slideTotal > 1 ? `ADVERTISEMENT ${slideIndex}/${slideTotal}` : 'ADVERTISEMENT'}</span>
       </div>
-    </div>
-  );
-}
-
-type MatchMediaBadgeProps = {
-  settings?: MatchMediaSettings;
-  placement: NonNullable<MatchMediaSettings['placement']>;
-  variant?: 'lineup' | 'result';
-};
-
-export function MatchMediaBadge({ settings, placement, variant = 'result' }: MatchMediaBadgeProps) {
-  const value = normalizeSettings(settings);
-  const label = (value.label || '').trim();
-  const showContent = value.enabled && (Boolean(value.image) || Boolean(label));
-  if (!showContent || value.placement !== placement) return null;
-
-  const isHeaderBadge = placement === 'header-right';
-  const isLineup = variant === 'lineup';
-  const imageStyle: React.CSSProperties = {
-    maxWidth: isHeaderBadge ? 70 : isLineup ? 86 : 104,
-    maxHeight: isHeaderBadge ? 24 : 28,
-    width: isHeaderBadge ? undefined : 'auto',
-    height: isHeaderBadge ? 24 : 28,
-    objectFit: value.fit || 'contain',
-    borderRadius: 3,
-    display: value.image ? 'block' : 'none',
-  };
-
-  const baseStyle: React.CSSProperties = isHeaderBadge
-    ? {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        gap: 5,
-        maxWidth: 142,
-        minHeight: 30,
-        padding: '3px 6px',
-        borderRadius: 4,
-        background: 'rgba(10, 10, 10, 0.62)',
-        border: '1px solid rgba(200,168,75,0.24)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.28)',
-      }
-    : {
-        zIndex: 2,
-        marginTop: isLineup ? 0 : 6,
-        padding: isLineup ? '6px 16px 7px' : '6px 0 0',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        width: '100%',
-      };
-
-  return (
-    <div style={baseStyle}>
-      {label && (
-        <span style={{
-          fontSize: isHeaderBadge ? 5.5 : 6.5,
-          fontWeight: 800,
-          color: '#c8a84b',
-          letterSpacing: isHeaderBadge ? 0.8 : 1.2,
-          textTransform: 'uppercase',
-          lineHeight: 1.1,
-          maxWidth: isHeaderBadge ? 54 : 130,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          textShadow: '0 1px 2px rgba(0,0,0,0.8)',
-        }}>
-          {label}
-        </span>
-      )}
-      {value.image && <img src={value.image} crossOrigin="anonymous" alt="" style={imageStyle} />}
     </div>
   );
 }
