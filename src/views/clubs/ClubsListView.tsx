@@ -53,6 +53,10 @@ const createUniqueClubCode = (baseCode: string, clubs: Club[]) => {
   return normalizedBase;
 };
 
+const getErrorMessage = (error: unknown, fallback: string) => (
+  error instanceof Error ? error.message : fallback
+);
+
 const createClubFromApiTeam = (candidate: ApiTeamCandidate): Club => {
   const teamName = candidate.team?.name || 'Klub API';
   const club: Club = {
@@ -105,8 +109,8 @@ export default function ClubsListView() {
       const teams = Array.isArray(result.data?.response) ? result.data.response : [];
       setApiTeams(teams.slice(0, 8));
       triggerToast(`${teams.length} kandidat klub ditemukan dari API.`);
-    } catch (error: any) {
-      triggerToast(error.message || 'Gagal mencari klub dari API.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Gagal mencari klub dari API.'), 'error');
     } finally {
       setIsSearchingApi(false);
     }
@@ -145,8 +149,8 @@ export default function ClubsListView() {
       logAction('CREATE_CLUB_FROM_API', 'Master Klub', `Menambahkan klub dari API-Football: ${newClub.name}`);
       triggerToast(`${newClub.name} berhasil ditambahkan ke Master Klub.`);
       setApiTeams(prev => prev.filter(item => item.team?.id !== candidate.team?.id));
-    } catch (error: any) {
-      triggerToast(error.message || 'Terjadi kesalahan saat menambahkan klub API.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menambahkan klub API.'), 'error');
     } finally {
       setAddingApiTeamId(null);
     }
@@ -167,8 +171,8 @@ export default function ClubsListView() {
       logAction('DELETE_CLUB', 'Master Klub', club?.name || id);
       triggerToast('Klub berhasil dihapus.');
       setConfirmDeleteId(null);
-    } catch (error: any) {
-      triggerToast(error.message || 'Terjadi kesalahan saat menghapus klub.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menghapus klub.'), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -258,8 +262,8 @@ export default function ClubsListView() {
         </div>
       )}
 
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper master-table-wrapper">
+        <table className="data-table master-card-table">
           <thead>
             <tr>
               <th>Logo</th>
@@ -274,12 +278,14 @@ export default function ClubsListView() {
           <tbody>
             {clubs.map(club => (
               <tr key={club.id}>
-                <td>{club.logoUrl?.startsWith('http') ? <img src={club.logoUrl} alt={club.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 22 }}>{club.logoUrl || '-'}</span>}</td>
-                <td><span className="semibold">{club.name}</span><div className="text-muted" style={{ fontSize: 11 }}>{club.shortName}</div></td>
-                <td>{club.code}</td>
-                <td>{club.city}</td>
-                <td>{club.stadium}</td>
-                <td>
+                <td className="master-logo-cell" data-label="Logo">
+                  {club.logoUrl?.startsWith('http') ? <img src={club.logoUrl} alt={club.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 22 }}>{club.logoUrl || '-'}</span>}
+                </td>
+                <td className="master-title-cell" data-label="Klub"><span className="semibold">{club.name}</span><div className="text-muted" style={{ fontSize: 11 }}>{club.shortName}</div></td>
+                <td className="master-info-cell" data-label="Kode">{club.code}</td>
+                <td className="master-info-cell" data-label="Kota">{club.city}</td>
+                <td className="master-info-cell" data-label="Stadion">{club.stadium}</td>
+                <td className="master-info-cell" data-label="Kelengkapan">
                   <div className="flex align-center gap-8">
                     <div style={{ width: 70, height: 6, background: 'var(--neutral-200)', borderRadius: 4, overflow: 'hidden' }}>
                       <div style={{ width: `${club.completeness}%`, height: '100%', background: 'var(--primary-600)' }} />
@@ -287,8 +293,8 @@ export default function ClubsListView() {
                     <span style={{ fontSize: 11, fontWeight: 700 }}>{club.completeness}%</span>
                   </div>
                 </td>
-                <td className="text-right">
-                  <div style={{ display: 'inline-flex', gap: 6 }}>
+                <td className="master-actions-cell text-right">
+                  <div className="master-actions">
                     <button className="btn btn-sm btn-secondary" onClick={() => window.location.href = `/clubs?edit=${club.id}`}><Edit size={13} /> Edit</button>
                     {hasPermission('Master', 'delete') && (confirmDeleteId === club.id ? (
                       <>

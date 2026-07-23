@@ -714,6 +714,22 @@ a {
   min-width: 280px;
 }
 
+.player-mobile-filter-controls,
+.player-roster-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.player-mobile-filter-controls .form-select {
+  max-width: 220px;
+}
+
+.player-search-wrapper {
+  max-width: 360px;
+}
+
 .schedule-table-title {
   font-size: 12px;
   font-weight: 700;
@@ -1416,13 +1432,20 @@ a {
   }
 
   .main-wrapper {
+    padding-top: 56px;
     padding-bottom: 0;
   }
 
   .top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 56px;
     padding: 0 16px;
     gap: 8px;
+    z-index: 1150;
+    box-shadow: 0 2px 12px rgba(21, 26, 29, 0.08);
   }
 
   .top-header .search-input-wrapper {
@@ -1756,6 +1779,12 @@ a {
   .top-header {
     padding-top: env(safe-area-inset-top, 0px);
     height: calc(56px + env(safe-area-inset-top, 0px));
+  }
+
+  @media (max-width: 768px) {
+    .main-wrapper {
+      padding-top: calc(56px + env(safe-area-inset-top, 0px));
+    }
   }
 }
 
@@ -2530,6 +2559,159 @@ a {
     justify-self: start;
     min-width: 0;
     max-width: 100%;
+  }
+
+  .master-card-table {
+    min-width: 0;
+  }
+
+  .master-card-table tr {
+    padding: 14px 12px 12px;
+    gap: 0;
+    overflow: hidden;
+    border-radius: var(--radius-md) !important;
+    border-color: rgba(227, 225, 218, 0.92) !important;
+    box-shadow: 0 2px 8px rgba(21, 26, 29, 0.04);
+  }
+
+  .master-card-table td {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid var(--neutral-100) !important;
+    width: 100%;
+  }
+
+  .master-card-table td::before {
+    content: attr(data-label);
+    color: var(--neutral-500);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .master-card-table .master-logo-cell,
+  .master-card-table .master-title-cell,
+  .master-card-table .master-competition-cell {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .master-card-table .master-logo-cell::before,
+  .master-card-table .master-title-cell::before,
+  .master-card-table .master-competition-cell::before {
+    display: none;
+  }
+
+  .master-card-table .master-logo-cell {
+    justify-items: start;
+    padding-bottom: 4px !important;
+  }
+
+  .master-card-table .master-title-cell,
+  .master-card-table .master-competition-cell {
+    padding-top: 0 !important;
+    padding-bottom: 12px !important;
+  }
+
+  .master-card-table .master-actions-cell {
+    display: block;
+    padding: 12px 0 0 !important;
+    border-bottom: none !important;
+  }
+
+  .master-card-table .master-actions-cell::before {
+    display: none;
+  }
+
+  .master-actions {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .master-actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .player-mobile-filter-card {
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+
+  .player-mobile-filter-controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .player-mobile-filter-controls .form-select {
+    max-width: none;
+  }
+
+  .player-club-selector-grid {
+    display: flex !important;
+    gap: 10px !important;
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    margin: 0 -2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .player-club-card {
+    flex: 0 0 116px;
+    min-height: 126px;
+    scroll-snap-align: start;
+  }
+
+  .player-club-card .player-club-logo {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .player-roster-section {
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+
+  .player-roster-section h2 {
+    font-size: 20px !important;
+  }
+
+  .player-roster-toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    position: sticky;
+    top: 64px;
+    z-index: 25;
+    padding: 8px;
+    margin: 0 -8px;
+    background: rgba(252, 251, 248, 0.96);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(8px);
+  }
+
+  .player-search-wrapper {
+    max-width: none;
+  }
+
+  .player-roster-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .player-roster-card {
+    min-height: 0 !important;
   }
 
   .schedule-score-full {

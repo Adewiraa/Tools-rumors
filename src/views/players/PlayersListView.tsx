@@ -123,11 +123,16 @@ const getAvailabilityBadgeClass = (availability: Player['availability']) => (
   availability === 'available' ? 'badge-success' : availability === 'injured' || availability === 'suspended' ? 'badge-danger' : 'badge-warning'
 );
 
+const getErrorMessage = (error: unknown, fallback: string) => (
+  error instanceof Error ? error.message : fallback
+);
+
 export default function PlayersListView() {
   const router = useRouter();
   const { players, setPlayers, clubs, hasPermission, logAction, triggerToast } = useApp();
   const [selectedClubId, setSelectedClubId] = useState('Semua');
   const [selectedPosition, setSelectedPosition] = useState('Semua');
+  const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [apiClubSearch, setApiClubSearch] = useState('');
@@ -140,9 +145,15 @@ export default function PlayersListView() {
   const [addingApiPlayerId, setAddingApiPlayerId] = useState<number | null>(null);
 
   const filteredPlayers = players.filter(player => {
+    const search = playerSearchTerm.trim().toLowerCase();
     const matchClub = selectedClubId === 'Semua' || player.clubId === selectedClubId;
     const matchPosition = selectedPosition === 'Semua' || player.position === selectedPosition;
-    return matchClub && matchPosition;
+    const matchSearch = !search
+      || player.fullName.toLowerCase().includes(search)
+      || player.displayName.toLowerCase().includes(search)
+      || player.clubName.toLowerCase().includes(search)
+      || player.nationality.toLowerCase().includes(search);
+    return matchClub && matchPosition && matchSearch;
   });
   const selectedClub = selectedClubId === 'Semua' ? undefined : clubs.find(club => club.id === selectedClubId);
   const selectedClubName = selectedClub?.name || 'Semua Klub';
@@ -170,8 +181,8 @@ export default function PlayersListView() {
       setSelectedApiTeam(null);
       setApiSquadPlayers([]);
       triggerToast(`${teams.length} kandidat klub ditemukan dari API.`);
-    } catch (error: any) {
-      triggerToast(error.message || 'Gagal mencari klub dari API.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Gagal mencari klub dari API.'), 'error');
     } finally {
       setIsSearchingApiClubs(false);
     }
@@ -197,8 +208,8 @@ export default function PlayersListView() {
       const squad = squadGroups.flatMap(group => Array.isArray(group.players) ? group.players : []);
       setApiSquadPlayers(squad);
       triggerToast(`${squad.length} pemain ditemukan dari skuad ${candidate.team?.name || 'API'}.`);
-    } catch (error: any) {
-      triggerToast(error.message || 'Gagal mengambil skuad klub dari API.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Gagal mengambil skuad klub dari API.'), 'error');
       setApiSquadPlayers([]);
     } finally {
       setIsLoadingSquad(false);
@@ -252,8 +263,8 @@ export default function PlayersListView() {
       logAction('CREATE_PLAYER_FROM_API', 'Master Pemain', `Menambahkan pemain dari API-Football: ${newPlayer.fullName}`);
       triggerToast(`${newPlayer.fullName} berhasil ditambahkan ke Master Pemain.`);
       setApiSquadPlayers(prev => prev.filter(item => item.id !== apiPlayer.id));
-    } catch (error: any) {
-      triggerToast(error.message || 'Terjadi kesalahan saat menambahkan pemain API.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menambahkan pemain API.'), 'error');
     } finally {
       setAddingApiPlayerId(null);
     }
@@ -274,8 +285,8 @@ export default function PlayersListView() {
       logAction('DELETE_PLAYER', 'Master Pemain', player?.fullName || id);
       triggerToast('Pemain berhasil dihapus.');
       setConfirmDeleteId(null);
-    } catch (error: any) {
-      triggerToast(error.message || 'Terjadi kesalahan saat menghapus pemain.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menghapus pemain.'), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -401,22 +412,28 @@ export default function PlayersListView() {
         </div>
       )}
 
-      <div className="card" style={{ padding: 18, display: 'grid', gap: 14 }}>
+      <div className="card player-mobile-filter-card" style={{ padding: 18, display: 'grid', gap: 14 }}>
         <div className="flex justify-between align-center" style={{ gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div className="semibold" style={{ fontSize: 14 }}>Pilih Klub</div>
             <div className="text-muted" style={{ fontSize: 12 }}>Klik logo klub untuk melihat pemain yang terdaftar.</div>
           </div>
-          <select className="form-select" style={{ maxWidth: 220 }} value={selectedPosition} onChange={event => setSelectedPosition(event.target.value)}>
-            <option value="Semua">Semua Posisi</option>
-            <option value="Goalkeeper">Goalkeeper</option>
-            <option value="Defender">Defender</option>
-            <option value="Midfielder">Midfielder</option>
-            <option value="Forward">Forward</option>
-          </select>
+          <div className="player-mobile-filter-controls">
+            <select className="form-select" value={selectedClubId} onChange={event => setSelectedClubId(event.target.value)}>
+              <option value="Semua">Semua Klub</option>
+              {clubs.map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
+            </select>
+            <select className="form-select" value={selectedPosition} onChange={event => setSelectedPosition(event.target.value)}>
+              <option value="Semua">Semua Posisi</option>
+              <option value="Goalkeeper">Goalkeeper</option>
+              <option value="Defender">Defender</option>
+              <option value="Midfielder">Midfielder</option>
+              <option value="Forward">Forward</option>
+            </select>
+          </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(154px, 1fr))', gap: 10 }}>
+        <div className="player-club-selector-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(154px, 1fr))', gap: 10 }}>
           <button
             type="button"
             className="player-club-card"
@@ -475,7 +492,7 @@ export default function PlayersListView() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 18, display: 'grid', gap: 16 }}>
+      <div className="card player-roster-section" style={{ padding: 18, display: 'grid', gap: 16 }}>
         <div className="flex justify-between align-center" style={{ gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div className="breadcrumb" style={{ marginBottom: 6 }}>
@@ -495,8 +512,25 @@ export default function PlayersListView() {
           </div>
         </div>
 
+        <div className="player-roster-toolbar">
+          <div className="search-input-wrapper player-search-wrapper">
+            <Search className="search-icon" size={16} />
+            <input
+              className="form-input"
+              placeholder="Cari pemain, klub, negara..."
+              value={playerSearchTerm}
+              onChange={event => setPlayerSearchTerm(event.target.value)}
+            />
+          </div>
+          {(playerSearchTerm || selectedPosition !== 'Semua' || selectedClubId !== 'Semua') && (
+            <button className="btn btn-sm btn-secondary" onClick={() => { setPlayerSearchTerm(''); setSelectedPosition('Semua'); setSelectedClubId('Semua'); }}>
+              Reset
+            </button>
+          )}
+        </div>
+
         {filteredPlayers.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+          <div className="player-roster-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
             {filteredPlayers.map(player => {
               const playerClub = clubs.find(club => club.id === player.clubId);
               return (

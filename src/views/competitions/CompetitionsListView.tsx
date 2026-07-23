@@ -7,6 +7,10 @@ import { AlertCircle, ChevronRight, Edit, Plus, Trash2, Trophy } from 'lucide-re
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
 
+const getErrorMessage = (error: unknown, fallback: string) => (
+  error instanceof Error ? error.message : fallback
+);
+
 export default function CompetitionsListView() {
   const router = useRouter();
   const { competitions, setCompetitions, clubs, hasPermission, logAction, triggerToast } = useApp();
@@ -36,8 +40,8 @@ export default function CompetitionsListView() {
       logAction('DELETE_COMPETITION', 'Master Kompetisi', competition?.name || id);
       triggerToast('Kompetisi berhasil dihapus.');
       setConfirmDeleteId(null);
-    } catch (error: any) {
-      triggerToast(error.message || 'Terjadi kesalahan saat menghapus kompetisi.', 'error');
+    } catch (error: unknown) {
+      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menghapus kompetisi.'), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -77,8 +81,8 @@ export default function CompetitionsListView() {
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>Belum ada kompetisi</h3>
         </div>
       ) : (
-        <div className="table-wrapper">
-          <table className="data-table">
+        <div className="table-wrapper master-table-wrapper">
+          <table className="data-table master-card-table">
             <thead>
               <tr>
                 <th>Kompetisi</th>
@@ -96,7 +100,7 @@ export default function CompetitionsListView() {
                 const participants = clubs.filter(club => (club.competitionIds || []).includes(comp.id));
                 return (
                   <tr key={comp.id}>
-                    <td>
+                    <td className="master-competition-cell" data-label="Kompetisi">
                       <div className="flex align-center gap-8">
                         <div style={{ width: 34, height: 34, border: '1px solid var(--neutral-200)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {comp.logoUrl?.startsWith('http') ? <img src={comp.logoUrl} alt={comp.name} style={{ width: 30, height: 30, objectFit: 'contain' }} /> : <Trophy size={16} />}
@@ -104,14 +108,14 @@ export default function CompetitionsListView() {
                         <div><span className="semibold">{comp.name}</span><div className="text-muted" style={{ fontSize: 11 }}>{comp.slug}</div></div>
                       </div>
                     </td>
-                    <td>{comp.shortName}</td>
-                    <td><span className={`badge ${comp.type === 'league' ? 'badge-info' : comp.type === 'cup' ? 'badge-warning' : 'badge-draft'}`}>{comp.type}</span></td>
-                    <td>{comp.country}</td>
-                    <td>{comp.season}</td>
-                    <td>{participants.length || '-'}</td>
-                    <td><span className={`badge ${comp.isActive ? 'badge-success' : 'badge-draft'}`}>{comp.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
-                    <td className="text-right">
-                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                    <td className="master-info-cell" data-label="Kode">{comp.shortName}</td>
+                    <td className="master-info-cell" data-label="Tipe"><span className={`badge ${comp.type === 'league' ? 'badge-info' : comp.type === 'cup' ? 'badge-warning' : 'badge-draft'}`}>{comp.type}</span></td>
+                    <td className="master-info-cell" data-label="Negara">{comp.country}</td>
+                    <td className="master-info-cell" data-label="Musim">{comp.season}</td>
+                    <td className="master-info-cell" data-label="Klub Peserta">{participants.length || '-'}</td>
+                    <td className="master-info-cell" data-label="Status"><span className={`badge ${comp.isActive ? 'badge-success' : 'badge-draft'}`}>{comp.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td className="master-actions-cell text-right">
+                      <div className="master-actions">
                         <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/competitions?edit=${comp.id}`)}><Edit size={13} /> Edit</button>
                         {hasPermission('Master', 'delete') && (confirmDeleteId === comp.id ? (
                           <>
