@@ -107,29 +107,47 @@ export default function ResultsListView() {
     const outputLabel = type === 'AD' ? 'Iklan' : type;
     try {
       setIsExportingResultOutput(true);
-      triggerToast(`Membuat gambar ${outputLabel}...`);
+      const shouldIncludeAd = type !== 'AD' && hasMatchMediaPage(getMatchMediaSettings(match));
+      triggerToast(shouldIncludeAd ? `Membuat gambar ${outputLabel} dan iklan...` : `Membuat gambar ${outputLabel}...`);
       const { blob, dataUrl, fileName } = await createResultOutputImage(match, type);
-      const file = new File([blob], fileName, { type: 'image/png' });
+      const files = [new File([blob], fileName, { type: 'image/png' })];
+      const fallbackDownloads = [{ dataUrl, fileName }];
+
+      if (shouldIncludeAd) {
+        const adImage = await createResultOutputImage(match, 'AD');
+        files.push(new File([adImage.blob], adImage.fileName, { type: 'image/png' }));
+        fallbackDownloads.push({ dataUrl: adImage.dataUrl, fileName: adImage.fileName });
+      }
+
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
       const shareData: ShareData = {
-        files: [file],
+        files,
         title: `${outputLabel} ${match.homeClubName} vs ${match.awayClubName}`,
-        text: type === 'AD'
+        text: shouldIncludeAd
+          ? `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName} dan media iklan`
+          : type === 'AD'
           ? `Halaman iklan ${match.homeClubName} vs ${match.awayClubName}`
           : `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
         await nav.share(shareData);
-        triggerToast(`Gambar ${outputLabel} siap dibagikan.`);
+        triggerToast(shouldIncludeAd ? `Gambar ${outputLabel} dan iklan siap dibagikan.` : `Gambar ${outputLabel} siap dibagikan.`);
         return;
       }
 
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = dataUrl;
-      link.click();
-      triggerToast('Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.', 'warning');
+      fallbackDownloads.forEach(download => {
+        const link = document.createElement('a');
+        link.download = download.fileName;
+        link.href = download.dataUrl;
+        link.click();
+      });
+      triggerToast(
+        shouldIncludeAd
+          ? 'Share langsung belum didukung di perangkat ini. PNG hasil dan iklan diunduh sebagai fallback.'
+          : 'Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.',
+        'warning'
+      );
     } catch (err) {
       const error = err as { name?: string };
       if (error?.name !== 'AbortError') {

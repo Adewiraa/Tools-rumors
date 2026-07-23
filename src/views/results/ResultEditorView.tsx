@@ -186,7 +186,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     if (!node) return;
     try {
       setIsExportingGraphic(true);
-      triggerToast('Membuat gambar untuk dibagikan...');
+      triggerToast(hasMediaAdPage ? 'Membuat gambar hasil dan iklan...' : 'Membuat gambar untuk dibagikan...');
       const dataUrl = await htmlToImage.toPng(node, {
         cacheBust: true,
         pixelRatio: 2.7,
@@ -196,26 +196,51 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       const graphicLabel = effectiveGraphicType === 'HT' ? 'Halftime' : 'Fulltime';
       const fileName = `Result_${graphicLabel}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
       const file = new File([blob], fileName, { type: 'image/png' });
+      const files = [file];
+      const fallbackDownloads = [{ dataUrl, fileName }];
+
+      if (hasMediaAdPage) {
+        const adNode = document.getElementById(mediaAdCardId);
+        if (adNode) {
+          const adDataUrl = await htmlToImage.toPng(adNode, {
+            cacheBust: true,
+            pixelRatio: 2.7,
+          });
+          const adResponse = await fetch(adDataUrl);
+          const adBlob = await adResponse.blob();
+          const adFileName = `Result_Ad_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+          files.push(new File([adBlob], adFileName, { type: 'image/png' }));
+          fallbackDownloads.push({ dataUrl: adDataUrl, fileName: adFileName });
+        }
+      }
       
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
       const shareData: ShareData = {
-        files: [file],
+        files,
         title: `${match.homeClubName} vs ${match.awayClubName} (${graphicLabel})`,
-        text: `Hasil pertandingan ${match.homeClubName} vs ${match.awayClubName} - ${graphicLabel}`,
+        text: hasMediaAdPage
+          ? `Hasil pertandingan ${match.homeClubName} vs ${match.awayClubName} - ${graphicLabel} dan media iklan`
+          : `Hasil pertandingan ${match.homeClubName} vs ${match.awayClubName} - ${graphicLabel}`,
       };
 
       if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
         await nav.share(shareData);
-        triggerToast('Gambar siap dibagikan.');
+        triggerToast(hasMediaAdPage ? 'Gambar hasil dan iklan siap dibagikan.' : 'Gambar siap dibagikan.');
         return;
       }
 
-      // Fallback to download
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = dataUrl;
-      link.click();
-      triggerToast('Bagikan langsung tidak didukung di perangkat ini. Gambar diunduh sebagai fallback.', 'warning');
+      fallbackDownloads.forEach(download => {
+        const link = document.createElement('a');
+        link.download = download.fileName;
+        link.href = download.dataUrl;
+        link.click();
+      });
+      triggerToast(
+        hasMediaAdPage
+          ? 'Share langsung belum didukung di perangkat ini. Gambar hasil dan iklan diunduh sebagai fallback.'
+          : 'Bagikan langsung tidak didukung di perangkat ini. Gambar diunduh sebagai fallback.',
+        'warning'
+      );
     } catch (err) {
       const error = err as { name?: string };
       if (error?.name !== 'AbortError') {
