@@ -7,6 +7,7 @@ ALTER TABLE clubs ADD COLUMN IF NOT EXISTS away_color TEXT;
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS third_color TEXT;
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS coach TEXT;
 ALTER TABLE clubs ADD COLUMN IF NOT EXISTS stadium TEXT;
+ALTER TABLE clubs ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'Indonesia';
 
 -- 2. Migrasikan data warna tim yang sudah ada (dari kolom lama ke kolom baru)
 UPDATE clubs 
@@ -45,6 +46,13 @@ CREATE POLICY "Allow all actions for club_seasons" ON club_seasons FOR ALL TO pu
 
 -- 6. Tambahkan kolom timeline untuk menyimpan kejadian gol / kartu pertandingan jika belum ada
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS timeline JSONB DEFAULT '[]'::jsonb;
+
+-- 6b. Tambahkan kolom regulasi lineup pada tabel competitions jika belum ada
+ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_starters INTEGER DEFAULT 7;
+ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_matchday INTEGER DEFAULT 9;
+ALTER TABLE competitions ADD COLUMN IF NOT EXISTS max_foreign_squad INTEGER DEFAULT 11;
+ALTER TABLE competitions ADD COLUMN IF NOT EXISTS min_local_starters INTEGER DEFAULT 0;
+ALTER TABLE competitions ADD COLUMN IF NOT EXISTS min_local_matchday INTEGER DEFAULT 0;
 
 -- 7. Buat tabel 'rumors' untuk menyimpan data rumor & transfer pemain
 CREATE TABLE IF NOT EXISTS rumors (

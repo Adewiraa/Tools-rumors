@@ -30,6 +30,11 @@ const getDeleteId = async (request: Request) => {
   }
 };
 
+const toRegulationNumber = (value: any, fallback: number) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 // GET /api/competitions — ambil semua kompetisi
 export async function GET() {
   try {
@@ -70,6 +75,11 @@ export async function POST(request: Request) {
         logo_url: competition.logoUrl || competition.logo_url || '',
         season: competition.season || '',
         is_active: competition.isActive !== undefined ? competition.isActive : competition.is_active !== undefined ? competition.is_active : true,
+        max_foreign_starters: toRegulationNumber(competition.maxForeignStarters ?? competition.max_foreign_starters, 7),
+        max_foreign_matchday: toRegulationNumber(competition.maxForeignMatchday ?? competition.max_foreign_matchday, 9),
+        max_foreign_squad: toRegulationNumber(competition.maxForeignSquad ?? competition.max_foreign_squad, 11),
+        min_local_starters: toRegulationNumber(competition.minLocalStarters ?? competition.min_local_starters, 0),
+        min_local_matchday: toRegulationNumber(competition.minLocalMatchday ?? competition.min_local_matchday, 0),
       };
 
       const { error } = await supabaseAdmin
@@ -136,7 +146,9 @@ export async function POST(request: Request) {
           competition_id,
           season,
           competitions (
-            id, name, short_name, slug, type, country, logo_url, season, is_active
+            id, name, short_name, slug, type, country, logo_url, season, is_active,
+            max_foreign_starters, max_foreign_matchday, max_foreign_squad,
+            min_local_starters, min_local_matchday
           )
         `)
         .eq('club_id', clubId);

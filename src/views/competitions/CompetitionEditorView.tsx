@@ -26,6 +26,11 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    maxForeignStarters: 7,
+    maxForeignMatchday: 9,
+    maxForeignSquad: 11,
+    minLocalStarters: 0,
+    minLocalMatchday: 0,
   });
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -103,6 +108,31 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Tipe</label><select className="form-select" value={competition.type} onChange={event => updateCompetition('type', event.target.value as Competition['type'])}><option value="league">Liga</option><option value="cup">Piala</option><option value="friendly">Friendly</option></select></div>
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Negara / Zona</label><input className="form-input" value={competition.country} onChange={event => updateCompetition('country', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Musim</label><input className="form-input" value={competition.season} onChange={event => updateCompetition('season', event.target.value)} /></div>
+          <div style={{ gridColumn: 'span 12', borderTop: '1px solid var(--neutral-200)', paddingTop: 14 }}>
+            <div className="semibold" style={{ fontSize: 13, marginBottom: 10 }}>Regulasi Lineup</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 12 }}>
+              <div style={{ gridColumn: 'span 4' }}>
+                <label className="form-label">Maks Asing Starting XI</label>
+                <input className="form-input" type="number" min={0} max={11} value={competition.maxForeignStarters ?? 7} onChange={event => updateCompetition('maxForeignStarters', Number(event.target.value))} />
+              </div>
+              <div style={{ gridColumn: 'span 4' }}>
+                <label className="form-label">Maks Asing Dibawa</label>
+                <input className="form-input" type="number" min={0} max={26} value={competition.maxForeignMatchday ?? 9} onChange={event => updateCompetition('maxForeignMatchday', Number(event.target.value))} />
+              </div>
+              <div style={{ gridColumn: 'span 4' }}>
+                <label className="form-label">Maks Asing DSP Liga</label>
+                <input className="form-input" type="number" min={0} max={99} value={competition.maxForeignSquad ?? 11} onChange={event => updateCompetition('maxForeignSquad', Number(event.target.value))} />
+              </div>
+              <div style={{ gridColumn: 'span 6' }}>
+                <label className="form-label">Min Lokal Starting XI</label>
+                <input className="form-input" type="number" min={0} max={11} value={competition.minLocalStarters ?? 0} onChange={event => updateCompetition('minLocalStarters', Number(event.target.value))} />
+              </div>
+              <div style={{ gridColumn: 'span 6' }}>
+                <label className="form-label">Min Lokal Dibawa</label>
+                <input className="form-input" type="number" min={0} max={26} value={competition.minLocalMatchday ?? 0} onChange={event => updateCompetition('minLocalMatchday', Number(event.target.value))} />
+              </div>
+            </div>
+          </div>
         </div>
 
         <aside className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>

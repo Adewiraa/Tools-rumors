@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Upload } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { countriesList } from '@/lib/countriesData';
 
 type ApiTeamCandidate = {
   team?: {
@@ -34,6 +35,7 @@ const mapApiTeamToClub = (baseClub: Club, candidate: ApiTeamCandidate): Club => 
     name: nextName,
     shortName: baseClub.shortName || nextName,
     code: buildClubCode(nextName, candidate.team?.code),
+    country: candidate.team?.country || baseClub.country,
     city: candidate.venue?.city || baseClub.city,
     stadium: candidate.venue?.name || baseClub.stadium,
     logoUrl: candidate.team?.logo || baseClub.logoUrl,
@@ -49,6 +51,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
     name: '',
     shortName: '',
     code: '',
+    country: 'Indonesia',
     city: '',
     stadium: '',
     founded: 2026,
@@ -226,9 +229,16 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
           <div style={{ gridColumn: 'span 8' }}><label className="form-label">Nama Klub</label><input className="form-input" value={club.name} onChange={event => updateClub('name', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Kode</label><input className="form-input" value={club.code} maxLength={3} onChange={event => updateClub('code', event.target.value.toUpperCase())} /></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Short Name</label><input className="form-input" value={club.shortName} onChange={event => updateClub('shortName', event.target.value)} /></div>
+          <div style={{ gridColumn: 'span 6' }}>
+            <label className="form-label">Negara Asal Klub</label>
+            <select className="form-select" value={club.country || 'Indonesia'} onChange={event => updateClub('country', event.target.value)}>
+              {club.country && !countriesList.some(country => country.name === club.country) && <option value={club.country}>{club.country}</option>}
+              {countriesList.map(country => <option key={country.name} value={country.name}>{country.name}</option>)}
+            </select>
+          </div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Pelatih</label><input className="form-input" value={club.coach} onChange={event => updateClub('coach', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Kota</label><input className="form-input" value={club.city} onChange={event => updateClub('city', event.target.value)} /></div>
-          <div style={{ gridColumn: 'span 6' }}><label className="form-label">Stadion</label><input className="form-input" value={club.stadium} onChange={event => updateClub('stadium', event.target.value)} /></div>
+          <div style={{ gridColumn: 'span 12' }}><label className="form-label">Stadion</label><input className="form-input" value={club.stadium} onChange={event => updateClub('stadium', event.target.value)} /></div>
         </div>
 
         <aside className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>

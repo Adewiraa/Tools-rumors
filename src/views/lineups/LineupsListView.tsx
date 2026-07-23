@@ -18,6 +18,7 @@ export default function LineupsListView() {
     appSettings,
     matches,
     players,
+    clubs,
     competitions,
     hasPermission: checkPermission,
     triggerToast
@@ -269,6 +270,7 @@ export default function LineupsListView() {
                 match={previewMatch}
                 players={players}
                 competitions={competitions}
+                clubs={clubs}
                 elementId={getLineupOutputElementId(previewMatch.id)}
                 appSettings={appSettings}
               />

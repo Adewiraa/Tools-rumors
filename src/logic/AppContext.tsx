@@ -413,12 +413,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Fetch Supabase data on mount
   useEffect(() => {
+    const toRegulationNumber = (value: any, fallback: number) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
     const mapClubFromSupabase = (club: any): Club => {
       const mappedClub: Club = {
         id: club.id,
         name: club.name || '',
         shortName: club.shortName || club.short_name || club.name || '',
         code: club.code || club.slug?.toUpperCase?.()?.slice(0, 3) || club.short_name?.toUpperCase?.()?.slice(0, 3) || '',
+        country: club.country || 'Indonesia',
         city: club.city || '',
         stadium: club.stadium || '',
         founded: Number(club.founded) || 2026,
@@ -450,6 +456,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       logoUrl: competition.logoUrl || competition.logo_url || competition.logo_public_url || '',
       season: competition.season || '',
       isActive: competition.isActive !== undefined ? competition.isActive : competition.is_active !== undefined ? competition.is_active : true,
+      maxForeignStarters: toRegulationNumber(competition.maxForeignStarters ?? competition.max_foreign_starters, 7),
+      maxForeignMatchday: toRegulationNumber(competition.maxForeignMatchday ?? competition.max_foreign_matchday, 9),
+      maxForeignSquad: toRegulationNumber(competition.maxForeignSquad ?? competition.max_foreign_squad, 11),
+      minLocalStarters: toRegulationNumber(competition.minLocalStarters ?? competition.min_local_starters, 0),
+      minLocalMatchday: toRegulationNumber(competition.minLocalMatchday ?? competition.min_local_matchday, 0),
     });
 
     async function loadSupabaseData() {

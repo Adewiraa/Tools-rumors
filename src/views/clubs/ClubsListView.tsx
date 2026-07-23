@@ -64,6 +64,7 @@ const createClubFromApiTeam = (candidate: ApiTeamCandidate): Club => {
     name: teamName,
     shortName: teamName,
     code: buildClubCode(teamName, candidate.team?.code),
+    country: candidate.team?.country || 'Indonesia',
     city: candidate.venue?.city || candidate.team?.country || '',
     stadium: candidate.venue?.name || '',
     founded: 2026,
@@ -270,6 +271,7 @@ export default function ClubsListView() {
               <th>Logo</th>
               <th>Nama Klub</th>
               <th>Kode</th>
+              <th>Negara</th>
               <th>Kota</th>
               <th>Stadion</th>
               <th>Kelengkapan</th>
@@ -284,6 +286,7 @@ export default function ClubsListView() {
                 </td>
                 <td className="master-title-cell" data-label="Klub"><span className="semibold">{club.name}</span><div className="text-muted" style={{ fontSize: 11 }}>{club.shortName}</div></td>
                 <td className="master-info-cell" data-label="Kode">{club.code}</td>
+                <td className="master-info-cell" data-label="Negara">{club.country || 'Indonesia'}</td>
                 <td className="master-info-cell" data-label="Kota">{club.city}</td>
                 <td className="master-info-cell" data-label="Stadion">{club.stadium}</td>
                 <td className="master-info-cell" data-label="Kelengkapan">

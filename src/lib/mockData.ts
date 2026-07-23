@@ -8,6 +8,11 @@ export interface Competition {
   logoUrl: string;
   season: string;
   isActive: boolean;
+  maxForeignStarters?: number;
+  maxForeignMatchday?: number;
+  maxForeignSquad?: number;
+  minLocalStarters?: number;
+  minLocalMatchday?: number;
 }
 
 export interface Club {
@@ -15,6 +20,7 @@ export interface Club {
   name: string;
   shortName: string;
   code: string;
+  country: string;
   city: string;
   stadium: string;
   founded: number;
@@ -35,6 +41,7 @@ export function calculateClubCompleteness(club: Partial<Club>): number {
     { key: 'name', weight: 15 },
     { key: 'shortName', weight: 10 },
     { key: 'code', weight: 10 },
+    { key: 'country', weight: 8 },
     { key: 'city', weight: 10 },
     { key: 'stadium', weight: 10 },
     { key: 'coach', weight: 10 },
@@ -179,6 +186,11 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    maxForeignStarters: 7,
+    maxForeignMatchday: 9,
+    maxForeignSquad: 11,
+    minLocalStarters: 0,
+    minLocalMatchday: 0,
   },
   {
     id: 'comp-2',
@@ -190,6 +202,11 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026',
     isActive: true,
+    maxForeignStarters: 7,
+    maxForeignMatchday: 9,
+    maxForeignSquad: 11,
+    minLocalStarters: 0,
+    minLocalMatchday: 0,
   },
   {
     id: 'comp-3',
@@ -201,6 +218,11 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    maxForeignStarters: 7,
+    maxForeignMatchday: 9,
+    maxForeignSquad: 11,
+    minLocalStarters: 0,
+    minLocalMatchday: 0,
   },
   {
     id: 'comp-4',
@@ -212,6 +234,11 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026',
     isActive: false,
+    maxForeignStarters: 7,
+    maxForeignMatchday: 9,
+    maxForeignSquad: 11,
+    minLocalStarters: 0,
+    minLocalMatchday: 0,
   },
   {
     id: 'comp-5',
@@ -223,6 +250,11 @@ export const INITIAL_COMPETITIONS: Competition[] = [
     logoUrl: '',
     season: '2026/27',
     isActive: true,
+    maxForeignStarters: 6,
+    maxForeignMatchday: 8,
+    maxForeignSquad: 10,
+    minLocalStarters: 0,
+    minLocalMatchday: 0,
   },
 ];
 
@@ -232,6 +264,7 @@ export const INITIAL_CLUBS: Club[] = [
     name: 'Jakarta Garuda FC',
     shortName: 'Jakarta Garuda',
     code: 'JGF',
+    country: 'Indonesia',
     city: 'Jakarta',
     stadium: 'Stadion Utama Nusantara',
     founded: 1928,
@@ -250,6 +283,7 @@ export const INITIAL_CLUBS: Club[] = [
     name: 'Surabaya Samudra FC',
     shortName: 'Surabaya Samudra',
     code: 'SSF',
+    country: 'Indonesia',
     city: 'Surabaya',
     stadium: 'Stadion Gelora Samudra',
     founded: 1927,
@@ -268,6 +302,7 @@ export const INITIAL_CLUBS: Club[] = [
     name: 'Bandung Cakra FC',
     shortName: 'Bandung Cakra',
     code: 'BCF',
+    country: 'Indonesia',
     city: 'Bandung',
     stadium: 'Stadion Gelora Cakra',
     founded: 1933,
@@ -286,6 +321,7 @@ export const INITIAL_CLUBS: Club[] = [
     name: 'Bali Dewata FC',
     shortName: 'Bali Dewata',
     code: 'BDF',
+    country: 'Indonesia',
     city: 'Gianyar',
     stadium: 'Stadion Kapten Dewata',
     founded: 2015,
@@ -304,6 +340,7 @@ export const INITIAL_CLUBS: Club[] = [
     name: 'PSM Phinisi FC',
     shortName: 'PSM Phinisi',
     code: 'PPF',
+    country: 'Indonesia',
     city: 'Makassar',
     stadium: 'Stadion Gelora Phinisi',
     founded: 1915,

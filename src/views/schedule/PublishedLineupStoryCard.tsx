@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Match, Player, Competition } from '@/lib/mockData';
+import { Match, Player, Competition, Club } from '@/lib/mockData';
 import {
   DEFAULT_APP_SETTINGS,
   renderPublishedStoryFlag,
@@ -12,14 +12,25 @@ interface PublishedLineupStoryCardProps {
   match: Match;
   players: Player[];
   competitions: Competition[];
+  clubs?: Club[];
   elementId: string;
   appSettings?: AppSettings;
 }
 
-export default function PublishedLineupStoryCard({ match, players, competitions, elementId, appSettings = DEFAULT_APP_SETTINGS }: PublishedLineupStoryCardProps) {
+const normalizeCountryName = (value?: string) => (value || '').trim().toLowerCase();
+
+export default function PublishedLineupStoryCard({ match, players, competitions, clubs = [], elementId, appSettings = DEFAULT_APP_SETTINGS }: PublishedLineupStoryCardProps) {
   const positionOrder = ['Goalkeeper', 'Defender', 'Midfielder', 'Forward'];
   const homeSquad = players.filter(p => p.clubId === match.homeClubId);
   const awaySquad = players.filter(p => p.clubId === match.awayClubId);
+  const comp = competitions.find(c => c.name === match.competition);
+  const homeClub = clubs.find(club => club.id === match.homeClubId);
+  const awayClub = clubs.find(club => club.id === match.awayClubId);
+  const isForeignForSide = (player: Player, side: 'home' | 'away') => {
+    const club = side === 'home' ? homeClub : awayClub;
+    const localCountry = club?.country || comp?.country || 'Indonesia';
+    return normalizeCountryName(player.nationality) !== normalizeCountryName(localCountry);
+  };
   const homeStarterIds = match.homeStarters || [];
   const awayStarterIds = match.awayStarters || [];
   const homeSubIds = match.homeSubs || [];
@@ -29,11 +40,11 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
     .filter(player => ids.includes(player.id))
     .sort((a, b) => positionOrder.indexOf(a.position) - positionOrder.indexOf(b.position));
 
-  const getForeignPool = (squad: Player[], starterIds: string[], subIds: string[]) => squad
-    .filter(player => !starterIds.includes(player.id) && !subIds.includes(player.id) && player.nationality !== 'Indonesia');
+  const getForeignPool = (squad: Player[], starterIds: string[], subIds: string[], side: 'home' | 'away') => squad
+    .filter(player => !starterIds.includes(player.id) && !subIds.includes(player.id) && isForeignForSide(player, side));
 
-  const renderPlayerLine = (player: Player, captainId: string | undefined, muted = false) => {
-    const isForeign = player.nationality !== 'Indonesia';
+  const renderPlayerLine = (player: Player, captainId: string | undefined, side: 'home' | 'away', muted = false) => {
+    const isForeign = isForeignForSide(player, side);
     const isCaptain = player.id === captainId;
     return (
       <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: muted ? 2 : 3 }}>
@@ -57,7 +68,7 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
     const subIds = isHome ? homeSubIds : awaySubIds;
     const starters = getSelectedPlayers(squad, starterIds);
     const subs = getSelectedPlayers(squad, subIds);
-    const nonDsp = getForeignPool(squad, starterIds, subIds);
+    const nonDsp = getForeignPool(squad, starterIds, subIds, side);
     const code = isHome ? match.homeClubName.slice(0, 3).toUpperCase() : match.awayClubName.slice(0, 3).toUpperCase();
     const captainId = isHome ? match.homeCaptain : match.awayCaptain;
 
@@ -68,7 +79,7 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
           borderBottom: '1px solid rgba(200,168,75,0.2)' }}>
           {code} - STARTING
         </div>
-        {starters.map(player => renderPlayerLine(player, captainId))}
+        {starters.map(player => renderPlayerLine(player, captainId, side))}
 
         {subs.length > 0 && (
           <>
@@ -76,7 +87,7 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
               margin: '7px 0 4px', paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
               CADANGAN
             </div>
-            {subs.map(player => renderPlayerLine(player, captainId, true))}
+            {subs.map(player => renderPlayerLine(player, captainId, side, true))}
           </>
         )}
 
@@ -101,7 +112,6 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
     );
   };
 
-  const comp = competitions.find(c => c.name === match.competition);
   return (
     <div id={elementId} style={{
       width: 360, minHeight: 640,

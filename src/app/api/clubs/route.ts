@@ -44,6 +44,7 @@ export async function POST(request: Request) {
       name: club.name,
       short_name: club.shortName,
       slug: club.code?.toLowerCase(),
+      country: club.country || 'Indonesia',
       city: club.city,
       stadium: club.stadium,
       coach: club.coach,

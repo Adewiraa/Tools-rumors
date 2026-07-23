@@ -35,6 +35,7 @@ export default function ScheduleListView() {
     matches,
     setMatches,
     players,
+    clubs,
     competitions,
     hasPermission,
     logAction,
@@ -395,6 +396,7 @@ export default function ScheduleListView() {
               match={previewMatch}
               players={players}
               competitions={competitions}
+              clubs={clubs}
               elementId={getPublishedStoryElementId(previewMatch.id)}
               appSettings={appSettings}
             />
