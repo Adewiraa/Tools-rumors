@@ -266,15 +266,21 @@ export const storyFindCountryForPlayer = (player: Player) => {
 
 export const storyGetPlayerCountryCode = (player: Player) => (
   storyNormalizeCountryCodeCandidate(player.countryCode) ||
-  storyNormalizeCountryCodeCandidate(player.flagUrl) ||
+  storyNormalizeCountryCodeCandidate(storyExtractCountryCodeFromFlagUrl(player.flagUrl)) ||
   storyNormalizeCountryCodeCandidate(storyFindCountryForPlayer(player)?.code) ||
-  storyNormalizeCountryCodeCandidate(storyExtractCountryCodeFromFlagUrl(player.flagUrl))
+  storyNormalizeCountryCodeCandidate(player.flagUrl)
 );
 
 export const storyCountryCodeToFlagUrl = (countryCode?: string) => {
   const normalizedCode = storyNormalizeCountryCodeCandidate(countryCode);
   if (!normalizedCode) return '';
   return `https://flagcdn.com/w40/${normalizedCode}.png`;
+};
+
+export const storyCountryCodeToFlagEmoji = (countryCode?: string) => {
+  const normalizedCode = storyNormalizeCountryCodeCandidate(countryCode).toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalizedCode)) return '';
+  return String.fromCodePoint(...normalizedCode.split('').map(char => 127397 + char.charCodeAt(0)));
 };
 
 export const storyCountryCodeToInlineFlagSrc = (countryCode?: string) => {
@@ -292,7 +298,21 @@ export const storyCountryCodeToInlineFlagSrc = (countryCode?: string) => {
     uy: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fff" d="M0 0h30v20H0z"/><path fill="#0038a8" d="M0 4h30v2H0zm0 4h30v2H0zm0 4h30v2H0zm0 4h30v2H0z"/><path fill="#fff" d="M0 0h12v10H0z"/><circle cx="6" cy="5" r="2.2" fill="#fcd116"/></svg>',
   };
   const svg = flagSvgByCode[code];
-  return svg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}` : '';
+  if (svg) return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+  const flagEmoji = storyCountryCodeToFlagEmoji(code);
+  if (!flagEmoji) return '';
+
+  const emojiSvg = [
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">',
+    '<rect width="30" height="20" rx="2" fill="#ffffff"/>',
+    '<text x="15" y="14.5" text-anchor="middle" font-size="15" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">',
+    flagEmoji,
+    '</text>',
+    '</svg>',
+  ].join('');
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(emojiSvg)}`;
 };
 
 export const renderPublishedStoryFlag = (player: Player, width: number, height: number, fontSize: number) => {
