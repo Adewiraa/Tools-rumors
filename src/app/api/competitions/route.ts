@@ -35,6 +35,26 @@ const toRegulationNumber = (value: any, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const getCompetitionSchemaErrorMessage = (error: { message?: string; code?: string }) => {
+  const message = error.message || '';
+  const isMissingRegulationColumn = (
+    error.code === 'PGRST204' ||
+    [
+      'max_foreign_starters',
+      'max_foreign_matchday',
+      'max_foreign_squad',
+      'min_local_starters',
+      'min_local_matchday',
+    ].some(column => message.toLowerCase().includes(`'${column}' column`))
+  );
+
+  if (isMissingRegulationColumn) {
+    return 'Kolom regulasi lineup belum ada di tabel competitions Supabase. Jalankan supabase_competitions_regulation_migration.sql di SQL Editor, lalu coba simpan lagi.';
+  }
+
+  return message;
+};
+
 // GET /api/competitions — ambil semua kompetisi
 export async function GET() {
   try {
@@ -87,7 +107,7 @@ export async function POST(request: Request) {
         .upsert(payload, { onConflict: 'id' });
 
       if (error) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        return NextResponse.json({ success: false, error: getCompetitionSchemaErrorMessage(error) }, { status: 400 });
       }
 
       return NextResponse.json({ success: true });
