@@ -543,7 +543,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
 
         setUiState('default');
-        triggerToast('Berhasil memuat data dari Supabase!', 'success');
+        triggerToast('Data aplikasi berhasil dimuat.', 'success');
       } catch (error) {
         console.error('Gagal memuat data dari Supabase:', error);
         triggerToast('Gagal memuat data Supabase. Menggunakan data lokal.', 'warning');
