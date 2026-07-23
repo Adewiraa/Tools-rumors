@@ -194,13 +194,13 @@ export default function ClubsListView() {
       </div>
 
       {hasPermission('Master', 'create_edit') && (
-        <div className="card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
-            <div style={{ minWidth: 0 }}>
+        <div className="card api-import-card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
+          <div className="api-import-header" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
+            <div className="api-import-copy" style={{ minWidth: 0 }}>
               <div className="semibold" style={{ fontSize: 14 }}>Ambil Data Klub dari API-Football</div>
               <div className="text-muted" style={{ fontSize: 12 }}>Cari klub, lihat detail kandidat, lalu tambahkan langsung ke Master Klub.</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8, alignItems: 'center' }}>
+            <div className="api-import-search" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8, alignItems: 'center' }}>
               <label className="search-input-wrapper" style={{ maxWidth: 'none', margin: 0 }}>
                 <Search className="search-icon" size={16} />
                 <input
@@ -220,10 +220,11 @@ export default function ClubsListView() {
           </div>
 
           {apiTeams.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+            <div className="api-import-results" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
               {apiTeams.map(candidate => (
                 <div
                   key={`${candidate.team?.id}-${candidate.team?.name}`}
+                  className="api-import-result-card"
                   style={{ border: '1px solid var(--neutral-200)', background: 'var(--white)', borderRadius: 8, padding: 14, display: 'grid', gap: 12, minWidth: 0 }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>

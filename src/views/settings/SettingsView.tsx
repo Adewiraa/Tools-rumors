@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp, UserRole } from '@/logic/AppContext';
-import { ChevronRight, Save, Upload, Settings } from 'lucide-react';
+import { ChevronRight, Save, Upload } from 'lucide-react';
 import type { AppSettings } from '@/logic/utils';
 
 const getErrorMessage = (error: unknown, fallback: string) => (
@@ -77,7 +77,7 @@ export default function SettingsView() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="settings-page" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* ── Page Header ── */}
       <div className="page-header">
@@ -93,7 +93,7 @@ export default function SettingsView() {
       </div>
 
       {/* ── Master Web Card ── */}
-      <div className="card" style={{ maxWidth: 900 }}>
+      <div className="card settings-card settings-identity-card" style={{ maxWidth: 900 }}>
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary-600)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
             Identitas Aplikasi
@@ -102,9 +102,9 @@ export default function SettingsView() {
           <p className="page-description" style={{ marginTop: 2 }}>Logo, nama, subtitle, dan handle watermark pada setiap konten.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '180px minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
+        <div className="settings-identity-layout" style={{ display: 'grid', gridTemplateColumns: '180px minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
           {/* Logo Preview */}
-          <div>
+          <div className="settings-logo-panel">
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Preview Logo</div>
             <div style={{
               width: 168,
@@ -132,7 +132,7 @@ export default function SettingsView() {
 
           {/* Form Fields */}
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
+            <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
               <div className="form-group">
                 <label className="form-label">Nama Aplikasi</label>
                 <input
@@ -162,8 +162,8 @@ export default function SettingsView() {
               </div>
             </div>
 
-            <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--neutral-200)' }}>
-              <button className="btn btn-md btn-primary" type="button" onClick={handleSaveIdentity} disabled={isSavingIdentity}>
+            <div className="settings-form-actions" style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--neutral-200)' }}>
+              <button className="btn btn-md btn-primary settings-save-button" type="button" onClick={handleSaveIdentity} disabled={isSavingIdentity}>
                 <Save size={16} />
                 {isSavingIdentity ? 'Menyimpan...' : 'Simpan Identitas'}
               </button>
@@ -173,7 +173,7 @@ export default function SettingsView() {
       </div>
 
       {/* ── Role & Status Card ── */}
-      <div className="card" style={{ maxWidth: 640 }}>
+      <div className="card settings-card settings-state-card" style={{ maxWidth: 640 }}>
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary-600)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
             Akses & Simulasi
@@ -200,7 +200,7 @@ export default function SettingsView() {
 
         <div className="form-group" style={{ marginTop: 24, borderTop: '1px solid var(--neutral-200)', paddingTop: 20 }}>
           <label className="form-label">Simulasi Status Aplikasi</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+          <div className="settings-toggle-stack" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--neutral-700)' }}>
               <input type="checkbox" checked={hasUnsavedChanges} onChange={event => setHasUnsavedChanges(event.target.checked)} />
               Simulasikan perubahan belum disimpan

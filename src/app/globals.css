@@ -2746,3 +2746,201 @@ a {
     grid-column: 1 / -1;
   }
 }
+
+.permissions-matrix-wrapper {
+  overflow-x: auto;
+}
+
+.permissions-matrix-table {
+  min-width: 880px;
+}
+
+@media (max-width: 768px) {
+  .api-import-card {
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+
+  .api-import-header,
+  .api-import-squad-header {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    align-items: start !important;
+  }
+
+  .api-import-copy {
+    padding: 0 2px;
+  }
+
+  .api-import-search {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    width: 100%;
+  }
+
+  .api-import-search .btn,
+  .api-import-result-card .btn,
+  .api-import-squad-grid .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .api-import-results,
+  .api-import-squad-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .api-import-result-card {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .api-import-team-grid {
+    display: flex !important;
+    gap: 10px !important;
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    margin: 0 -2px;
+    scroll-snap-type: x proximity;
+  }
+
+  .api-import-team-grid > button {
+    flex: 0 0 238px;
+    scroll-snap-align: start;
+  }
+
+  .api-import-squad {
+    padding-top: 12px !important;
+    gap: 12px !important;
+  }
+
+  .settings-card {
+    max-width: none !important;
+    padding: 14px !important;
+  }
+
+  .settings-identity-layout,
+  .settings-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .settings-logo-panel {
+    display: grid;
+    gap: 10px;
+  }
+
+  .settings-logo-panel > div:nth-child(2) {
+    width: 100% !important;
+    min-height: 132px !important;
+  }
+
+  .settings-form-actions {
+    display: grid;
+    margin-top: 16px !important;
+    padding-top: 16px !important;
+  }
+
+  .settings-save-button {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .settings-toggle-stack label {
+    align-items: flex-start !important;
+    line-height: 1.4;
+  }
+
+  .permissions-header-actions {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .permissions-alert {
+    align-items: flex-start !important;
+    padding: 12px 14px !important;
+  }
+
+  .permissions-matrix-wrapper {
+    background: var(--white) !important;
+    border: 1px solid var(--neutral-200) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-sm) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .permissions-matrix-table {
+    display: table !important;
+    min-width: 820px !important;
+    width: max-content !important;
+    border-collapse: collapse;
+  }
+
+  .permissions-matrix-table thead {
+    display: table-header-group !important;
+  }
+
+  .permissions-matrix-table tbody {
+    display: table-row-group !important;
+  }
+
+  .permissions-matrix-table tr {
+    display: table-row !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent;
+  }
+
+  .permissions-matrix-table th,
+  .permissions-matrix-table td {
+    display: table-cell !important;
+    width: auto !important;
+    padding: 10px 12px !important;
+    border-bottom: 1px solid var(--neutral-200) !important;
+    text-align: center !important;
+    vertical-align: middle;
+  }
+
+  .permissions-matrix-table td::before {
+    content: none !important;
+  }
+
+  .permissions-matrix-table th:first-child,
+  .permissions-matrix-table .permissions-menu-cell,
+  .permissions-matrix-table .permissions-category-cell {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    text-align: left !important;
+    background: var(--white);
+  }
+
+  .permissions-matrix-table th:first-child {
+    z-index: 3;
+    background: var(--neutral-50);
+  }
+
+  .permissions-matrix-table .permissions-category-cell {
+    background: var(--neutral-50) !important;
+  }
+
+  .permissions-info-card {
+    padding: 14px !important;
+  }
+
+  .audit-card-table .master-info-cell[data-label="Detail"] {
+    align-items: start;
+  }
+
+  .audit-card-table .master-info-cell[data-label="Detail"] > span {
+    text-align: right;
+    line-height: 1.45;
+  }
+}

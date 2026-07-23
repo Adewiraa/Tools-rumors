@@ -184,8 +184,8 @@ export default function AuditLogsView() {
       </div>
 
       {/* ── Data Table ── */}
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper master-table-wrapper">
+        <table className="data-table master-card-table audit-card-table">
           <thead>
             <tr>
               <th style={{ whiteSpace: 'nowrap' }}>Waktu</th>
@@ -218,16 +218,16 @@ export default function AuditLogsView() {
 
               return (
                 <tr key={log.id}>
-                  <td style={{ whiteSpace: 'nowrap', fontSize: 12 }} className="text-muted">{log.timestamp}</td>
-                  <td><span className="semibold" style={{ fontSize: 13 }}>{log.user}</span></td>
-                  <td><span className="badge badge-info" style={{ fontSize: 11 }}>{log.module}</span></td>
-                  <td>
+                  <td className="master-info-cell text-muted" data-label="Waktu" style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{log.timestamp}</td>
+                  <td className="master-info-cell" data-label="User"><span className="semibold" style={{ fontSize: 13 }}>{log.user}</span></td>
+                  <td className="master-info-cell" data-label="Modul"><span className="badge badge-info" style={{ fontSize: 11 }}>{log.module}</span></td>
+                  <td className="master-info-cell" data-label="Kategori">
                     <span className={`badge ${badge.cssClass}`} style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
                       {badge.label}
                     </span>
                   </td>
-                  <td style={{ fontSize: 13, fontWeight: 600 }}>{humanAction}</td>
-                  <td style={{ fontSize: 12, maxWidth: 320 }} className="text-muted">{log.details}</td>
+                  <td className="master-info-cell" data-label="Aksi" style={{ fontSize: 13, fontWeight: 600 }}>{humanAction}</td>
+                  <td className="master-info-cell" data-label="Detail" style={{ fontSize: 12, maxWidth: 320 }}><span className="text-muted">{log.details}</span></td>
                 </tr>
               );
             })}

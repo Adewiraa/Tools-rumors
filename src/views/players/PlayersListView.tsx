@@ -306,13 +306,13 @@ export default function PlayersListView() {
       </div>
 
       {hasPermission('Master', 'create_edit') && (
-        <div className="card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
-            <div style={{ minWidth: 0 }}>
+        <div className="card api-import-card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
+          <div className="api-import-header" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
+            <div className="api-import-copy" style={{ minWidth: 0 }}>
               <div className="semibold" style={{ fontSize: 14 }}>Ambil Pemain dari API-Football</div>
               <div className="text-muted" style={{ fontSize: 12 }}>Cari klub, ambil skuad aktif, lalu tambahkan pemain ke Master Pemain.</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8, alignItems: 'center' }}>
+            <div className="api-import-search" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8, alignItems: 'center' }}>
               <label className="search-input-wrapper" style={{ maxWidth: 'none', margin: 0 }}>
                 <Search className="search-icon" size={16} />
                 <input
@@ -332,7 +332,7 @@ export default function PlayersListView() {
           </div>
 
           {apiTeams.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+            <div className="api-import-team-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
               {apiTeams.map(candidate => {
                 const matchedClub = findMatchingLocalClub(candidate, clubs);
                 const isActive = selectedApiTeam?.team?.id === candidate.team?.id;
@@ -360,8 +360,8 @@ export default function PlayersListView() {
           )}
 
           {(selectedApiTeam || isLoadingSquad || apiSquadPlayers.length > 0) && (
-            <div style={{ borderTop: '1px solid var(--neutral-200)', paddingTop: 14, display: 'grid', gap: 12 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) minmax(260px, 360px)', gap: 12, alignItems: 'end' }}>
+            <div className="api-import-squad" style={{ borderTop: '1px solid var(--neutral-200)', paddingTop: 14, display: 'grid', gap: 12 }}>
+              <div className="api-import-squad-header" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) minmax(260px, 360px)', gap: 12, alignItems: 'end' }}>
                 <div style={{ minWidth: 0 }}>
                   <div className="semibold" style={{ fontSize: 14 }}>{selectedApiTeam?.team?.name || 'Skuad API'}</div>
                   <div className="text-muted" style={{ fontSize: 12 }}>Pemain akan disimpan ke klub lokal yang dipilih di kanan.</div>
@@ -378,7 +378,7 @@ export default function PlayersListView() {
               {isLoadingSquad ? (
                 <div className="text-muted" style={{ padding: '18px 0', fontSize: 13 }}>Mengambil data pemain klub...</div>
               ) : apiSquadPlayers.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10 }}>
+                <div className="api-import-squad-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10 }}>
                   {apiSquadPlayers.map(apiPlayer => (
                     <div key={`${apiPlayer.id}-${apiPlayer.name}`} style={{ border: '1px solid var(--neutral-200)', borderRadius: 8, padding: 12, display: 'grid', gap: 10, background: 'var(--white)' }}>
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0 }}>

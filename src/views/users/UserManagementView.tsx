@@ -14,7 +14,6 @@ import {
   EyeOff,
   ChevronRight,
   X,
-  Key,
   CheckCircle,
   AlertCircle,
   UserCheck,
@@ -26,7 +25,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   RotateCcw,
-  SlidersHorizontal
 } from 'lucide-react';
 
 type SortField = 'fullName' | 'username' | 'role' | 'status' | 'id';
@@ -311,8 +309,8 @@ export default function UserManagementView() {
 
       {/* ── Datatable ── */}
 
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper master-table-wrapper">
+        <table className="data-table master-card-table">
           <thead>
             <tr>
                 
@@ -402,7 +400,7 @@ export default function UserManagementView() {
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       {/* User / Full Name */}
-                      <td style={{ padding: '14px 20px' }}>
+                      <td className="master-title-cell" data-label="User" style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                           <div style={{
                             width: 38,
@@ -427,7 +425,7 @@ export default function UserManagementView() {
                       </td>
 
                       {/* Username */}
-                      <td style={{ padding: '14px 20px' }}>
+                      <td className="master-info-cell" data-label="Username" style={{ padding: '14px 20px' }}>
                         <span style={{
                           fontFamily: 'monospace',
                           fontWeight: 700,
@@ -443,7 +441,7 @@ export default function UserManagementView() {
                       </td>
 
                       {/* Role Admin Badge */}
-                      <td style={{ padding: '14px 20px' }}>
+                      <td className="master-info-cell" data-label="Role" style={{ padding: '14px 20px' }}>
                         <span style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -474,7 +472,7 @@ export default function UserManagementView() {
                       </td>
 
                       {/* Password Cell */}
-                      <td style={{ padding: '14px 20px' }}>
+                      <td className="master-info-cell" data-label="Password" style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#334155', fontWeight: isPasswordVisible ? 600 : 400 }}>
                             {isPasswordVisible ? u.password || '••••••••' : '••••••••'}
@@ -491,7 +489,7 @@ export default function UserManagementView() {
                       </td>
 
                       {/* Status */}
-                      <td style={{ padding: '14px 20px' }}>
+                      <td className="master-info-cell" data-label="Status" style={{ padding: '14px 20px' }}>
                         {u.status === 'active' ? (
                           <span style={{
                             display: 'inline-flex',
@@ -526,8 +524,8 @@ export default function UserManagementView() {
                       </td>
 
                       {/* Action Buttons */}
-                      <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
+                      <td className="master-actions-cell text-right" data-label="Aksi" style={{ padding: '14px 20px', textAlign: 'right' }}>
+                        <div className="master-actions" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
                           <button
                             className="btn btn-sm btn-secondary"
                             onClick={() => handleOpenEdit(u)}

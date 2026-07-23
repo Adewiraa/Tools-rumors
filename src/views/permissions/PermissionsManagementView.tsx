@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { UserRole, ActiveMenu, ALL_MENUS, RolePermission, INITIAL_ROLE_PERMISSIONS } from '@/lib/types/auth';
-import { Shield, Lock, Save, RefreshCw, ChevronRight, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, Save, RefreshCw, ChevronRight, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
 const ROLES: UserRole[] = [
   'Super Admin',
@@ -24,13 +24,10 @@ const ROLE_COLOR: Record<UserRole, { bg: string; color: string; border: string }
 export default function PermissionsManagementView() {
   const { rolePermissions, saveRolePermissions, triggerToast } = useApp();
 
-  const [matrix, setMatrix] = useState<RolePermission[]>(rolePermissions);
+  const [draftMatrix, setDraftMatrix] = useState<RolePermission[] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  useEffect(() => {
-    setMatrix(rolePermissions);
-  }, [rolePermissions]);
+  const matrix = draftMatrix ?? rolePermissions;
+  const hasChanges = draftMatrix !== null;
 
   const isMenuAllowed = (role: UserRole, menuId: ActiveMenu): boolean => {
     if (role === 'Super Admin') return true;
@@ -41,8 +38,9 @@ export default function PermissionsManagementView() {
 
   const togglePermission = (role: UserRole, menuId: ActiveMenu) => {
     if (role === 'Super Admin') return;
-    setMatrix(prev =>
-      prev.map(p => {
+    setDraftMatrix(prev => {
+      const source = prev ?? rolePermissions;
+      return source.map(p => {
         if (p.role !== role) return p;
         const exists = p.allowedMenus.includes(menuId);
         return {
@@ -51,21 +49,19 @@ export default function PermissionsManagementView() {
             ? p.allowedMenus.filter(m => m !== menuId)
             : [...p.allowedMenus, menuId],
         };
-      })
-    );
-    setHasChanges(true);
+      });
+    });
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     const success = await saveRolePermissions(matrix);
     setIsSaving(false);
-    if (success) setHasChanges(false);
+    if (success) setDraftMatrix(null);
   };
 
   const handleResetDefault = () => {
-    setMatrix(INITIAL_ROLE_PERMISSIONS);
-    setHasChanges(true);
+    setDraftMatrix(INITIAL_ROLE_PERMISSIONS);
     triggerToast('Matriks dikembalikan ke preset default (Belum disimpan)', 'warning');
   };
 
@@ -85,7 +81,7 @@ export default function PermissionsManagementView() {
           <h1 className="page-title">Manajemen Hak Akses Menu</h1>
           <p className="page-description">Atur dan batasi menu aplikasi yang boleh dibuka oleh masing-masing Role Admin.</p>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'flex-start' }}>
+        <div className="permissions-header-actions" style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'flex-start' }}>
           <button className="btn btn-md btn-secondary" onClick={handleResetDefault}>
             <RefreshCw size={15} /> Reset Default
           </button>
@@ -97,7 +93,7 @@ export default function PermissionsManagementView() {
 
       {/* ── Unsaved Changes Alert ── */}
       {hasChanges && (
-        <div className="card" style={{ padding: '12px 20px', backgroundColor: '#fffbeb', borderColor: '#fde68a', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="card permissions-alert" style={{ padding: '12px 20px', backgroundColor: '#fffbeb', borderColor: '#fde68a', display: 'flex', alignItems: 'center', gap: 10 }}>
           <AlertCircle size={16} style={{ color: '#d97706', flexShrink: 0 }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>
             Ada perubahan hak akses yang belum disimpan. Klik <strong>&quot;Simpan Hak Akses&quot;</strong> untuk menerapkan.
@@ -106,8 +102,8 @@ export default function PermissionsManagementView() {
       )}
 
       {/* ── Permissions Matrix Table ── */}
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper permissions-matrix-wrapper">
+        <table className="data-table permissions-matrix-table">
           <thead>
             <tr>
               <th style={{ minWidth: 220 }}>Modul / Menu Aplikasi</th>
@@ -140,8 +136,8 @@ export default function PermissionsManagementView() {
               return (
                 <React.Fragment key={category}>
                   {/* Category Header Row */}
-                  <tr>
-                    <td colSpan={ROLES.length + 1} style={{
+                  <tr className="permissions-category-row">
+                    <td className="permissions-category-cell" colSpan={ROLES.length + 1} style={{
                       padding: '8px 16px',
                       fontSize: 11,
                       fontWeight: 800,
@@ -157,14 +153,14 @@ export default function PermissionsManagementView() {
 
                   {categoryMenus.map(menu => (
                     <tr key={menu.id}>
-                      <td style={{ fontWeight: 600, fontSize: 13 }}>{menu.label}</td>
+                      <td className="permissions-menu-cell" style={{ fontWeight: 600, fontSize: 13 }}>{menu.label}</td>
 
                       {ROLES.map(role => {
                         const allowed = isMenuAllowed(role, menu.id);
                         const isSuperAdmin = role === 'Super Admin';
 
                         return (
-                          <td key={role} style={{ textAlign: 'center' }}>
+                          <td key={role} className="permissions-toggle-cell" style={{ textAlign: 'center' }}>
                             <label style={{
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -206,7 +202,7 @@ export default function PermissionsManagementView() {
       </div>
 
       {/* ── Info Card ── */}
-      <div className="card">
+      <div className="card permissions-info-card">
         <h4 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700, color: 'var(--neutral-950)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Shield size={16} style={{ color: 'var(--primary-600)' }} /> Penjelasan Hak Akses Role
         </h4>
