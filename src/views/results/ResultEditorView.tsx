@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Match, Player, Club, Competition } from '@/lib/mockData';
 import { ArrowLeft, Search, Share2, Download, X } from 'lucide-react';
@@ -31,7 +30,6 @@ interface MatchEvent {
 }
 
 export default function ResultEditorView({ matchId }: { matchId: string }) {
-  const router = useRouter();
   const {
     appSettings,
     matches,
@@ -45,6 +43,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
   const foundMatch = matches.find(m => m.id === matchId);
   const matchMissing = !foundMatch;
+  const goToResultsList = () => {
+    window.location.replace('/results');
+  };
   const match: Match = foundMatch || {
     id: matchId,
     homeClubId: '',
@@ -444,7 +445,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       <div className="card" style={{ maxWidth: 560 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Pertandingan tidak ditemukan</h2>
         <p className="text-muted" style={{ marginBottom: 16 }}>Pilih pertandingan dari jadwal atau lineup yang sudah lengkap.</p>
-        <button className="btn btn-sm btn-secondary" onClick={() => router.push('/results')}><ArrowLeft size={16} /> Kembali</button>
+        <button type="button" className="btn btn-sm btn-secondary" onClick={goToResultsList}><ArrowLeft size={16} /> Kembali</button>
       </div>
     );
   }
@@ -579,7 +580,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
       setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
       triggerToast('Hasil pertandingan berhasil disimpan!');
-      router.push('/results');
+      goToResultsList();
     } catch (err: any) {
       triggerToast('Terjadi kesalahan saat menyimpan hasil.', 'error');
     } finally {
@@ -606,7 +607,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       {/* Editor Header */}
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button className="btn btn-sm btn-secondary" onClick={() => router.push('/results')}>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={goToResultsList}>
             <ArrowLeft size={16} /> Kembali
           </button>
           <div>

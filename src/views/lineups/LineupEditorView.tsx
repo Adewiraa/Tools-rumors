@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Match, Player, Club, Competition } from '@/lib/mockData';
 import { countriesList } from '@/lib/countriesData';
@@ -36,7 +35,6 @@ const DEFAULT_LINEUP_REGULATION = {
 };
 
 export default function LineupEditorView({ matchId }: { matchId: string }) {
-  const router = useRouter();
   const {
     appSettings,
     clubs,
@@ -102,6 +100,9 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   const isPublishedLineup = existingMatch?.publicationStatus === 'Published';
 
   const MAX_SUBS          = 15; 
+  const goToLineupsList = () => {
+    window.location.replace('/lineups');
+  };
 
   const inferLocalCountryFromSquad = (squad: Player[]) => {
     const counts = new Map<string, number>();
@@ -297,7 +298,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
       setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
       logAction(publish ? 'PUBLISH_LINEUP' : 'SAVE_LINEUP_DRAFT', 'Lineup Pertandingan', `${publish ? 'Menerbitkan' : 'Menyimpan draft'} lineup: ${updatedMatch.homeClubName} vs ${updatedMatch.awayClubName}`);
       triggerToast(publish ? 'Lineup berhasil diterbitkan!' : 'Draft lineup berhasil disimpan!');
-      router.push('/lineups');
+      goToLineupsList();
     } catch (err: any) {
       triggerToast('Terjadi kesalahan saat menyimpan lineup.', 'error');
     } finally {
@@ -727,7 +728,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
       {/* HEADER */}
       <div className="lineup-editor-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <button className="btn btn-sm btn-secondary" onClick={() => router.push('/lineups')} style={{ flexShrink: 0 }}>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={goToLineupsList} style={{ flexShrink: 0 }}>
             <ArrowLeft size={16} />
             <span className="hide-mobile"> Kembali</span>
           </button>

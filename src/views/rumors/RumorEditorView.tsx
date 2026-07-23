@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
 import { ArrowLeft, Download, Image as ImageIcon, Save, Share2, Upload } from 'lucide-react';
@@ -29,7 +28,6 @@ const getErrorMessage = (err: unknown, fallback: string) => (
 );
 
 export default function RumorEditorView({ rumorId }: { rumorId: string }) {
-  const router = useRouter();
   const { appSettings, clubs, rumors, setRumors, logAction, triggerToast } = useApp();
   const [draftId] = useState(() => `rumor-${Date.now()}`);
   const isNew = rumorId === 'new';
@@ -187,7 +185,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
   const returnToRumorsList = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
     setIsSaving(false);
-    window.location.href = '/rumors';
+    window.location.replace('/rumors');
   };
 
   const handleSave = async () => {
@@ -202,7 +200,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
       await persistRumor(saved);
       triggerToast(isNew ? 'Rumor dipublikasi! ✅' : 'Rumor diperbarui & dipublikasi! ✅');
       setIsSaving(false);
-      router.replace('/rumors');
+      window.location.replace('/rumors');
     } catch (err: unknown) {
       setIsSaving(false);
       triggerToast(getErrorMessage(err, 'Gagal menyimpan rumor.'), 'error');

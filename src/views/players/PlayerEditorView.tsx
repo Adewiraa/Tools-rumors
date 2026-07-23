@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Player, calculatePlayerCompleteness } from '@/lib/mockData';
 import { countriesList } from '@/lib/countriesData';
@@ -43,7 +42,6 @@ const mapApiPosition = (position?: string): Player['position'] => {
 };
 
 export default function PlayerEditorView({ playerId }: { playerId: string }) {
-  const router = useRouter();
   const { players, setPlayers, clubs, logAction, triggerToast } = useApp();
   const isNew = playerId === 'new';
   const existing = players.find(item => item.id === playerId);
@@ -54,6 +52,9 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const [apiSeason, setApiSeason] = useState('2026');
   const [apiPlayers, setApiPlayers] = useState<ApiPlayerCandidate[]>([]);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
+  const goToPlayersList = () => {
+    window.location.replace('/players');
+  };
   const [player, setPlayer] = useState<Player>(existing || {
     id: generateUUID(),
     fullName: '',
@@ -154,7 +155,7 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
       setPlayers(prev => isNew ? [...prev, savedPlayer] : prev.map(item => item.id === savedPlayer.id ? savedPlayer : item));
       logAction(isNew ? 'CREATE_PLAYER' : 'UPDATE_PLAYER', 'Master Pemain', savedPlayer.fullName);
       triggerToast('Pemain berhasil disimpan.');
-      router.push('/players');
+      goToPlayersList();
     } catch (error: any) {
       triggerToast(error.message || 'Terjadi kesalahan saat menyimpan pemain.', 'error');
     } finally {
@@ -166,7 +167,7 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button className="btn btn-sm btn-secondary" onClick={() => router.push('/players')}><ArrowLeft size={16} /> Kembali</button>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={goToPlayersList}><ArrowLeft size={16} /> Kembali</button>
           <div>
             <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Pemain' : 'Edit Pemain'}</h1>
             <div className="text-muted" style={{ fontSize: 12 }}>Kelengkapan data: {liveCompleteness}%</div>
