@@ -2103,12 +2103,12 @@ a {
 
   .schedule-table-section {
     min-width: 0;
-    margin-top: 2px;
+    margin-top: 4px;
   }
 
   .schedule-table-title {
-    margin: 0 2px 8px;
-    font-size: 11px;
+    margin: 0 6px 9px;
+    font-size: 11.5px;
     letter-spacing: 0.08em;
   }
 
@@ -2118,11 +2118,12 @@ a {
   }
 
   .schedule-table tr {
-    padding: 0;
+    padding: 14px 12px 12px;
     gap: 0;
     overflow: hidden;
     border-radius: var(--radius-md) !important;
     border-color: rgba(227, 225, 218, 0.92) !important;
+    box-shadow: 0 2px 8px rgba(21, 26, 29, 0.04);
   }
 
   .schedule-table td {
@@ -2133,20 +2134,20 @@ a {
   }
 
   .schedule-match-cell {
-    padding: 12px 12px 10px !important;
+    padding: 0 0 11px !important;
     border-bottom: 1px solid var(--neutral-100) !important;
   }
 
   .schedule-match-teams {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
     align-items: center;
-    column-gap: 6px;
+    column-gap: 8px;
     row-gap: 8px;
   }
 
   .schedule-team {
-    gap: 7px;
+    gap: 6px;
     min-width: 0;
   }
 
@@ -2184,18 +2185,18 @@ a {
   }
 
   .schedule-match-venue {
-    margin-top: 8px;
+    margin-top: 9px;
     font-size: 12px;
     line-height: 1.35;
   }
 
   .schedule-info-cell {
     display: grid !important;
-    grid-template-columns: 88px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: 12px;
     align-items: center;
-    min-height: 30px;
-    padding: 7px 12px !important;
+    min-height: 31px;
+    padding: 7px 0 !important;
     border-bottom: 1px solid var(--neutral-100) !important;
     font-size: 13px;
   }
@@ -2229,13 +2230,13 @@ a {
   }
 
   .schedule-actions-cell {
-    padding: 10px 12px 12px !important;
+    padding: 11px 0 0 !important;
   }
 
   .schedule-actions {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
-    gap: 7px;
+    gap: 8px;
     width: 100%;
   }
 
