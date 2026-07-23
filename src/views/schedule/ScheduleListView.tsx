@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
-import { Match, Player, Competition } from '@/lib/mockData';
+import { Match } from '@/lib/mockData';
 import {
   Search,
   Plus,
@@ -73,6 +73,11 @@ export default function ScheduleListView() {
   const lineupLabel = (s: string) => s === 'Complete' ? 'Siap' : s === 'Needs Review' ? 'Review' : 'Belum';
   const getPublishedStoryElementId = (matchId: string) => `published-lineup-story-card-${matchId}`;
   const getPublishedStoryFileName = (match: Match) => `Lineup_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
+  const renderMatchLogo = (logo?: string) => (
+    logo && logo.startsWith('http')
+      ? <img src={logo} alt="" className="schedule-team-logo" />
+      : <span className="schedule-team-logo-text">{logo || '-'}</span>
+  );
 
   const createPublishedLineupStoryImage = async (match: Match) => {
     const node = document.getElementById(getPublishedStoryElementId(match.id));
@@ -149,7 +154,7 @@ export default function ScheduleListView() {
       logAction('DELETE_SCHEDULE', 'Jadwal Pertandingan', `Menghapus jadwal match id: ${id}`);
       triggerToast('Jadwal berhasil dihapus!');
       setConfirmDeleteId(null);
-    } catch (err: any) {
+    } catch {
       triggerToast('Terjadi kesalahan saat menghapus jadwal.', 'error');
     } finally {
       setDeletingId(null);
@@ -177,44 +182,44 @@ export default function ScheduleListView() {
     };
     return (
       <tr key={m.id} style={{ backgroundColor: isToday ? 'var(--primary-50)' : undefined }}>
-        <td>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {m.homeLogo && m.homeLogo.startsWith('http')
-              ? <img src={m.homeLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-              : <span style={{ fontSize: 18 }}>{m.homeLogo}</span>}
-            <span className="semibold" style={{ fontSize: 13 }}>{m.homeClubName}</span>
-            <span className="text-muted" style={{ fontSize: 11 }}>vs</span>
-            {m.awayLogo && m.awayLogo.startsWith('http')
-              ? <img src={m.awayLogo} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-              : <span style={{ fontSize: 18 }}>{m.awayLogo}</span>}
-            <span className="semibold" style={{ fontSize: 13 }}>{m.awayClubName}</span>
-            {isToday && <span style={{ fontSize: 10, background: 'var(--primary-600)', color: 'white', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>HARI INI</span>}
+        <td className="schedule-match-cell">
+          <div className="schedule-match-teams">
+            <span className="schedule-team schedule-team-home">
+              {renderMatchLogo(m.homeLogo)}
+              <span className="schedule-team-name">{m.homeClubName}</span>
+            </span>
+            <span className="schedule-versus">vs</span>
+            <span className="schedule-team schedule-team-away">
+              {renderMatchLogo(m.awayLogo)}
+              <span className="schedule-team-name">{m.awayClubName}</span>
+            </span>
+            {isToday && <span className="schedule-today-badge">HARI INI</span>}
           </div>
-          <div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>{m.venue}</div>
+          <div className="schedule-match-venue">{m.venue}</div>
         </td>
-        <td style={{ fontSize: 12 }}>{m.competition}</td>
-        <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+        <td className="schedule-info-cell" data-label="Kompetisi">{m.competition}</td>
+        <td className="schedule-info-cell schedule-kickoff-cell" data-label="Kickoff">
           <div>{new Date(m.kickoff).toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}</div>
-          <div className="text-muted" style={{ fontSize: 11 }}>{new Date(m.kickoff).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</div>
+          <div className="schedule-kickoff-time">{new Date(m.kickoff).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</div>
         </td>
-        <td><span className={`badge ${statusClass(effectiveStatus)}`}>{statusLabel(effectiveStatus)}</span></td>
-        <td><span className={`badge ${lineupClass(effectiveLineupStatus)}`}>{lineupLabel(effectiveLineupStatus)}</span></td>
-        <td>
+        <td className="schedule-info-cell" data-label="Status"><span className={`badge ${statusClass(effectiveStatus)}`}>{statusLabel(effectiveStatus)}</span></td>
+        <td className="schedule-info-cell" data-label="Lineup"><span className={`badge ${lineupClass(effectiveLineupStatus)}`}>{lineupLabel(effectiveLineupStatus)}</span></td>
+        <td className="schedule-info-cell" data-label="HT">
           {m.halfTimeHomeScore !== undefined && m.halfTimeHomeScore !== null && m.halfTimeAwayScore !== undefined && m.halfTimeAwayScore !== null ? (
-            <span className="semibold" style={{ fontSize: 12 }}>{m.halfTimeHomeScore} - {m.halfTimeAwayScore}</span>
+            <span className="schedule-score schedule-score-half">{m.halfTimeHomeScore} - {m.halfTimeAwayScore}</span>
           ) : (
-            <span className="text-muted" style={{ fontSize: 12 }}>-</span>
+            <span className="schedule-empty-score">-</span>
           )}
         </td>
-        <td>
+        <td className="schedule-info-cell" data-label="FT">
           {m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null ? (
-            <span style={{ fontSize: 13, fontWeight: 700 }}>{m.homeScore} - {m.awayScore}</span>
+            <span className="schedule-score schedule-score-full">{m.homeScore} - {m.awayScore}</span>
           ) : (
-            <span className="text-muted" style={{ fontSize: 12 }}>-</span>
+            <span className="schedule-empty-score">-</span>
           )}
         </td>
-        <td className="text-right">
-          <div style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <td className="schedule-actions-cell text-right">
+          <div className="schedule-actions">
             {canLineup && hasPermission('Lineup Pertandingan', 'create_edit') && (
               <button className="btn btn-sm btn-primary" onClick={handleLineupAction} style={{ fontSize: 11 }}>
                 {canOpenPublishedLineup ? 'Lihat Lineup' : hasLineupData ? 'Edit Lineup' : 'Buat Lineup'}
@@ -226,8 +231,8 @@ export default function ScheduleListView() {
             <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/schedule?edit=${m.id}`)} style={{ fontSize: 11 }}><Edit size={12} /></button>
             {hasPermission('Lineup Pertandingan', 'delete') && (
               confirmDeleteId === m.id ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                  <span style={{ fontSize: 11, color: 'var(--danger-600)', fontWeight: 600 }}>Yakin?</span>
+                <span className="schedule-confirm-delete">
+                  <span>Yakin?</span>
                   <LoadingButton className="btn btn-sm btn-danger" style={{ fontSize: 11 }} onClick={() => handleDelete(m.id)} loading={deletingId === m.id} loadingLabel="Menghapus...">Ya</LoadingButton>
                   <button className="btn btn-sm btn-secondary" disabled={deletingId === m.id} style={{ fontSize: 11 }} onClick={() => setConfirmDeleteId(null)}>Batal</button>
                 </span>
@@ -242,12 +247,12 @@ export default function ScheduleListView() {
   };
 
   const renderTable = (rows: Match[], title: string) => (
-    <div>
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 4 }}>
+    <div className="schedule-table-section">
+      <div className="schedule-table-title">
         {title} ({rows.length})
       </div>
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper schedule-table-wrapper">
+        <table className="data-table schedule-table">
           <thead>
             <tr>
               <th>Pertandingan</th>

@@ -675,6 +675,121 @@ a {
   color: var(--primary-700);
 }
 
+.schedule-table-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 4px 0 8px;
+}
+
+.schedule-match-teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.schedule-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.schedule-team-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.schedule-team-logo-text {
+  font-size: 18px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.schedule-team-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.schedule-versus {
+  color: var(--neutral-500);
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+
+.schedule-today-badge {
+  font-size: 10px;
+  background: var(--primary-600);
+  color: var(--white);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.schedule-match-venue,
+.schedule-kickoff-time,
+.schedule-empty-score {
+  color: var(--neutral-500);
+}
+
+.schedule-match-venue {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.schedule-info-cell,
+.schedule-kickoff-cell,
+.schedule-score-half,
+.schedule-empty-score {
+  font-size: 12px;
+}
+
+.schedule-kickoff-cell {
+  white-space: nowrap;
+}
+
+.schedule-kickoff-time {
+  font-size: 11px;
+}
+
+.schedule-score {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-score-full {
+  font-size: 13px;
+}
+
+.schedule-actions {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.schedule-confirm-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.schedule-confirm-delete > span:first-child {
+  font-size: 11px;
+  color: var(--danger-600);
+  font-weight: 600;
+}
+
 .player-editor-root {
   display: flex;
   flex-direction: column;
@@ -1052,7 +1167,7 @@ a {
     min-height: 100dvh;
   }
 
-  /* Hide Desktop Sidebar on Mobile (Mobile uses fixed bottom-nav & drawer) */
+  /* Mobile uses the left drawer opened from the header menu button. */
   .sidebar {
     display: none !important;
   }
@@ -1089,9 +1204,8 @@ a {
     max-width: none;
   }
 
-  /* Main Content Padding for Mobile Bottom Bar */
   .main-wrapper {
-    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
   }
 
   .top-header {
@@ -1310,10 +1424,6 @@ a {
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .sidebar {
     padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .main-wrapper {
-    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 }
 
@@ -1804,7 +1914,7 @@ a {
 }
 
 /* ==========================================
-   MOBILE BOTTOM NAVIGATION & RESPONSIVE DATATABLE CARDS
+   RESPONSIVE DATATABLE CARDS
    ========================================== */
 
 .mobile-bottom-nav {
@@ -1812,59 +1922,8 @@ a {
 }
 
 @media (max-width: 768px) {
-  /* Mobile Page Container Padding so bottom nav doesn't cover content */
   .page-container {
-    padding: 16px 16px calc(80px + env(safe-area-inset-bottom, 0px)) 16px !important;
-  }
-
-  /* Fixed Mobile Bottom Navigation Bar */
-  .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(60px + env(safe-area-inset-bottom, 0px));
-    background-color: var(--navy-950);
-    border-top: 1px solid var(--navy-800);
-    z-index: 1000;
-    align-items: flex-start;
-    justify-content: space-around;
-    padding: 6px 4px env(safe-area-inset-bottom, 0px) 4px;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
-  }
-
-  .mobile-bottom-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    flex: 1;
-    height: 48px;
-    color: var(--neutral-500);
-    font-size: 10px;
-    font-weight: 600;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.15s ease;
-    padding: 4px 0;
-    border-radius: var(--radius-md);
-  }
-
-  .mobile-bottom-item.active {
-    color: var(--primary-600);
-    font-weight: 700;
-  }
-
-  .mobile-bottom-item:hover {
-    color: var(--white);
-  }
-
-  .mobile-bottom-item svg {
-    flex-shrink: 0;
+    padding: 16px !important;
   }
 
   /* Page Header Mobile Adjustments */
@@ -1950,5 +2009,150 @@ a {
     width: 100%;
     justify-content: flex-end;
   }
-}
 
+  .schedule-table {
+    min-width: 0;
+  }
+
+  .schedule-table-section {
+    min-width: 0;
+  }
+
+  .schedule-table-title {
+    margin-bottom: 10px;
+  }
+
+  .schedule-table .data-table,
+  .schedule-table tbody {
+    width: 100%;
+  }
+
+  .schedule-table tr {
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .schedule-table td {
+    display: block;
+    width: 100%;
+    padding: 0 !important;
+    border-bottom: none !important;
+  }
+
+  .schedule-match-cell {
+    padding: 14px !important;
+    border-bottom: 1px solid var(--neutral-100) !important;
+  }
+
+  .schedule-match-teams {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 8px;
+  }
+
+  .schedule-team {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .schedule-team-away {
+    justify-content: flex-start;
+  }
+
+  .schedule-team-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .schedule-team-logo,
+  .schedule-team-logo-text {
+    width: 24px;
+    min-width: 24px;
+  }
+
+  .schedule-versus {
+    align-self: center;
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .schedule-today-badge {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: 2px;
+  }
+
+  .schedule-match-venue {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .schedule-info-cell {
+    display: grid !important;
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid var(--neutral-100) !important;
+    font-size: 13px;
+  }
+
+  .schedule-info-cell::before {
+    content: attr(data-label);
+    color: var(--neutral-500);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .schedule-kickoff-cell {
+    white-space: normal;
+  }
+
+  .schedule-kickoff-time {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  .schedule-score-full {
+    font-size: 14px;
+  }
+
+  .schedule-actions-cell {
+    padding: 12px 14px !important;
+  }
+
+  .schedule-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .schedule-actions .btn,
+  .schedule-confirm-delete .btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .schedule-confirm-delete {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .schedule-confirm-delete > span:first-child {
+    grid-column: 1 / -1;
+  }
+}
