@@ -4,9 +4,11 @@ import React from 'react';
 import { Match, Player, Competition } from '@/lib/mockData';
 import {
   DEFAULT_APP_SETTINGS,
+  getMatchMediaSettings,
   renderPublishedStoryFlag,
 } from '@/logic/utils';
 import type { AppSettings } from '@/logic/utils';
+import { MatchMediaBadge } from '@/views/shared/MatchMediaAd';
 
 interface PublishedLineupStoryCardProps {
   match: Match;
@@ -102,6 +104,7 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
   };
 
   const comp = competitions.find(c => c.name === match.competition);
+  const mediaSettings = getMatchMediaSettings(match);
   return (
     <div id={elementId} style={{
       width: 360, minHeight: 640,
@@ -148,6 +151,8 @@ export default function PublishedLineupStoryCard({ match, players, competitions,
         {renderTeamColumn('home')}
         {renderTeamColumn('away')}
       </div>
+
+      <MatchMediaBadge settings={{ ...mediaSettings, placement: 'footer' }} placement="footer" variant="lineup" />
 
       <div style={{ padding: '8px 16px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         borderTop: '1px solid rgba(255,255,255,0.06)' }}>

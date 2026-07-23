@@ -12,11 +12,15 @@ import {
   hasSavedHalfTimeResult,
   getMatchTimelineEvents,
   getTimelineWithResultGraphicSettings,
+  getMatchMediaSettings,
+  getTimelineWithMatchMediaSettings,
   hasHalfTimeScoreValues,
   getEffectiveLineupStatus,
   ResultGraphicSettings
 } from '@/logic/utils';
+import type { MatchMediaSettings } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { MatchMediaBadge, MatchMediaControls } from '@/views/shared/MatchMediaAd';
 
 interface MatchEvent {
   id: string;
@@ -62,6 +66,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
   const effectiveInitialStatus = getEffectiveMatchStatus(match);
   const initialResultGraphicSettings = getResultGraphicSettings(match);
+  const initialMatchMediaSettings = getMatchMediaSettings(match);
   const halfTimeWasSaved = hasSavedHalfTimeResult(match);
 
   // Editor states
@@ -94,6 +99,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   const [pendingBackgroundPositionY, setPendingBackgroundPositionY] = useState(initialResultGraphicSettings.backgroundPositionY ?? 50);
   const [pendingBackgroundZoom, setPendingBackgroundZoom] = useState(initialResultGraphicSettings.backgroundZoom ?? 100);
   const [pendingBackgroundDim, setPendingBackgroundDim] = useState(initialResultGraphicSettings.backgroundDim ?? 20);
+  const [mediaSettings, setMediaSettings] = useState<MatchMediaSettings>(initialMatchMediaSettings);
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
   const isFullTimeGraphic = showFullTime || matchStatus === 'Finished';
   const effectiveGraphicType: 'HT' | 'FT' = isFullTimeGraphic ? 'FT' : graphicType;
@@ -436,7 +442,10 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       halfTimeAwayScore: shouldPersistHalfTime ? (halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any)) : null,
       status: storedStatus,
       lineupStatus: nextLineupStatus,
-      timeline: getTimelineWithResultGraphicSettings(events, nextGraphicSettings),
+      timeline: getTimelineWithMatchMediaSettings(
+        getTimelineWithResultGraphicSettings(events, nextGraphicSettings),
+        mediaSettings
+      ),
     };
 
     try {
@@ -1027,6 +1036,13 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               </div>
             )}
 
+            <MatchMediaControls
+              settings={mediaSettings}
+              onChange={setMediaSettings}
+              triggerToast={triggerToast}
+              defaultPlacement="header-right"
+            />
+
             {/* Action Buttons */}
             <div className="flex gap-12" style={{ width: '100%', maxWidth: 500 }}>
               <button
@@ -1162,6 +1178,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <MatchMediaBadge settings={mediaSettings} placement="header-right" variant="result" />
                 </div>
               </div>
 
@@ -1241,6 +1258,8 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                   <div style={{ fontSize: 9, color: '#a0aec0', textAlign: 'center', fontStyle: 'italic', padding: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>Tidak ada gol tercipta</div>
                 )}
               </div>
+
+              <MatchMediaBadge settings={mediaSettings} placement="footer" variant="result" />
 
               {/* Footer */}
               <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>

@@ -13,9 +13,11 @@ import {
   hasSavedHalfTimeResult,
   hasHalfTimeScoreValues,
   getResultGraphicSettings,
+  getMatchMediaSettings,
   getMatchTimelineEvents
 } from '@/logic/utils';
 import type { AppSettings } from '@/logic/utils';
+import { MatchMediaBadge } from '@/views/shared/MatchMediaAd';
 
 export default function ResultsListView() {
   const router = useRouter();
@@ -330,6 +332,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
   const goalEvents = events.filter(event => event.type === 'goal' && (graphicType === 'FT' || (event.minute || 0) <= 45));
   const comp = competitions.find(c => c.name === match.competition);
   const resultGraphicSettings = getResultGraphicSettings(match);
+  const mediaSettings = getMatchMediaSettings(match);
   const backgroundImage = resultGraphicSettings.backgroundImage || null;
   const backgroundPositionX = resultGraphicSettings.backgroundPositionX ?? 50;
   const backgroundPositionY = resultGraphicSettings.backgroundPositionY ?? 50;
@@ -456,6 +459,7 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <MatchMediaBadge settings={mediaSettings} placement="header-right" variant="result" />
         </div>
       </div>
 
@@ -534,6 +538,8 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
           <div style={{ fontSize: 9, color: '#a0aec0', textAlign: 'center', fontStyle: 'italic', padding: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>Tidak ada gol tercipta</div>
         )}
       </div>
+
+      <MatchMediaBadge settings={mediaSettings} placement="footer" variant="result" />
 
       <div style={{ zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6, fontSize: 8, color: '#a0aec0', fontWeight: 600, marginTop: 8, width: '100%', textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
         <span>{appSettings.appHandle}</span>

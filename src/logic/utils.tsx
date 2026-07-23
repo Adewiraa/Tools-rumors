@@ -86,10 +86,32 @@ export type ResultGraphicSettings = {
   halfTimeSaved?: boolean;
 };
 
+export type MatchMediaSettings = {
+  enabled?: boolean;
+  image?: string | null;
+  label?: string;
+  placement?: 'footer' | 'header-right';
+  fit?: 'contain' | 'cover';
+};
+
 export const RESULT_GRAPHIC_META_TYPE = '__result_graphic_settings';
+export const MATCH_MEDIA_META_TYPE = '__match_media_settings';
+
+export const DEFAULT_MATCH_MEDIA_SETTINGS: MatchMediaSettings = {
+  enabled: false,
+  image: null,
+  label: '',
+  placement: 'footer',
+  fit: 'contain',
+};
 
 const isTimelineMetaType = (item: any, type: string) => (
   item && typeof item === 'object' && item.type === type
+);
+
+const isTimelineMetaItem = (item: any) => (
+  isTimelineMetaType(item, RESULT_GRAPHIC_META_TYPE) ||
+  isTimelineMetaType(item, MATCH_MEDIA_META_TYPE)
 );
 
 export const getResultGraphicSettings = (match: Match): ResultGraphicSettings => {
@@ -99,9 +121,19 @@ export const getResultGraphicSettings = (match: Match): ResultGraphicSettings =>
   return settings && typeof settings === 'object' ? settings : {};
 };
 
+export const getMatchMediaSettings = (match: Match): MatchMediaSettings => {
+  const timeline = Array.isArray(match.timeline) ? match.timeline : [];
+  const meta = timeline.find(item => isTimelineMetaType(item, MATCH_MEDIA_META_TYPE));
+  const settings = meta && typeof meta.settings === 'object' ? meta.settings : (match as any).matchMedia;
+
+  return settings && typeof settings === 'object'
+    ? { ...DEFAULT_MATCH_MEDIA_SETTINGS, ...settings }
+    : DEFAULT_MATCH_MEDIA_SETTINGS;
+};
+
 export const getMatchTimelineEvents = (timeline?: any[]) => (
   Array.isArray(timeline)
-    ? timeline.filter(item => item && typeof item === 'object' && !isTimelineMetaType(item, RESULT_GRAPHIC_META_TYPE))
+    ? timeline.filter(item => item && typeof item === 'object' && !isTimelineMetaItem(item))
     : []
 );
 
@@ -116,6 +148,26 @@ export const getTimelineWithResultGraphicSettings = (timeline: any[], settings: 
       id: RESULT_GRAPHIC_META_TYPE,
       type: RESULT_GRAPHIC_META_TYPE,
       settings,
+    },
+  ];
+};
+
+export const getTimelineWithMatchMediaSettings = (timeline: any[], settings: MatchMediaSettings) => {
+  const normalizedSettings = { ...DEFAULT_MATCH_MEDIA_SETTINGS, ...settings };
+  const preservedTimeline = Array.isArray(timeline)
+    ? timeline.filter(item => !isTimelineMetaType(item, MATCH_MEDIA_META_TYPE))
+    : [];
+
+  if (!normalizedSettings.enabled && !normalizedSettings.image && !normalizedSettings.label?.trim()) {
+    return preservedTimeline;
+  }
+
+  return [
+    ...preservedTimeline,
+    {
+      id: MATCH_MEDIA_META_TYPE,
+      type: MATCH_MEDIA_META_TYPE,
+      settings: normalizedSettings,
     },
   ];
 };

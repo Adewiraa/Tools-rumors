@@ -19,9 +19,12 @@ import * as htmlToImage from 'html-to-image';
 import {
   getEffectiveMatchStatus,
   getEffectiveLineupStatus,
-  renderPublishedStoryFlag
+  getMatchMediaSettings,
+  getTimelineWithMatchMediaSettings
 } from '@/logic/utils';
+import type { MatchMediaSettings } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { MatchMediaBadge, MatchMediaControls } from '@/views/shared/MatchMediaAd';
 
 interface AsingEntry { id: string; name: string; no: number; pos: string; }
 
@@ -78,6 +81,9 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   const [awayPlayerSearch, setAwayPlayerSearch] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isExportingStory, setIsExportingStory] = useState(false);
+  const [mediaSettings, setMediaSettings] = useState<MatchMediaSettings>(
+    existingMatch ? getMatchMediaSettings(existingMatch) : { placement: 'footer' }
+  );
   const isPublishedLineup = existingMatch?.publicationStatus === 'Published';
 
   const MAX_ASING_DSP     = 11; 
@@ -191,6 +197,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
       awayCaptain,
       homeAsing,
       awayAsing,
+      timeline: getTimelineWithMatchMediaSettings(existingMatch?.timeline || [], { ...mediaSettings, placement: 'footer' }),
       editor: 'Admin', lastUpdated: 'Baru saja',
     };
 
@@ -730,6 +737,14 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
         </div>
       </div>
 
+      <MatchMediaControls
+        settings={{ ...mediaSettings, placement: 'footer' }}
+        onChange={(nextSettings) => setMediaSettings({ ...nextSettings, placement: 'footer' })}
+        triggerToast={triggerToast}
+        defaultPlacement="footer"
+        showPlacementSelect={false}
+      />
+
       {/* TEAM PANELS */}
       <div className="lineup-teams-grid">
         {renderTeamPanel('home', homeSquad, homeClub, homeFormation, setHomeFormation,
@@ -955,6 +970,8 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
                   )}
                 </div>
               </div>
+
+              <MatchMediaBadge settings={{ ...mediaSettings, placement: 'footer' }} placement="footer" variant="lineup" />
 
               <div style={{ padding: '8px 16px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 borderTop: '1px solid rgba(255,255,255,0.06)' }}>
