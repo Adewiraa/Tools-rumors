@@ -94,9 +94,37 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const RUMORS_STORAGE_KEY = 'gosball_rumors_cache';
+const CLUBS_STORAGE_KEY = 'gosball_clubs_cache';
+const PLAYERS_STORAGE_KEY = 'gosball_players_cache';
+const MATCHES_STORAGE_KEY = 'gosball_matches_cache';
+const COMPETITIONS_STORAGE_KEY = 'gosball_competitions_cache';
 const APP_SETTINGS_STORAGE_KEY = 'gosball_app_settings';
 const USERS_STORAGE_KEY = 'gosball_users_cache';
 const PERMISSIONS_STORAGE_KEY = 'gosball_permissions_cache';
+
+const readCachedArray = <T,>(key: string, fallback: T[]): T[] => {
+  if (typeof window === 'undefined') return fallback;
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : fallback;
+  } catch (error) {
+    console.warn(`Cache ${key} error:`, error);
+    return fallback;
+  }
+};
+
+const writeCache = (key: string, value: unknown) => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Cache ${key} error:`, error);
+  }
+};
 
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clubs, setClubs] = useState<Club[]>(INITIAL_CLUBS);
@@ -135,15 +163,13 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (savedRole) setCurrentUserRoleState(savedRole);
       }
 
-      const savedRumors = localStorage.getItem(RUMORS_STORAGE_KEY);
-      if (savedRumors) {
-        try {
-          const parsed = JSON.parse(savedRumors);
-          if (Array.isArray(parsed)) setRumorsState(parsed);
-        } catch (e) {
-          console.warn('Cache rumor error:', e);
-        }
-      }
+      setClubs(readCachedArray(CLUBS_STORAGE_KEY, INITIAL_CLUBS));
+      setPlayers(readCachedArray(PLAYERS_STORAGE_KEY, INITIAL_PLAYERS));
+      setMatches(readCachedArray(MATCHES_STORAGE_KEY, []));
+      setRumorsState(readCachedArray(RUMORS_STORAGE_KEY, INITIAL_RUMORS));
+      setCompetitions(readCachedArray(COMPETITIONS_STORAGE_KEY, INITIAL_COMPETITIONS));
+      setUsers(readCachedArray(USERS_STORAGE_KEY, INITIAL_USERS));
+      setRolePermissions(readCachedArray(PERMISSIONS_STORAGE_KEY, INITIAL_ROLE_PERMISSIONS));
 
       const savedSettings = localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
       if (savedSettings) {
@@ -151,26 +177,6 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setAppSettingsState(normalizeAppSettings(JSON.parse(savedSettings)));
         } catch (e) {
           console.warn('Cache settings error:', e);
-        }
-      }
-
-      const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-      if (savedUsers) {
-        try {
-          const parsed = JSON.parse(savedUsers);
-          if (Array.isArray(parsed) && parsed.length > 0) setUsers(parsed);
-        } catch (e) {
-          console.warn('Cache users error:', e);
-        }
-      }
-
-      const savedPerms = localStorage.getItem(PERMISSIONS_STORAGE_KEY);
-      if (savedPerms) {
-        try {
-          const parsed = JSON.parse(savedPerms);
-          if (Array.isArray(parsed) && parsed.length > 0) setRolePermissions(parsed);
-        } catch (e) {
-          console.warn('Cache permissions error:', e);
         }
       }
     }
@@ -197,11 +203,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         : value;
 
       if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(RUMORS_STORAGE_KEY, JSON.stringify(next));
-        } catch (e) {
-          console.warn('Cache rumor error:', e);
-        }
+        writeCache(RUMORS_STORAGE_KEY, next);
       }
 
       return next;
@@ -464,101 +466,107 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     async function loadSupabaseData() {
-      try {
-        setUiState('loading');
-        
-        // 1. Fetch Clubs
-        const { data: clubsData, error: clubsError } = await supabase.from('clubs').select('*');
-        if (clubsError) throw clubsError;
-        if (clubsData) {
-          const sortedClubs = clubsData
-            .map(mapClubFromSupabase)
-            .sort((a, b) => a.name.localeCompare(b.name));
-          setClubs(sortedClubs);
-        }
-        
-        // 2. Fetch Competitions
-        const { data: compData, error: compError } = await supabase.from('competitions').select('*');
-        if (compError) throw compError;
-        if (compData) {
-          const sortedComp = compData
-            .map(mapCompetitionFromSupabase)
-            .sort((a, b) => a.name.localeCompare(b.name));
-          setCompetitions(sortedComp);
-        }
+      const fetchJson = async (url: string) => {
+        const response = await fetch(url, { cache: 'no-store' });
+        return response.json();
+      };
 
-        // 3. Fetch Players via API route
-        try {
-          const playerRes = await fetch('/api/players');
-          const playerJson = await playerRes.json();
-          if (playerJson.success && playerJson.data && playerJson.data.length > 0) {
-            setPlayers(playerJson.data);
-          }
-        } catch (playerErr) {
-          console.warn('Gagal load players dari Supabase, pakai data lokal:', playerErr);
-        }
+      const [
+        clubsResult,
+        compResult,
+        playerResult,
+        matchResult,
+        rumorResult,
+        usersResult,
+        permResult,
+        settingsResult,
+      ] = await Promise.allSettled([
+        supabase.from('clubs').select('*'),
+        supabase.from('competitions').select('*'),
+        fetchJson('/api/players'),
+        fetchJson('/api/matches'),
+        fetchJson('/api/rumors'),
+        fetchJson('/api/users'),
+        fetchJson('/api/permissions'),
+        fetchJson('/api/settings'),
+      ]);
 
-        // 4. Fetch Matches via API route
-        try {
-          const matchRes = await fetch('/api/matches');
-          const matchJson = await matchRes.json();
-          if (matchJson.success && matchJson.data && matchJson.data.length > 0) {
-            setMatches(matchJson.data);
-          }
-        } catch (matchErr) {
-          console.warn('Gagal load matches dari Supabase, pakai data lokal:', matchErr);
-        }
+      let successCount = 0;
 
-        // 5. Fetch Rumors via API route
-        try {
-          const rumorRes = await fetch('/api/rumors');
-          const rumorJson = await rumorRes.json();
-          if (rumorJson.success && Array.isArray(rumorJson.data)) {
-            setRumorsState(rumorJson.data);
-          }
-        } catch (rumorErr) {
-          console.warn('Gagal load rumors dari Supabase, pakai cache lokal:', rumorErr);
-        }
+      if (clubsResult.status === 'fulfilled' && !clubsResult.value.error && clubsResult.value.data) {
+        const sortedClubs = clubsResult.value.data
+          .map(mapClubFromSupabase)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setClubs(sortedClubs);
+        writeCache(CLUBS_STORAGE_KEY, sortedClubs);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load clubs dari Supabase, pakai cache lokal:', clubsResult);
+      }
 
-        // 6. Fetch Users via API route
-        try {
-          const usersRes = await fetch('/api/users');
-          const usersJson = await usersRes.json();
-          if (usersJson.success && Array.isArray(usersJson.data) && usersJson.data.length > 0) {
-            setUsers(usersJson.data);
-          }
-        } catch (usersErr) {
-          console.warn('Gagal load users dari Supabase, pakai cache lokal:', usersErr);
-        }
+      if (compResult.status === 'fulfilled' && !compResult.value.error && compResult.value.data) {
+        const sortedComp = compResult.value.data
+          .map(mapCompetitionFromSupabase)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setCompetitions(sortedComp);
+        writeCache(COMPETITIONS_STORAGE_KEY, sortedComp);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load competitions dari Supabase, pakai cache lokal:', compResult);
+      }
 
-        // 7. Fetch Role Permissions via API route
-        try {
-          const permRes = await fetch('/api/permissions');
-          const permJson = await permRes.json();
-          if (permJson.success && Array.isArray(permJson.data) && permJson.data.length > 0) {
-            setRolePermissions(permJson.data);
-          }
-        } catch (permErr) {
-          console.warn('Gagal load permissions dari Supabase, pakai cache lokal:', permErr);
-        }
+      if (playerResult.status === 'fulfilled' && playerResult.value.success && Array.isArray(playerResult.value.data) && playerResult.value.data.length > 0) {
+        setPlayers(playerResult.value.data);
+        writeCache(PLAYERS_STORAGE_KEY, playerResult.value.data);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load players dari Supabase, pakai cache lokal:', playerResult);
+      }
 
-        // 8. Fetch app identity
-        try {
-          const settingsRes = await fetch('/api/settings');
-          const settingsJson = await settingsRes.json();
-          if (settingsJson.success && settingsJson.data) {
-            setAppSettings(settingsJson.data);
-          }
-        } catch (settingsErr) {
-          console.warn('Gagal load pengaturan aplikasi, pakai cache lokal:', settingsErr);
-        }
+      if (matchResult.status === 'fulfilled' && matchResult.value.success && Array.isArray(matchResult.value.data)) {
+        setMatches(matchResult.value.data);
+        writeCache(MATCHES_STORAGE_KEY, matchResult.value.data);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load matches dari Supabase, pakai cache lokal:', matchResult);
+      }
 
-        setUiState('default');
-        triggerToast('Data aplikasi berhasil dimuat.', 'success');
-      } catch (error) {
-        console.error('Gagal memuat data dari Supabase:', error);
-        triggerToast('Gagal memuat data Supabase. Menggunakan data lokal.', 'warning');
-        setUiState('default');
+      if (rumorResult.status === 'fulfilled' && rumorResult.value.success && Array.isArray(rumorResult.value.data)) {
+        setRumorsState(rumorResult.value.data);
+        writeCache(RUMORS_STORAGE_KEY, rumorResult.value.data);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load rumors dari Supabase, pakai cache lokal:', rumorResult);
+      }
+
+      if (usersResult.status === 'fulfilled' && usersResult.value.success && Array.isArray(usersResult.value.data) && usersResult.value.data.length > 0) {
+        setUsers(usersResult.value.data);
+        writeCache(USERS_STORAGE_KEY, usersResult.value.data);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load users dari Supabase, pakai cache lokal:', usersResult);
+      }
+
+      if (permResult.status === 'fulfilled' && permResult.value.success && Array.isArray(permResult.value.data) && permResult.value.data.length > 0) {
+        setRolePermissions(permResult.value.data);
+        writeCache(PERMISSIONS_STORAGE_KEY, permResult.value.data);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load permissions dari Supabase, pakai cache lokal:', permResult);
+      }
+
+      if (settingsResult.status === 'fulfilled' && settingsResult.value.success && settingsResult.value.data) {
+        setAppSettings(settingsResult.value.data);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load pengaturan aplikasi, pakai cache lokal:', settingsResult);
+      }
+
+      setIsOffline(successCount === 0);
+      setUiState('default');
+
+      if (successCount === 0) {
+        triggerToast('Data online belum tersambung. Aplikasi memakai cache lokal.', 'warning');
       }
     }
 
