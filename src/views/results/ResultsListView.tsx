@@ -142,7 +142,278 @@ export default function ResultsListView() {
     return { dataUrl, blob };
   };
 
+  const loadCanvasImage = (src?: string) => new Promise<HTMLImageElement | null>(resolve => {
+    if (!src || !src.startsWith('http')) {
+      resolve(null);
+      return;
+    }
+
+    const image = new Image();
+    const timer = window.setTimeout(() => resolve(null), 3500);
+    image.crossOrigin = 'anonymous';
+    image.referrerPolicy = 'no-referrer';
+    image.onload = () => {
+      window.clearTimeout(timer);
+      resolve(image);
+    };
+    image.onerror = () => {
+      window.clearTimeout(timer);
+      resolve(null);
+    };
+    image.src = src;
+  });
+
+  const drawRoundedRect = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+    fillStyle: string
+  ) => {
+    ctx.fillStyle = fillStyle;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  const drawCoverImage = (
+    ctx: CanvasRenderingContext2D,
+    image: HTMLImageElement,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    positionX = 50,
+    positionY = 50,
+    zoom = 100
+  ) => {
+    const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * (zoom / 100);
+    const drawWidth = image.naturalWidth * scale;
+    const drawHeight = image.naturalHeight * scale;
+    const drawX = x + (width - drawWidth) * (positionX / 100);
+    const drawY = y + (height - drawHeight) * (positionY / 100);
+    ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+  };
+
+  const drawImageOrText = (
+    ctx: CanvasRenderingContext2D,
+    image: HTMLImageElement | null,
+    fallback: string,
+    x: number,
+    y: number,
+    size: number
+  ) => {
+    if (image) {
+      ctx.drawImage(image, x, y, size, size);
+      return;
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '700 18px Arial, sans-serif';
+    ctx.fillText(fallback || '-', x + size / 2, y + size / 2);
+  };
+
+  const createCanvasResultOutputImage = async (match: Match, type: 'HT' | 'FT'): Promise<GeneratedResultOutput> => {
+    const pixelRatio = 3;
+    const width = 400;
+    const height = 500;
+    const canvas = document.createElement('canvas');
+    canvas.width = width * pixelRatio;
+    canvas.height = height * pixelRatio;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas tidak tersedia.');
+
+    ctx.scale(pixelRatio, pixelRatio);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    const comp = competitions.find(c => c.name === match.competition);
+    const resultGraphicSettings = getResultGraphicSettings(match);
+    const [backgroundImage, competitionLogo, homeLogo, awayLogo, appLogo] = await Promise.all([
+      loadCanvasImage(resultGraphicSettings.backgroundImage || ''),
+      loadCanvasImage(comp?.logoUrl),
+      loadCanvasImage(match.homeLogo),
+      loadCanvasImage(match.awayLogo),
+      loadCanvasImage(appSettings.appLogoSrc),
+    ]);
+
+    const baseGradient = ctx.createLinearGradient(0, 0, width, height);
+    baseGradient.addColorStop(0, '#0a0a0a');
+    baseGradient.addColorStop(1, '#1a1a1a');
+    ctx.fillStyle = baseGradient;
+    ctx.fillRect(0, 0, width, height);
+
+    if (backgroundImage) {
+      drawCoverImage(
+        ctx,
+        backgroundImage,
+        0,
+        0,
+        width,
+        height,
+        resultGraphicSettings.backgroundPositionX ?? 50,
+        resultGraphicSettings.backgroundPositionY ?? 50,
+        resultGraphicSettings.backgroundZoom ?? 100
+      );
+      ctx.fillStyle = `rgba(10,10,10,${Math.max((resultGraphicSettings.backgroundDim ?? 20) / 100, 0.08)})`;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    const bottomGradient = ctx.createLinearGradient(0, 250, 0, height);
+    bottomGradient.addColorStop(0, 'rgba(10,10,10,0)');
+    bottomGradient.addColorStop(0.45, 'rgba(10,10,10,0.42)');
+    bottomGradient.addColorStop(1, 'rgba(10,10,10,0.86)');
+    ctx.fillStyle = bottomGradient;
+    ctx.fillRect(0, 250, width, 250);
+
+    const topGradient = ctx.createLinearGradient(0, 0, 0, 95);
+    topGradient.addColorStop(0, 'rgba(10,10,10,0.46)');
+    topGradient.addColorStop(1, 'rgba(10,10,10,0)');
+    ctx.fillStyle = topGradient;
+    ctx.fillRect(0, 0, width, 95);
+
+    const goldGradient = ctx.createLinearGradient(0, 0, width, 0);
+    goldGradient.addColorStop(0, '#c8a84b');
+    goldGradient.addColorStop(0.5, '#e8cc6a');
+    goldGradient.addColorStop(1, '#c8a84b');
+    ctx.fillStyle = goldGradient;
+    ctx.fillRect(0, 0, width, 3);
+
+    drawImageOrText(ctx, competitionLogo, match.competition?.slice(0, 2).toUpperCase() || 'KO', 18, 22, 32);
+    drawRoundedRect(ctx, 58, 26, 116, 17, 3, '#c8a84b');
+    ctx.fillStyle = '#0a0a0a';
+    ctx.font = '800 8px Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText((match.competition || 'PIALA PRESIDEN').toUpperCase().slice(0, 20), 66, 34.5);
+
+    if (appLogo) {
+      const logoHeight = 22;
+      const ratio = appLogo.naturalWidth / Math.max(appLogo.naturalHeight, 1);
+      const logoWidth = Math.min(58, logoHeight * ratio);
+      ctx.drawImage(appLogo, (width - logoWidth) / 2, 315, logoWidth, logoHeight);
+    }
+
+    ctx.fillStyle = 'rgba(14, 18, 22, 0.5)';
+    ctx.fillRect(0, 332, width, 118);
+
+    drawImageOrText(ctx, homeLogo, match.homeClubName.slice(0, 1), 20, 340, 36);
+    drawImageOrText(ctx, awayLogo, match.awayClubName.slice(0, 1), 344, 340, 36);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 12px Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 4;
+    ctx.textAlign = 'left';
+    ctx.fillText((match.homeClubName.split(' ')[0] || 'HOME').toUpperCase(), 66, 358);
+    ctx.textAlign = 'right';
+    ctx.fillText((match.awayClubName.split(' ')[0] || 'AWAY').toUpperCase(), 334, 358);
+    ctx.shadowBlur = 0;
+
+    drawRoundedRect(ctx, 166, 337, 68, 18, 3, '#c8a84b');
+    ctx.fillStyle = '#0a0a0a';
+    ctx.font = '800 8px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(type === 'HT' ? 'HALF TIME' : 'FULL TIME', 200, 346);
+
+    const scoreHome = type === 'HT' ? match.halfTimeHomeScore ?? 0 : match.homeScore ?? 0;
+    const scoreAway = type === 'HT' ? match.halfTimeAwayScore ?? 0 : match.awayScore ?? 0;
+    ctx.fillStyle = '#e8cc6a';
+    ctx.font = '900 32px Arial, sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(String(scoreHome), 181, 377);
+    ctx.fillText(String(scoreAway), 219, 377);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '800 12px Arial, sans-serif';
+    ctx.fillText('-', 200, 374);
+    ctx.shadowBlur = 0;
+
+    const hasHalfTimeScore = hasSavedHalfTimeResult(match) &&
+      match.halfTimeHomeScore !== undefined && match.halfTimeHomeScore !== null &&
+      match.halfTimeAwayScore !== undefined && match.halfTimeAwayScore !== null;
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '700 9px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      type === 'FT' && hasHalfTimeScore ? `HALF TIME: ${match.halfTimeHomeScore} - ${match.halfTimeAwayScore}` : (match.venue || 'Stadion Pertandingan'),
+      200,
+      408
+    );
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(20, 428);
+    ctx.lineTo(380, 428);
+    ctx.stroke();
+
+    type TimelineOutputEvent = { id?: string; minute?: number; type?: string; playerName?: string; clubId?: string };
+    const events = (getMatchTimelineEvents(match.timeline) as TimelineOutputEvent[]).slice().sort((a, b) => (a.minute || 0) - (b.minute || 0));
+    const goalEvents = events.filter(event => event.type === 'goal' && (type === 'FT' || (event.minute || 0) <= 45));
+    ctx.font = '700 9px Arial, sans-serif';
+    ctx.textAlign = 'left';
+    goalEvents.slice(0, 5).forEach((event, index) => {
+      ctx.fillStyle = '#c8a84b';
+      ctx.fillText(`${event.minute || 0}'`, 20, 444 + index * 15);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText(`Goal ${event.playerName || ''}`, 42, 444 + index * 15);
+    });
+
+    if (goalEvents.length === 0) {
+      ctx.fillStyle = '#a0aec0';
+      ctx.textAlign = 'center';
+      ctx.font = 'italic 9px Arial, sans-serif';
+      ctx.fillText('Tidak ada gol tercipta', 200, 446);
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath();
+    ctx.moveTo(20, 470);
+    ctx.lineTo(380, 470);
+    ctx.stroke();
+    ctx.fillStyle = '#a0aec0';
+    ctx.font = '700 8px Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(appSettings.appHandle || '@mediatools', 20, 486);
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(result => {
+        if (result) resolve(result);
+        else reject(new Error('Gagal membuat blob canvas.'));
+      }, 'image/png', 1);
+    });
+
+    return {
+      dataUrl: canvas.toDataURL('image/png'),
+      blob,
+      fileName: getResultOutputFileName(match, type),
+    };
+  };
+
   const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0): Promise<GeneratedResultOutput> => {
+    if (type === 'HT' || type === 'FT') {
+      try {
+        return await createCanvasResultOutputImage(match, type);
+      } catch (error) {
+        console.warn('Canvas result output failed, falling back to DOM capture:', error);
+      }
+    }
+
     const outputNode = document.getElementById(getResultOutputElementId(match.id, type, adIndex));
     const previewNode = document.getElementById(getResultPreviewElementId(match.id, type, adIndex));
     const fileName = getResultOutputFileName(match, type, adIndex);
@@ -202,6 +473,20 @@ export default function ResultsListView() {
     }
   };
 
+  const copyResultOutputToClipboard = async (output: GeneratedResultOutput) => {
+    if (!navigator.clipboard || typeof ClipboardItem === 'undefined') return false;
+
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({ [output.blob.type || 'image/png']: output.blob }),
+      ]);
+      return true;
+    } catch (error) {
+      console.warn('Result output clipboard fallback failed:', error);
+      return false;
+    }
+  };
+
   const downloadResultOutput = async (match: Match, type: ResultOutputType, adIndex = 0) => {
     const outputLabel = type === 'AD' ? `iklan ${adIndex + 1}` : type;
     try {
@@ -251,6 +536,11 @@ export default function ResultsListView() {
           if (error?.name === 'AbortError') return;
           console.warn('Result output native share failed, falling back to download:', shareError);
         }
+      }
+
+      if (await copyResultOutputToClipboard(output)) {
+        triggerToast(`Gambar ${outputLabel} disalin ke clipboard. Tinggal paste ke aplikasi tujuan.`);
+        return;
       }
 
       downloadGeneratedOutputs([output]);
@@ -515,10 +805,10 @@ export default function ResultsListView() {
                       <button
                         className="btn btn-sm btn-primary"
                         onClick={() => shareResultOutput(timelineMatch, activeType, activeResultPreview.adIndex)}
-                        disabled={isExportingResultOutput}
-                        title={activeOutputReady ? `Bagikan ${activeType}` : 'Akan membuat gambar sebelum dibagikan'}
+                        disabled={isExportingResultOutput || !activeOutputReady}
+                        title={activeOutputReady ? `Bagikan ${activeType}` : 'File share sedang disiapkan'}
                       >
-                        <Share2 size={14} /> Bagikan {activeType === 'AD' ? 'Iklan' : activeType}
+                        <Share2 size={14} /> {activeOutputReady ? `Bagikan ${activeType === 'AD' ? 'Iklan' : activeType}` : 'Menyiapkan file...'}
                       </button>
                       <button
                         className="btn btn-sm btn-secondary"
