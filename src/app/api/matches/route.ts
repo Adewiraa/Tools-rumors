@@ -89,6 +89,7 @@ export async function GET() {
       homeAsing:            toLineupForeignEntries(m.home_asing),
       awayAsing:            toLineupForeignEntries(m.away_asing),
       timeline:             m.timeline || [],
+      matchMedia:           m.match_media || undefined,
       editor:               m.editor || 'Admin',
       lastUpdated:          m.last_updated || '',
     }));
@@ -137,6 +138,7 @@ export async function POST(request: Request) {
       home_asing:           Array.isArray(match.homeAsing) ? match.homeAsing : [],
       away_asing:           Array.isArray(match.awayAsing) ? match.awayAsing : [],
       timeline:             Array.isArray(match.timeline) ? match.timeline : [],
+      match_media:          match.matchMedia && typeof match.matchMedia === 'object' ? match.matchMedia : null,
       editor:               match.editor || 'Admin',
       last_updated:         new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB',
     };
@@ -153,8 +155,9 @@ export async function POST(request: Request) {
 
     if (result.error) {
       if (result.error.message.includes('timeline') || result.error.message.includes('column')) {
-        console.warn('Timeline column missing in DB, retrying without timeline payload...');
-        delete payload.timeline;
+        console.warn('Optional JSON column missing in DB, retrying without timeline/match_media payload...');
+        if (result.error.message.includes('timeline')) delete payload.timeline;
+        if (result.error.message.includes('match_media') || result.error.message.includes('column')) delete payload.match_media;
         const retryResult = await supabaseAdmin
           .from('matches')
           .upsert(payload, { onConflict: 'id' });

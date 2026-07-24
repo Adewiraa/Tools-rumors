@@ -90,6 +90,7 @@ export type MatchMediaSettings = {
   enabled?: boolean;
   ads?: MatchMediaAdItem[];
   image?: string | null;
+  video?: string | null;
   label?: string;
   placement?: 'footer' | 'header-right';
   fit?: 'contain' | 'cover';
@@ -97,9 +98,16 @@ export type MatchMediaSettings = {
 
 export type MatchMediaAdItem = {
   id?: string;
+  mediaType?: 'image' | 'video';
+  source?: string | null;
   image?: string | null;
+  video?: string | null;
+  poster?: string | null;
   label?: string;
   fit?: 'contain' | 'cover';
+  fileName?: string;
+  mimeType?: string;
+  masterAdId?: string;
 };
 
 export const RESULT_GRAPHIC_META_TYPE = '__result_graphic_settings';
@@ -109,6 +117,7 @@ export const DEFAULT_MATCH_MEDIA_SETTINGS: MatchMediaSettings = {
   enabled: false,
   ads: [],
   image: null,
+  video: null,
   label: '',
   placement: 'footer',
   fit: 'contain',
@@ -144,20 +153,43 @@ export const getMatchMediaAds = (settings?: MatchMediaSettings): MatchMediaAdIte
   const ads = Array.isArray(settings?.ads) ? settings.ads : [];
   const normalizedAds = ads
     .filter(ad => ad && typeof ad === 'object')
-    .map((ad, index) => ({
-      id: ad.id || `ad-${index + 1}`,
-      image: ad.image || null,
-      label: ad.label || '',
-      fit: ad.fit || settings?.fit || 'contain',
-    }))
-    .filter(ad => ad.image || ad.label.trim());
+    .map((ad, index) => {
+      const source = ad.source || ad.video || ad.image || null;
+      const mediaType: 'image' | 'video' =
+        ad.mediaType === 'video' ||
+        ad.mimeType?.startsWith('video/') ||
+        source?.startsWith('data:video') ||
+        /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(source || '')
+          ? 'video'
+          : 'image';
+
+      return {
+        id: ad.id || `ad-${index + 1}`,
+        mediaType,
+        source,
+        image: mediaType === 'image' ? source : (ad.image || ad.poster || null),
+        video: mediaType === 'video' ? source : null,
+        poster: ad.poster || null,
+        label: ad.label || '',
+        fit: ad.fit || settings?.fit || 'contain',
+        fileName: ad.fileName || '',
+        mimeType: ad.mimeType || (mediaType === 'video' ? 'video/mp4' : ''),
+        masterAdId: ad.masterAdId || '',
+      };
+    })
+    .filter(ad => ad.source || ad.image || ad.video || ad.label.trim());
 
   if (normalizedAds.length > 0) return normalizedAds;
 
-  if (settings?.image || settings?.label?.trim()) {
+  if (settings?.image || settings?.video || settings?.label?.trim()) {
+    const source = settings.video || settings.image || null;
+    const mediaType: 'image' | 'video' = settings.video ? 'video' : 'image';
     return [{
       id: 'ad-1',
-      image: settings.image || null,
+      mediaType,
+      source,
+      image: mediaType === 'image' ? source : null,
+      video: mediaType === 'video' ? source : null,
       label: settings.label || '',
       fit: settings.fit || 'contain',
     }];
@@ -211,6 +243,7 @@ export const getTimelineWithMatchMediaSettings = (timeline: any[], settings: Mat
         ...normalizedSettings,
         ads: normalizedAds,
         image: normalizedAds[0]?.image || null,
+        video: normalizedAds[0]?.video || null,
         label: normalizedAds[0]?.label || '',
         fit: normalizedAds[0]?.fit || normalizedSettings.fit,
       },

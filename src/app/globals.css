@@ -718,7 +718,8 @@ a {
   padding: 4px;
 }
 
-.match-media-preview-box img {
+.match-media-preview-box img,
+.match-media-preview-box video {
   width: 100%;
   height: 100%;
   object-fit: contain;

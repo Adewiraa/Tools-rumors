@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
 
-const ALLOWED_BUCKETS = new Set(['club-logos', 'competition-logos', 'brand-logos']);
+const ALLOWED_BUCKETS = new Set(['club-logos', 'competition-logos', 'brand-logos', 'media-ads']);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -47,8 +47,10 @@ const isBucketAlreadyExistsError = (error: StorageErrorLike | null) => {
 const ensurePublicBucket = async (bucket: string) => {
   const { error } = await supabaseAdmin.storage.createBucket(bucket, {
     public: true,
-    fileSizeLimit: 1024 * 1024 * 5,
-    allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+    fileSizeLimit: bucket === 'media-ads' ? 1024 * 1024 * 80 : 1024 * 1024 * 5,
+    allowedMimeTypes: bucket === 'media-ads'
+      ? ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'video/mp4', 'video/webm', 'video/quicktime']
+      : ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
   });
 
   if (error && !isBucketAlreadyExistsError(error)) {
@@ -73,14 +75,18 @@ export async function POST(request: Request) {
     const folder = slugify(String(formData.get('folder') || 'logo')) || 'logo';
 
     if (!ALLOWED_BUCKETS.has(bucket)) {
-      return NextResponse.json({ success: false, error: 'Bucket logo tidak valid.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Bucket upload tidak valid.' }, { status: 400 });
     }
 
     if (!(fileEntry instanceof File)) {
-      return NextResponse.json({ success: false, error: 'File logo wajib diunggah.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'File wajib diunggah.' }, { status: 400 });
     }
 
-    if (!fileEntry.type.startsWith('image/')) {
+    if (bucket === 'media-ads') {
+      if (!fileEntry.type.startsWith('image/') && !fileEntry.type.startsWith('video/')) {
+        return NextResponse.json({ success: false, error: 'File media iklan harus berupa gambar atau video.' }, { status: 400 });
+      }
+    } else if (!fileEntry.type.startsWith('image/')) {
       return NextResponse.json({ success: false, error: 'File harus berupa gambar.' }, { status: 400 });
     }
 

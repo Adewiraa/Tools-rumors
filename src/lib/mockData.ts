@@ -137,6 +137,7 @@ export interface Match {
   homeAsing?: { id: string; name: string; no: number; pos: string }[];
   awayAsing?: { id: string; name: string; no: number; pos: string }[];
   timeline?: any[];
+  matchMedia?: any;
   editor: string;
   lastUpdated: string;
 }

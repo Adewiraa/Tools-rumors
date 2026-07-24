@@ -96,6 +96,53 @@ export default function ResultsListView() {
       : `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`
   ).replace(/[^\w.-]+/g, '_');
 
+  const getFileExtensionFromMime = (mimeType?: string) => {
+    if (!mimeType) return 'bin';
+    if (mimeType.includes('mp4')) return 'mp4';
+    if (mimeType.includes('webm')) return 'webm';
+    if (mimeType.includes('quicktime')) return 'mov';
+    if (mimeType.includes('jpeg')) return 'jpg';
+    if (mimeType.includes('png')) return 'png';
+    if (mimeType.includes('webp')) return 'webp';
+    return mimeType.split('/')[1]?.split(';')[0] || 'bin';
+  };
+
+  const getMatchMediaAdSource = (ad?: MatchMediaAdItem) => (
+    ad?.source || ad?.video || ad?.image || ''
+  );
+
+  const isVideoMatchMediaAd = (ad?: MatchMediaAdItem) => {
+    const source = getMatchMediaAdSource(ad);
+    return Boolean(
+      ad?.mediaType === 'video' ||
+      ad?.mimeType?.startsWith('video/') ||
+      source.startsWith('data:video') ||
+      /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(source)
+    );
+  };
+
+  const createRawVideoAdOutput = async (match: Match, ad: MatchMediaAdItem, adIndex = 0): Promise<GeneratedResultOutput> => {
+    const source = getMatchMediaAdSource(ad);
+    if (!source) throw new Error('File video iklan belum siap.');
+
+    const response = await fetch(source, { cache: 'no-cache' });
+    const blob = await response.blob();
+    const mimeType = ad.mimeType || blob.type || 'video/mp4';
+    const extension = getFileExtensionFromMime(mimeType);
+    const baseFileName = ad.fileName?.trim()
+      ? ad.fileName.trim()
+      : `Result_AD_${adIndex + 1}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.${extension}`;
+    const fileName = baseFileName.includes('.')
+      ? baseFileName
+      : `${baseFileName}.${extension}`;
+
+    return {
+      dataUrl: source.startsWith('data:') ? source : URL.createObjectURL(blob),
+      blob,
+      fileName: fileName.replace(/[^\w.-]+/g, '_'),
+    };
+  };
+
   const waitForOutputAssets = async (node: HTMLElement) => {
     await document.fonts?.ready;
     const images = Array.from(node.querySelectorAll('img'));
@@ -406,6 +453,13 @@ export default function ResultsListView() {
   };
 
   const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0): Promise<GeneratedResultOutput> => {
+    if (type === 'AD') {
+      const ad = getMatchMediaPages(getMatchMediaSettings(match))[adIndex];
+      if (isVideoMatchMediaAd(ad)) {
+        return createRawVideoAdOutput(match, ad, adIndex);
+      }
+    }
+
     const outputNode = document.getElementById(getResultOutputElementId(match.id, type, adIndex));
     const previewNode = document.getElementById(getResultPreviewElementId(match.id, type, adIndex));
     const fileName = getResultOutputFileName(match, type, adIndex);
@@ -550,7 +604,7 @@ export default function ResultsListView() {
       triggerToast(type === 'AD' ? `Membuat gambar ${outputLabel}...` : `Membuat paket gambar ${outputLabel} dan iklan...`);
       const outputs = await collectResultShareOutputs(match, type, adIndex);
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-      const files = outputs.map(output => new File([output.blob], output.fileName, { type: 'image/png' }));
+      const files = outputs.map(output => new File([output.blob], output.fileName, { type: output.blob.type || 'image/png' }));
       const shareData: ShareData = {
         files,
         title: `${outputLabel} ${match.homeClubName} vs ${match.awayClubName}`,

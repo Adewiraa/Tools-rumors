@@ -39,6 +39,7 @@ export function MatchMediaControls({
       enabled,
       ads,
       image: firstAd?.image || null,
+      video: firstAd?.video || null,
       label: firstAd?.label || '',
       fit: firstAd?.fit || value.fit || 'contain',
       placement: 'footer',
@@ -56,12 +57,18 @@ export function MatchMediaControls({
     Promise.all(files.map(file => new Promise<MatchMediaAdItem>((resolve) => {
       const reader = new FileReader();
       reader.onload = (loadEvent) => {
-        const image = loadEvent.target?.result;
+        const source = loadEvent.target?.result;
+        const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
         resolve({
           id: createAdId(),
-          image: typeof image === 'string' ? image : null,
+          mediaType,
+          source: typeof source === 'string' ? source : null,
+          image: mediaType === 'image' && typeof source === 'string' ? source : null,
+          video: mediaType === 'video' && typeof source === 'string' ? source : null,
           label: '',
           fit: value.fit || 'contain',
+          fileName: file.name,
+          mimeType: file.type,
         });
       };
       reader.readAsDataURL(file);
@@ -92,7 +99,7 @@ export function MatchMediaControls({
 
       <div className="match-media-control-grid">
         <label className="match-media-upload">
-          <input type="file" accept="image/*" multiple onChange={handleFileChange} />
+          <input type="file" accept="image/*,video/*" multiple onChange={handleFileChange} />
           <span className="match-media-upload-icon">
             <ImagePlus size={16} />
           </span>
@@ -120,7 +127,13 @@ export function MatchMediaControls({
           {value.ads.map((ad, index) => (
             <div className="match-media-ad-item" key={ad.id || index}>
               <div className="match-media-preview-box">
-                {ad.image ? <img src={ad.image} alt="" /> : <span>{index + 1}</span>}
+                {ad.mediaType === 'video' && ad.video ? (
+                  <video src={ad.video} muted playsInline />
+                ) : ad.image ? (
+                  <img src={ad.image} alt="" />
+                ) : (
+                  <span>{index + 1}</span>
+                )}
               </div>
               <div className="match-media-ad-fields">
                 <input
@@ -206,6 +219,8 @@ export function MatchMediaPageCard({
   const label = (selectedAd.label || 'MEDIA PARTNER').trim();
   const mediaBoxHeight = Math.max(190, Math.round(height * 0.48));
   const fit = selectedAd.fit || settings?.fit || 'contain';
+  const mediaSource = selectedAd.source || selectedAd.video || selectedAd.image || '';
+  const isVideo = selectedAd.mediaType === 'video' && Boolean(mediaSource);
 
   return (
     <div id={elementId} style={{
@@ -324,7 +339,23 @@ export function MatchMediaPageCard({
           overflow: 'hidden',
           padding: fit === 'cover' ? 0 : 18,
         }}>
-          {selectedAd.image ? (
+          {isVideo ? (
+            <video
+              src={mediaSource}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster={selectedAd.poster || selectedAd.image || undefined}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: fit,
+                display: 'block',
+                background: '#0a0a0a',
+              }}
+            />
+          ) : selectedAd.image ? (
             <img
               src={selectedAd.image}
               crossOrigin="anonymous"

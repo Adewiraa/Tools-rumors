@@ -17,7 +17,7 @@ import {
   getEffectiveLineupStatus,
   ResultGraphicSettings
 } from '@/logic/utils';
-import type { MatchMediaSettings } from '@/logic/utils';
+import type { MatchMediaAdItem, MatchMediaSettings } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
 import { getMatchMediaPages, hasMatchMediaPage, MatchMediaControls, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
 
@@ -121,6 +121,74 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   const hasMediaAdPage = hasMatchMediaPage(mediaSettings);
   const getMediaAdCardId = (index: number) => `match-media-ad-card-${index + 1}`;
 
+  type GeneratedEditorOutput = { dataUrl: string; blob: Blob; fileName: string };
+
+  const getFileExtensionFromMime = (mimeType?: string) => {
+    if (!mimeType) return 'bin';
+    if (mimeType.includes('mp4')) return 'mp4';
+    if (mimeType.includes('webm')) return 'webm';
+    if (mimeType.includes('quicktime')) return 'mov';
+    if (mimeType.includes('jpeg')) return 'jpg';
+    if (mimeType.includes('png')) return 'png';
+    if (mimeType.includes('webp')) return 'webp';
+    return mimeType.split('/')[1]?.split(';')[0] || 'bin';
+  };
+
+  const getMatchMediaAdSource = (ad?: MatchMediaAdItem) => (
+    ad?.source || ad?.video || ad?.image || ''
+  );
+
+  const isVideoMatchMediaAd = (ad?: MatchMediaAdItem) => {
+    const source = getMatchMediaAdSource(ad);
+    return Boolean(
+      ad?.mediaType === 'video' ||
+      ad?.mimeType?.startsWith('video/') ||
+      source.startsWith('data:video') ||
+      /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(source)
+    );
+  };
+
+  const createRawVideoAdOutput = async (ad: MatchMediaAdItem, index: number): Promise<GeneratedEditorOutput> => {
+    const source = getMatchMediaAdSource(ad);
+    if (!source) throw new Error('File video iklan belum siap.');
+
+    const response = await fetch(source, { cache: 'no-cache' });
+    const blob = await response.blob();
+    const mimeType = ad.mimeType || blob.type || 'video/mp4';
+    const extension = getFileExtensionFromMime(mimeType);
+    const baseFileName = ad.fileName?.trim()
+      ? ad.fileName.trim()
+      : `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.${extension}`;
+    const fileName = baseFileName.includes('.') ? baseFileName : `${baseFileName}.${extension}`;
+
+    return {
+      dataUrl: source.startsWith('data:') ? source : URL.createObjectURL(blob),
+      blob,
+      fileName: fileName.replace(/[^\w.-]+/g, '_'),
+    };
+  };
+
+  const createMatchMediaAdOutput = async (index: number): Promise<GeneratedEditorOutput | null> => {
+    const ad = mediaAdPages[index];
+    if (!ad) return null;
+
+    if (isVideoMatchMediaAd(ad)) {
+      return createRawVideoAdOutput(ad, index);
+    }
+
+    const node = document.getElementById(getMediaAdCardId(index));
+    if (!node) return null;
+
+    const dataUrl = await htmlToImage.toPng(node, {
+      cacheBust: true,
+      pixelRatio: 2.7,
+    });
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    const fileName = `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+    return { dataUrl, blob, fileName };
+  };
+
   useEffect(() => {
     if (isFullTimeGraphic && graphicType !== 'FT') {
       setGraphicType('FT');
@@ -203,18 +271,10 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
       if (hasMediaAdPage) {
         for (let index = 0; index < mediaAdPages.length; index += 1) {
-          const adNode = document.getElementById(getMediaAdCardId(index));
-          if (adNode) {
-            const adDataUrl = await htmlToImage.toPng(adNode, {
-              cacheBust: true,
-              pixelRatio: 2.7,
-            });
-            const adResponse = await fetch(adDataUrl);
-            const adBlob = await adResponse.blob();
-            const adFileName = `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
-            files.push(new File([adBlob], adFileName, { type: 'image/png' }));
-            fallbackDownloads.push({ dataUrl: adDataUrl, fileName: adFileName });
-          }
+          const adOutput = await createMatchMediaAdOutput(index);
+          if (!adOutput) continue;
+          files.push(new File([adOutput.blob], adOutput.fileName, { type: adOutput.blob.type || 'image/png' }));
+          fallbackDownloads.push({ dataUrl: adOutput.dataUrl, fileName: adOutput.fileName });
         }
       }
       
@@ -290,17 +350,10 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       const fallbackDownloads: { dataUrl: string; fileName: string }[] = [];
 
       for (let index = 0; index < mediaAdPages.length; index += 1) {
-        const node = document.getElementById(getMediaAdCardId(index));
-        if (!node) continue;
-        const dataUrl = await htmlToImage.toPng(node, {
-          cacheBust: true,
-          pixelRatio: 2.7,
-        });
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        const fileName = `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
-        files.push(new File([blob], fileName, { type: 'image/png' }));
-        fallbackDownloads.push({ dataUrl, fileName });
+        const output = await createMatchMediaAdOutput(index);
+        if (!output) continue;
+        files.push(new File([output.blob], output.fileName, { type: output.blob.type || 'image/png' }));
+        fallbackDownloads.push({ dataUrl: output.dataUrl, fileName: output.fileName });
       }
 
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
@@ -340,16 +393,11 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       setIsExportingGraphic(true);
       triggerToast('Mengunduh semua halaman iklan...');
       for (let index = 0; index < mediaAdPages.length; index += 1) {
-        const node = document.getElementById(getMediaAdCardId(index));
-        if (!node) continue;
-        const dataUrl = await htmlToImage.toPng(node, {
-          cacheBust: true,
-          pixelRatio: 2.7,
-        });
-        const fileName = `Result_Ad_${index + 1}_${match.homeClubName}_vs_${match.awayClubName}_${graphicRatio.replace(':', '_')}.png`.replace(/[^\w.-]+/g, '_');
+        const output = await createMatchMediaAdOutput(index);
+        if (!output) continue;
         const link = document.createElement('a');
-        link.download = fileName;
-        link.href = dataUrl;
+        link.download = output.fileName;
+        link.href = output.dataUrl;
         link.click();
       }
       triggerToast('Semua halaman iklan berhasil diunduh!');
@@ -553,6 +601,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       halfTimeAwayScore: shouldPersistHalfTime ? (halfTimeAwayScore === '' ? null : (halfTimeAwayScore as any)) : null,
       status: storedStatus,
       lineupStatus: nextLineupStatus,
+      matchMedia: mediaSettings,
       timeline: getTimelineWithMatchMediaSettings(
         getTimelineWithResultGraphicSettings(events, nextGraphicSettings),
         mediaSettings
