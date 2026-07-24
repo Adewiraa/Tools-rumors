@@ -318,8 +318,15 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const hasMenuAccess = (menuId: string): boolean => {
     if (currentUserRole === 'Super Admin') return true;
+    if (menuId === 'media-ads' && currentUserRole === 'Admin Data') return true;
     const perm = rolePermissions.find(p => p.role === currentUserRole);
     if (!perm) return true; // fallback default open
+    if (
+      menuId === 'media-ads' &&
+      perm.allowedMenus.some(menu => menu === 'clubs' || menu === 'players' || menu === 'competitions')
+    ) {
+      return true;
+    }
     return perm.allowedMenus.includes(menuId as ActiveMenu);
   };
 

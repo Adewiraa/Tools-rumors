@@ -23,9 +23,17 @@ const getErrorMessage = (error: unknown) => (
 
 const mapPermissionFromSupabase = (row: any): RolePermission => ({
   role: row.role as UserRole,
-  allowedMenus: (Array.isArray(row.allowed_menus) ? row.allowed_menus : []) as ActiveMenu[],
+  allowedMenus: normalizeAllowedMenus(row.role, Array.isArray(row.allowed_menus) ? row.allowed_menus : []),
   updatedAt: row.updated_at,
 });
+
+const normalizeAllowedMenus = (role: string, menus: string[]): ActiveMenu[] => {
+  const next = new Set(menus);
+  if ((role === 'Super Admin' || role === 'Admin Data') && (next.has('clubs') || next.has('players') || next.has('competitions'))) {
+    next.add('media-ads');
+  }
+  return Array.from(next) as ActiveMenu[];
+};
 
 export async function GET() {
   try {
