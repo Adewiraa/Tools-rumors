@@ -98,6 +98,19 @@ DROP POLICY IF EXISTS "match_media_ads_read_all" ON match_media_ads;
 CREATE POLICY "match_media_ads_read_all"
   ON match_media_ads FOR SELECT USING (true);
 
+-- Tambahkan akses menu Master Iklan untuk role yang mengelola master data.
+DO $$
+BEGIN
+  IF to_regclass('public.role_permissions') IS NOT NULL THEN
+    UPDATE role_permissions
+    SET allowed_menus = (
+      SELECT jsonb_agg(DISTINCT menu)
+      FROM jsonb_array_elements_text(allowed_menus || '["media-ads"]'::jsonb) AS menu
+    )
+    WHERE role IN ('Super Admin', 'Admin Data');
+  END IF;
+END $$;
+
 -- View praktis untuk mengambil iklan aktif per match, dengan fallback label/fit override.
 CREATE OR REPLACE VIEW match_media_ads_resolved AS
 SELECT

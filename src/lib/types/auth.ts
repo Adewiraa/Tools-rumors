@@ -9,6 +9,7 @@ export type ActiveMenu =
   | 'clubs'
   | 'players'
   | 'competitions'
+  | 'media-ads'
   | 'users'
   | 'permissions'
   | 'logs'
@@ -41,6 +42,7 @@ export const ALL_MENUS: { id: ActiveMenu; label: string; category: string }[] = 
   { id: 'clubs', label: 'Master Klub', category: 'Master Data' },
   { id: 'players', label: 'Master Pemain', category: 'Master Data' },
   { id: 'competitions', label: 'Master Kompetisi', category: 'Master Data' },
+  { id: 'media-ads', label: 'Master Iklan', category: 'Master Data' },
   { id: 'users', label: 'Manajemen User', category: 'Sistem' },
   { id: 'permissions', label: 'Manajemen Hak Akses', category: 'Sistem' },
   { id: 'logs', label: 'Audit Log', category: 'Sistem' },
@@ -50,11 +52,11 @@ export const ALL_MENUS: { id: ActiveMenu; label: string; category: string }[] = 
 export const INITIAL_ROLE_PERMISSIONS: RolePermission[] = [
   {
     role: 'Super Admin',
-    allowedMenus: ['dashboard', 'schedule', 'lineups', 'results', 'rumors', 'clubs', 'players', 'competitions', 'users', 'permissions', 'logs', 'settings'],
+    allowedMenus: ['dashboard', 'schedule', 'lineups', 'results', 'rumors', 'clubs', 'players', 'competitions', 'media-ads', 'users', 'permissions', 'logs', 'settings'],
   },
   {
     role: 'Admin Data',
-    allowedMenus: ['dashboard', 'schedule', 'clubs', 'players', 'competitions', 'logs', 'settings'],
+    allowedMenus: ['dashboard', 'schedule', 'clubs', 'players', 'competitions', 'media-ads', 'logs', 'settings'],
   },
   {
     role: 'Match Editor',
