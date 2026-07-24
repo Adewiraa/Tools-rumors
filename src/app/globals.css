@@ -1418,6 +1418,20 @@ a {
   flex-wrap: wrap;
 }
 
+.result-output-export-deck {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 400px;
+  height: auto;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.result-output-export-deck > * {
+  margin-bottom: 24px;
+}
+
 .rumor-modal-overlay {
   position: fixed;
   inset: 0;
