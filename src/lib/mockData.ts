@@ -586,29 +586,4 @@ export const INITIAL_RUMORS: Rumor[] = [
   }
 ];
 
-export const INITIAL_AUDIT_LOGS: AuditLog[] = [
-  {
-    id: 'log-1',
-    timestamp: '13 Jul 2026, 19:15:30 WIB',
-    user: 'Super Admin',
-    action: 'PUBLISH_MATCH_RESULT',
-    module: 'Match Result',
-    details: 'Mempublikasikan hasil pertandingan Bandung Cakra FC (2) vs (1) Bali Dewata FC',
-  },
-  {
-    id: 'log-2',
-    timestamp: '13 Jul 2026, 18:45:12 WIB',
-    user: 'Match Editor A',
-    action: 'UPDATE_LINEUP_DRAFT',
-    module: 'Lineup Pertandingan',
-    details: 'Mengubah starting XI Jakarta Garuda FC vs Surabaya Samudra FC',
-  },
-  {
-    id: 'log-3',
-    timestamp: '13 Jul 2026, 17:30:22 WIB',
-    user: 'Rumor Editor X',
-    action: 'CREATE_RUMOR',
-    module: 'Rumor & Transfer',
-    details: 'Membuat draft rumor baru: Jakarta Garuda FC Memantau Penyerang Muda Ardi Pratama',
-  }
-];
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [];

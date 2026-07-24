@@ -11,7 +11,6 @@ import {
   INITIAL_CLUBS,
   INITIAL_PLAYERS,
   INITIAL_RUMORS,
-  INITIAL_AUDIT_LOGS,
   INITIAL_COMPETITIONS,
   calculateClubCompleteness
 } from '@/lib/mockData';
@@ -102,6 +101,7 @@ const APP_SETTINGS_STORAGE_KEY = 'gosball_app_settings';
 const USERS_STORAGE_KEY = 'gosball_users_cache';
 const PERMISSIONS_STORAGE_KEY = 'gosball_permissions_cache';
 const AUDIT_LOGS_STORAGE_KEY = 'gosball_audit_logs_cache';
+const SEED_AUDIT_LOG_IDS = new Set(['log-1', 'log-2', 'log-3']);
 
 const readCachedArray = <T,>(key: string, fallback: T[]): T[] => {
   if (typeof window === 'undefined') return fallback;
@@ -127,13 +127,17 @@ const writeCache = (key: string, value: unknown) => {
   }
 };
 
+const sanitizeAuditLogs = (logs: AuditLog[]) => (
+  logs.filter(log => !SEED_AUDIT_LOG_IDS.has(log.id))
+);
+
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clubs, setClubsState] = useState<Club[]>(INITIAL_CLUBS);
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
   const [matches, setMatches] = useState<Match[]>([]);
   const [rumors, setRumorsState] = useState<Rumor[]>(INITIAL_RUMORS);
   const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
-  const [auditLogs, setAuditLogsState] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
+  const [auditLogs, setAuditLogsState] = useState<AuditLog[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>(INITIAL_COMPETITIONS);
   
   const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS);
@@ -162,9 +166,10 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const setAuditLogs: React.Dispatch<React.SetStateAction<AuditLog[]>> = (value) => {
     setAuditLogsState(prev => {
-      const next = typeof value === 'function'
+      const nextValue = typeof value === 'function'
         ? (value as (prevState: AuditLog[]) => AuditLog[])(prev)
         : value;
+      const next = sanitizeAuditLogs(nextValue);
       writeCache(AUDIT_LOGS_STORAGE_KEY, next);
       return next;
     });
@@ -191,7 +196,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setCompetitions(readCachedArray(COMPETITIONS_STORAGE_KEY, INITIAL_COMPETITIONS));
       setUsers(readCachedArray(USERS_STORAGE_KEY, INITIAL_USERS));
       setRolePermissions(readCachedArray(PERMISSIONS_STORAGE_KEY, INITIAL_ROLE_PERMISSIONS));
-      setAuditLogs(readCachedArray(AUDIT_LOGS_STORAGE_KEY, INITIAL_AUDIT_LOGS));
+      setAuditLogs(readCachedArray(AUDIT_LOGS_STORAGE_KEY, []));
 
       const savedSettings = localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
       if (savedSettings) {
