@@ -21,6 +21,7 @@ import { getMatchMediaPages, hasMatchMediaPage, MatchMediaPageCard } from '@/vie
 
 type ResultOutputType = 'HT' | 'FT' | 'AD';
 type ResultPreviewTarget = { type: ResultOutputType; adIndex: number };
+type GeneratedResultOutput = { dataUrl: string; blob: Blob; fileName: string };
 
 export default function ResultsListView() {
   const router = useRouter();
@@ -85,13 +86,31 @@ export default function ResultsListView() {
       : `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`
   ).replace(/[^\w.-]+/g, '_');
 
-  const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0) => {
+  const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0): Promise<GeneratedResultOutput> => {
     const node = document.getElementById(getResultOutputElementId(match.id, type, adIndex));
     if (!node) throw new Error(type === 'AD' ? 'Halaman iklan belum siap.' : 'Gambar hasil belum siap.');
     const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     return { dataUrl, blob, fileName: getResultOutputFileName(match, type, adIndex) };
+  };
+
+  const downloadGeneratedOutputs = (outputs: Pick<GeneratedResultOutput, 'dataUrl' | 'fileName'>[]) => {
+    outputs.forEach(output => {
+      const link = document.createElement('a');
+      link.download = output.fileName;
+      link.href = output.dataUrl;
+      link.click();
+    });
+  };
+
+  const canShareFiles = (nav: Navigator & { canShare?: (data: ShareData) => boolean }, shareData: ShareData) => {
+    try {
+      return typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData);
+    } catch (error) {
+      console.warn('Result output canShare check failed:', error);
+      return false;
+    }
   };
 
   const downloadResultOutput = async (match: Match, type: ResultOutputType, adIndex = 0) => {
@@ -120,19 +139,23 @@ export default function ResultsListView() {
       const shouldIncludeAd = type !== 'AD' && hasMatchMediaPage(getMatchMediaSettings(match));
       const mediaAdPages = getMatchMediaPages(getMatchMediaSettings(match));
       triggerToast(shouldIncludeAd ? `Membuat gambar ${outputLabel} dan semua iklan...` : `Membuat gambar ${outputLabel}...`);
-      const { blob, dataUrl, fileName } = await createResultOutputImage(match, type, adIndex);
-      const files = [new File([blob], fileName, { type: 'image/png' })];
-      const fallbackDownloads = [{ dataUrl, fileName }];
+      const mainOutput = await createResultOutputImage(match, type, adIndex);
+      const outputs: GeneratedResultOutput[] = [mainOutput];
+      let skippedAdCount = 0;
 
       if (shouldIncludeAd) {
         for (let index = 0; index < mediaAdPages.length; index += 1) {
-          const adImage = await createResultOutputImage(match, 'AD', index);
-          files.push(new File([adImage.blob], adImage.fileName, { type: 'image/png' }));
-          fallbackDownloads.push({ dataUrl: adImage.dataUrl, fileName: adImage.fileName });
+          try {
+            outputs.push(await createResultOutputImage(match, 'AD', index));
+          } catch (error) {
+            skippedAdCount += 1;
+            console.warn(`Result output ad ${index + 1} export skipped:`, error);
+          }
         }
       }
 
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+      const files = outputs.map(output => new File([output.blob], output.fileName, { type: 'image/png' }));
       const shareData: ShareData = {
         files,
         title: `${outputLabel} ${match.homeClubName} vs ${match.awayClubName}`,
@@ -143,21 +166,28 @@ export default function ResultsListView() {
           : `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName}`,
       };
 
-      if (typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(shareData)) {
-        await nav.share(shareData);
-        triggerToast(shouldIncludeAd ? `Gambar ${outputLabel} dan semua iklan siap dibagikan.` : `Gambar ${outputLabel} siap dibagikan.`);
-        return;
+      if (canShareFiles(nav, shareData)) {
+        try {
+          await nav.share(shareData);
+          triggerToast(
+            shouldIncludeAd && outputs.length > 1
+              ? `Gambar ${outputLabel} dan media iklan siap dibagikan.`
+              : `Gambar ${outputLabel} siap dibagikan.`
+          );
+          return;
+        } catch (shareError) {
+          const error = shareError as { name?: string };
+          if (error?.name === 'AbortError') return;
+          console.warn('Result output native share failed, falling back to download:', shareError);
+        }
       }
 
-      fallbackDownloads.forEach(download => {
-        const link = document.createElement('a');
-        link.download = download.fileName;
-        link.href = download.dataUrl;
-        link.click();
-      });
+      downloadGeneratedOutputs(outputs);
       triggerToast(
-        shouldIncludeAd
-          ? 'Share langsung belum didukung di perangkat ini. PNG hasil dan semua iklan diunduh sebagai fallback.'
+        skippedAdCount > 0
+          ? `Share langsung belum didukung. PNG ${outputLabel} diunduh, ${skippedAdCount} iklan dilewati.`
+          : shouldIncludeAd && outputs.length > 1
+          ? 'Share langsung belum didukung. PNG hasil dan media iklan diunduh sebagai fallback.'
           : 'Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.',
         'warning'
       );
