@@ -1825,10 +1825,14 @@ a {
   .output-preview-modal {
     max-width: 100%;
     border-radius: 18px 18px 0 0;
+    max-height: calc(100dvh - env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
   }
 
   .output-preview-header {
     padding: 16px 18px 12px;
+    flex-shrink: 0;
   }
 
   .output-preview-title {
@@ -1842,6 +1846,7 @@ a {
 
   .output-preview-tabs {
     padding: 10px 16px;
+    flex-shrink: 0;
   }
 
   .output-preview-tab {
@@ -1856,8 +1861,48 @@ a {
   }
 
   .output-preview-stage {
-    max-height: 76dvh;
-    padding: 18px 12px calc(18px + env(safe-area-inset-bottom));
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    padding: 14px 10px calc(14px + env(safe-area-inset-bottom));
+    align-items: flex-start;
+  }
+
+  .output-preview-active-card {
+    gap: 6px;
+  }
+
+  .output-preview-active-card > [id^="result-output-card"] {
+    width: 320px !important;
+    height: 400px !important;
+    max-width: calc(100vw - 48px);
+    overflow: hidden;
+  }
+
+  .output-preview-item-label {
+    font-size: 10px;
+  }
+
+  .output-preview-actions {
+    width: min(320px, calc(100vw - 48px));
+  }
+
+  .output-preview-actions .btn {
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 11px;
+  }
+
+  @media (max-height: 760px), (max-width: 380px) {
+    .output-preview-active-card > [id^="result-output-card"] {
+      width: 292px !important;
+      height: 365px !important;
+    }
+
+    .output-preview-actions {
+      width: min(292px, calc(100vw - 48px));
+    }
   }
 
   .rumor-modal-overlay {
