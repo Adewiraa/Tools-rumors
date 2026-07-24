@@ -95,13 +95,63 @@ export default function ResultsListView() {
       : `Result_${type}_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`
   ).replace(/[^\w.-]+/g, '_');
 
-  const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0): Promise<GeneratedResultOutput> => {
-    const node = document.getElementById(getResultOutputElementId(match.id, type, adIndex));
-    if (!node) throw new Error(type === 'AD' ? 'Halaman iklan belum siap.' : 'Gambar hasil belum siap.');
+  const waitForOutputAssets = async (node: HTMLElement) => {
+    await document.fonts?.ready;
+    const images = Array.from(node.querySelectorAll('img'));
+    await Promise.all(images.map(image => {
+      if (image.complete && image.naturalWidth > 0) {
+        return image.decode?.().catch(() => undefined) || Promise.resolve();
+      }
+
+      return new Promise<void>(resolve => {
+        const done = () => resolve();
+        const timer = window.setTimeout(done, 2500);
+        image.addEventListener('load', () => {
+          window.clearTimeout(timer);
+          done();
+        }, { once: true });
+        image.addEventListener('error', () => {
+          window.clearTimeout(timer);
+          done();
+        }, { once: true });
+      }).then(() => image.decode?.().catch(() => undefined));
+    }));
+    await new Promise(resolve => window.setTimeout(resolve, 80));
+  };
+
+  const captureResultOutputNode = async (node: HTMLElement) => {
+    await waitForOutputAssets(node);
     const dataUrl = await htmlToImage.toPng(node, { cacheBust: true, pixelRatio: 3 });
     const response = await fetch(dataUrl);
     const blob = await response.blob();
-    return { dataUrl, blob, fileName: getResultOutputFileName(match, type, adIndex) };
+    return { dataUrl, blob };
+  };
+
+  const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0): Promise<GeneratedResultOutput> => {
+    const outputNode = document.getElementById(getResultOutputElementId(match.id, type, adIndex));
+    const previewNode = document.getElementById(getResultPreviewElementId(match.id, type, adIndex));
+    const fileName = getResultOutputFileName(match, type, adIndex);
+
+    if (!outputNode && !previewNode) {
+      throw new Error(type === 'AD' ? 'Halaman iklan belum siap.' : 'Gambar hasil belum siap.');
+    }
+
+    let dataUrl = '';
+    let blob: Blob;
+
+    try {
+      const captured = await captureResultOutputNode((outputNode || previewNode) as HTMLElement);
+      dataUrl = captured.dataUrl;
+      blob = captured.blob;
+    } catch (error) {
+      if (!previewNode || previewNode === outputNode) throw error;
+      console.warn('Hidden result output capture failed, retrying visible preview:', error);
+      const captured = await captureResultOutputNode(previewNode);
+      dataUrl = captured.dataUrl;
+      blob = captured.blob;
+    }
+
+    return { dataUrl, blob, fileName };
   };
 
   const prepareResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0) => {
@@ -187,6 +237,7 @@ export default function ResultsListView() {
           setIsExportingResultOutput(true);
           await sharePromise;
           triggerToast(`Gambar ${outputLabel} siap dibagikan.`);
+          return;
         } catch (shareError) {
           const error = shareError as { name?: string };
           if (error?.name === 'AbortError') return;
@@ -429,6 +480,7 @@ export default function ResultsListView() {
                 const activeGraphicType: 'HT' | 'FT' = activeType === 'HT' ? 'HT' : 'FT';
                 const activeLabel = activeType === 'HT' ? 'Half Time' : activeType === 'FT' ? 'Full Time' : `Media Iklan ${activeResultPreview.adIndex + 1}`;
                 const activeOutputReady = preparedOutputKeys.has(getResultOutputCacheKey(timelineMatch.id, activeType, activeResultPreview.adIndex));
+                const activeShareLabel = activeOutputReady ? `Bagikan ${activeType === 'AD' ? 'Iklan' : activeType}` : `Siapkan ${activeType === 'AD' ? 'Iklan' : activeType}`;
 
                 return (
                   <div className="output-preview-item output-preview-active-card">
@@ -456,10 +508,10 @@ export default function ResultsListView() {
                       <button
                         className="btn btn-sm btn-primary"
                         onClick={() => shareResultOutput(timelineMatch, activeType, activeResultPreview.adIndex)}
-                        disabled={isExportingResultOutput || !activeOutputReady}
+                        disabled={isExportingResultOutput}
                         title={activeOutputReady ? `Bagikan ${activeType}` : 'Gambar sedang disiapkan'}
                       >
-                        <Share2 size={14} /> {activeOutputReady ? `Bagikan ${activeType === 'AD' ? 'Iklan' : activeType}` : 'Menyiapkan...'}
+                        <Share2 size={14} /> {activeShareLabel}
                       </button>
                       <button
                         className="btn btn-sm btn-secondary"
