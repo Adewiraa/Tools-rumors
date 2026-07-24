@@ -406,19 +406,11 @@ export default function ResultsListView() {
   };
 
   const createResultOutputImage = async (match: Match, type: ResultOutputType, adIndex = 0): Promise<GeneratedResultOutput> => {
-    if (type === 'HT' || type === 'FT') {
-      try {
-        return await createCanvasResultOutputImage(match, type);
-      } catch (error) {
-        console.warn('Canvas result output failed, falling back to DOM capture:', error);
-      }
-    }
-
     const outputNode = document.getElementById(getResultOutputElementId(match.id, type, adIndex));
     const previewNode = document.getElementById(getResultPreviewElementId(match.id, type, adIndex));
     const fileName = getResultOutputFileName(match, type, adIndex);
 
-    if (!outputNode && !previewNode) {
+    if (!outputNode && !previewNode && type !== 'HT' && type !== 'FT') {
       throw new Error(type === 'AD' ? 'Halaman iklan belum siap.' : 'Gambar hasil belum siap.');
     }
 
@@ -430,11 +422,22 @@ export default function ResultsListView() {
       dataUrl = captured.dataUrl;
       blob = captured.blob;
     } catch (error) {
-      if (!previewNode || previewNode === outputNode) throw error;
-      console.warn('Hidden result output capture failed, retrying visible preview:', error);
-      const captured = await captureResultOutputNode(previewNode);
-      dataUrl = captured.dataUrl;
-      blob = captured.blob;
+      if (previewNode && previewNode !== outputNode) {
+        try {
+          console.warn('Hidden result output capture failed, retrying visible preview:', error);
+          const captured = await captureResultOutputNode(previewNode);
+          dataUrl = captured.dataUrl;
+          blob = captured.blob;
+        } catch (previewError) {
+          if (type !== 'HT' && type !== 'FT') throw previewError;
+          console.warn('Visible result output capture failed, falling back to canvas:', previewError);
+          return createCanvasResultOutputImage(match, type);
+        }
+      } else {
+        if (type !== 'HT' && type !== 'FT') throw error;
+        console.warn('Result output DOM capture failed, falling back to canvas:', error);
+        return createCanvasResultOutputImage(match, type);
+      }
     }
 
     return { dataUrl, blob, fileName };
@@ -473,17 +476,50 @@ export default function ResultsListView() {
     }
   };
 
-  const copyResultOutputToClipboard = async (output: GeneratedResultOutput) => {
+  const collectResultShareOutputs = async (match: Match, type: ResultOutputType, adIndex = 0) => {
+    const getOutput = async (outputType: ResultOutputType, outputAdIndex = 0) => {
+      const key = getResultOutputCacheKey(match.id, outputType, outputAdIndex);
+      return resultOutputCacheRef.current.get(key) || await prepareResultOutputImage(match, outputType, outputAdIndex);
+    };
+
+    const outputs = [await getOutput(type, adIndex)];
+
+    if (type !== 'AD') {
+      const mediaPages = getMatchMediaPages(getMatchMediaSettings(match));
+      for (let index = 0; index < mediaPages.length; index += 1) {
+        try {
+          outputs.push(await getOutput('AD', index));
+        } catch (error) {
+          console.warn(`Media ad ${index + 1} output skipped from share package:`, error);
+        }
+      }
+    }
+
+    return outputs;
+  };
+
+  const copyResultOutputsToClipboard = async (outputs: GeneratedResultOutput[]) => {
     if (!navigator.clipboard || typeof ClipboardItem === 'undefined') return false;
 
     try {
-      await navigator.clipboard.write([
-        new ClipboardItem({ [output.blob.type || 'image/png']: output.blob }),
-      ]);
-      return true;
+      await navigator.clipboard.write(outputs.map(output => (
+        new ClipboardItem({ [output.blob.type || 'image/png']: output.blob })
+      )));
+      return { copiedCount: outputs.length };
     } catch (error) {
       console.warn('Result output clipboard fallback failed:', error);
-      return false;
+
+      if (outputs.length <= 1) return false;
+
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [outputs[0].blob.type || 'image/png']: outputs[0].blob }),
+        ]);
+        return { copiedCount: 1 };
+      } catch (singleError) {
+        console.warn('Single result output clipboard fallback failed:', singleError);
+        return false;
+      }
     }
   };
 
@@ -508,20 +544,19 @@ export default function ResultsListView() {
 
   const shareResultOutput = async (match: Match, type: ResultOutputType, adIndex = 0) => {
     const outputLabel = type === 'AD' ? `Iklan ${adIndex + 1}` : type;
-    const key = getResultOutputCacheKey(match.id, type, adIndex);
 
     try {
       setIsExportingResultOutput(true);
-      triggerToast(`Membuat gambar ${outputLabel}...`);
-      const output = resultOutputCacheRef.current.get(key) || await prepareResultOutputImage(match, type, adIndex);
+      triggerToast(type === 'AD' ? `Membuat gambar ${outputLabel}...` : `Membuat paket gambar ${outputLabel} dan iklan...`);
+      const outputs = await collectResultShareOutputs(match, type, adIndex);
       const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-      const files = [new File([output.blob], output.fileName, { type: 'image/png' })];
+      const files = outputs.map(output => new File([output.blob], output.fileName, { type: 'image/png' }));
       const shareData: ShareData = {
         files,
         title: `${outputLabel} ${match.homeClubName} vs ${match.awayClubName}`,
         text: type === 'AD'
           ? `Halaman iklan ${match.homeClubName} vs ${match.awayClubName}`
-          : `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName}`,
+          : `Hasil ${type} ${match.homeClubName} vs ${match.awayClubName}${outputs.length > 1 ? ' + media iklan' : ''}`,
       };
 
       if (canShareFiles(nav, shareData)) {
@@ -529,7 +564,7 @@ export default function ResultsListView() {
           const sharePromise = nav.share(shareData);
           setIsExportingResultOutput(true);
           await sharePromise;
-          triggerToast(`Gambar ${outputLabel} siap dibagikan.`);
+          triggerToast(outputs.length > 1 ? `Gambar ${outputLabel} dan media iklan siap dibagikan.` : `Gambar ${outputLabel} siap dibagikan.`);
           return;
         } catch (shareError) {
           const error = shareError as { name?: string };
@@ -538,12 +573,18 @@ export default function ResultsListView() {
         }
       }
 
-      if (await copyResultOutputToClipboard(output)) {
-        triggerToast(`Gambar ${outputLabel} disalin ke clipboard. Tinggal paste ke aplikasi tujuan.`);
+      const clipboardResult = await copyResultOutputsToClipboard(outputs);
+      if (clipboardResult) {
+        triggerToast(
+          clipboardResult.copiedCount === outputs.length
+            ? `Gambar ${outputLabel}${outputs.length > 1 ? ' dan iklan' : ''} disalin ke clipboard. Tinggal paste ke aplikasi tujuan.`
+            : `Gambar ${outputLabel} disalin ke clipboard. Perangkat ini belum mendukung clipboard multi-gambar untuk iklan.`,
+          clipboardResult.copiedCount === outputs.length ? 'success' : 'warning'
+        );
         return;
       }
 
-      downloadGeneratedOutputs([output]);
+      downloadGeneratedOutputs(outputs);
       triggerToast('Share langsung belum didukung di perangkat ini. PNG diunduh sebagai fallback.', 'warning');
     } catch (err) {
       const error = err as { name?: string };
