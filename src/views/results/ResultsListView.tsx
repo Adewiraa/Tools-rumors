@@ -20,6 +20,7 @@ import type { AppSettings, MatchMediaAdItem } from '@/logic/utils';
 import { getMatchMediaPages, hasMatchMediaPage, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
 
 type ResultOutputType = 'HT' | 'FT' | 'AD';
+type ResultPreviewTarget = { type: ResultOutputType; adIndex: number };
 
 export default function ResultsListView() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function ResultsListView() {
 
   const [selectedComp, setSelectedComp] = useState('Semua');
   const [timelineMatch, setTimelineMatch] = useState<Match | null>(null);
+  const [activeResultPreview, setActiveResultPreview] = useState<ResultPreviewTarget>({ type: 'FT', adIndex: 0 });
   const [isExportingResultOutput, setIsExportingResultOutput] = useState(false);
 
   const filteredMatches = matches
@@ -174,6 +176,26 @@ export default function ResultsListView() {
     router.push(`/results?edit=${id}`);
   };
 
+  const canShowHalfTimeOutput = (match: Match) => (
+    hasSavedHalfTimeResult(match) &&
+    match.halfTimeHomeScore !== undefined &&
+    match.halfTimeHomeScore !== null &&
+    match.halfTimeAwayScore !== undefined &&
+    match.halfTimeAwayScore !== null
+  );
+
+  const canShowFullTimeOutput = (match: Match) => (
+    match.homeScore !== undefined &&
+    match.homeScore !== null &&
+    match.awayScore !== undefined &&
+    match.awayScore !== null
+  );
+
+  const openResultPreview = (match: Match) => {
+    setTimelineMatch(match);
+    setActiveResultPreview({ type: canShowHalfTimeOutput(match) ? 'HT' : 'FT', adIndex: 0 });
+  };
+
   return (
     <div className="schedule-page-root">
       <div className="page-header">
@@ -277,9 +299,9 @@ export default function ResultsListView() {
                   </td>
                   <td className="schedule-actions-cell text-right">
                     <div className="schedule-actions">
-                      {effectiveStatus === 'Finished' ? (
-                        <button className="btn btn-sm btn-secondary" onClick={() => setTimelineMatch(match)}>
-                          <Info size={13} /> Lihat Timeline
+                      {hasResultProgress(match) ? (
+                        <button className="btn btn-sm btn-secondary" onClick={() => openResultPreview(match)}>
+                          <Info size={13} /> Lihat Gambar
                         </button>
                       ) : hasPermission('Match Result', 'create_edit') && (
                         <button className="btn btn-sm btn-secondary" disabled={!canInputResult} title={canInputResult ? 'Input hasil HT/FT' : 'Input hasil tersedia saat pertandingan Live dan lineup lengkap'} onClick={() => handleEdit(match.id)}>
@@ -304,71 +326,86 @@ export default function ResultsListView() {
               </div>
               <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setTimelineMatch(null)}><X size={16} /></button>
             </div>
+            <div className="output-preview-tabs" role="tablist" aria-label="Pilihan gambar hasil">
+              {canShowHalfTimeOutput(timelineMatch) && (
+                <button
+                  type="button"
+                  className={`output-preview-tab ${activeResultPreview.type === 'HT' ? 'active' : ''}`}
+                  onClick={() => setActiveResultPreview({ type: 'HT', adIndex: 0 })}
+                >
+                  Half Time
+                </button>
+              )}
+              {canShowFullTimeOutput(timelineMatch) && (
+                <button
+                  type="button"
+                  className={`output-preview-tab ${activeResultPreview.type === 'FT' ? 'active' : ''}`}
+                  onClick={() => setActiveResultPreview({ type: 'FT', adIndex: 0 })}
+                >
+                  Full Time
+                </button>
+              )}
+              {getMatchMediaPages(getMatchMediaSettings(timelineMatch)).map((ad, index) => (
+                <button
+                  type="button"
+                  key={ad.id || index}
+                  className={`output-preview-tab ${activeResultPreview.type === 'AD' && activeResultPreview.adIndex === index ? 'active' : ''}`}
+                  onClick={() => setActiveResultPreview({ type: 'AD', adIndex: index })}
+                >
+                  Media Iklan {index + 1}
+                </button>
+              ))}
+            </div>
             <div className="output-preview-stage">
-              <div className="output-preview-gallery">
-                {hasSavedHalfTimeResult(timelineMatch) &&
-                  timelineMatch.halfTimeHomeScore !== undefined && timelineMatch.halfTimeHomeScore !== null &&
-                  timelineMatch.halfTimeAwayScore !== undefined && timelineMatch.halfTimeAwayScore !== null && (
-                    <div className="output-preview-item">
-                      <div className="output-preview-item-label">Half Time</div>
+              {(() => {
+                const mediaAdPages = getMatchMediaPages(getMatchMediaSettings(timelineMatch));
+                const activeAd = mediaAdPages[activeResultPreview.adIndex] || mediaAdPages[0];
+                const isActiveAd = activeResultPreview.type === 'AD' && activeAd;
+                const activeType = isActiveAd ? 'AD' : activeResultPreview.type === 'HT' && canShowHalfTimeOutput(timelineMatch) ? 'HT' : 'FT';
+                const activeGraphicType: 'HT' | 'FT' = activeType === 'HT' ? 'HT' : 'FT';
+                const activeLabel = activeType === 'HT' ? 'Half Time' : activeType === 'FT' ? 'Full Time' : `Media Iklan ${activeResultPreview.adIndex + 1}`;
+
+                return (
+                  <div className="output-preview-item output-preview-active-card">
+                    <div className="output-preview-item-label">{activeLabel}</div>
+                    {activeType === 'AD' && activeAd ? (
+                      <ResultOutputAdCard
+                        match={timelineMatch}
+                        competitions={competitions}
+                        elementId={getResultOutputElementId(timelineMatch.id, 'AD', activeResultPreview.adIndex)}
+                        appSettings={appSettings}
+                        ad={activeAd}
+                        adIndex={activeResultPreview.adIndex}
+                        adTotal={mediaAdPages.length}
+                      />
+                    ) : (
                       <ResultOutputGraphicCard
                         match={timelineMatch}
                         competitions={competitions}
-                        elementId={getResultOutputElementId(timelineMatch.id, 'HT')}
-                        graphicType="HT"
+                        elementId={getResultOutputElementId(timelineMatch.id, activeGraphicType)}
+                        graphicType={activeGraphicType}
                         appSettings={appSettings}
                       />
-                      <div className="output-preview-actions">
-                        <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'HT')} disabled={isExportingResultOutput}>
-                          <Share2 size={14} /> Bagikan HT
-                        </button>
-                        <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'HT')} disabled={isExportingResultOutput}>
-                          <Download size={14} /> Unduh HT
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                <div className="output-preview-item">
-                  <div className="output-preview-item-label">Full Time</div>
-                  <ResultOutputGraphicCard
-                    match={timelineMatch}
-                    competitions={competitions}
-                    elementId={getResultOutputElementId(timelineMatch.id, 'FT')}
-                    graphicType="FT"
-                    appSettings={appSettings}
-                  />
-                  <div className="output-preview-actions">
-                    <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'FT')} disabled={isExportingResultOutput}>
-                      <Share2 size={14} /> Bagikan FT
-                    </button>
-                    <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'FT')} disabled={isExportingResultOutput}>
-                      <Download size={14} /> Unduh FT
-                    </button>
-                  </div>
-                </div>
-                {getMatchMediaPages(getMatchMediaSettings(timelineMatch)).map((ad, index, adPages) => (
-                  <div className="output-preview-item" key={ad.id || index}>
-                    <div className="output-preview-item-label">Media Iklan {index + 1}</div>
-                    <ResultOutputAdCard
-                      match={timelineMatch}
-                      competitions={competitions}
-                      elementId={getResultOutputElementId(timelineMatch.id, 'AD', index)}
-                      appSettings={appSettings}
-                      ad={ad}
-                      adIndex={index}
-                      adTotal={adPages.length}
-                    />
+                    )}
                     <div className="output-preview-actions">
-                      <button className="btn btn-sm btn-primary" onClick={() => shareResultOutput(timelineMatch, 'AD', index)} disabled={isExportingResultOutput}>
-                        <Share2 size={14} /> Bagikan Iklan
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={() => shareResultOutput(timelineMatch, activeType, activeResultPreview.adIndex)}
+                        disabled={isExportingResultOutput}
+                      >
+                        <Share2 size={14} /> Bagikan {activeType === 'AD' ? 'Iklan' : activeType}
                       </button>
-                      <button className="btn btn-sm btn-secondary" onClick={() => downloadResultOutput(timelineMatch, 'AD', index)} disabled={isExportingResultOutput}>
-                        <Download size={14} /> Unduh Iklan
+                      <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => downloadResultOutput(timelineMatch, activeType, activeResultPreview.adIndex)}
+                        disabled={isExportingResultOutput}
+                      >
+                        <Download size={14} /> Unduh {activeType === 'AD' ? 'Iklan' : activeType}
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
           </div>
         </div>

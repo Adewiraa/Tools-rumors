@@ -1338,6 +1338,41 @@ a {
   background: rgba(255, 255, 255, 0.82);
 }
 
+.output-preview-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 22px;
+  border-bottom: 1px solid rgba(215, 217, 211, 0.7);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.output-preview-tab {
+  appearance: none;
+  border: 1px solid var(--neutral-200);
+  background: var(--white);
+  color: var(--neutral-700);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.output-preview-tab:hover {
+  border-color: var(--neutral-400);
+  background: var(--neutral-50);
+}
+
+.output-preview-tab.active {
+  border-color: var(--primary-700);
+  background: var(--primary-700);
+  color: var(--white);
+}
+
 .output-preview-stage {
   max-height: min(78dvh, 760px);
   overflow: auto;
@@ -1367,6 +1402,11 @@ a {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+}
+
+.output-preview-active-card {
+  width: 100%;
+  min-width: 0;
 }
 
 .output-preview-item-label {
@@ -1798,6 +1838,15 @@ a {
   .output-preview-toolbar {
     justify-content: stretch;
     padding: 10px 16px;
+  }
+
+  .output-preview-tabs {
+    padding: 10px 16px;
+  }
+
+  .output-preview-tab {
+    flex: 0 0 auto;
+    padding: 8px 10px;
   }
 
   .output-preview-toolbar .btn,
