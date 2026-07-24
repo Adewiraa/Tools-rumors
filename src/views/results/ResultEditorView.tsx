@@ -526,7 +526,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     const storedStatus: Match['status'] =
       isSavingFullTime
         ? 'Finished'
-        : (matchStatus === 'Postponed' || matchStatus === 'Cancelled' ? matchStatus : 'Scheduled');
+        : (matchStatus === 'Live' || matchStatus === 'Postponed' || matchStatus === 'Cancelled' ? matchStatus : 'Scheduled');
     const finalBgImage = pendingBackgroundImage !== null ? pendingBackgroundImage : backgroundImage;
     const finalPositionX = pendingBackgroundImage !== null ? pendingBackgroundPositionX : backgroundPositionX;
     const finalPositionY = pendingBackgroundImage !== null ? pendingBackgroundPositionY : backgroundPositionY;
@@ -566,7 +566,16 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'upsert', match: updatedMatch })
       });
-      const result = await res.json();
+      const responseText = await res.text();
+      let result: { success?: boolean; error?: string } = {};
+      try {
+        result = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error(responseText || `HTTP ${res.status} ${res.statusText}`);
+      }
+      if (!res.ok) {
+        throw new Error(result.error || `HTTP ${res.status} ${res.statusText}`);
+      }
       if (!result.success) {
         triggerToast(`Gagal menyimpan hasil: ${result.error}`, 'error');
         return;
@@ -582,7 +591,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       triggerToast('Hasil pertandingan berhasil disimpan!');
       goToResultsList();
     } catch (err: any) {
-      triggerToast('Terjadi kesalahan saat menyimpan hasil.', 'error');
+      const message = err?.message || 'Terjadi kesalahan saat menyimpan hasil.';
+      console.error('Save match result failed:', err);
+      triggerToast(message, 'error');
     } finally {
       setIsSaving(false);
     }
