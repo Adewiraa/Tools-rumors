@@ -305,8 +305,8 @@ export const storyFindCountryForPlayer = (player: Player) => {
 
 export const storyGetPlayerCountryCode = (player: Player) => (
   storyNormalizeCountryCodeCandidate(player.countryCode) ||
-  storyNormalizeCountryCodeCandidate(storyExtractCountryCodeFromFlagUrl(player.flagUrl)) ||
   storyNormalizeCountryCodeCandidate(storyFindCountryForPlayer(player)?.code) ||
+  storyNormalizeCountryCodeCandidate(storyExtractCountryCodeFromFlagUrl(player.flagUrl)) ||
   storyNormalizeCountryCodeCandidate(player.flagUrl)
 );
 
@@ -329,38 +329,34 @@ export const storyCountryCodeToInlineFlagSrc = (countryCode?: string) => {
     br: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#009b3a" d="M0 0h30v20H0z"/><path fill="#ffdf00" d="M15 2 28 10 15 18 2 10z"/><circle cx="15" cy="10" r="4.2" fill="#002776"/></svg>',
     co: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fcd116" d="M0 0h30v10H0z"/><path fill="#003893" d="M0 10h30v5H0z"/><path fill="#ce1126" d="M0 15h30v5H0z"/></svg>',
     fr: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#002395" d="M0 0h10v20H0z"/><path fill="#fff" d="M10 0h10v20H10z"/><path fill="#ed2939" d="M20 0h10v20H20z"/></svg>',
+    gb: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#012169" d="M0 0h30v20H0z"/><path stroke="#fff" stroke-width="4" d="m0 0 30 20M30 0 0 20"/><path stroke="#c8102e" stroke-width="2.4" d="m0 0 30 20M30 0 0 20"/><path fill="#fff" d="M12 0h6v20h-6zM0 7h30v6H0z"/><path fill="#c8102e" d="M13.2 0h3.6v20h-3.6zM0 8.2h30v3.6H0z"/></svg>',
+    id: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#ce1126" d="M0 0h30v10H0z"/><path fill="#fff" d="M0 10h30v10H0z"/></svg>',
     iq: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#ce1126" d="M0 0h30v6.67H0z"/><path fill="#fff" d="M0 6.67h30v6.66H0z"/><path fill="#000" d="M0 13.33h30V20H0z"/><path fill="#007a3d" d="M12 8.2h6v3.6h-6z"/></svg>',
     it: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#009246" d="M0 0h10v20H0z"/><path fill="#fff" d="M10 0h10v20H10z"/><path fill="#ce2b37" d="M20 0h10v20H20z"/></svg>',
+    jp: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fff" d="M0 0h30v20H0z"/><circle cx="15" cy="10" r="5" fill="#bc002d"/></svg>',
+    kr: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fff" d="M0 0h30v20H0z"/><circle cx="15" cy="10" r="4.2" fill="#c60c30"/><path fill="#003478" d="M15 10a4.2 4.2 0 0 1 0 8.4 4.2 4.2 0 0 1 0-8.4z" transform="translate(0 -4.2)"/><path stroke="#000" stroke-width="1.1" d="m6.5 4 4 2.5m-4 9.5 4-2.5m13-9.5-4 2.5m4 9.5-4-2.5"/></svg>',
+    my: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fff" d="M0 0h30v20H0z"/><path stroke="#cc0001" stroke-width="2" d="M0 1h30M0 5h30M0 9h30M0 13h30M0 17h30"/><path fill="#010066" d="M0 0h15v10H0z"/><circle cx="7" cy="5" r="3.3" fill="#ffcc00"/><circle cx="8.1" cy="5" r="2.8" fill="#010066"/><path fill="#ffcc00" d="m11.2 2.2.5 1.5h1.6l-1.3.9.5 1.5-1.3-.9-1.3.9.5-1.5-1.3-.9h1.6z"/></svg>',
     nl: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#ae1c28" d="M0 0h30v6.67H0z"/><path fill="#fff" d="M0 6.67h30v6.66H0z"/><path fill="#21468b" d="M0 13.33h30V20H0z"/></svg>',
     pt: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#006600" d="M0 0h12v20H0z"/><path fill="#ff0000" d="M12 0h18v20H12z"/><circle cx="12" cy="10" r="3" fill="#ffcc00"/></svg>',
+    sg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#ef3340" d="M0 0h30v10H0z"/><path fill="#fff" d="M0 10h30v10H0z"/><circle cx="7" cy="5" r="3.2" fill="#fff"/><circle cx="8.1" cy="5" r="2.7" fill="#ef3340"/><path fill="#fff" d="m11.1 2.3.36 1.1h1.16l-.94.68.36 1.1-.94-.68-.94.68.36-1.1-.94-.68h1.16zm-1.6 4.9.36 1.1h1.16l-.94.68.36 1.1-.94-.68-.94.68.36-1.1-.94-.68h1.16zm3.2 0 .36 1.1h1.16l-.94.68.36 1.1-.94-.68-.94.68.36-1.1-.94-.68h1.16zm1.6-2.45.36 1.1h1.16l-.94.68.36 1.1-.94-.68-.94.68.36-1.1-.94-.68h1.16zm-3.2 0 .36 1.1h1.16l-.94.68.36 1.1-.94-.68-.94.68.36-1.1-.94-.68h1.16z"/></svg>',
     es: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#aa151b" d="M0 0h30v5H0zm0 15h30v5H0z"/><path fill="#f1bf00" d="M0 5h30v10H0z"/></svg>',
+    th: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#a51931" d="M0 0h30v20H0z"/><path fill="#fff" d="M0 3h30v14H0z"/><path fill="#2d2a4a" d="M0 6h30v8H0z"/></svg>',
     uy: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path fill="#fff" d="M0 0h30v20H0z"/><path fill="#0038a8" d="M0 4h30v2H0zm0 4h30v2H0zm0 4h30v2H0zm0 4h30v2H0z"/><path fill="#fff" d="M0 0h12v10H0z"/><circle cx="6" cy="5" r="2.2" fill="#fcd116"/></svg>',
   };
   const svg = flagSvgByCode[code];
   if (svg) return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-
-  const flagEmoji = storyCountryCodeToFlagEmoji(code);
-  if (!flagEmoji) return '';
-
-  const emojiSvg = [
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">',
-    '<rect width="30" height="20" rx="2" fill="#ffffff"/>',
-    '<text x="15" y="14.5" text-anchor="middle" font-size="15" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">',
-    flagEmoji,
-    '</text>',
-    '</svg>',
-  ].join('');
-
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(emojiSvg)}`;
+  return '';
 };
 
 export const renderPublishedStoryFlag = (player: Player, width: number, height: number, fontSize: number) => {
-  const inlineFlagSrc = storyCountryCodeToInlineFlagSrc(storyGetPlayerCountryCode(player));
+  const countryCode = storyGetPlayerCountryCode(player);
+  const inlineFlagSrc = storyCountryCodeToInlineFlagSrc(countryCode);
   if (inlineFlagSrc) return <img src={inlineFlagSrc} alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
 
-  const flagUrl = player.flagUrl && player.flagUrl.startsWith('http')
+  const resolvedFlagUrl = storyCountryCodeToFlagUrl(countryCode);
+  const flagUrl = resolvedFlagUrl || (player.flagUrl && player.flagUrl.startsWith('http')
     ? player.flagUrl
-    : storyCountryCodeToFlagUrl(player.flagUrl || player.countryCode || storyFindCountryForPlayer(player)?.code);
+    : storyCountryCodeToFlagUrl(player.flagUrl || player.countryCode || storyFindCountryForPlayer(player)?.code));
   if (flagUrl) return <img src={flagUrl} crossOrigin="anonymous" alt="" style={{ width, height, objectFit: 'cover', borderRadius: 1, flexShrink: 0 }} />;
 
   return <span style={{ fontSize, color: '#93c5fd', fontWeight: 800, flexShrink: 0 }}>*</span>;

@@ -420,12 +420,13 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
   };
 
   const resolvePlayerFlagUrl = (player: Player) => {
-    if (player.flagUrl && player.flagUrl.startsWith('http')) return player.flagUrl;
+    const country = findCountryForPlayer(player);
     return (
-      countryCodeToFlagUrl(player.flagUrl) ||
       countryCodeToFlagUrl(player.countryCode) ||
-      countryCodeToFlagUrl(findCountryForPlayer(player)?.code) ||
-      findCountryForPlayer(player)?.flagUrl ||
+      countryCodeToFlagUrl(country?.code) ||
+      country?.flagUrl ||
+      (player.flagUrl && player.flagUrl.startsWith('http') ? player.flagUrl : '') ||
+      countryCodeToFlagUrl(player.flagUrl) ||
       ''
     );
   };
