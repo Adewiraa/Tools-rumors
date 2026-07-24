@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp, UserRole } from '@/logic/AppContext';
@@ -30,6 +30,12 @@ import {
 } from 'lucide-react';
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
 import { Match } from '@/lib/mockData';
+import {
+  getEffectiveLineupStatus,
+  getEffectiveMatchStatus,
+  hasResultProgress,
+  hasSavedHalfTimeResult
+} from '@/logic/utils';
 
 type NavSection = {
   title: string;
@@ -73,6 +79,19 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+const NOTIFICATION_READ_STORAGE_KEY = 'gosball_read_match_notifications';
+
+type MatchNotification = {
+  id: string;
+  matchId: string;
+  title: string;
+  description: string;
+  timeLabel: string;
+  badgeLabel: string;
+  badgeClass: string;
+  href: string;
+};
+
 export default function AdminLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -105,6 +124,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   const [searchResults, setSearchResults] = useState<{ matches: Match[], players: unknown[], clubs: unknown[] }>({ matches: [], players: [], clubs: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set());
 
   const handleLogout = useCallback((message = 'Berhasil keluar. Sampai jumpa!', type: 'success' | 'warning' = 'success') => {
     clearSession();
@@ -183,6 +203,148 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
       activityEvents.forEach(eventName => window.removeEventListener(eventName, handleUserActivity));
     };
   }, [authChecked, handleLogout, isLoginPage]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(NOTIFICATION_READ_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      setReadNotificationIds(new Set(Array.isArray(parsed) ? parsed.filter(item => typeof item === 'string') : []));
+    } catch (error) {
+      console.warn('Notification read cache error:', error);
+    }
+  }, []);
+
+  const writeReadNotificationIds = (ids: Set<string>) => {
+    setReadNotificationIds(ids);
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(NOTIFICATION_READ_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  };
+
+  const markNotificationRead = (id: string) => {
+    writeReadNotificationIds(new Set([...readNotificationIds, id]));
+  };
+
+  const markAllNotificationsRead = (ids: string[]) => {
+    writeReadNotificationIds(new Set([...readNotificationIds, ...ids]));
+  };
+
+  const matchNotifications = useMemo<MatchNotification[]>(() => {
+    const now = new Date();
+    const todayKey = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const items: MatchNotification[] = [];
+
+    const formatKickoff = (match: Match) => {
+      const date = new Date(match.kickoff);
+      if (Number.isNaN(date.getTime())) return 'Jadwal belum valid';
+      return new Intl.DateTimeFormat('id-ID', {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta',
+      }).format(date) + ' WIB';
+    };
+
+    matches.forEach(match => {
+      const kickoff = new Date(match.kickoff);
+      const kickoffKey = Number.isNaN(kickoff.getTime())
+        ? ''
+        : kickoff.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+      const effectiveStatus = getEffectiveMatchStatus(match);
+      const lineupStatus = getEffectiveLineupStatus(match);
+      const scoreVersion = `${match.halfTimeHomeScore ?? '-'}:${match.halfTimeAwayScore ?? '-'}:${match.homeScore ?? '-'}:${match.awayScore ?? '-'}`;
+      const baseTitle = `${match.homeClubName} vs ${match.awayClubName}`;
+      const timeLabel = formatKickoff(match);
+
+      if (effectiveStatus === 'Live' && lineupStatus !== 'Complete') {
+        items.push({
+          id: `match:${match.id}:lineup-live:${lineupStatus}`,
+          matchId: match.id,
+          title: baseTitle,
+          description: `Lineup belum lengkap untuk pertandingan yang sedang live di ${match.venue || 'stadion pertandingan'}.`,
+          timeLabel,
+          badgeLabel: 'Lineup',
+          badgeClass: 'badge-warning',
+          href: `/lineups?edit=${encodeURIComponent(match.id)}`,
+        });
+        return;
+      }
+
+      if (effectiveStatus === 'Live' && lineupStatus === 'Complete' && !hasResultProgress(match)) {
+        items.push({
+          id: `match:${match.id}:ready-result:${lineupStatus}`,
+          matchId: match.id,
+          title: baseTitle,
+          description: 'Pertandingan sudah siap untuk input skor halftime atau timeline awal.',
+          timeLabel,
+          badgeLabel: 'Hasil',
+          badgeClass: 'badge-info',
+          href: `/results?edit=${encodeURIComponent(match.id)}`,
+        });
+        return;
+      }
+
+      if (hasSavedHalfTimeResult(match) && effectiveStatus !== 'Finished') {
+        items.push({
+          id: `match:${match.id}:ht-saved:${scoreVersion}`,
+          matchId: match.id,
+          title: baseTitle,
+          description: `Skor HT sudah tersimpan. Lanjutkan update fulltime saat pertandingan selesai.`,
+          timeLabel,
+          badgeLabel: 'HT',
+          badgeClass: 'badge-success',
+          href: `/results?edit=${encodeURIComponent(match.id)}`,
+        });
+        return;
+      }
+
+      if (effectiveStatus === 'Finished' && match.publicationStatus !== 'Published') {
+        items.push({
+          id: `match:${match.id}:finished-unpublished:${scoreVersion}:${match.publicationStatus}`,
+          matchId: match.id,
+          title: baseTitle,
+          description: `Hasil FT ${match.homeScore ?? '-'} - ${match.awayScore ?? '-'} belum dipublish.`,
+          timeLabel,
+          badgeLabel: 'Publish',
+          badgeClass: 'badge-warning',
+          href: '/results',
+        });
+        return;
+      }
+
+      if (
+        effectiveStatus === 'Scheduled' &&
+        !Number.isNaN(kickoff.getTime()) &&
+        kickoff >= now &&
+        kickoff <= tomorrow &&
+        kickoffKey !== todayKey
+      ) {
+        items.push({
+          id: `match:${match.id}:upcoming:${match.kickoff}`,
+          matchId: match.id,
+          title: baseTitle,
+          description: `Kickoff akan berlangsung dalam 24 jam. Pastikan lineup dan aset grafis siap.`,
+          timeLabel,
+          badgeLabel: 'Jadwal',
+          badgeClass: 'badge-info',
+          href: '/schedule',
+        });
+      }
+    });
+
+    return items
+      .sort((a, b) => {
+        const matchA = matches.find(match => match.id === a.matchId);
+        const matchB = matches.find(match => match.id === b.matchId);
+        return new Date(matchA?.kickoff || 0).getTime() - new Date(matchB?.kickoff || 0).getTime();
+      })
+      .slice(0, 12);
+  }, [matches]);
+
+  const unreadNotifications = matchNotifications.filter(item => !readNotificationIds.has(item.id));
 
   // Renders role permissions label badge
   const renderRoleBadge = (role: UserRole) => {
@@ -421,32 +583,94 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             <div style={{ position: 'relative' }}>
               <button className="btn btn-sm btn-secondary" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setNotificationsOpen(!notificationsOpen)}>
                 <Bell size={16} />
-                <span style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, backgroundColor: 'var(--danger-600)', borderRadius: '50%' }}></span>
+                {unreadNotifications.length > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: -6,
+                    right: -6,
+                    minWidth: 18,
+                    height: 18,
+                    padding: '0 5px',
+                    backgroundColor: 'var(--danger-600)',
+                    color: 'white',
+                    borderRadius: 999,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    display: 'grid',
+                    placeItems: 'center',
+                    border: '2px solid var(--white)',
+                  }}>{unreadNotifications.length}</span>
+                )}
               </button>
 
               {notificationsOpen && (
-                <div style={{ position: 'absolute', right: 0, top: 40, width: 320, backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 120, padding: 16 }}>
+                <div style={{ position: 'absolute', right: 0, top: 40, width: 380, maxWidth: 'calc(100vw - 24px)', backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 120, padding: 16 }}>
                   <div className="flex justify-between align-center" style={{ marginBottom: 12, borderBottom: '1px solid var(--neutral-100)', paddingBottom: 8 }}>
-                    <span className="semibold" style={{ fontSize: 14 }}>Notifikasi Masuk</span>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer' }} onClick={() => setNotificationsOpen(false)}><X size={14} /></button>
-                  </div>
-                  <div className="flex flex-col gap-12">
-                    <div style={{ padding: '8px 0', borderBottom: '1px solid var(--neutral-50)' }}>
-                      <div className="flex align-center gap-8" style={{ marginBottom: 4 }}>
-                        <span className="pulse-dot"></span>
-                        <span className="semibold" style={{ fontSize: 12 }}>Bandung Cakra vs Bali Dewata</span>
-                      </div>
-                      <p style={{ fontSize: 12, color: 'var(--neutral-700)' }}>Hasil pertandingan baru selesai. Membutuhkan review skor akhir.</p>
-                      <span style={{ fontSize: 10, color: 'var(--neutral-500)' }}>Baru saja</span>
+                    <div>
+                      <span className="semibold" style={{ fontSize: 14 }}>Notifikasi Jadwal</span>
+                      <div className="text-muted" style={{ fontSize: 11 }}>{unreadNotifications.length} belum dibaca</div>
                     </div>
-                    <div style={{ padding: '8px 0', borderBottom: '1px solid var(--neutral-50)' }}>
-                      <div className="flex align-center gap-8" style={{ marginBottom: 4 }}>
-                        <span className="badge badge-warning" style={{ padding: '2px 6px', fontSize: 10 }}>Rumor Baru</span>
-                      </div>
-                      <p style={{ fontSize: 12, color: 'var(--neutral-700)' }}>Rumor transfer baru dibuat oleh Rumor Editor X.</p>
-                      <span style={{ fontSize: 10, color: 'var(--neutral-500)' }}>30 menit yang lalu</span>
+                    <div className="flex align-center gap-8">
+                      {unreadNotifications.length > 0 && (
+                        <button
+                          className="btn btn-sm btn-secondary"
+                          style={{ height: 30, fontSize: 11, padding: '0 10px' }}
+                          onClick={() => markAllNotificationsRead(unreadNotifications.map(item => item.id))}
+                        >
+                          Tandai semua
+                        </button>
+                      )}
+                      <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer' }} onClick={() => setNotificationsOpen(false)}><X size={14} /></button>
                     </div>
                   </div>
+
+                  {unreadNotifications.length === 0 ? (
+                    <div style={{ padding: '22px 12px', textAlign: 'center' }}>
+                      <CheckCircle size={28} color="var(--success-600)" style={{ margin: '0 auto 8px' }} />
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--neutral-800)' }}>Tidak ada notifikasi jadwal</div>
+                      <div className="text-muted" style={{ fontSize: 11, marginTop: 3 }}>Semua update pertandingan sudah dibaca.</div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-8" style={{ maxHeight: 420, overflowY: 'auto' }}>
+                      {unreadNotifications.map(item => (
+                        <div
+                          key={item.id}
+                          style={{
+                            padding: '10px 0',
+                            borderBottom: '1px solid var(--neutral-100)',
+                            display: 'grid',
+                            gap: 6,
+                          }}
+                        >
+                          <div className="flex align-center gap-8" style={{ justifyContent: 'space-between' }}>
+                            <span className={`badge ${item.badgeClass}`} style={{ padding: '2px 7px', fontSize: 10 }}>{item.badgeLabel}</span>
+                            <span style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{item.timeLabel}</span>
+                          </div>
+                          <div className="semibold" style={{ fontSize: 12, color: 'var(--neutral-950)' }}>{item.title}</div>
+                          <p style={{ fontSize: 12, color: 'var(--neutral-700)', margin: 0, lineHeight: 1.45 }}>{item.description}</p>
+                          <div className="flex align-center gap-8" style={{ justifyContent: 'space-between', marginTop: 2 }}>
+                            <button
+                              className="btn btn-sm btn-secondary"
+                              style={{ height: 28, fontSize: 11, padding: '0 9px' }}
+                              onClick={() => {
+                                markNotificationRead(item.id);
+                                setNotificationsOpen(false);
+                                router.replace(item.href);
+                              }}
+                            >
+                              Lihat
+                            </button>
+                            <button
+                              style={{ border: 'none', background: 'transparent', color: 'var(--primary-700)', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
+                              onClick={() => markNotificationRead(item.id)}
+                            >
+                              Tandai telah dibaca
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
