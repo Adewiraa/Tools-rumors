@@ -101,6 +101,7 @@ const COMPETITIONS_STORAGE_KEY = 'gosball_competitions_cache';
 const APP_SETTINGS_STORAGE_KEY = 'gosball_app_settings';
 const USERS_STORAGE_KEY = 'gosball_users_cache';
 const PERMISSIONS_STORAGE_KEY = 'gosball_permissions_cache';
+const AUDIT_LOGS_STORAGE_KEY = 'gosball_audit_logs_cache';
 
 const readCachedArray = <T,>(key: string, fallback: T[]): T[] => {
   if (typeof window === 'undefined') return fallback;
@@ -132,7 +133,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [matches, setMatches] = useState<Match[]>([]);
   const [rumors, setRumorsState] = useState<Rumor[]>(INITIAL_RUMORS);
   const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
+  const [auditLogs, setAuditLogsState] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [competitions, setCompetitions] = useState<Competition[]>(INITIAL_COMPETITIONS);
   
   const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS);
@@ -159,6 +160,16 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   };
 
+  const setAuditLogs: React.Dispatch<React.SetStateAction<AuditLog[]>> = (value) => {
+    setAuditLogsState(prev => {
+      const next = typeof value === 'function'
+        ? (value as (prevState: AuditLog[]) => AuditLog[])(prev)
+        : value;
+      writeCache(AUDIT_LOGS_STORAGE_KEY, next);
+      return next;
+    });
+  };
+
   // Load browser-only preferences and draft assets.
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -180,6 +191,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setCompetitions(readCachedArray(COMPETITIONS_STORAGE_KEY, INITIAL_COMPETITIONS));
       setUsers(readCachedArray(USERS_STORAGE_KEY, INITIAL_USERS));
       setRolePermissions(readCachedArray(PERMISSIONS_STORAGE_KEY, INITIAL_ROLE_PERMISSIONS));
+      setAuditLogs(readCachedArray(AUDIT_LOGS_STORAGE_KEY, INITIAL_AUDIT_LOGS));
 
       const savedSettings = localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
       if (savedSettings) {
@@ -246,6 +258,21 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       details,
     };
     setAuditLogs(prev => [newLog, ...prev]);
+
+    void fetch('/api/audit-logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ log: newLog }),
+    })
+      .then(async response => {
+        const json = await response.json().catch(() => null);
+        if (!response.ok || !json?.success) {
+          throw new Error(json?.error || 'Gagal menyimpan audit log.');
+        }
+      })
+      .catch(error => {
+        console.warn('Audit log persisted locally only:', error);
+      });
   };
 
   const hasPermission = (module: string, action: 'read' | 'create_edit' | 'publish' | 'delete' | 'all') => {
@@ -491,6 +518,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         usersResult,
         permResult,
         settingsResult,
+        auditResult,
       ] = await Promise.allSettled([
         supabase.from('clubs').select('*'),
         supabase.from('competitions').select('*'),
@@ -500,6 +528,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fetchJson('/api/users'),
         fetchJson('/api/permissions'),
         fetchJson('/api/settings'),
+        fetchJson('/api/audit-logs'),
       ]);
 
       let successCount = 0;
@@ -571,6 +600,13 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         successCount += 1;
       } else {
         console.warn('Gagal load pengaturan aplikasi, pakai cache lokal:', settingsResult);
+      }
+
+      if (auditResult.status === 'fulfilled' && auditResult.value.success && Array.isArray(auditResult.value.data)) {
+        setAuditLogs(auditResult.value.data);
+        successCount += 1;
+      } else {
+        console.warn('Gagal load audit log dari Supabase, pakai cache lokal:', auditResult);
       }
 
       setIsOffline(successCount === 0);

@@ -28,6 +28,14 @@ const ACTION_LABEL: Record<string, string> = {
   CREATE_COMPETITION:    'Tambah Kompetisi',
   UPDATE_COMPETITION:    'Perbarui Kompetisi',
   DELETE_COMPETITION:    'Hapus Kompetisi',
+  CREATE_USER:           'Tambah User',
+  UPDATE_USER:           'Perbarui User',
+  DELETE_USER:           'Hapus User',
+  UPDATE_PERMISSIONS:    'Perbarui Hak Akses',
+  UPLOAD_APP_LOGO:       'Upload Logo Aplikasi',
+  UPDATE_APP_SETTINGS:   'Simpan Pengaturan',
+  UPDATE_ACTIVE_ROLE:    'Ubah Role Aktif',
+  TOGGLE_SYSTEM_SIMULATION: 'Ubah Simulasi Sistem',
 };
 
 type ActionCategory = 'publish' | 'create' | 'update' | 'delete' | 'safety' | 'other';

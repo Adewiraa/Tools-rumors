@@ -20,6 +20,7 @@ export default function SettingsView() {
     isOffline,
     setIsOffline,
     triggerToast,
+    logAction,
   } = useApp();
   const [isSavingIdentity, setIsSavingIdentity] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -46,6 +47,7 @@ export default function SettingsView() {
       }
 
       updateIdentityDraft('appLogoSrc', result.data.publicUrl);
+      logAction('UPLOAD_APP_LOGO', 'Pengaturan', `Mengupload logo aplikasi: ${file.name}`);
       triggerToast('Logo aplikasi berhasil diupload');
     } catch (error: unknown) {
       triggerToast(getErrorMessage(error, 'Logo aplikasi gagal diupload'), 'error');
@@ -68,6 +70,7 @@ export default function SettingsView() {
         throw new Error(result.error || 'Pengaturan identitas belum tersimpan ke database.');
       }
       setAppSettings(result.data);
+      logAction('UPDATE_APP_SETTINGS', 'Pengaturan', `Menyimpan identitas aplikasi: ${result.data.appName || appSettings.appName}`);
       triggerToast('Identitas aplikasi berhasil disimpan');
     } catch (error: unknown) {
       triggerToast(`${getErrorMessage(error, 'Pengaturan identitas belum tersimpan ke database.')} Perubahan tetap tersimpan di browser ini.`, 'warning');
@@ -187,6 +190,7 @@ export default function SettingsView() {
           <select className="form-select" value={currentUserRole} onChange={event => {
             const role = event.target.value as UserRole;
             setCurrentUserRole(role);
+            logAction('UPDATE_ACTIVE_ROLE', 'Pengaturan', `Mengubah role aktif menjadi ${role}`);
             triggerToast(`Role aktif: ${role}`);
           }}>
             <option value="Super Admin">Super Admin</option>
@@ -202,11 +206,17 @@ export default function SettingsView() {
           <label className="form-label">Simulasi Status Aplikasi</label>
           <div className="settings-toggle-stack" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--neutral-700)' }}>
-              <input type="checkbox" checked={hasUnsavedChanges} onChange={event => setHasUnsavedChanges(event.target.checked)} />
+              <input type="checkbox" checked={hasUnsavedChanges} onChange={event => {
+                setHasUnsavedChanges(event.target.checked);
+                logAction('TOGGLE_SYSTEM_SIMULATION', 'Pengaturan', `Simulasi perubahan belum disimpan: ${event.target.checked ? 'aktif' : 'nonaktif'}`);
+              }} />
               Simulasikan perubahan belum disimpan
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--neutral-700)' }}>
-              <input type="checkbox" checked={isOffline} onChange={event => setIsOffline(event.target.checked)} />
+              <input type="checkbox" checked={isOffline} onChange={event => {
+                setIsOffline(event.target.checked);
+                logAction('TOGGLE_SYSTEM_SIMULATION', 'Pengaturan', `Simulasi mode offline: ${event.target.checked ? 'aktif' : 'nonaktif'}`);
+              }} />
               Simulasikan mode offline
             </label>
           </div>

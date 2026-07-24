@@ -205,7 +205,6 @@ export default function LineupsListView() {
                         </span>
                       </div>
                       <div className="schedule-match-venue">{match.venue}</div>
-                      <div className="schedule-match-id">ID Jadwal: {match.id}</div>
                     </td>
                     <td className="schedule-info-cell" data-label="Kompetisi">
                       <span className="schedule-competition-value">
@@ -253,7 +252,7 @@ export default function LineupsListView() {
             <div className="output-preview-header">
               <div>
                 <h3 className="output-preview-title">Gambar Lineup</h3>
-                <div className="output-preview-meta">{previewMatch.homeClubName} vs {previewMatch.awayClubName} - ID Jadwal: {previewMatch.id}</div>
+                <div className="output-preview-meta">{previewMatch.homeClubName} vs {previewMatch.awayClubName}</div>
               </div>
               <button className="btn btn-sm btn-secondary" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></button>
             </div>

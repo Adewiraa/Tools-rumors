@@ -257,7 +257,6 @@ export default function ResultsListView() {
                         <span className="schedule-team-name">{match.awayClubName}</span>
                       </span>
                     </div>
-                    <div className="schedule-match-id">ID Jadwal: {match.id}</div>
                   </td>
                   <td className="schedule-info-cell" data-label="Kompetisi">
                     <span className="schedule-competition-value">
@@ -322,7 +321,7 @@ export default function ResultsListView() {
             <div className="output-preview-header">
               <div>
                 <h3 className="output-preview-title">Gambar Hasil Pertandingan</h3>
-                <div className="output-preview-meta">{timelineMatch.homeClubName} vs {timelineMatch.awayClubName} - ID Jadwal: {timelineMatch.id}</div>
+                <div className="output-preview-meta">{timelineMatch.homeClubName} vs {timelineMatch.awayClubName}</div>
               </div>
               <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setTimelineMatch(null)}><X size={16} /></button>
             </div>
