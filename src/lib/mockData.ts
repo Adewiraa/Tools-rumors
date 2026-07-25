@@ -175,6 +175,25 @@ export interface AuditLog {
   details: string;
 }
 
+export interface MediaAd {
+  id: string;
+  title: string;
+  label: string;
+  mediaType: 'image' | 'video';
+  mediaUrl: string;
+  posterUrl?: string;
+  mimeType?: string;
+  fileName?: string;
+  fit?: 'contain' | 'cover';
+  placement?: 'result_package' | 'lineup_package' | 'all';
+  status?: 'active' | 'inactive' | 'archived';
+  competition?: string;
+  clubId?: string;
+  startsAt?: string;
+  endsAt?: string;
+  sortOrder?: number;
+}
+
 export const INITIAL_COMPETITIONS: Competition[] = [
   {
     id: 'comp-1',

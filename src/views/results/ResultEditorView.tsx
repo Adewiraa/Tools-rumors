@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/logic/AppContext';
-import { Match, Player, Club, Competition } from '@/lib/mockData';
-import { ArrowLeft, Search, Share2, Download, X } from 'lucide-react';
+import { Match, Player, Club, Competition, MediaAd } from '@/lib/mockData';
+import { ArrowLeft, Search, Share2, Download, X, Megaphone } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import {
   getEffectiveMatchStatus,
@@ -101,6 +101,51 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   const [pendingBackgroundZoom, setPendingBackgroundZoom] = useState(initialResultGraphicSettings.backgroundZoom ?? 100);
   const [pendingBackgroundDim, setPendingBackgroundDim] = useState(initialResultGraphicSettings.backgroundDim ?? 20);
   const [mediaSettings, setMediaSettings] = useState<MatchMediaSettings>(initialMatchMediaSettings);
+  const [masterAdsCount, setMasterAdsCount] = useState(0);
+
+  useEffect(() => {
+    async function loadMasterAds() {
+      try {
+        const res = await fetch('/api/media-ads');
+        const result = await res.json();
+        if (result.success && Array.isArray(result.data)) {
+          const activeAds = (result.data as MediaAd[])
+            .filter(ad => ad.status === 'active')
+            .filter(ad => !ad.placement || ad.placement === 'result_package' || ad.placement === 'all')
+            .filter(ad => !ad.competition || ad.competition === match.competition)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+          const autoAds: MatchMediaAdItem[] = activeAds.map(ad => ({
+            id: ad.id,
+            mediaType: ad.mediaType,
+            source: ad.mediaUrl,
+            image: ad.mediaType === 'image' ? ad.mediaUrl : null,
+            video: ad.mediaType === 'video' ? ad.mediaUrl : null,
+            label: ad.label || 'MEDIA PARTNER',
+            fit: ad.fit || 'contain',
+            fileName: ad.fileName,
+            mimeType: ad.mimeType,
+          }));
+
+          setMasterAdsCount(autoAds.length);
+          if (autoAds.length > 0) {
+            setMediaSettings({
+              enabled: true,
+              ads: autoAds,
+              image: autoAds[0]?.image || null,
+              video: autoAds[0]?.video || null,
+              label: autoAds[0]?.label || 'MEDIA PARTNER',
+              fit: autoAds[0]?.fit || 'contain',
+              placement: 'footer',
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load master ads for result editor:', e);
+      }
+    }
+    void loadMasterAds();
+  }, [match.competition]);
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
   const isFullTimeGraphic = showFullTime || matchStatus === 'Finished';
   const effectiveGraphicType: 'HT' | 'FT' = isFullTimeGraphic ? 'FT' : graphicType;
@@ -1207,11 +1252,30 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               </div>
             )}
 
-            <MatchMediaControls
-              settings={mediaSettings}
-              onChange={setMediaSettings}
-              triggerToast={triggerToast}
-            />
+            <div className="card" style={{ width: '100%', maxWidth: 500, padding: 14, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: masterAdsCount > 0 ? 'var(--primary-50)' : 'var(--neutral-200)', color: masterAdsCount > 0 ? 'var(--primary-600)' : 'var(--neutral-600)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Megaphone size={18} />
+                </div>
+                <div>
+                  <div className="semibold" style={{ fontSize: 13 }}>Media Iklan (Otomatis dari Master Iklan)</div>
+                  <div className="text-muted" style={{ fontSize: 12 }}>
+                    {masterAdsCount > 0
+                      ? `${masterAdsCount} iklan aktif dari Master Iklan terpasang otomatis.`
+                      : 'Belum ada iklan aktif di Master Iklan untuk kompetisi ini.'}
+                  </div>
+                </div>
+              </div>
+              <a
+                href="/media-ads"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm btn-secondary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                Atur Master Iklan
+              </a>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-12" style={{ width: '100%', maxWidth: 500 }}>
