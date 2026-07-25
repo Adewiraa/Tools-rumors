@@ -13,6 +13,7 @@ import {
   hasSavedHalfTimeResult,
   hasHalfTimeScoreValues,
   getResultGraphicSettings,
+  getGraphicBackgroundForType,
   getMatchMediaSettings,
   getMatchTimelineEvents
 } from '@/logic/utils';
@@ -975,11 +976,12 @@ function ResultOutputGraphicCard({ match, competitions, elementId, graphicType, 
   const goalEvents = events.filter(event => event.type === 'goal' && (graphicType === 'FT' || (event.minute || 0) <= 45));
   const comp = competitions.find(c => c.name === match.competition);
   const resultGraphicSettings = getResultGraphicSettings(match);
-  const backgroundImage = resultGraphicSettings.backgroundImage || null;
-  const backgroundPositionX = resultGraphicSettings.backgroundPositionX ?? 50;
-  const backgroundPositionY = resultGraphicSettings.backgroundPositionY ?? 50;
-  const backgroundZoom = resultGraphicSettings.backgroundZoom ?? 100;
-  const backgroundDim = resultGraphicSettings.backgroundDim ?? 20;
+  const bgObj = getGraphicBackgroundForType(resultGraphicSettings, graphicType);
+  const backgroundImage = bgObj.image;
+  const backgroundPositionX = bgObj.positionX;
+  const backgroundPositionY = bgObj.positionY;
+  const backgroundZoom = bgObj.zoom;
+  const backgroundDim = bgObj.dim;
   const scoreHome = graphicType === 'HT' ? match.halfTimeHomeScore ?? 0 : match.homeScore ?? 0;
   const scoreAway = graphicType === 'HT' ? match.halfTimeAwayScore ?? 0 : match.awayScore ?? 0;
   const hasHalfTimeScore = hasSavedHalfTimeResult(match) &&

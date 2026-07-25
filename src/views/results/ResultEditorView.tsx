@@ -8,6 +8,7 @@ import * as htmlToImage from 'html-to-image';
 import {
   getEffectiveMatchStatus,
   getResultGraphicSettings,
+  getGraphicBackgroundForType,
   hasSavedHalfTimeResult,
   getMatchTimelineEvents,
   getTimelineWithResultGraphicSettings,
@@ -90,16 +91,62 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
   // Instagram graphic options
   const [graphicType, setGraphicType] = useState<'HT' | 'FT'>(effectiveInitialStatus === 'Finished' ? 'FT' : 'HT');
   const [graphicRatio, setGraphicRatio] = useState<'1:1' | '4:5'>('1:1');
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(initialResultGraphicSettings.backgroundImage || null);
+
+  const initialHtBg = getGraphicBackgroundForType(initialResultGraphicSettings, 'HT');
+  const initialFtBg = getGraphicBackgroundForType(initialResultGraphicSettings, 'FT');
+
+  const [htBackgroundImage, setHtBackgroundImage] = useState<string | null>(initialHtBg.image);
+  const [htBackgroundPositionX, setHtBackgroundPositionX] = useState(initialHtBg.positionX);
+  const [htBackgroundPositionY, setHtBackgroundPositionY] = useState(initialHtBg.positionY);
+  const [htBackgroundZoom, setHtBackgroundZoom] = useState(initialHtBg.zoom);
+  const [htBackgroundDim, setHtBackgroundDim] = useState(initialHtBg.dim);
+
+  const [ftBackgroundImage, setFtBackgroundImage] = useState<string | null>(initialFtBg.image);
+  const [ftBackgroundPositionX, setFtBackgroundPositionX] = useState(initialFtBg.positionX);
+  const [ftBackgroundPositionY, setFtBackgroundPositionY] = useState(initialFtBg.positionY);
+  const [ftBackgroundZoom, setFtBackgroundZoom] = useState(initialFtBg.zoom);
+  const [ftBackgroundDim, setFtBackgroundDim] = useState(initialFtBg.dim);
+
+  const isFullTimeGraphic = showFullTime || matchStatus === 'Finished';
+  const effectiveGraphicType: 'HT' | 'FT' = isFullTimeGraphic ? 'FT' : graphicType;
+
+  const isEditingHT = effectiveGraphicType === 'HT';
+
+  const backgroundImage = isEditingHT ? htBackgroundImage : ftBackgroundImage;
+  const setBackgroundImage = (val: string | null | ((prev: string | null) => string | null)) => {
+    if (isEditingHT) setHtBackgroundImage(val);
+    else setFtBackgroundImage(val);
+  };
+
+  const backgroundPositionX = isEditingHT ? htBackgroundPositionX : ftBackgroundPositionX;
+  const setBackgroundPositionX = (val: number | ((prev: number) => number)) => {
+    if (isEditingHT) setHtBackgroundPositionX(val);
+    else setFtBackgroundPositionX(val);
+  };
+
+  const backgroundPositionY = isEditingHT ? htBackgroundPositionY : ftBackgroundPositionY;
+  const setBackgroundPositionY = (val: number | ((prev: number) => number)) => {
+    if (isEditingHT) setHtBackgroundPositionY(val);
+    else setFtBackgroundPositionY(val);
+  };
+
+  const backgroundZoom = isEditingHT ? htBackgroundZoom : ftBackgroundZoom;
+  const setBackgroundZoom = (val: number | ((prev: number) => number)) => {
+    if (isEditingHT) setHtBackgroundZoom(val);
+    else setFtBackgroundZoom(val);
+  };
+
+  const backgroundDim = isEditingHT ? htBackgroundDim : ftBackgroundDim;
+  const setBackgroundDim = (val: number | ((prev: number) => number)) => {
+    if (isEditingHT) setHtBackgroundDim(val);
+    else setFtBackgroundDim(val);
+  };
+
   const [pendingBackgroundImage, setPendingBackgroundImage] = useState<string | null>(null);
-  const [backgroundPositionX, setBackgroundPositionX] = useState(initialResultGraphicSettings.backgroundPositionX ?? 50);
-  const [backgroundPositionY, setBackgroundPositionY] = useState(initialResultGraphicSettings.backgroundPositionY ?? 50);
-  const [backgroundZoom, setBackgroundZoom] = useState(initialResultGraphicSettings.backgroundZoom ?? 100);
-  const [backgroundDim, setBackgroundDim] = useState(initialResultGraphicSettings.backgroundDim ?? 20);
-  const [pendingBackgroundPositionX, setPendingBackgroundPositionX] = useState(initialResultGraphicSettings.backgroundPositionX ?? 50);
-  const [pendingBackgroundPositionY, setPendingBackgroundPositionY] = useState(initialResultGraphicSettings.backgroundPositionY ?? 50);
-  const [pendingBackgroundZoom, setPendingBackgroundZoom] = useState(initialResultGraphicSettings.backgroundZoom ?? 100);
-  const [pendingBackgroundDim, setPendingBackgroundDim] = useState(initialResultGraphicSettings.backgroundDim ?? 20);
+  const [pendingBackgroundPositionX, setPendingBackgroundPositionX] = useState(50);
+  const [pendingBackgroundPositionY, setPendingBackgroundPositionY] = useState(50);
+  const [pendingBackgroundZoom, setPendingBackgroundZoom] = useState(100);
+  const [pendingBackgroundDim, setPendingBackgroundDim] = useState(20);
   const [mediaSettings, setMediaSettings] = useState<MatchMediaSettings>(initialMatchMediaSettings);
   const [masterAdsCount, setMasterAdsCount] = useState(0);
 
@@ -146,9 +193,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     }
     void loadMasterAds();
   }, [match.competition]);
+
   const [isExportingGraphic, setIsExportingGraphic] = useState(false);
-  const isFullTimeGraphic = showFullTime || matchStatus === 'Finished';
-  const effectiveGraphicType: 'HT' | 'FT' = isFullTimeGraphic ? 'FT' : graphicType;
+
   const isHtScoresFilled = halfTimeHomeScore !== '' && halfTimeHomeScore !== undefined && halfTimeHomeScore !== null &&
                           halfTimeAwayScore !== '' && halfTimeAwayScore !== undefined && halfTimeAwayScore !== null;
   const isFtScoresFilled = homeScore !== '' && homeScore !== undefined && homeScore !== null &&
@@ -630,12 +677,36 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     const finalZoom = pendingBackgroundImage !== null ? pendingBackgroundZoom : backgroundZoom;
     const finalDim = pendingBackgroundImage !== null ? pendingBackgroundDim : backgroundDim;
 
+    const nextHtImage = isEditingHT ? finalBgImage : htBackgroundImage;
+    const nextHtPositionX = isEditingHT ? finalPositionX : htBackgroundPositionX;
+    const nextHtPositionY = isEditingHT ? finalPositionY : htBackgroundPositionY;
+    const nextHtZoom = isEditingHT ? finalZoom : htBackgroundZoom;
+    const nextHtDim = isEditingHT ? finalDim : htBackgroundDim;
+
+    const nextFtImage = !isEditingHT ? finalBgImage : ftBackgroundImage;
+    const nextFtPositionX = !isEditingHT ? finalPositionX : ftBackgroundPositionX;
+    const nextFtPositionY = !isEditingHT ? finalPositionY : ftBackgroundPositionY;
+    const nextFtZoom = !isEditingHT ? finalZoom : ftBackgroundZoom;
+    const nextFtDim = !isEditingHT ? finalDim : ftBackgroundDim;
+
     const nextGraphicSettings: ResultGraphicSettings = {
-      backgroundImage: finalBgImage,
-      backgroundPositionX: finalPositionX,
-      backgroundPositionY: finalPositionY,
-      backgroundZoom: finalZoom,
-      backgroundDim: finalDim,
+      htBackgroundImage: nextHtImage,
+      htBackgroundPositionX: nextHtPositionX,
+      htBackgroundPositionY: nextHtPositionY,
+      htBackgroundZoom: nextHtZoom,
+      htBackgroundDim: nextHtDim,
+
+      ftBackgroundImage: nextFtImage,
+      ftBackgroundPositionX: nextFtPositionX,
+      ftBackgroundPositionY: nextFtPositionY,
+      ftBackgroundZoom: nextFtZoom,
+      ftBackgroundDim: nextFtDim,
+
+      backgroundImage: nextFtImage || nextHtImage,
+      backgroundPositionX: nextFtPositionX,
+      backgroundPositionY: nextFtPositionY,
+      backgroundZoom: nextFtZoom,
+      backgroundDim: nextFtDim,
       halfTimeSaved: shouldPersistHalfTime,
     };
     const nextLineupStatus: Match['lineupStatus'] =

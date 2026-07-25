@@ -83,7 +83,39 @@ export type ResultGraphicSettings = {
   backgroundPositionY?: number;
   backgroundZoom?: number;
   backgroundDim?: number;
+  htBackgroundImage?: string | null;
+  htBackgroundPositionX?: number;
+  htBackgroundPositionY?: number;
+  htBackgroundZoom?: number;
+  htBackgroundDim?: number;
+  ftBackgroundImage?: string | null;
+  ftBackgroundPositionX?: number;
+  ftBackgroundPositionY?: number;
+  ftBackgroundZoom?: number;
+  ftBackgroundDim?: number;
   halfTimeSaved?: boolean;
+};
+
+export const getGraphicBackgroundForType = (
+  settings: ResultGraphicSettings,
+  type: 'HT' | 'FT'
+) => {
+  if (type === 'HT') {
+    return {
+      image: settings.htBackgroundImage !== undefined ? settings.htBackgroundImage : (settings.backgroundImage || null),
+      positionX: settings.htBackgroundPositionX ?? settings.backgroundPositionX ?? 50,
+      positionY: settings.htBackgroundPositionY ?? settings.backgroundPositionY ?? 50,
+      zoom: settings.htBackgroundZoom ?? settings.backgroundZoom ?? 100,
+      dim: settings.htBackgroundDim ?? settings.backgroundDim ?? 20,
+    };
+  }
+  return {
+    image: settings.ftBackgroundImage !== undefined ? settings.ftBackgroundImage : (settings.backgroundImage || null),
+    positionX: settings.ftBackgroundPositionX ?? settings.backgroundPositionX ?? 50,
+    positionY: settings.ftBackgroundPositionY ?? settings.backgroundPositionY ?? 50,
+    zoom: settings.ftBackgroundZoom ?? settings.backgroundZoom ?? 100,
+    dim: settings.ftBackgroundDim ?? settings.backgroundDim ?? 20,
+  };
 };
 
 export type MatchMediaSettings = {
