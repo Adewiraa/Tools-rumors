@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Match, Competition } from '@/lib/mockData';
-import { ChevronRight, Info, Share2, Download, X } from 'lucide-react';
+import { ChevronRight, Info, Share2, Download, X, Edit } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import {
   getEffectiveLineupStatus,
@@ -751,7 +751,7 @@ export default function ResultsListView() {
               const kickoffDate = new Date(match.kickoff);
               const kickoffDateLabel = kickoffDate.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' });
               const kickoffTimeLabel = kickoffDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-              const canInputResult = (effectiveStatus === 'Live' || hasSavedHalfTime) && (getEffectiveLineupStatus(match) === 'Complete' || hasSavedHalfTime);
+              const canInputResult = (effectiveStatus === 'Live' || effectiveStatus === 'Finished' || hasSavedHalfTime) && (getEffectiveLineupStatus(match) === 'Complete' || hasSavedHalfTime || effectiveStatus === 'Finished');
               return (
                 <tr key={match.id}>
                   <td className="schedule-match-cell">
@@ -806,14 +806,21 @@ export default function ResultsListView() {
                     </span>
                   </td>
                   <td className="schedule-actions-cell text-right">
-                    <div className="schedule-actions">
-                      {hasResultProgress(match) ? (
-                        <button className="btn btn-sm btn-secondary" onClick={() => openResultPreview(match)}>
-                          <Info size={13} /> Lihat Gambar
+                    <div className="schedule-actions" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                      {hasPermission('Match Result', 'create_edit') && (
+                        <button 
+                          className="btn btn-sm btn-primary" 
+                          disabled={!canInputResult} 
+                          title={canInputResult ? 'Input / Edit Hasil Pertandingan' : 'Input hasil tersedia saat pertandingan Live dan lineup lengkap'} 
+                          onClick={() => handleEdit(match.id)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Edit size={13} /> {hasResultProgress(match) ? (match.homeScore !== undefined && match.homeScore !== null ? 'Edit Skor' : 'Input FT') : 'Input HT/FT'}
                         </button>
-                      ) : hasPermission('Match Result', 'create_edit') && (
-                        <button className="btn btn-sm btn-secondary" disabled={!canInputResult} title={canInputResult ? 'Input hasil HT/FT' : 'Input hasil tersedia saat pertandingan Live dan lineup lengkap'} onClick={() => handleEdit(match.id)}>
-                          Input HT/FT
+                      )}
+                      {hasResultProgress(match) && (
+                        <button className="btn btn-sm btn-secondary" onClick={() => openResultPreview(match)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <Info size={13} /> Lihat Gambar
                         </button>
                       )}
                     </div>
