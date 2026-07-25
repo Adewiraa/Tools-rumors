@@ -1017,8 +1017,8 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       </div>
 
       {/* Instagram Graphic Export Row */}
-      <div className="card" style={{ marginTop: 24, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-        <div style={{ alignSelf: 'flex-start', width: '100%' }}>
+      <div className="card" style={{ marginTop: 24, padding: 24 }}>
+        <div style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Instagram Feed Graphic</h3>
           <p className="page-description" style={{ margin: 0 }}>Gunakan template premium ini untuk mempublikasikan hasil pertandingan ke feeds Instagram resmi.</p>
         </div>
@@ -1026,7 +1026,6 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
         {!isGraphicScoresFilled ? (
           <div style={{
             width: '100%',
-            maxWidth: 500,
             padding: '24px 16px',
             backgroundColor: 'var(--neutral-50)',
             border: '1px dashed var(--neutral-300)',
@@ -1041,309 +1040,314 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               : 'Silakan isi skor Half Time (HT) di atas terlebih dahulu untuk mengaktifkan preview dan unduhan Instagram Graphic.'}
           </div>
         ) : (
-          <>
-            {/* Compact Control Panel */}
-            <div style={{
-              width: '100%',
-              maxWidth: 520,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 10,
-              padding: 12,
-              backgroundColor: 'var(--neutral-50)',
-              border: '1px solid var(--neutral-200)',
-              borderRadius: 10,
-              boxSizing: 'border-box'
-            }}>
-              {/* Content Type Segment */}
-              <div style={{ minWidth: 0 }}>
-                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Tipe Konten</label>
-                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-200)', padding: 2, borderRadius: 6 }}>
-                  <button
-                    type="button"
-                    style={{
-                      flex: 1,
-                      backgroundColor: effectiveGraphicType === 'HT' ? 'var(--primary-600)' : 'transparent',
-                      color: effectiveGraphicType === 'HT' ? 'white' : 'var(--neutral-700)',
-                      border: 'none',
-                      borderRadius: 4,
-                      fontWeight: 600,
-                      fontSize: 11,
-                      padding: '6px 2px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onClick={() => {
-                      if (showFullTime) {
-                        triggerToast('Nonaktifkan "Pertandingan Selesai" untuk membuat gambar Half Time.', 'warning');
-                        return;
-                      }
-                      setGraphicType('HT');
-                    }}
-                  >
-                    Half Time
-                  </button>
-                  <button
-                    type="button"
-                    style={{
-                      flex: 1,
-                      backgroundColor: effectiveGraphicType === 'FT' ? 'var(--primary-600)' : 'transparent',
-                      color: effectiveGraphicType === 'FT' ? 'white' : 'var(--neutral-700)',
-                      border: 'none',
-                      borderRadius: 4,
-                      fontWeight: 600,
-                      fontSize: 11,
-                      padding: '6px 2px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onClick={() => {
-                      if (!showFullTime) {
-                        triggerToast('Aktifkan "Pertandingan Selesai" terlebih dahulu untuk membuat gambar Full Time.', 'warning');
-                        return;
-                      }
-                      setGraphicType('FT');
-                    }}
-                  >
-                    Full Time
-                  </button>
-                </div>
-              </div>
-
-              {/* Ratio Segment */}
-              <div style={{ minWidth: 0 }}>
-                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Rasio Gambar</label>
-                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-200)', padding: 2, borderRadius: 6 }}>
-                  <button
-                    type="button"
-                    style={{
-                      flex: 1,
-                      backgroundColor: graphicRatio === '1:1' ? 'var(--primary-600)' : 'transparent',
-                      color: graphicRatio === '1:1' ? 'white' : 'var(--neutral-700)',
-                      border: 'none',
-                      borderRadius: 4,
-                      fontWeight: 600,
-                      fontSize: 11,
-                      padding: '6px 2px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onClick={() => setGraphicRatio('1:1')}
-                  >
-                    1:1 Feed
-                  </button>
-                  <button
-                    type="button"
-                    style={{
-                      flex: 1,
-                      backgroundColor: graphicRatio === '4:5' ? 'var(--primary-600)' : 'transparent',
-                      color: graphicRatio === '4:5' ? 'white' : 'var(--neutral-700)',
-                      border: 'none',
-                      borderRadius: 4,
-                      fontWeight: 600,
-                      fontSize: 11,
-                      padding: '6px 2px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onClick={() => setGraphicRatio('4:5')}
-                  >
-                    4:5 Story
-                  </button>
-                </div>
-              </div>
-
-              {/* Background Picker */}
-              <div style={{ minWidth: 0 }}>
-                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Gambar Background</label>
-                <div style={{ display: 'flex', gap: 4, width: '100%' }}>
-                  <label className="btn btn-sm btn-secondary" style={{ flex: 1, cursor: 'pointer', margin: 0, padding: '6px 4px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, whiteSpace: 'nowrap' }}>
-                    <span>📁</span> {backgroundImage ? 'Ganti' : 'Pilih'}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (event) => {
-                            if (event.target?.result) {
-                              setPendingBackgroundImage(event.target.result as string);
-                              setPendingBackgroundPositionX(backgroundPositionX);
-                              setPendingBackgroundPositionY(backgroundPositionY);
-                              setPendingBackgroundZoom(backgroundZoom);
-                              setPendingBackgroundDim(backgroundDim);
-                              triggerToast('Gambar siap diatur. Klik Terapkan jika sudah pas.');
-                            }
-                          };
-                          reader.readAsDataURL(file);
+          <div className="result-graphic-layout">
+            {/* Left Column: Controls & Action Buttons */}
+            <div className="result-graphic-controls-column">
+              {/* Compact Control Panel */}
+              <div style={{
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 8,
+                padding: 10,
+                backgroundColor: 'var(--neutral-50)',
+                border: '1px solid var(--neutral-200)',
+                borderRadius: 10,
+                boxSizing: 'border-box'
+              }}>
+                {/* Content Type Segment */}
+                <div style={{ minWidth: 0 }}>
+                  <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Tipe Konten</label>
+                  <div style={{ display: 'flex', backgroundColor: 'var(--neutral-200)', padding: 2, borderRadius: 6 }}>
+                    <button
+                      type="button"
+                      style={{
+                        flex: 1,
+                        backgroundColor: effectiveGraphicType === 'HT' ? 'var(--primary-600)' : 'transparent',
+                        color: effectiveGraphicType === 'HT' ? 'white' : 'var(--neutral-700)',
+                        border: 'none',
+                        borderRadius: 4,
+                        fontWeight: 600,
+                        fontSize: 11,
+                        padding: '6px 2px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onClick={() => {
+                        if (showFullTime) {
+                          triggerToast('Nonaktifkan "Pertandingan Selesai" untuk membuat gambar Half Time.', 'warning');
+                          return;
                         }
+                        setGraphicType('HT');
+                      }}
+                    >
+                      Half Time
+                    </button>
+                    <button
+                      type="button"
+                      style={{
+                        flex: 1,
+                        backgroundColor: effectiveGraphicType === 'FT' ? 'var(--primary-600)' : 'transparent',
+                        color: effectiveGraphicType === 'FT' ? 'white' : 'var(--neutral-700)',
+                        border: 'none',
+                        borderRadius: 4,
+                        fontWeight: 600,
+                        fontSize: 11,
+                        padding: '6px 2px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onClick={() => {
+                        if (!showFullTime) {
+                          triggerToast('Aktifkan "Pertandingan Selesai" terlebih dahulu untuk membuat gambar Full Time.', 'warning');
+                          return;
+                        }
+                        setGraphicType('FT');
+                      }}
+                    >
+                      Full Time
+                    </button>
+                  </div>
+                </div>
+
+                {/* Ratio Segment */}
+                <div style={{ minWidth: 0 }}>
+                  <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Rasio Gambar</label>
+                  <div style={{ display: 'flex', backgroundColor: 'var(--neutral-200)', padding: 2, borderRadius: 6 }}>
+                    <button
+                      type="button"
+                      style={{
+                        flex: 1,
+                        backgroundColor: graphicRatio === '1:1' ? 'var(--primary-600)' : 'transparent',
+                        color: graphicRatio === '1:1' ? 'white' : 'var(--neutral-700)',
+                        border: 'none',
+                        borderRadius: 4,
+                        fontWeight: 600,
+                        fontSize: 11,
+                        padding: '6px 2px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onClick={() => setGraphicRatio('1:1')}
+                    >
+                      1:1 Feed
+                    </button>
+                    <button
+                      type="button"
+                      style={{
+                        flex: 1,
+                        backgroundColor: graphicRatio === '4:5' ? 'var(--primary-600)' : 'transparent',
+                        color: graphicRatio === '4:5' ? 'white' : 'var(--neutral-700)',
+                        border: 'none',
+                        borderRadius: 4,
+                        fontWeight: 600,
+                        fontSize: 11,
+                        padding: '6px 2px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onClick={() => setGraphicRatio('4:5')}
+                    >
+                      4:5 Story
+                    </button>
+                  </div>
+                </div>
+
+                {/* Background Picker */}
+                <div style={{ minWidth: 0 }}>
+                  <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Gambar Background</label>
+                  <div style={{ display: 'flex', gap: 4, width: '100%' }}>
+                    <label className="btn btn-sm btn-secondary" style={{ flex: 1, cursor: 'pointer', margin: 0, padding: '6px 4px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                      <span>📁</span> {backgroundImage ? 'Ganti' : 'Pilih'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              if (event.target?.result) {
+                                setPendingBackgroundImage(event.target.result as string);
+                                setPendingBackgroundPositionX(backgroundPositionX);
+                                setPendingBackgroundPositionY(backgroundPositionY);
+                                setPendingBackgroundZoom(backgroundZoom);
+                                setPendingBackgroundDim(backgroundDim);
+                                triggerToast('Gambar siap diatur. Klik Terapkan jika sudah pas.');
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    {backgroundImage && !pendingBackgroundImage && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        title="Atur Posisi Background"
+                        style={{ padding: '6px 8px', fontSize: 11 }}
+                        onClick={() => {
+                          setPendingBackgroundImage(backgroundImage);
+                          setPendingBackgroundPositionX(backgroundPositionX);
+                          setPendingBackgroundPositionY(backgroundPositionY);
+                          setPendingBackgroundZoom(backgroundZoom);
+                          setPendingBackgroundDim(backgroundDim);
+                        }}
+                      >
+                        ⚙️
+                      </button>
+                    )}
+                    {backgroundImage && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        title="Hapus Background"
+                        style={{ padding: '6px 8px', fontSize: 11 }}
+                        onClick={() => {
+                          setBackgroundImage(null);
+                          resetBackgroundImageDraft();
+                          triggerToast('Gambar background dihapus.');
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {pendingBackgroundImage && (
+                <div style={{ width: '100%', border: '1px solid var(--neutral-200)', borderRadius: 10, padding: 12, backgroundColor: 'var(--neutral-50)', boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                    <label className="form-label" style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Preview & Atur Background</label>
+                    <div className="flex gap-8">
+                      <button type="button" className="btn btn-sm btn-primary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={applyPendingBackgroundImage}>
+                        Terapkan
+                      </button>
+                      <button type="button" className="btn btn-sm btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={resetBackgroundImageDraft}>
+                        Batal
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ position: 'relative', height: 160, overflow: 'hidden', borderRadius: 8, backgroundColor: '#111', marginBottom: 12 }}>
+                    <img
+                      src={pendingBackgroundImage}
+                      alt=""
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: `${pendingBackgroundPositionX}% ${pendingBackgroundPositionY}%`,
+                        transform: `scale(${pendingBackgroundZoom / 100})`,
+                        transformOrigin: `${pendingBackgroundPositionX}% ${pendingBackgroundPositionY}%`,
                       }}
                     />
-                  </label>
-                  {backgroundImage && !pendingBackgroundImage && (
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-secondary"
-                      title="Atur Posisi Background"
-                      style={{ padding: '6px 8px', fontSize: 11 }}
-                      onClick={() => {
-                        setPendingBackgroundImage(backgroundImage);
-                        setPendingBackgroundPositionX(backgroundPositionX);
-                        setPendingBackgroundPositionY(backgroundPositionY);
-                        setPendingBackgroundZoom(backgroundZoom);
-                        setPendingBackgroundDim(backgroundDim);
-                      }}
-                    >
-                      ⚙️
-                    </button>
-                  )}
-                  {backgroundImage && (
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-danger"
-                      title="Hapus Background"
-                      style={{ padding: '6px 8px', fontSize: 11 }}
-                      onClick={() => {
-                        setBackgroundImage(null);
-                        resetBackgroundImageDraft();
-                        triggerToast('Gambar background dihapus.');
-                      }}
-                    >
-                      🗑️
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {pendingBackgroundImage && (
-              <div style={{ width: '100%', maxWidth: 520, border: '1px solid var(--neutral-200)', borderRadius: 10, padding: 12, backgroundColor: 'var(--neutral-50)', boxSizing: 'border-box' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                  <label className="form-label" style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Preview & Atur Background</label>
-                  <div className="flex gap-8">
-                    <button type="button" className="btn btn-sm btn-primary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={applyPendingBackgroundImage}>
-                      Terapkan
-                    </button>
-                    <button type="button" className="btn btn-sm btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={resetBackgroundImageDraft}>
-                      Batal
-                    </button>
+                    <div style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0, 0, 0, ${pendingBackgroundDim / 100})`, pointerEvents: 'none' }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                      Posisi X
+                      <input type="range" className="w-full" min="0" max="100" value={pendingBackgroundPositionX} onChange={(e) => setPendingBackgroundPositionX(Number(e.target.value))} />
+                    </label>
+                    <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                      Posisi Y
+                      <input type="range" className="w-full" min="0" max="100" value={pendingBackgroundPositionY} onChange={(e) => setPendingBackgroundPositionY(Number(e.target.value))} />
+                    </label>
+                    <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                      Zoom
+                      <input type="range" className="w-full" min="100" max="180" value={pendingBackgroundZoom} onChange={(e) => setPendingBackgroundZoom(Number(e.target.value))} />
+                    </label>
+                    <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
+                      Gelap Overlay
+                      <input type="range" className="w-full" min="0" max="55" value={pendingBackgroundDim} onChange={(e) => setPendingBackgroundDim(Number(e.target.value))} />
+                    </label>
                   </div>
                 </div>
-                <div style={{ position: 'relative', height: 180, overflow: 'hidden', borderRadius: 8, backgroundColor: '#111', marginBottom: 12 }}>
-                  <img
-                    src={pendingBackgroundImage}
-                    alt=""
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: `${pendingBackgroundPositionX}% ${pendingBackgroundPositionY}%`,
-                      transform: `scale(${pendingBackgroundZoom / 100})`,
-                      transformOrigin: `${pendingBackgroundPositionX}% ${pendingBackgroundPositionY}%`,
-                    }}
-                  />
-                  <div style={{ position: 'absolute', inset: 0, backgroundColor: `rgba(0, 0, 0, ${pendingBackgroundDim / 100})`, pointerEvents: 'none' }} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
-                    Posisi X
-                    <input type="range" className="w-full" min="0" max="100" value={pendingBackgroundPositionX} onChange={(e) => setPendingBackgroundPositionX(Number(e.target.value))} />
-                  </label>
-                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
-                    Posisi Y
-                    <input type="range" className="w-full" min="0" max="100" value={pendingBackgroundPositionY} onChange={(e) => setPendingBackgroundPositionY(Number(e.target.value))} />
-                  </label>
-                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
-                    Zoom
-                    <input type="range" className="w-full" min="100" max="180" value={pendingBackgroundZoom} onChange={(e) => setPendingBackgroundZoom(Number(e.target.value))} />
-                  </label>
-                  <label className="form-label" style={{ fontSize: 11, margin: 0 }}>
-                    Gelap Overlay
-                    <input type="range" className="w-full" min="0" max="55" value={pendingBackgroundDim} onChange={(e) => setPendingBackgroundDim(Number(e.target.value))} />
-                  </label>
-                </div>
-              </div>
-            )}
+              )}
 
-            <div className="card" style={{ width: '100%', maxWidth: 520, padding: 12, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, boxSizing: 'border-box' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: masterAdsCount > 0 ? 'var(--primary-50)' : 'var(--neutral-200)', color: masterAdsCount > 0 ? 'var(--primary-600)' : 'var(--neutral-600)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <Megaphone size={16} />
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div className="semibold" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Media Iklan (Otomatis dari Master Iklan)</div>
-                  <div className="text-muted" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {masterAdsCount > 0
-                      ? `${masterAdsCount} iklan aktif terpasang otomatis.`
-                      : 'Belum ada iklan aktif di Master Iklan untuk kompetisi ini.'}
+              {/* Master Iklan Auto Card */}
+              <div style={{ width: '100%', padding: 12, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: masterAdsCount > 0 ? 'var(--primary-50)' : 'var(--neutral-200)', color: masterAdsCount > 0 ? 'var(--primary-600)' : 'var(--neutral-600)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <Megaphone size={16} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="semibold" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Media Iklan (Master Iklan)</div>
+                    <div className="text-muted" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {masterAdsCount > 0
+                        ? `${masterAdsCount} iklan aktif terpasang otomatis.`
+                        : 'Belum ada iklan aktif di Master Iklan.'}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <a
-                href="/media-ads"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-sm btn-secondary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0, fontSize: 11, padding: '5px 10px' }}
-              >
-                Atur Master Iklan
-              </a>
-            </div>
-
-            {/* Compact Action Buttons Grid */}
-            <div style={{ width: '100%', maxWidth: 520, display: 'grid', gap: 8, boxSizing: 'border-box' }}>
-              {/* Graphic Output Actions */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <button
-                  className="btn btn-md btn-primary flex align-center justify-center gap-6"
-                  style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
-                  onClick={shareResultGraphic}
-                  disabled={isExportingGraphic}
+                <a
+                  href="/media-ads"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-sm btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0, fontSize: 11, padding: '5px 10px' }}
                 >
-                  <Share2 size={15} /> Bagikan Gambar ({effectiveGraphicType === 'HT' ? 'Halftime' : 'Fulltime'})
-                </button>
-                <button
-                  className="btn btn-md btn-secondary flex align-center justify-center gap-6"
-                  style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
-                  onClick={downloadResultGraphic}
-                  disabled={isExportingGraphic}
-                >
-                  <Download size={15} /> Unduh PNG ({graphicRatio})
-                </button>
+                  Atur Master Iklan
+                </a>
               </div>
 
-              {/* Master Ad Package Actions (if ads exist) */}
-              {hasMediaAdPage && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 8, borderTop: '1px dashed var(--neutral-300)' }}>
+              {/* Compact Action Buttons Grid */}
+              <div style={{ width: '100%', display: 'grid', gap: 8, boxSizing: 'border-box' }}>
+                {/* Graphic Output Actions */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <button
                     className="btn btn-md btn-primary flex align-center justify-center gap-6"
-                    style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, background: 'var(--neutral-900)', width: '100%', boxSizing: 'border-box' }}
-                    onClick={shareMatchMediaAd}
+                    style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                    onClick={shareResultGraphic}
                     disabled={isExportingGraphic}
                   >
-                    <Share2 size={15} /> Bagikan Semua Iklan ({mediaAdPages.length})
+                    <Share2 size={15} /> Bagikan ({effectiveGraphicType})
                   </button>
                   <button
                     className="btn btn-md btn-secondary flex align-center justify-center gap-6"
-                    style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
-                    onClick={downloadMatchMediaAd}
+                    style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                    onClick={downloadResultGraphic}
                     disabled={isExportingGraphic}
                   >
-                    <Download size={15} /> Unduh Semua Iklan ({mediaAdPages.length})
+                    <Download size={15} /> Unduh PNG ({graphicRatio})
                   </button>
                 </div>
-              )}
+
+                {/* Master Ad Package Actions (if ads exist) */}
+                {hasMediaAdPage && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 8, borderTop: '1px dashed var(--neutral-300)' }}>
+                    <button
+                      className="btn btn-md btn-primary flex align-center justify-center gap-6"
+                      style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, background: 'var(--neutral-900)', width: '100%', boxSizing: 'border-box' }}
+                      onClick={shareMatchMediaAd}
+                      disabled={isExportingGraphic}
+                    >
+                      <Share2 size={15} /> Semua Iklan ({mediaAdPages.length})
+                    </button>
+                    <button
+                      className="btn btn-md btn-secondary flex align-center justify-center gap-6"
+                      style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                      onClick={downloadMatchMediaAd}
+                      disabled={isExportingGraphic}
+                    >
+                      <Download size={15} /> Unduh Semua ({mediaAdPages.length})
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* IG Feed Graphic Canvas */}
+            {/* Right Column: Live Previews */}
+            <div className="result-graphic-preview-column">
+              {/* IG Feed Graphic Canvas */}
             <div 
               id="match-feed-card"
               style={{
@@ -1564,7 +1568,8 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                 slideTotal={mediaAdPages.length}
               />
             ))}
-          </>
+            </div>
+          </div>
         )}
       </div>
 
