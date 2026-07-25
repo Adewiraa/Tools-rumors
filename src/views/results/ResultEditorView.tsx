@@ -614,12 +614,16 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
   const submitUpdate = async () => {
     if (isSaving) return;
+    setIsSaving(true);
     const isSavingFullTime = showFullTime || matchStatus === 'Finished';
     const shouldPersistHalfTime = !isSavingFullTime || halfTimeWasSaved;
     const storedStatus: Match['status'] =
       isSavingFullTime
         ? 'Finished'
-        : (matchStatus === 'Live' || matchStatus === 'Postponed' || matchStatus === 'Cancelled' ? matchStatus : 'Scheduled');
+        : (matchStatus === 'Live' || matchStatus === 'Postponed' || matchStatus === 'Cancelled'
+            ? matchStatus
+            : (!isSavingFullTime ? 'Live' : 'Scheduled'));
+
     const finalBgImage = pendingBackgroundImage !== null ? pendingBackgroundImage : backgroundImage;
     const finalPositionX = pendingBackgroundImage !== null ? pendingBackgroundPositionX : backgroundPositionX;
     const finalPositionY = pendingBackgroundImage !== null ? pendingBackgroundPositionY : backgroundPositionY;
@@ -654,12 +658,17 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
     };
 
     try {
-      setIsSaving(true);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
       const res = await fetch('/api/matches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'upsert', match: updatedMatch })
+        body: JSON.stringify({ action: 'upsert', match: updatedMatch }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+
       const responseText = await res.text();
       let result: { success?: boolean; error?: string } = {};
       try {
@@ -667,12 +676,11 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       } catch {
         throw new Error(responseText || `HTTP ${res.status} ${res.statusText}`);
       }
-      if (!res.ok) {
-        throw new Error(result.error || `HTTP ${res.status} ${res.statusText}`);
-      }
-      if (!result.success) {
-        triggerToast(`Gagal menyimpan hasil: ${result.error}`, 'error');
-        return;
+
+      if (!res.ok || !result.success) {
+        triggerToast(`Gagal menyimpan ke server: ${result.error || 'Terjadi kesalahan'}, pembaruan disimpan secara lokal.`, 'warning');
+      } else {
+        triggerToast('Hasil pertandingan berhasil disimpan!');
       }
 
       if (safetyReason) {
@@ -682,12 +690,15 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       }
 
       setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
-      triggerToast('Hasil pertandingan berhasil disimpan!');
       goToResultsList();
     } catch (err: any) {
-      const message = err?.message || 'Terjadi kesalahan saat menyimpan hasil.';
+      const message = err?.name === 'AbortError'
+        ? 'Penyimpanan server memakan waktu, hasil disimpan secara lokal.'
+        : (err?.message || 'Terjadi kesalahan saat menyimpan hasil.');
       console.error('Save match result failed:', err);
-      triggerToast(message, 'error');
+      setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
+      triggerToast(message, 'warning');
+      goToResultsList();
     } finally {
       setIsSaving(false);
     }

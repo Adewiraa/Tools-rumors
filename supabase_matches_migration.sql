@@ -52,6 +52,10 @@ ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_captain TEXT DEFAULT '';
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_captain TEXT DEFAULT '';
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS home_asing JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS away_asing JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS half_time_home_score INTEGER;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS half_time_away_score INTEGER;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS timeline JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS match_media JSONB;
 
 -- Index untuk query cepat
 CREATE INDEX IF NOT EXISTS idx_matches_kickoff      ON matches (kickoff DESC);

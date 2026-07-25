@@ -154,23 +154,34 @@ export async function POST(request: Request) {
       .upsert(payload, { onConflict: 'id' });
 
     if (result.error) {
-      if (result.error.message.includes('timeline') || result.error.message.includes('column')) {
-        console.warn('Optional JSON column missing in DB, retrying without timeline/match_media payload...');
-        if (result.error.message.includes('timeline')) delete payload.timeline;
-        if (result.error.message.includes('match_media') || result.error.message.includes('column')) delete payload.match_media;
-        const retryResult = await supabaseAdmin
+      console.warn('Supabase upsert warning:', result.error.message);
+      // Fallback 1: Remove potentially missing JSON/Media columns
+      const retryPayload = { ...payload };
+      delete retryPayload.match_media;
+      delete retryPayload.timeline;
+
+      const retryResult = await supabaseAdmin
+        .from('matches')
+        .upsert(retryPayload, { onConflict: 'id' });
+
+      if (retryResult.error) {
+        console.warn('Supabase retry 1 warning:', retryResult.error.message);
+        // Fallback 2: Remove HT score columns if DB schema doesn't have them yet
+        delete retryPayload.half_time_home_score;
+        delete retryPayload.half_time_away_score;
+
+        const retryResult2 = await supabaseAdmin
           .from('matches')
-          .upsert(payload, { onConflict: 'id' });
-        if (retryResult.error) throw retryResult.error;
-      } else {
-        throw result.error;
+          .upsert(retryPayload, { onConflict: 'id' });
+
+        if (retryResult2.error) throw retryResult2.error;
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('Matches POST error:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: err?.message || 'Gagal menyimpan pertandingan.' }, { status: 500 });
   }
 }
 
