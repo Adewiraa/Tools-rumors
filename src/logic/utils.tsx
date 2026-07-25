@@ -1,6 +1,6 @@
 import React from 'react';
 import { Club, Player, Match, Competition } from '@/lib/mockData';
-import { countriesList } from '@/lib/countriesData';
+import { countriesList, findCountry } from '@/lib/countriesData';
 
 export type AppSettings = {
   appName: string;
@@ -322,26 +322,30 @@ export const storyExtractCountryCodeFromFlagUrl = (flagUrl?: string) => {
 };
 
 export const storyFindCountryForPlayer = (player: Player) => {
-  const countryCode = storyNormalizeCountryValue(player.countryCode);
-  if (countryCode) {
-    const byCode = countriesList.find(country => {
-      const code = storyNormalizeCountryValue(country.code);
-      return code === countryCode || (countryCode.length === 2 && code.startsWith(countryCode));
-    });
-    if (byCode) return byCode;
+  if (player.nationality) {
+    const matched = findCountry(player.nationality);
+    if (matched) return matched;
   }
-
-  const nationality = storyNormalizeCountryValue(player.nationality);
-  if (!nationality) return undefined;
-  return countriesList.find(country => storyNormalizeCountryValue(country.name) === nationality);
+  if (player.countryCode) {
+    const matched = findCountry(player.countryCode);
+    if (matched) return matched;
+  }
+  if (player.flagUrl) {
+    const extracted = storyExtractCountryCodeFromFlagUrl(player.flagUrl);
+    if (extracted) return findCountry(extracted);
+  }
+  return undefined;
 };
 
-export const storyGetPlayerCountryCode = (player: Player) => (
-  storyNormalizeCountryCodeCandidate(player.countryCode) ||
-  storyNormalizeCountryCodeCandidate(storyFindCountryForPlayer(player)?.code) ||
-  storyNormalizeCountryCodeCandidate(storyExtractCountryCodeFromFlagUrl(player.flagUrl)) ||
-  storyNormalizeCountryCodeCandidate(player.flagUrl)
-);
+export const storyGetPlayerCountryCode = (player: Player) => {
+  const found = storyFindCountryForPlayer(player);
+  if (found) return storyNormalizeCountryCodeCandidate(found.code);
+  return (
+    storyNormalizeCountryCodeCandidate(player.countryCode) ||
+    storyNormalizeCountryCodeCandidate(storyExtractCountryCodeFromFlagUrl(player.flagUrl)) ||
+    storyNormalizeCountryCodeCandidate(player.flagUrl)
+  );
+};
 
 export const storyCountryCodeToFlagUrl = (countryCode?: string) => {
   const normalizedCode = storyNormalizeCountryCodeCandidate(countryCode);

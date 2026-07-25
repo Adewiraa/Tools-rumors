@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Club, Player, calculatePlayerCompleteness } from '@/lib/mockData';
-import { countriesList } from '@/lib/countriesData';
+import { countriesList, findCountry, getCountryFlagUrl } from '@/lib/countriesData';
 import { Activity, ChevronRight, Edit, Flag, Hash, Plus, Search, Shield, Trash2, UserRound, Users } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
@@ -572,7 +572,28 @@ export default function PlayersListView() {
 
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <span className={`badge ${getAvailabilityBadgeClass(player.availability)}`}><Activity size={12} /> {getAvailabilityLabel(player.availability)}</span>
-                      <span className="badge badge-draft"><Flag size={12} /> {player.nationality}</span>
+                      {(() => {
+                        const isForeign = player.nationality && player.nationality !== 'Indonesia';
+                        const matchedCountry = findCountry(player.nationality) || (player.countryCode ? findCountry(player.countryCode) : undefined);
+                        const flagUrl = matchedCountry ? `https://flagcdn.com/w40/${matchedCountry.code.toLowerCase()}.png` : getCountryFlagUrl(player.nationality);
+
+                        return (
+                          <span className={`badge ${isForeign ? 'badge-warning' : 'badge-draft'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <img
+                              src={flagUrl}
+                              alt={player.nationality}
+                              style={{ width: 16, height: 11, objectFit: 'cover', borderRadius: 2, flexShrink: 0 }}
+                              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                            />
+                            <span>{player.nationality}</span>
+                            {isForeign && (
+                              <span style={{ fontSize: 9, fontWeight: 800, background: '#d97706', color: '#fff', padding: '1px 4px', borderRadius: 3 }}>
+                                INT
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div>

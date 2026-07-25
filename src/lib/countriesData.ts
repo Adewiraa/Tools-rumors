@@ -96,3 +96,61 @@ export const countriesList: CountryItem[] = [
   { name: 'Syria', code: 'sy', flagUrl: 'https://flags.restcountries.com/v5/svg/sy.svg' },
   { name: 'Tajikistan', code: 'tj', flagUrl: 'https://flags.restcountries.com/v5/svg/tj.svg' }
 ];
+
+export function findCountry(nameOrCode?: string): CountryItem | undefined {
+  if (!nameOrCode) return undefined;
+  const q = nameOrCode.trim().toLowerCase();
+
+  // Direct code match
+  const byCode = countriesList.find(c => c.code.toLowerCase() === q);
+  if (byCode) return byCode;
+
+  // Direct name match
+  const byName = countriesList.find(c => c.name.toLowerCase() === q);
+  if (byName) return byName;
+
+  // Common aliases & variations
+  const aliases: Record<string, string> = {
+    'bosnia': 'ba',
+    'bosnia & herzegovina': 'ba',
+    'bosnia-herzegovina': 'ba',
+    'bosnia and herzegovina': 'ba',
+    'slovakia': 'sk',
+    'slovak': 'sk',
+    'slovakia (slovak republic)': 'sk',
+    'serbia': 'rs',
+    'montenegro': 'me',
+    'croatia': 'hr',
+    'cape verde': 'cv',
+    'cabo verde': 'cv',
+    'holland': 'nl',
+    'netherlands': 'nl',
+    'czechia': 'cz',
+    'czech republic': 'cz',
+    'england': 'gb',
+    'scotland': 'gb',
+    'wales': 'gb',
+    'uk': 'gb',
+    'usa': 'us',
+    'korea': 'kr',
+    'south korea': 'kr',
+  };
+
+  if (aliases[q]) {
+    const code = aliases[q];
+    const found = countriesList.find(c => c.code.toLowerCase() === code);
+    if (found) return found;
+  }
+
+  // Partial substring match
+  return countriesList.find(c => c.name.toLowerCase().includes(q) || q.includes(c.name.toLowerCase()));
+}
+
+export function getCountryFlagUrl(nameOrCode?: string): string {
+  const item = findCountry(nameOrCode);
+  if (item?.code) {
+    return `https://flagcdn.com/w40/${item.code.toLowerCase()}.png`;
+  }
+  return 'https://flagcdn.com/w40/id.png';
+}
+

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { findCountry, getCountryFlagUrl } from '@/lib/countriesData';
 
 // Server-side only — uses service_role key to bypass RLS
 const supabaseAdmin = createClient(
@@ -93,6 +94,11 @@ export async function GET() {
       const roster = rosterByPlayerId.get(String(player.id));
       const clubSeason = roster?.club_season_id ? clubSeasonById.get(String(roster.club_season_id)) : undefined;
       const clubId = player.club_id || clubSeason?.club_id || '';
+      const nationality = player.country_name || player.nationality || 'Indonesia';
+      const matchedCountry = findCountry(nationality) || (player.country_code ? findCountry(player.country_code) : undefined);
+      const countryCode = matchedCountry?.code?.toUpperCase() || player.country_code || (nationality === 'Indonesia' ? 'ID' : 'XX');
+      const flagUrl = matchedCountry ? `https://flagcdn.com/w40/${matchedCountry.code.toLowerCase()}.png` : (player.country_flag_url || player.flag_url || getCountryFlagUrl(nationality));
+
       const mappedPlayer = {
         id: player.id,
         fullName: player.full_name,
@@ -101,9 +107,9 @@ export async function GET() {
         clubName: player.club_name || (clubId ? clubNameById.get(String(clubId)) : '') || '',
         position: positionFromRoster(roster?.position || player.position),
         shirtNumber: Number(roster?.shirt_number ?? player.shirt_number) || 0,
-        nationality: player.country_name || player.nationality || 'Indonesia',
-        countryCode: player.country_code || undefined,
-        flagUrl: player.country_flag_url || player.flag_url || 'https://flags.restcountries.com/v5/svg/id.svg',
+        nationality,
+        countryCode,
+        flagUrl,
         age: Number(player.age) || 20,
         status: player.status || (clubId ? 'active' : 'free_agent'),
         availability: player.availability || 'available',
@@ -129,14 +135,18 @@ export async function POST(request: Request) {
     const { action, player, clubSeasonId } = body;
 
     if (action === 'upsert') {
+      const matched = findCountry(player.nationality) || (player.countryCode ? findCountry(player.countryCode) : undefined);
+      const resolvedCode = matched?.code?.toUpperCase() || (player.nationality === 'Indonesia' ? 'ID' : 'XX');
+      const resolvedFlagUrl = matched ? `https://flagcdn.com/w40/${matched.code.toLowerCase()}.png` : player.flagUrl;
+
       // 1. Upsert player profile
       const playerPayload = {
         id: player.id,
         full_name: player.fullName,
         display_name: player.displayName,
-        country_code: player.nationality === 'Indonesia' ? 'ID' : player.nationality?.slice(0, 2).toUpperCase() || 'XX',
+        country_code: resolvedCode,
         country_name: player.nationality,
-        country_flag_url: player.flagUrl,
+        country_flag_url: resolvedFlagUrl,
       };
 
       const { error: playerErr } = await supabaseAdmin
