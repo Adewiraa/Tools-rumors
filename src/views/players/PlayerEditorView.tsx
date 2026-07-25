@@ -213,8 +213,32 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Display Name</label><input className="form-input" value={player.displayName} onChange={event => updatePlayer('displayName', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Klub</label><select className="form-select" value={player.clubId} onChange={event => updatePlayer('clubId', event.target.value)}>{clubs.map(club => <option key={club.id} value={club.id}>{club.name}</option>)}</select></div>
           <div style={{ gridColumn: 'span 3' }}><label className="form-label">Posisi</label><select className="form-select" value={player.position} onChange={event => updatePlayer('position', event.target.value as Player['position'])}><option value="Goalkeeper">Goalkeeper</option><option value="Defender">Defender</option><option value="Midfielder">Midfielder</option><option value="Forward">Forward</option></select></div>
-          <div style={{ gridColumn: 'span 3' }}><label className="form-label">No</label><input type="number" className="form-input" value={player.shirtNumber} onChange={event => updatePlayer('shirtNumber', Number(event.target.value))} /></div>
-          <div style={{ gridColumn: 'span 3' }}><label className="form-label">Umur</label><input type="number" className="form-input" value={player.age} onChange={event => updatePlayer('age', Number(event.target.value))} /></div>
+          <div style={{ gridColumn: 'span 3' }}>
+            <label className="form-label">No Punggung</label>
+            <input
+              type="number"
+              className="form-input"
+              placeholder="0"
+              value={player.shirtNumber === 0 ? '' : player.shirtNumber}
+              onChange={event => {
+                const val = event.target.value;
+                updatePlayer('shirtNumber', val === '' ? 0 : Math.max(0, parseInt(val, 10) || 0));
+              }}
+            />
+          </div>
+          <div style={{ gridColumn: 'span 3' }}>
+            <label className="form-label">Umur</label>
+            <input
+              type="number"
+              className="form-input"
+              placeholder="0"
+              value={player.age === 0 ? '' : player.age}
+              onChange={event => {
+                const val = event.target.value;
+                updatePlayer('age', val === '' ? 0 : Math.max(0, parseInt(val, 10) || 0));
+              }}
+            />
+          </div>
           <div style={{ gridColumn: 'span 3' }}><label className="form-label">Status</label><select className="form-select" value={player.status} onChange={event => updatePlayer('status', event.target.value as Player['status'])}><option value="active">Aktif</option><option value="free_agent">Free Agent</option><option value="retired">Pensiun</option></select></div>
           <div style={{ gridColumn: 'span 6' }}><label className="form-label">Availability</label><select className="form-select" value={player.availability} onChange={event => updatePlayer('availability', event.target.value as Player['availability'])}><option value="available">Tersedia</option><option value="injured">Cedera</option><option value="suspended">Skorsing</option><option value="international_duty">Tim Nasional</option><option value="doubtful">Diragukan</option></select></div>
         </div>
