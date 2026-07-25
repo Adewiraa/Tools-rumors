@@ -6,6 +6,7 @@ import { Match } from '@/lib/mockData';
 import { ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { getEditableScheduleStatus } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
+import SearchableClubSelect from '@/views/shared/SearchableClubSelect';
 
 export default function ScheduleEditorView({ matchId }: { matchId: string }) {
   const {
@@ -148,15 +149,21 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
           <div className="form-row-2col schedule-editor-team-fields">
             <div className="form-group">
               <label className="form-label">Tim Home <span className="required">*</span></label>
-              <select className="form-select" value={homeClubId} onChange={e => setHomeClubId(e.target.value)}>
-                {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <SearchableClubSelect
+                clubs={clubOptions}
+                value={homeClubId}
+                onChange={id => setHomeClubId(id)}
+                placeholder="Pilih Tim Home..."
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Tim Away <span className="required">*</span></label>
-              <select className="form-select" value={awayClubId} onChange={e => setAwayClubId(e.target.value)}>
-                {clubOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <SearchableClubSelect
+                clubs={clubOptions}
+                value={awayClubId}
+                onChange={id => setAwayClubId(id)}
+                placeholder="Pilih Tim Away..."
+              />
             </div>
           </div>
 

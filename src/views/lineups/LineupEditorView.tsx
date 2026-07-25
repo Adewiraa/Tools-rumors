@@ -22,6 +22,7 @@ import {
   renderPublishedStoryFlag,
 } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
+import SearchableClubSelect from '@/views/shared/SearchableClubSelect';
 
 interface AsingEntry { id: string; name: string; no: number; pos: string; }
 
@@ -766,19 +767,21 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
           </div>
           <div>
             <label className="lineup-field-label">Tim Home</label>
-            <select className="form-select" style={{ fontSize: 12 }} value={selectedHomeClub}
+            <SearchableClubSelect
+              clubs={clubs}
+              value={selectedHomeClub}
               disabled={matchInfoLocked}
-              onChange={e => { setSelectedHomeClub(e.target.value); setHomeStarters([]); setHomeSubs([]); setHomeCaptain(''); }}>
-              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+              onChange={id => { setSelectedHomeClub(id); setHomeStarters([]); setHomeSubs([]); setHomeCaptain(''); }}
+            />
           </div>
           <div>
             <label className="lineup-field-label">Tim Away</label>
-            <select className="form-select" style={{ fontSize: 12 }} value={selectedAwayClub}
+            <SearchableClubSelect
+              clubs={clubs}
+              value={selectedAwayClub}
               disabled={matchInfoLocked}
-              onChange={e => { setSelectedAwayClub(e.target.value); setAwayStarters([]); setAwaySubs([]); setAwayCaptain(''); }}>
-              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+              onChange={id => { setSelectedAwayClub(id); setAwayStarters([]); setAwaySubs([]); setAwayCaptain(''); }}
+            />
           </div>
           <div>
             <label className="lineup-field-label">Kickoff</label>
