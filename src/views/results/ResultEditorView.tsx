@@ -1042,12 +1042,23 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
           </div>
         ) : (
           <>
-            {/* Control Panel */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, width: '100%', maxWidth: 500, justifyContent: 'center' }}>
-              {/* Content Type */}
-              <div style={{ flex: '1 1 140px' }}>
-                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>Tipe Konten</label>
-                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-100)', padding: 3, borderRadius: 8 }}>
+            {/* Compact Control Panel */}
+            <div style={{
+              width: '100%',
+              maxWidth: 520,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 10,
+              padding: 12,
+              backgroundColor: 'var(--neutral-50)',
+              border: '1px solid var(--neutral-200)',
+              borderRadius: 10,
+              boxSizing: 'border-box'
+            }}>
+              {/* Content Type Segment */}
+              <div style={{ minWidth: 0 }}>
+                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Tipe Konten</label>
+                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-200)', padding: 2, borderRadius: 6 }}>
                   <button
                     type="button"
                     style={{
@@ -1055,11 +1066,13 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                       backgroundColor: effectiveGraphicType === 'HT' ? 'var(--primary-600)' : 'transparent',
                       color: effectiveGraphicType === 'HT' ? 'white' : 'var(--neutral-700)',
                       border: 'none',
-                      borderRadius: 6,
+                      borderRadius: 4,
                       fontWeight: 600,
                       fontSize: 11,
-                      padding: '6px 12px',
-                      cursor: 'pointer'
+                      padding: '6px 2px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
                     onClick={() => {
                       if (showFullTime) {
@@ -1078,11 +1091,13 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                       backgroundColor: effectiveGraphicType === 'FT' ? 'var(--primary-600)' : 'transparent',
                       color: effectiveGraphicType === 'FT' ? 'white' : 'var(--neutral-700)',
                       border: 'none',
-                      borderRadius: 6,
+                      borderRadius: 4,
                       fontWeight: 600,
                       fontSize: 11,
-                      padding: '6px 12px',
-                      cursor: 'pointer'
+                      padding: '6px 2px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
                     onClick={() => {
                       if (!showFullTime) {
@@ -1097,10 +1112,10 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                 </div>
               </div>
 
-              {/* Ratio Selection */}
-              <div style={{ flex: '1 1 140px' }}>
-                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>Rasio Gambar</label>
-                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-100)', padding: 3, borderRadius: 8 }}>
+              {/* Ratio Segment */}
+              <div style={{ minWidth: 0 }}>
+                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Rasio Gambar</label>
+                <div style={{ display: 'flex', backgroundColor: 'var(--neutral-200)', padding: 2, borderRadius: 6 }}>
                   <button
                     type="button"
                     style={{
@@ -1108,11 +1123,13 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                       backgroundColor: graphicRatio === '1:1' ? 'var(--primary-600)' : 'transparent',
                       color: graphicRatio === '1:1' ? 'white' : 'var(--neutral-700)',
                       border: 'none',
-                      borderRadius: 6,
+                      borderRadius: 4,
                       fontWeight: 600,
                       fontSize: 11,
-                      padding: '6px 12px',
-                      cursor: 'pointer'
+                      padding: '6px 2px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
                     onClick={() => setGraphicRatio('1:1')}
                   >
@@ -1125,11 +1142,13 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                       backgroundColor: graphicRatio === '4:5' ? 'var(--primary-600)' : 'transparent',
                       color: graphicRatio === '4:5' ? 'white' : 'var(--neutral-700)',
                       border: 'none',
-                      borderRadius: 6,
+                      borderRadius: 4,
                       fontWeight: 600,
                       fontSize: 11,
-                      padding: '6px 12px',
-                      cursor: 'pointer'
+                      padding: '6px 2px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
                     onClick={() => setGraphicRatio('4:5')}
                   >
@@ -1138,12 +1157,12 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                 </div>
               </div>
 
-              {/* Background Image Upload */}
-              <div style={{ flex: '1 1 180px' }}>
-                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600 }}>Gambar Background</label>
-                <div className="flex gap-8 align-center" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer', margin: 0, padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <span>📁</span> {backgroundImage ? 'Ganti Bg' : 'Pilih Gambar'}
+              {/* Background Picker */}
+              <div style={{ minWidth: 0 }}>
+                <label className="form-label" style={{ fontSize: 11, marginBottom: 4, fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>Gambar Background</label>
+                <div style={{ display: 'flex', gap: 4, width: '100%' }}>
+                  <label className="btn btn-sm btn-secondary" style={{ flex: 1, cursor: 'pointer', margin: 0, padding: '6px 4px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                    <span>📁</span> {backgroundImage ? 'Ganti' : 'Pilih'}
                     <input
                       type="file"
                       accept="image/*"
@@ -1171,7 +1190,8 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                     <button
                       type="button"
                       className="btn btn-sm btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      title="Atur Posisi Background"
+                      style={{ padding: '6px 8px', fontSize: 11 }}
                       onClick={() => {
                         setPendingBackgroundImage(backgroundImage);
                         setPendingBackgroundPositionX(backgroundPositionX);
@@ -1180,21 +1200,22 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                         setPendingBackgroundDim(backgroundDim);
                       }}
                     >
-                      <span>⚙️</span> Atur Posisi
+                      ⚙️
                     </button>
                   )}
                   {backgroundImage && (
                     <button
                       type="button"
                       className="btn btn-sm btn-danger"
-                      style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      title="Hapus Background"
+                      style={{ padding: '6px 8px', fontSize: 11 }}
                       onClick={() => {
                         setBackgroundImage(null);
                         resetBackgroundImageDraft();
                         triggerToast('Gambar background dihapus.');
                       }}
                     >
-                      <span>🗑️</span> Hapus
+                      🗑️
                     </button>
                   )}
                 </div>
@@ -1202,7 +1223,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
             </div>
 
             {pendingBackgroundImage && (
-              <div style={{ width: '100%', maxWidth: 500, border: '1px solid var(--neutral-200)', borderRadius: 8, padding: 12, backgroundColor: 'var(--neutral-50)' }}>
+              <div style={{ width: '100%', maxWidth: 520, border: '1px solid var(--neutral-200)', borderRadius: 10, padding: 12, backgroundColor: 'var(--neutral-50)', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                   <label className="form-label" style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Preview & Atur Background</label>
                   <div className="flex gap-8">
@@ -1252,16 +1273,16 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               </div>
             )}
 
-            <div className="card" style={{ width: '100%', maxWidth: 500, padding: 14, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: masterAdsCount > 0 ? 'var(--primary-50)' : 'var(--neutral-200)', color: masterAdsCount > 0 ? 'var(--primary-600)' : 'var(--neutral-600)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                  <Megaphone size={18} />
+            <div className="card" style={{ width: '100%', maxWidth: 520, padding: 12, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: masterAdsCount > 0 ? 'var(--primary-50)' : 'var(--neutral-200)', color: masterAdsCount > 0 ? 'var(--primary-600)' : 'var(--neutral-600)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Megaphone size={16} />
                 </div>
-                <div>
-                  <div className="semibold" style={{ fontSize: 13 }}>Media Iklan (Otomatis dari Master Iklan)</div>
-                  <div className="text-muted" style={{ fontSize: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="semibold" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Media Iklan (Otomatis dari Master Iklan)</div>
+                  <div className="text-muted" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {masterAdsCount > 0
-                      ? `${masterAdsCount} iklan aktif dari Master Iklan terpasang otomatis.`
+                      ? `${masterAdsCount} iklan aktif terpasang otomatis.`
                       : 'Belum ada iklan aktif di Master Iklan untuk kompetisi ini.'}
                   </div>
                 </div>
@@ -1271,52 +1292,56 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-sm btn-secondary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0, fontSize: 11, padding: '5px 10px' }}
               >
                 Atur Master Iklan
               </a>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-12" style={{ width: '100%', maxWidth: 500 }}>
-              <button
-                className="btn btn-md btn-primary flex-1 flex align-center justify-center gap-8"
-                style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
-                onClick={shareResultGraphic}
-                disabled={isExportingGraphic}
-              >
-                <Share2 size={16} /> Bagikan Gambar ({effectiveGraphicType === 'HT' ? 'Halftime' : 'Fulltime'})
-              </button>
-              <button
-                className="btn btn-md btn-secondary flex-1 flex align-center justify-center gap-8"
-                style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
-                onClick={downloadResultGraphic}
-                disabled={isExportingGraphic}
-              >
-                <Download size={16} /> Unduh PNG ({graphicRatio})
-              </button>
-            </div>
-
-            {hasMediaAdPage && (
-              <div className="flex gap-12" style={{ width: '100%', maxWidth: 500 }}>
+            {/* Compact Action Buttons Grid */}
+            <div style={{ width: '100%', maxWidth: 520, display: 'grid', gap: 8, boxSizing: 'border-box' }}>
+              {/* Graphic Output Actions */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <button
-                  className="btn btn-md btn-primary flex-1 flex align-center justify-center gap-8"
-                  style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
-                  onClick={shareMatchMediaAd}
+                  className="btn btn-md btn-primary flex align-center justify-center gap-6"
+                  style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                  onClick={shareResultGraphic}
                   disabled={isExportingGraphic}
                 >
-                  <Share2 size={16} /> Bagikan Semua Iklan
+                  <Share2 size={15} /> Bagikan Gambar ({effectiveGraphicType === 'HT' ? 'Halftime' : 'Fulltime'})
                 </button>
                 <button
-                  className="btn btn-md btn-secondary flex-1 flex align-center justify-center gap-8"
-                  style={{ padding: '10px 24px', fontWeight: 600, letterSpacing: 0.5 }}
-                  onClick={downloadMatchMediaAd}
+                  className="btn btn-md btn-secondary flex align-center justify-center gap-6"
+                  style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                  onClick={downloadResultGraphic}
                   disabled={isExportingGraphic}
                 >
-                  <Download size={16} /> Unduh Semua Iklan
+                  <Download size={15} /> Unduh PNG ({graphicRatio})
                 </button>
               </div>
-            )}
+
+              {/* Master Ad Package Actions (if ads exist) */}
+              {hasMediaAdPage && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 8, borderTop: '1px dashed var(--neutral-300)' }}>
+                  <button
+                    className="btn btn-md btn-primary flex align-center justify-center gap-6"
+                    style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, background: 'var(--neutral-900)', width: '100%', boxSizing: 'border-box' }}
+                    onClick={shareMatchMediaAd}
+                    disabled={isExportingGraphic}
+                  >
+                    <Share2 size={15} /> Bagikan Semua Iklan ({mediaAdPages.length})
+                  </button>
+                  <button
+                    className="btn btn-md btn-secondary flex align-center justify-center gap-6"
+                    style={{ padding: '9px 12px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
+                    onClick={downloadMatchMediaAd}
+                    disabled={isExportingGraphic}
+                  >
+                    <Download size={15} /> Unduh Semua Iklan ({mediaAdPages.length})
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* IG Feed Graphic Canvas */}
             <div 
