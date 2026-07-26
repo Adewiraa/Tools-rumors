@@ -15,20 +15,21 @@ import {
   calculateClubCompleteness
 } from '@/lib/mockData';
 import { supabase } from '@/lib/supabaseClient';
-import { DEFAULT_APP_SETTINGS, normalizeAppSettings } from '@/logic/utils';
+import { DEFAULT_APP_SETTINGS, DEFAULT_MEDIA_TENANTS, normalizeAppSettings } from '@/logic/utils';
 import type { AppSettings } from '@/logic/utils';
 import {
   AppUser,
   RolePermission,
   UserRole,
   ActiveMenu,
+  MediaTenant,
   INITIAL_USERS,
   INITIAL_ROLE_PERMISSIONS
 } from '@/lib/types/auth';
 import { getSessionUser } from '@/logic/authSession';
 import { ThemePalette, DEFAULT_THEME_PALETTE, applyThemeToDocument } from '@/logic/colorGenerator';
 
-export type { UserRole, ActiveMenu };
+export type { UserRole, ActiveMenu, MediaTenant };
 
 export interface ToastMessage {
   message: string;
@@ -50,6 +51,12 @@ interface AppContextType {
   setAuditLogs: React.Dispatch<React.SetStateAction<AuditLog[]>>;
   competitions: Competition[];
   setCompetitions: React.Dispatch<React.SetStateAction<Competition[]>>;
+
+  // Multi-Tenant Workspace State
+  currentTenantId: string;
+  mediaTenants: MediaTenant[];
+  switchTenant: (tenantId: string) => Promise<void>;
+  addTenant: (tenant: MediaTenant) => Promise<void>;
 
   // Users & Permissions State
   users: AppUser[];
@@ -181,14 +188,62 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   };
 
+  const [mediaTenants, setMediaTenants] = useState<MediaTenant[]>(DEFAULT_MEDIA_TENANTS);
+  const [currentTenantId, setCurrentTenantId] = useState<string>('gosball');
+
+  const switchTenant = async (tenantId: string) => {
+    setCurrentTenantId(tenantId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gosball_active_tenant', tenantId);
+    }
+
+    try {
+      const res = await fetch(`/api/settings?tenantId=${encodeURIComponent(tenantId)}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setAppSettingsState(normalizeAppSettings(json.data));
+      }
+    } catch (e) {
+      console.warn('Switch tenant API fetch error:', e);
+    }
+  };
+
+  const addTenant = async (newTenant: MediaTenant) => {
+    setMediaTenants(prev => {
+      const exists = prev.some(t => t.id === newTenant.id);
+      const next = exists ? prev.map(t => t.id === newTenant.id ? newTenant : t) : [...prev, newTenant];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('gosball_media_tenants', JSON.stringify(next));
+      }
+      return next;
+    });
+    await switchTenant(newTenant.id);
+  };
+
   // Load browser-only preferences and draft assets.
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Load saved media tenants
+      const cachedTenants = localStorage.getItem('gosball_media_tenants');
+      if (cachedTenants) {
+        try {
+          const parsed = JSON.parse(cachedTenants);
+          if (Array.isArray(parsed) && parsed.length > 0) setMediaTenants(parsed);
+        } catch (e) {
+          console.warn('Cache tenants error:', e);
+        }
+      }
+
+      // Load active tenant
+      const activeTenant = localStorage.getItem('gosball_active_tenant');
+      if (activeTenant) setCurrentTenantId(activeTenant);
+
       // Load session user (from login)
       const sessionUser = getSessionUser();
       if (sessionUser) {
         setCurrentUserState(sessionUser);
         setCurrentUserRoleState(sessionUser.role as UserRole);
+        if (sessionUser.tenantId) setCurrentTenantId(sessionUser.tenantId);
       } else {
         // Fallback: legacy role from localStorage
         const savedRole = localStorage.getItem('gosball_admin_role') as UserRole;
@@ -327,11 +382,29 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const setAppSettings = (settings: Partial<AppSettings>) => {
-    const nextSettings = normalizeAppSettings(settings);
+    const activeTenantId = settings.tenantId || currentTenantId;
+    const nextSettings = normalizeAppSettings({ ...settings, tenantId: activeTenantId });
     setAppSettingsState(nextSettings);
+
+    // Update mediaTenants list summary
+    setMediaTenants(prev => prev.map(t => t.id === activeTenantId ? {
+      ...t,
+      name: nextSettings.appName,
+      logoSrc: nextSettings.appLogoSrc,
+      subtitle: nextSettings.appSubtitle,
+      handle: nextSettings.appHandle,
+    } : t));
+
     if (typeof window !== 'undefined') {
+      localStorage.setItem(`${APP_SETTINGS_STORAGE_KEY}_${activeTenantId}`, JSON.stringify(nextSettings));
       localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(nextSettings));
     }
+
+    void fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantId: activeTenantId, settings: nextSettings }),
+    }).catch(e => console.warn('Persist settings API error:', e));
   };
 
   const triggerToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
@@ -743,6 +816,11 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setUsers,
         rolePermissions,
         setRolePermissions,
+
+        currentTenantId,
+        mediaTenants,
+        switchTenant,
+        addTenant,
 
         currentUser,
         setCurrentUser,

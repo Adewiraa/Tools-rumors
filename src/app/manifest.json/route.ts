@@ -17,7 +17,10 @@ const supabaseAdmin = createClient(
   }
 );
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const tenantId = searchParams.get('tenantId') || 'default';
+
   let appName = DEFAULT_APP_SETTINGS.appName;
   let appLogoSrc = DEFAULT_APP_SETTINGS.appLogoSrc;
 
@@ -25,7 +28,7 @@ export async function GET() {
     const { data } = await supabaseAdmin
       .from('app_settings')
       .select('app_name, app_logo_url')
-      .eq('id', 'default')
+      .eq('id', tenantId)
       .maybeSingle();
 
     if (data) {

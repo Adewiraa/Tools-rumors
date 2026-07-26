@@ -15,6 +15,16 @@ export type ActiveMenu =
   | 'logs'
   | 'settings';
 
+export interface MediaTenant {
+  id: string;
+  name: string;
+  logoSrc: string;
+  subtitle: string;
+  handle: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface AppUser {
   id: string;
   username: string;
@@ -24,6 +34,7 @@ export interface AppUser {
   status: 'active' | 'inactive';
   avatarUrl?: string;
   customTheme?: unknown;
+  tenantId?: string;
   createdAt?: string;
   updatedAt?: string;
 }

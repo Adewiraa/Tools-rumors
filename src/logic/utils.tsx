@@ -3,6 +3,7 @@ import { Club, Player, Match, Competition } from '@/lib/mockData';
 import { countriesList, findCountry } from '@/lib/countriesData';
 
 export type AppSettings = {
+  tenantId?: string;
   appName: string;
   appHandle: string;
   appLogoSrc: string;
@@ -10,13 +11,32 @@ export type AppSettings = {
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
+  tenantId: 'gosball',
   appName: 'Gosball',
   appHandle: '@GOSBALL',
   appLogoSrc: '/brand/gosball-alt.png',
   appSubtitle: 'MEDIA APP',
 };
 
+export const DEFAULT_MEDIA_TENANTS = [
+  {
+    id: 'gosball',
+    name: 'Gosball',
+    logoSrc: '/brand/gosball-alt.png',
+    subtitle: 'Media Sepak Bola',
+    handle: '@gosball',
+  },
+  {
+    id: 'garudagoal',
+    name: 'Garuda Goal',
+    logoSrc: '/brand/gosball-alt.png',
+    subtitle: 'Media Sepak Bola Indonesia',
+    handle: '@garudagoal',
+  },
+];
+
 export const normalizeAppSettings = (value?: Partial<AppSettings> | null): AppSettings => ({
+  tenantId: value?.tenantId || DEFAULT_APP_SETTINGS.tenantId,
   appName: value?.appName !== undefined && value?.appName !== null ? value.appName : DEFAULT_APP_SETTINGS.appName,
   appHandle: value?.appHandle !== undefined && value?.appHandle !== null ? value.appHandle : DEFAULT_APP_SETTINGS.appHandle,
   appLogoSrc: value?.appLogoSrc !== undefined && value?.appLogoSrc !== null ? value.appLogoSrc : DEFAULT_APP_SETTINGS.appLogoSrc,

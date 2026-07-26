@@ -27,19 +27,23 @@ const getErrorMessage = (error: unknown) => (
   error instanceof Error ? error.message : String(error)
 );
 
-const mapFromSupabase = (settings: AppSettingsRow) => normalizeAppSettings({
+const mapFromSupabase = (settings: AppSettingsRow, tenantId: string) => normalizeAppSettings({
+  tenantId,
   appName: settings?.app_name || undefined,
   appHandle: settings?.app_handle || undefined,
   appLogoSrc: settings?.app_logo_url || undefined,
   appSubtitle: settings?.app_subtitle || undefined,
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const tenantId = searchParams.get('tenantId') || 'default';
+
     const { data, error } = await supabaseAdmin
       .from('app_settings')
       .select('app_name, app_handle, app_logo_url, app_subtitle')
-      .eq('id', 'default')
+      .eq('id', tenantId)
       .maybeSingle();
 
     if (error) {
@@ -48,7 +52,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      data: data ? mapFromSupabase(data) : DEFAULT_APP_SETTINGS,
+      data: data ? mapFromSupabase(data, tenantId) : { ...DEFAULT_APP_SETTINGS, tenantId },
     });
   } catch (error: unknown) {
     console.error('Settings GET error:', error);
@@ -59,12 +63,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const settings = normalizeAppSettings(body?.settings || body);
+    const rawSettings = body?.settings || body;
+    const tenantId = rawSettings?.tenantId || body?.tenantId || 'default';
+    const settings = normalizeAppSettings({ ...rawSettings, tenantId });
 
     const { error } = await supabaseAdmin
       .from('app_settings')
       .upsert({
-        id: 'default',
+        id: tenantId,
         app_name: settings.appName,
         app_handle: settings.appHandle,
         app_logo_url: settings.appLogoSrc,
