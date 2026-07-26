@@ -212,19 +212,14 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           console.warn('Cache settings error:', e);
         }
       }
-
-      const savedTheme = localStorage.getItem('gosball_custom_theme');
-      if (savedTheme) {
-        try {
-          const parsed = JSON.parse(savedTheme);
-          setCurrentThemeState(parsed);
-          applyThemeToDocument(parsed);
-        } catch (e) {
-          console.warn('Cache theme error:', e);
-        }
-      }
     }
   }, []);
+
+  const getUserThemeStorageKey = (user?: Omit<AppUser, 'password'> | null) => {
+    if (user?.id) return `gosball_custom_theme_${user.id}`;
+    if (user?.username) return `gosball_custom_theme_${user.username}`;
+    return 'gosball_custom_theme';
+  };
 
   // Dynamically update browser tab favicon/icon & document title from App Settings (Master Web Logo & Name)
   useEffect(() => {
@@ -237,30 +232,64 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (appSettings.appLogoSrc) {
       const logoUrl = appSettings.appLogoSrc;
 
-      // Update or create standard shortcut icon link tag
-      let iconLink: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-      if (!iconLink) {
-        iconLink = document.createElement('link');
-        iconLink.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(iconLink);
-      }
-      iconLink.href = logoUrl;
+      // Remove existing static icon links to force browser tab icon refresh
+      const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
+      existingLinks.forEach(el => el.remove());
 
-      // Update or create apple-touch-icon link tag
-      let appleIconLink: HTMLLinkElement | null = document.querySelector("link[rel='apple-touch-icon']");
-      if (!appleIconLink) {
-        appleIconLink = document.createElement('link');
-        appleIconLink.rel = 'apple-touch-icon';
-        document.getElementsByTagName('head')[0].appendChild(appleIconLink);
-      }
-      appleIconLink.href = logoUrl;
+      // Inject fresh dynamic icon link tags
+      const iconTypes = [
+        { rel: 'icon', type: 'image/png' },
+        { rel: 'shortcut icon', type: 'image/x-icon' },
+        { rel: 'apple-touch-icon', type: 'image/png' },
+      ];
+
+      iconTypes.forEach(({ rel, type }) => {
+        const link = document.createElement('link');
+        link.rel = rel;
+        link.type = type;
+        link.href = logoUrl;
+        document.head.appendChild(link);
+      });
     }
   }, [appSettings.appName, appSettings.appLogoSrc]);
+
+  // Sync private user theme whenever currentUser changes (Login / Logout / Switch Account)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const userKey = getUserThemeStorageKey(currentUser);
+    const savedUserTheme = localStorage.getItem(userKey);
+
+    if (savedUserTheme) {
+      try {
+        const parsed = JSON.parse(savedUserTheme);
+        setCurrentThemeState(parsed);
+        applyThemeToDocument(parsed);
+        return;
+      } catch (e) {
+        console.warn('Cache user theme error:', e);
+      }
+    }
+
+    if (currentUser?.customTheme) {
+      const parsed = currentUser.customTheme as ThemePalette;
+      setCurrentThemeState(parsed);
+      applyThemeToDocument(parsed);
+      return;
+    }
+
+    // Default theme for new users without saved preference
+    const fallbackTheme = DEFAULT_THEME_PALETTE;
+    setCurrentThemeState(fallbackTheme);
+    applyThemeToDocument(fallbackTheme);
+  }, [currentUser?.id, currentUser?.username]);
 
   const setCustomTheme = (palette: ThemePalette) => {
     setCurrentThemeState(palette);
     applyThemeToDocument(palette);
     if (typeof window !== 'undefined') {
+      const userKey = getUserThemeStorageKey(currentUser);
+      localStorage.setItem(userKey, JSON.stringify(palette));
       localStorage.setItem('gosball_custom_theme', JSON.stringify(palette));
     }
   };

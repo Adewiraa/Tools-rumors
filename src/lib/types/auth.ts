@@ -23,6 +23,7 @@ export interface AppUser {
   role: UserRole;
   status: 'active' | 'inactive';
   avatarUrl?: string;
+  customTheme?: unknown;
   createdAt?: string;
   updatedAt?: string;
 }
