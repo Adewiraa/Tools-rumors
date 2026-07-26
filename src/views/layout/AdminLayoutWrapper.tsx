@@ -135,7 +135,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     setMobileDrawerOpen(false);
     setGlobalSearchOpen(false);
     triggerToast(message, type);
-    window.setTimeout(() => router.replace('/login'), 350);
+    router.replace('/login');
   }, [router, setCurrentUser, setGlobalSearchOpen, setMobileDrawerOpen, triggerToast]);
 
   // ── Auth Guard ──────────────────────────────────────────────────────────────
