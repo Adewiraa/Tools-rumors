@@ -26,6 +26,7 @@ import {
   INITIAL_ROLE_PERMISSIONS
 } from '@/lib/types/auth';
 import { getSessionUser } from '@/logic/authSession';
+import { ThemePalette, DEFAULT_THEME_PALETTE, applyThemeToDocument } from '@/logic/colorGenerator';
 
 export type { UserRole, ActiveMenu };
 
@@ -82,6 +83,10 @@ interface AppContextType {
   logAction: (action: string, module: string, details: string) => void;
   hasPermission: (module: string, action: 'read' | 'create_edit' | 'publish' | 'delete' | 'all') => boolean;
   hasMenuAccess: (menuId: string) => boolean;
+
+  // Realtime Color Studio Theme State
+  currentTheme: ThemePalette;
+  setCustomTheme: (palette: ThemePalette) => void;
 
   // CRUD Operations for Users & Role Permissions
   addUser: (user: Omit<AppUser, 'id'>) => Promise<boolean>;
@@ -145,6 +150,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const [currentUser, setCurrentUserState] = useState<Omit<AppUser, 'password'> | null>(null);
   const [currentUserRole, setCurrentUserRoleState] = useState<UserRole>('Super Admin');
+  const [currentTheme, setCurrentThemeState] = useState<ThemePalette>(DEFAULT_THEME_PALETTE);
   const [uiState, setUiState] = useState<'default' | 'loading' | 'empty' | 'error'>('default');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
@@ -206,8 +212,27 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           console.warn('Cache settings error:', e);
         }
       }
+
+      const savedTheme = localStorage.getItem('gosball_custom_theme');
+      if (savedTheme) {
+        try {
+          const parsed = JSON.parse(savedTheme);
+          setCurrentThemeState(parsed);
+          applyThemeToDocument(parsed);
+        } catch (e) {
+          console.warn('Cache theme error:', e);
+        }
+      }
     }
   }, []);
+
+  const setCustomTheme = (palette: ThemePalette) => {
+    setCurrentThemeState(palette);
+    applyThemeToDocument(palette);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gosball_custom_theme', JSON.stringify(palette));
+    }
+  };
 
   const setCurrentUserRole = (role: UserRole) => {
     setCurrentUserRoleState(role);
@@ -680,6 +705,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         logAction,
         hasPermission,
         hasMenuAccess,
+
+        currentTheme,
+        setCustomTheme,
 
         addUser,
         updateUser,
