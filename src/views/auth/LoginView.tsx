@@ -101,39 +101,32 @@ export default function LoginView() {
         zIndex: 1,
       }}>
 
-        {/* Logo & App Name */}
+        {/* Logo & Portal Identity */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          {appLogo ? (
-            <div style={{
-              width: 80, height: 80,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 16px',
-              background: 'transparent',
-            }}>
-              <img src={appLogo} alt={appName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', background: 'transparent' }} />
-            </div>
-          ) : (
-            <div style={{
-              width: 72, height: 72,
-              borderRadius: 16,
-              background: 'var(--primary-600)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 16px',
-              boxShadow: '0 8px 24px rgba(102,117,106,0.3)',
-            }}>
-              <Shield size={32} color="white" />
-            </div>
-          )}
+          <div style={{
+            width: 72,
+            height: 72,
+            borderRadius: 20,
+            background: 'linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}>
+            <Shield size={36} color="#ffffff" />
+          </div>
 
           <h1 style={{
             fontSize: 24, fontWeight: 800, color: 'var(--white)',
             margin: '0 0 6px',
             letterSpacing: '-0.3px',
           }}>
-            {appName}
+            Media Tools
           </h1>
           <p style={{ fontSize: 13, color: 'var(--neutral-500)', margin: 0, fontWeight: 500 }}>
-            Admin Panel — Masuk untuk melanjutkan
+            Multi-Media Operating System — Masuk untuk melanjutkan
           </p>
         </div>
 
@@ -296,7 +289,7 @@ export default function LoginView() {
 
       {/* Footer */}
       <p style={{ marginTop: 24, fontSize: 12, color: 'var(--neutral-500)', textAlign: 'center' }}>
-        {appName} Admin Panel &copy; {new Date().getFullYear()}
+        Media Tools Operating System &copy; {new Date().getFullYear()}
       </p>
 
       <style>{`
