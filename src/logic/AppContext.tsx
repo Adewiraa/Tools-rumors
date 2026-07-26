@@ -243,11 +243,15 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         { rel: 'apple-touch-icon', type: 'image/png' },
       ];
 
+      const cacheBustUrl = logoUrl.startsWith('data:') 
+        ? logoUrl 
+        : `${logoUrl}${logoUrl.includes('?') ? '&' : '?'}v=${encodeURIComponent(logoUrl)}`;
+
       iconTypes.forEach(({ rel, type }) => {
         const link = document.createElement('link');
         link.rel = rel;
         link.type = type;
-        link.href = logoUrl;
+        link.href = cacheBustUrl;
         document.head.appendChild(link);
       });
     }
