@@ -169,39 +169,93 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
 
         {/* Color Pickers Grid */}
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 10 }}>Kustomisasi Warna Fine-Tune:</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 10 }}>Pilih & Kustomisasi Warna Sesuai Selera:</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input type="color" value={draftTheme.primary} onChange={e => handleColorChange('primary', e.target.value)} style={{ width: 34, height: 34, border: 'none', borderRadius: 6, cursor: 'pointer' }} />
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700 }}>Primary Color</div>
-                <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{draftTheme.primary}</div>
+            
+            {/* Primary Color */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+              <input type="color" value={draftTheme.primary} onChange={e => handleColorChange('primary', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Primary Color</div>
+                <input
+                  type="text"
+                  value={draftTheme.primary}
+                  onChange={e => handleColorChange('primary', e.target.value)}
+                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
+                />
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input type="color" value={draftTheme.accent} onChange={e => handleColorChange('accent', e.target.value)} style={{ width: 34, height: 34, border: 'none', borderRadius: 6, cursor: 'pointer' }} />
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700 }}>Accent Highlight</div>
-                <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{draftTheme.accent}</div>
+            {/* Accent Color */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+              <input type="color" value={draftTheme.accent} onChange={e => handleColorChange('accent', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Accent Highlight</div>
+                <input
+                  type="text"
+                  value={draftTheme.accent}
+                  onChange={e => handleColorChange('accent', e.target.value)}
+                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
+                />
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input type="color" value={draftTheme.background} onChange={e => handleColorChange('background', e.target.value)} style={{ width: 34, height: 34, border: 'none', borderRadius: 6, cursor: 'pointer' }} />
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700 }}>Background Base</div>
-                <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{draftTheme.background}</div>
+            {/* Background Color */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+              <input type="color" value={draftTheme.background} onChange={e => handleColorChange('background', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Background Page</div>
+                <input
+                  type="text"
+                  value={draftTheme.background}
+                  onChange={e => handleColorChange('background', e.target.value)}
+                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
+                />
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input type="color" value={draftTheme.sidebar} onChange={e => handleColorChange('sidebar', e.target.value)} style={{ width: 34, height: 34, border: 'none', borderRadius: 6, cursor: 'pointer' }} />
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700 }}>Sidebar Nav</div>
-                <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{draftTheme.sidebar}</div>
+            {/* Card Surface Color */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+              <input type="color" value={draftTheme.surface} onChange={e => handleColorChange('surface', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Card Surface</div>
+                <input
+                  type="text"
+                  value={draftTheme.surface}
+                  onChange={e => handleColorChange('surface', e.target.value)}
+                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
+                />
               </div>
             </div>
+
+            {/* Sidebar Color */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+              <input type="color" value={draftTheme.sidebar} onChange={e => handleColorChange('sidebar', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Sidebar Nav</div>
+                <input
+                  type="text"
+                  value={draftTheme.sidebar}
+                  onChange={e => handleColorChange('sidebar', e.target.value)}
+                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
+                />
+              </div>
+            </div>
+
+            {/* Text Color */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+              <input type="color" value={draftTheme.textPrimary} onChange={e => handleColorChange('textPrimary', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Text Main</div>
+                <input
+                  type="text"
+                  value={draftTheme.textPrimary}
+                  onChange={e => handleColorChange('textPrimary', e.target.value)}
+                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
+                />
+              </div>
+            </div>
+
           </div>
         </div>
 
