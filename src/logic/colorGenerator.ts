@@ -14,6 +14,9 @@ export interface ThemePalette {
   isDark: boolean;
 }
 
+export type RandomMode = 'all' | 'dark' | 'light' | 'vibrant';
+export type ColorSchemeType = 'all' | 'monochromatic' | 'analogous' | 'complementary' | 'split-complementary' | 'triadic' | 'tetradic';
+
 export const DEFAULT_THEME_PALETTE: ThemePalette = {
   name: 'Default Navy',
   primary: '#2563eb',
@@ -29,7 +32,7 @@ export const DEFAULT_THEME_PALETTE: ThemePalette = {
 };
 
 // HSL Helper Functions
-function hslToHex(h: number, s: number, l: number): string {
+export function hslToHex(h: number, s: number, l: number): string {
   l /= 100;
   const a = (s * Math.min(l, 1 - l)) / 100;
   const f = (n: number) => {
@@ -88,26 +91,45 @@ function getBorderColor(bgHex: string, isDark: boolean): string {
   return '#e2e8f0';
 }
 
-export type RandomMode = 'all' | 'dark' | 'light' | 'vibrant';
-
-// Infinite Algorithmic Palette Generator
-export function generateRandomPalette(mode: RandomMode = 'all'): ThemePalette {
+// Infinite Algorithmic Palette Generator with Color Schemes
+export function generateRandomPalette(mode: RandomMode = 'all', scheme: ColorSchemeType = 'all'): ThemePalette {
   const forceDark = mode === 'dark' ? true : mode === 'light' ? false : Math.random() > 0.45;
   
   // Random base hue (0 - 360)
   const baseHue = Math.floor(Math.random() * 360);
   
-  // Color Harmonies: 0 = Complementary, 1 = Triadic, 2 = Analogous, 3 = Split-Comp
-  const harmonyType = Math.floor(Math.random() * 4);
+  // Determine Accent Hue based on Color Harmony Scheme
+  let selectedScheme = scheme;
+  if (selectedScheme === 'all') {
+    const schemes: ColorSchemeType[] = ['monochromatic', 'analogous', 'complementary', 'split-complementary', 'triadic', 'tetradic'];
+    selectedScheme = schemes[Math.floor(Math.random() * schemes.length)];
+  }
+
   let accentHue = baseHue;
-  if (harmonyType === 0) {
-    accentHue = (baseHue + 180) % 360;
-  } else if (harmonyType === 1) {
-    accentHue = (baseHue + 120) % 360;
-  } else if (harmonyType === 2) {
-    accentHue = (baseHue + 35) % 360;
-  } else {
-    accentHue = (baseHue + 150) % 360;
+  let accentSatShift = 0;
+  let accentLightShift = 0;
+
+  switch (selectedScheme) {
+    case 'monochromatic':
+      accentHue = baseHue;
+      accentSatShift = -20;
+      accentLightShift = 25;
+      break;
+    case 'analogous':
+      accentHue = (baseHue + (Math.random() > 0.5 ? 30 : 330)) % 360;
+      break;
+    case 'complementary':
+      accentHue = (baseHue + 180) % 360;
+      break;
+    case 'split-complementary':
+      accentHue = (baseHue + (Math.random() > 0.5 ? 150 : 210)) % 360;
+      break;
+    case 'triadic':
+      accentHue = (baseHue + (Math.random() > 0.5 ? 120 : 240)) % 360;
+      break;
+    case 'tetradic':
+      accentHue = (baseHue + (Math.random() > 0.5 ? 90 : 270)) % 360;
+      break;
   }
 
   const primarySat = mode === 'vibrant' ? 85 + Math.floor(Math.random() * 15) : 60 + Math.floor(Math.random() * 30);
@@ -115,8 +137,8 @@ export function generateRandomPalette(mode: RandomMode = 'all'): ThemePalette {
   const primaryHex = hslToHex(baseHue, primarySat, primaryLight);
   const primaryHoverHex = hslToHex(baseHue, primarySat, Math.max(20, primaryLight - 8));
 
-  const accentSat = 75 + Math.floor(Math.random() * 25);
-  const accentLight = 50 + Math.floor(Math.random() * 15);
+  const accentSat = Math.min(100, Math.max(30, 75 + Math.floor(Math.random() * 25) + accentSatShift));
+  const accentLight = Math.min(85, Math.max(25, 50 + Math.floor(Math.random() * 15) + accentLightShift));
   const accentHex = hslToHex(accentHue, accentSat, accentLight);
 
   let bgHex = '#f8fafc';
@@ -163,8 +185,10 @@ export function generateRandomPalette(mode: RandomMode = 'all'): ThemePalette {
 
   const borderHex = getBorderColor(bgHex, forceDark);
 
+  const schemeLabel = selectedScheme.charAt(0).toUpperCase() + selectedScheme.slice(1);
+
   return {
-    name: `Custom (${primaryHex})`,
+    name: `Custom ${schemeLabel} (${primaryHex})`,
     primary: primaryHex,
     primaryHover: primaryHoverHex,
     accent: accentHex,
@@ -178,7 +202,7 @@ export function generateRandomPalette(mode: RandomMode = 'all'): ThemePalette {
   };
 }
 
-// Preset Themes List for Quick Starts
+// Preset Themes Collection (15 Curated Themes)
 export const PRESET_THEMES: ThemePalette[] = [
   DEFAULT_THEME_PALETTE,
   {
@@ -246,6 +270,123 @@ export const PRESET_THEMES: ThemePalette[] = [
     border: '#e2e8f0',
     isDark: false,
   },
+  {
+    name: 'Nordic Slate',
+    primary: '#0284c7',
+    primaryHover: '#0369a1',
+    accent: '#38bdf8',
+    background: '#0f172a',
+    surface: '#1e293b',
+    sidebar: '#090d16',
+    textPrimary: '#f1f5f9',
+    textSecondary: '#94a3b8',
+    border: '#334155',
+    isDark: true,
+  },
+  {
+    name: 'Tokyo Midnight',
+    primary: '#8b5cf6',
+    primaryHover: '#7c3aed',
+    accent: '#ec4899',
+    background: '#130d24',
+    surface: '#1d1536',
+    sidebar: '#0b0716',
+    textPrimary: '#f5f3ff',
+    textSecondary: '#c4b5fd',
+    border: '#2e234e',
+    isDark: true,
+  },
+  {
+    name: 'Deep Ocean',
+    primary: '#0284c7',
+    primaryHover: '#0369a1',
+    accent: '#14b8a6',
+    background: '#041724',
+    surface: '#092538',
+    sidebar: '#020e17',
+    textPrimary: '#f0f9ff',
+    textSecondary: '#7dd3fc',
+    border: '#113a56',
+    isDark: true,
+  },
+  {
+    name: 'Volcanic Lava',
+    primary: '#ea580c',
+    primaryHover: '#c2410c',
+    accent: '#eab308',
+    background: '#1a0c06',
+    surface: '#29140b',
+    sidebar: '#0f0603',
+    textPrimary: '#fff7ed',
+    textSecondary: '#fdba74',
+    border: '#431f10',
+    isDark: true,
+  },
+  {
+    name: 'Matrix Hacker',
+    primary: '#22c55e',
+    primaryHover: '#16a34a',
+    accent: '#84cc16',
+    background: '#041408',
+    surface: '#0a2310',
+    sidebar: '#020b04',
+    textPrimary: '#f0fdf4',
+    textSecondary: '#86efac',
+    border: '#143d1c',
+    isDark: true,
+  },
+  {
+    name: 'Pastel Dream',
+    primary: '#a855f7',
+    primaryHover: '#9333ea',
+    accent: '#06b6d4',
+    background: '#faf5ff',
+    surface: '#ffffff',
+    sidebar: '#3b0764',
+    textPrimary: '#2e1065',
+    textSecondary: '#7e22ce',
+    border: '#f3e8ff',
+    isDark: false,
+  },
+  {
+    name: 'Golden Hour',
+    primary: '#d97706',
+    primaryHover: '#b45309',
+    accent: '#ea580c',
+    background: '#fffbeb',
+    surface: '#ffffff',
+    sidebar: '#451a03',
+    textPrimary: '#451a03',
+    textSecondary: '#b45309',
+    border: '#fef3c7',
+    isDark: false,
+  },
+  {
+    name: 'Minimal Charcoal',
+    primary: '#f8fafc',
+    primaryHover: '#e2e8f0',
+    accent: '#38bdf8',
+    background: '#09090b',
+    surface: '#18181b',
+    sidebar: '#000000',
+    textPrimary: '#f4f4f5',
+    textSecondary: '#a1a1aa',
+    border: '#27272a',
+    isDark: true,
+  },
+  {
+    name: 'Lavender Bliss',
+    primary: '#7c3aed',
+    primaryHover: '#6d28d9',
+    accent: '#f43f5e',
+    background: '#fcf5ff',
+    surface: '#ffffff',
+    sidebar: '#2e1065',
+    textPrimary: '#1e1b4b',
+    textSecondary: '#6b21a8',
+    border: '#f3e8ff',
+    isDark: false,
+  },
 ];
 
 // Apply Theme Palette to document root CSS variables dynamically
@@ -300,4 +441,3 @@ export function exportCSSVariables(palette: ThemePalette): string {
   --neutral-200: ${palette.border};
 }`;
 }
-

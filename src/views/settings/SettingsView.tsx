@@ -12,6 +12,7 @@ import {
   applyThemeToDocument,
   exportCSSVariables,
   RandomMode,
+  ColorSchemeType,
 } from '@/logic/colorGenerator';
 
 const getErrorMessage = (error: unknown, fallback: string) => (
@@ -34,6 +35,7 @@ export default function SettingsView() {
 
   // Theme Studio States
   const [activeMode, setActiveMode] = useState<RandomMode>('all');
+  const [activeScheme, setActiveScheme] = useState<ColorSchemeType>('all');
   const [draftTheme, setDraftTheme] = useState<ThemePalette>(currentTheme || DEFAULT_THEME_PALETTE);
 
   useEffect(() => {
@@ -105,9 +107,10 @@ export default function SettingsView() {
   };
 
   // Color Studio Handlers
-  const handleRandomize = (modeOverride?: RandomMode) => {
+  const handleRandomize = (modeOverride?: RandomMode, schemeOverride?: ColorSchemeType) => {
     const mode = modeOverride || activeMode;
-    const newPalette = generateRandomPalette(mode);
+    const scheme = schemeOverride || activeScheme;
+    const newPalette = generateRandomPalette(mode, scheme);
     setDraftTheme(newPalette);
     applyThemeToDocument(newPalette);
   };
@@ -258,6 +261,32 @@ export default function SettingsView() {
 
         {/* Big Randomize Button + Filters */}
         <div style={{ marginBottom: 24, padding: 18, borderRadius: 'var(--radius-lg)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+          
+          {/* Color Scheme Harmonies Dropdown Selector */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 6 }}>
+              Select a Color Scheme (Pilihan Harmoni Warna):
+            </label>
+            <select
+              className="form-select"
+              value={activeScheme}
+              onChange={e => {
+                const scheme = e.target.value as ColorSchemeType;
+                setActiveScheme(scheme);
+                handleRandomize(activeMode, scheme);
+              }}
+              style={{ width: '100%', fontSize: 13, fontWeight: 700, padding: '10px 12px', borderRadius: 'var(--radius-md)' }}
+            >
+              <option value="all">All (Random Harmony) — Campuran harmoni warna acak</option>
+              <option value="monochromatic">Monochromatic — Satu nada warna dengan variasi saturasi & terang</option>
+              <option value="analogous">Analogous — Warna yang bersebelahan pada roda warna (harmonis)</option>
+              <option value="complementary">Complementary — Warna berseberangan (kontras tinggi & dinamis)</option>
+              <option value="split-complementary">Split Complementary — Variasi kontras lembut dengan warna terpisah</option>
+              <option value="triadic">Triadic — Tiga warna berjarak seimbang (enerjik & seimbang)</option>
+              <option value="tetradic">Tetradic — Empat warna berpasangan (paling kaya & kontras)</option>
+            </select>
+          </div>
+
           <button
             onClick={() => handleRandomize()}
             className="btn"

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Dices, RotateCcw, Palette, Check, Sparkles, Sun, Moon, Zap } from 'lucide-react';
+import { X, Dices, RotateCcw, Palette, Check, Sparkles, Sun, Moon, Zap, Copy, Layers, Sliders } from 'lucide-react';
 import {
   ThemePalette,
   DEFAULT_THEME_PALETTE,
@@ -10,6 +10,7 @@ import {
   applyThemeToDocument,
   exportCSSVariables,
   RandomMode,
+  ColorSchemeType,
 } from '@/logic/colorGenerator';
 import { useApp } from '@/logic/AppContext';
 
@@ -18,16 +19,29 @@ interface RealtimeColorStudioModalProps {
   onClose: () => void;
 }
 
+const SCHEME_OPTIONS: { id: ColorSchemeType; label: string; desc: string }[] = [
+  { id: 'all', label: 'All (Random Harmony)', desc: 'Campuran harmoni warna acak' },
+  { id: 'monochromatic', label: 'Monochromatic', desc: 'Satu nada warna dengan variasi saturasi & terang' },
+  { id: 'analogous', label: 'Analogous', desc: 'Warna yang bersebelahan pada roda warna (harmonis)' },
+  { id: 'complementary', label: 'Complementary', desc: 'Warna berseberangan (kontras tinggi & dinamis)' },
+  { id: 'split-complementary', label: 'Split Complementary', desc: 'Variasi kontras lembut dengan warna terpisah' },
+  { id: 'triadic', label: 'Triadic', desc: ' Tiga warna berjarak seimbang (enerjik & seimbang)' },
+  { id: 'tetradic', label: 'Tetradic', desc: 'Empat warna berpasangan (paling kaya & kontras)' },
+];
+
 export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeColorStudioModalProps) {
-  const { currentTheme, setCustomTheme, triggerToast } = useApp();
+  const { currentTheme, setCustomTheme, triggerToast, logAction } = useApp();
   const [activeMode, setActiveMode] = useState<RandomMode>('all');
+  const [activeScheme, setActiveScheme] = useState<ColorSchemeType>('all');
   const [draftTheme, setDraftTheme] = useState<ThemePalette>(currentTheme || DEFAULT_THEME_PALETTE);
+  const [activeTab, setActiveTab] = useState<'randomizer' | 'pickers' | 'presets'>('randomizer');
 
   if (!isOpen) return null;
 
-  const handleRandomize = (modeOverride?: RandomMode) => {
+  const handleRandomize = (modeOverride?: RandomMode, schemeOverride?: ColorSchemeType) => {
     const mode = modeOverride || activeMode;
-    const newPalette = generateRandomPalette(mode);
+    const scheme = schemeOverride || activeScheme;
+    const newPalette = generateRandomPalette(mode, scheme);
     setDraftTheme(newPalette);
     applyThemeToDocument(newPalette);
   };
@@ -46,6 +60,7 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
 
   const handleSaveTheme = () => {
     setCustomTheme(draftTheme);
+    logAction('UPDATE_THEME', 'Pengaturan', `Memperbarui skema warna tema`);
     triggerToast('Skema warna berhasil disimpan!', 'success');
     onClose();
   };
@@ -58,18 +73,23 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}>
-      <div className="card" style={{ width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto', padding: 24, borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--neutral-200)', background: 'var(--white)', color: 'var(--neutral-950)' }}>
+    <div className="modal-overlay" style={{ zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5, 8, 15, 0.75)', backdropFilter: 'blur(8px)' }}>
+      <div className="card" style={{ width: '100%', maxWidth: 680, maxHeight: '92vh', overflowY: 'auto', padding: 24, borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', border: '1px solid var(--neutral-200)', background: 'var(--white)', color: 'var(--neutral-950)' }}>
         
         {/* Modal Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg, var(--primary-600), var(--accent-500))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              <Palette size={20} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #6366f1, #a855f7, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 12px rgba(168, 85, 247, 0.35)' }}>
+              <Palette size={22} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--neutral-950)' }}>Realtime Color Studio</h3>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--neutral-500)' }}>Visualisasi warna acak algoritmis secara *real-time*</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h3 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--neutral-950)' }}>Realtime Color Studio</h3>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: draftTheme.isDark ? '#312e81' : '#e0e7ff', color: draftTheme.isDark ? '#c7d2fe' : '#4338ca' }}>
+                  {draftTheme.isDark ? 'Dark Mode' : 'Light Mode'}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--neutral-500)', marginTop: 2 }}>Algoritma Penjelajah Warna Acak & Harmoni Teori Warna Realtime</p>
             </div>
           </div>
           <button onClick={onClose} className="btn btn-sm btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
@@ -77,73 +97,11 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
           </button>
         </div>
 
-        {/* Big Randomize Button */}
-        <div style={{ marginBottom: 20 }}>
-          <button
-            onClick={() => handleRandomize()}
-            className="btn"
-            style={{
-              width: '100%',
-              padding: '14px 20px',
-              fontSize: 15,
-              fontWeight: 800,
-              color: '#ffffff',
-              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              boxShadow: '0 4px 14px rgba(168, 85, 247, 0.4)',
-              transition: 'transform 0.15s ease, boxShadow 0.15s ease',
-            }}
-            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
-            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            <Dices size={22} className="spin-on-hover" />
-            <span>🎲 Randomize Color Palette!</span>
-          </button>
-
-          {/* Random Mode Toggles */}
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              className={`btn btn-sm ${activeMode === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => { setActiveMode('all'); handleRandomize('all'); }}
-              style={{ fontSize: 11, padding: '4px 10px', gap: 4 }}
-            >
-              <Sparkles size={12} /> Bebas Acak
-            </button>
-            <button
-              className={`btn btn-sm ${activeMode === 'dark' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => { setActiveMode('dark'); handleRandomize('dark'); }}
-              style={{ fontSize: 11, padding: '4px 10px', gap: 4 }}
-            >
-              <Moon size={12} /> Dark Mode Only
-            </button>
-            <button
-              className={`btn btn-sm ${activeMode === 'light' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => { setActiveMode('light'); handleRandomize('light'); }}
-              style={{ fontSize: 11, padding: '4px 10px', gap: 4 }}
-            >
-              <Sun size={12} /> Light Mode Only
-            </button>
-            <button
-              className={`btn btn-sm ${activeMode === 'vibrant' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => { setActiveMode('vibrant'); handleRandomize('vibrant'); }}
-              style={{ fontSize: 11, padding: '4px 10px', gap: 4 }}
-            >
-              <Zap size={12} /> Vibrant Neon
-            </button>
-          </div>
-        </div>
-
-        {/* Live Mini App UI Preview Card */}
-        <div style={{ marginBottom: 20, padding: 14, borderRadius: 'var(--radius-md)', background: draftTheme.background, border: `1px solid ${draftTheme.border}`, color: draftTheme.textPrimary }}>
+        {/* Live Mini App UI Preview */}
+        <div style={{ marginBottom: 20, padding: 14, borderRadius: 12, background: draftTheme.background, border: `1px solid ${draftTheme.border}`, color: draftTheme.textPrimary, transition: 'background-color 0.2s ease' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.8 }}>
-              ✨ Live Mini UI Preview:
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.85 }}>
+              ✨ Pratinjau Tampilan Realtime:
             </div>
             <button
               className="btn btn-sm btn-secondary"
@@ -155,185 +113,305 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
               }}
               title="Salin Kode Warna CSS Variable"
             >
-              Copy CSS Code
+              <Copy size={11} /> Copy CSS Code
             </button>
           </div>
 
           {/* Mini App Frame */}
-          <div style={{ display: 'flex', height: 100, borderRadius: 8, overflow: 'hidden', border: `1px solid ${draftTheme.border}`, background: draftTheme.surface }}>
+          <div style={{ display: 'flex', height: 105, borderRadius: 8, overflow: 'hidden', border: `1px solid ${draftTheme.border}`, background: draftTheme.surface }}>
             {/* Mini Sidebar */}
-            <div style={{ width: 44, background: draftTheme.sidebar, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 10, gap: 8 }}>
-              <div style={{ width: 16, height: 16, borderRadius: 4, background: draftTheme.primary }} />
-              <div style={{ width: 22, height: 4, borderRadius: 2, background: draftTheme.accent }} />
-              <div style={{ width: 22, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.3)' }} />
+            <div style={{ width: 50, background: draftTheme.sidebar, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 10, gap: 8 }}>
+              <div style={{ width: 18, height: 18, borderRadius: 4, background: draftTheme.primary }} />
+              <div style={{ width: 26, height: 4, borderRadius: 2, background: draftTheme.accent }} />
+              <div style={{ width: 26, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.3)' }} />
             </div>
 
             {/* Mini Main Content */}
             <div style={{ flex: 1, padding: 10, display: 'flex', flexDirection: 'column', gap: 8, background: draftTheme.background }}>
-              {/* Mini Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: draftTheme.textPrimary }}>Media Tools Demo</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: draftTheme.textPrimary }}>Media Tools Portal</div>
                 <div style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: draftTheme.accent, color: '#fff', fontWeight: 700 }}>Active</div>
               </div>
 
-              {/* Mini Card */}
               <div style={{ padding: 8, borderRadius: 6, background: draftTheme.surface, border: `1px solid ${draftTheme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: draftTheme.textPrimary }}>Match Result #102</div>
-                  <div style={{ fontSize: 8, color: draftTheme.textSecondary }}>Persib vs Arema</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: draftTheme.textPrimary }}>Hasil Pertandingan #102</div>
+                  <div style={{ fontSize: 8, color: draftTheme.textSecondary }}>Persib Bandung vs Arema FC</div>
                 </div>
                 <div style={{ fontSize: 9, padding: '3px 8px', borderRadius: 4, background: draftTheme.primary, color: '#ffffff', fontWeight: 700 }}>
-                  Action Button
+                  Edit Skor
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Color Pickers Grid */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 10 }}>Pilih & Kustomisasi Warna Sesuai Selera:</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            
-            {/* Primary Color */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-              <input type="color" value={draftTheme.primary} onChange={e => handleColorChange('primary', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Primary Color</div>
-                <input
-                  type="text"
-                  value={draftTheme.primary}
-                  onChange={e => handleColorChange('primary', e.target.value)}
-                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
-                />
-              </div>
-            </div>
-
-            {/* Accent Color */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-              <input type="color" value={draftTheme.accent} onChange={e => handleColorChange('accent', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Accent Highlight</div>
-                <input
-                  type="text"
-                  value={draftTheme.accent}
-                  onChange={e => handleColorChange('accent', e.target.value)}
-                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
-                />
-              </div>
-            </div>
-
-            {/* Background Color */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-              <input type="color" value={draftTheme.background} onChange={e => handleColorChange('background', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Background Page</div>
-                <input
-                  type="text"
-                  value={draftTheme.background}
-                  onChange={e => handleColorChange('background', e.target.value)}
-                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
-                />
-              </div>
-            </div>
-
-            {/* Card Surface Color */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-              <input type="color" value={draftTheme.surface} onChange={e => handleColorChange('surface', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Card Surface</div>
-                <input
-                  type="text"
-                  value={draftTheme.surface}
-                  onChange={e => handleColorChange('surface', e.target.value)}
-                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
-                />
-              </div>
-            </div>
-
-            {/* Sidebar Color */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-              <input type="color" value={draftTheme.sidebar} onChange={e => handleColorChange('sidebar', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Sidebar Nav</div>
-                <input
-                  type="text"
-                  value={draftTheme.sidebar}
-                  onChange={e => handleColorChange('sidebar', e.target.value)}
-                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
-                />
-              </div>
-            </div>
-
-            {/* Text Color */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 8, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-              <input type="color" value={draftTheme.textPrimary} onChange={e => handleColorChange('textPrimary', e.target.value)} style={{ width: 36, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Text Main</div>
-                <input
-                  type="text"
-                  value={draftTheme.textPrimary}
-                  onChange={e => handleColorChange('textPrimary', e.target.value)}
-                  style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '2px 4px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)' }}
-                />
-              </div>
-            </div>
-
-          </div>
+        {/* Modal Navigation Tabs */}
+        <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--neutral-200)', paddingBottom: 12, marginBottom: 20 }}>
+          <button
+            className={`btn btn-sm ${activeTab === 'randomizer' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('randomizer')}
+            style={{ fontSize: 12, gap: 6 }}
+          >
+            <Dices size={14} /> Generator Acak & Harmoni
+          </button>
+          <button
+            className={`btn btn-sm ${activeTab === 'pickers' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('pickers')}
+            style={{ fontSize: 12, gap: 6 }}
+          >
+            <Sliders size={14} /> Kustomisasi Warna Manual
+          </button>
+          <button
+            className={`btn btn-sm ${activeTab === 'presets' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setActiveTab('presets')}
+            style={{ fontSize: 12, gap: 6 }}
+          >
+            <Layers size={14} /> Presets ({PRESET_THEMES.length})
+          </button>
         </div>
 
-        {/* Preset Themes List */}
-        <div style={{ marginBottom: 24, borderTop: '1px solid var(--neutral-200)', paddingTop: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 10 }}>Quick Preset Themes:</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {PRESET_THEMES.map(preset => {
-              const isSelected = draftTheme.name === preset.name || (draftTheme.primary === preset.primary && draftTheme.background === preset.background);
-              return (
+        {/* Tab 1: Randomizer & Color Harmonies */}
+        {activeTab === 'randomizer' && (
+          <div>
+            {/* Color Scheme Harmonies Dropdown Selector */}
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 6 }}>
+                Select a Color Scheme (Pilihan Harmoni Warna):
+              </label>
+              <select
+                className="form-select"
+                value={activeScheme}
+                onChange={e => {
+                  const scheme = e.target.value as ColorSchemeType;
+                  setActiveScheme(scheme);
+                  handleRandomize(activeMode, scheme);
+                }}
+                style={{ width: '100%', fontSize: 13, fontWeight: 700, padding: '10px 12px', borderRadius: 'var(--radius-md)' }}
+              >
+                {SCHEME_OPTIONS.map(opt => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label} — {opt.desc}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Mode Toggles */}
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
+                Modu Acak:
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 <button
-                  key={preset.name}
-                  type="button"
-                  onClick={() => handleSelectPreset(preset)}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 'var(--radius-md)',
-                    border: isSelected ? '2px solid var(--primary-600)' : '1px solid var(--neutral-200)',
-                    background: preset.background,
-                    color: preset.textPrimary,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                    alignItems: 'flex-start',
-                    textAlign: 'left',
-                  }}
+                  className={`btn btn-sm ${activeMode === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => { setActiveMode('all'); handleRandomize('all'); }}
+                  style={{ fontSize: 11, justifyContent: 'center', gap: 4 }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preset.name}</span>
-                    {isSelected && <Check size={12} style={{ color: preset.primary }} />}
-                  </div>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: preset.primary }} />
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: preset.accent }} />
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: preset.sidebar }} />
-                  </div>
+                  <Sparkles size={12} /> Bebas Acak
                 </button>
-              );
-            })}
+                <button
+                  className={`btn btn-sm ${activeMode === 'dark' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => { setActiveMode('dark'); handleRandomize('dark'); }}
+                  style={{ fontSize: 11, justifyContent: 'center', gap: 4 }}
+                >
+                  <Moon size={12} /> Dark Mode
+                </button>
+                <button
+                  className={`btn btn-sm ${activeMode === 'light' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => { setActiveMode('light'); handleRandomize('light'); }}
+                  style={{ fontSize: 11, justifyContent: 'center', gap: 4 }}
+                >
+                  <Sun size={12} /> Light Mode
+                </button>
+                <button
+                  className={`btn btn-sm ${activeMode === 'vibrant' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => { setActiveMode('vibrant'); handleRandomize('vibrant'); }}
+                  style={{ fontSize: 11, justifyContent: 'center', gap: 4 }}
+                >
+                  <Zap size={12} /> Vibrant
+                </button>
+              </div>
+            </div>
+
+            {/* Giant Randomize Action Button */}
+            <button
+              onClick={() => handleRandomize()}
+              className="btn"
+              style={{
+                width: '100%',
+                padding: '16px 20px',
+                fontSize: 16,
+                fontWeight: 800,
+                color: '#ffffff',
+                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                boxShadow: '0 6px 20px rgba(168, 85, 247, 0.4)',
+                transition: 'transform 0.15s ease',
+              }}
+              onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
+              onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+            >
+              <Dices size={24} />
+              <span>🎲 Randomize Color Palette!</span>
+            </button>
           </div>
-        </div>
+        )}
+
+        {/* Tab 2: Manual Fine-Tune Color Pickers */}
+        {activeTab === 'pickers' && (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 12 }}>Pilih & Kustomisasi 6 Elemen Utama UI:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              
+              {/* Primary Color */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+                <input type="color" value={draftTheme.primary} onChange={e => handleColorChange('primary', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Primary Color</div>
+                  <input
+                    type="text"
+                    value={draftTheme.primary}
+                    onChange={e => handleColorChange('primary', e.target.value)}
+                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
+                  />
+                </div>
+              </div>
+
+              {/* Accent Color */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+                <input type="color" value={draftTheme.accent} onChange={e => handleColorChange('accent', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Accent Highlight</div>
+                  <input
+                    type="text"
+                    value={draftTheme.accent}
+                    onChange={e => handleColorChange('accent', e.target.value)}
+                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
+                  />
+                </div>
+              </div>
+
+              {/* Background Color */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+                <input type="color" value={draftTheme.background} onChange={e => handleColorChange('background', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Background Page</div>
+                  <input
+                    type="text"
+                    value={draftTheme.background}
+                    onChange={e => handleColorChange('background', e.target.value)}
+                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
+                  />
+                </div>
+              </div>
+
+              {/* Card Surface Color */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+                <input type="color" value={draftTheme.surface} onChange={e => handleColorChange('surface', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Card Surface</div>
+                  <input
+                    type="text"
+                    value={draftTheme.surface}
+                    onChange={e => handleColorChange('surface', e.target.value)}
+                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
+                  />
+                </div>
+              </div>
+
+              {/* Sidebar Color */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+                <input type="color" value={draftTheme.sidebar} onChange={e => handleColorChange('sidebar', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Sidebar Nav</div>
+                  <input
+                    type="text"
+                    value={draftTheme.sidebar}
+                    onChange={e => handleColorChange('sidebar', e.target.value)}
+                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
+                  />
+                </div>
+              </div>
+
+              {/* Text Color */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
+                <input type="color" value={draftTheme.textPrimary} onChange={e => handleColorChange('textPrimary', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Text Main</div>
+                  <input
+                    type="text"
+                    value={draftTheme.textPrimary}
+                    onChange={e => handleColorChange('textPrimary', e.target.value)}
+                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
+                  />
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Curated Presets Grid */}
+        {activeTab === 'presets' && (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 12 }}>Pilihan 15+ Tema Terkurasi Pilihan:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, maxHeight: 320, overflowY: 'auto' }}>
+              {PRESET_THEMES.map(preset => {
+                const isSelected = draftTheme.name === preset.name || (draftTheme.primary === preset.primary && draftTheme.background === preset.background);
+                return (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => handleSelectPreset(preset)}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-md)',
+                      border: isSelected ? '2px solid var(--primary-600)' : '1px solid var(--neutral-200)',
+                      background: preset.background,
+                      color: preset.textPrimary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6,
+                      alignItems: 'flex-start',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preset.name}</span>
+                      {isSelected && <Check size={14} style={{ color: preset.primary }} />}
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <span style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: preset.primary }} />
+                      <span style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: preset.accent }} />
+                      <span style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: preset.sidebar }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Footer Actions */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--neutral-200)', paddingTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--neutral-200)', paddingTop: 18, marginTop: 20 }}>
           <button className="btn btn-sm btn-secondary" onClick={handleReset} style={{ gap: 6 }}>
             <RotateCcw size={14} /> Reset Default
           </button>
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-sm btn-secondary" onClick={onClose}>
-              Tutup
+              Batal
             </button>
             <button className="btn btn-sm btn-primary" onClick={handleSaveTheme} style={{ gap: 6 }}>
-              <Check size={14} /> Simpan Warna Ini
+              <Check size={14} /> Simpan Skema Warna
             </button>
           </div>
         </div>
