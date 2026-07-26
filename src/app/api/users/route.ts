@@ -29,6 +29,7 @@ const mapUserFromSupabase = (row: any): AppUser => ({
   role: row.role || 'Match Editor',
   status: row.status === 'inactive' ? 'inactive' : 'active',
   avatarUrl: row.avatar_url || '',
+  tenantId: row.tenant_id || row.tenantId || 'gosball',
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });

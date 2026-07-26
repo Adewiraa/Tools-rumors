@@ -53,6 +53,7 @@ export async function POST(request: Request) {
             role: data.role || 'Match Editor',
             status: 'active',
             avatarUrl: data.avatar_url || '',
+            tenantId: data.tenant_id || data.tenantId || 'gosball',
             createdAt: data.created_at,
           };
         }
