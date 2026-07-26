@@ -1577,6 +1577,48 @@ a {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+/* Settings Page Responsive Layout */
+.settings-dashboard-grid {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.settings-color-pickers-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.settings-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+@media (max-width: 992px) {
+  .settings-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .settings-color-pickers-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .settings-presets-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-color-pickers-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .settings-presets-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
 }
 
 .rumor-modal-manage {

@@ -235,7 +235,7 @@ export default function SettingsView() {
       </div>
 
       {/* 2-Column Compact Settings Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '320px minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
+      <div className="settings-dashboard-grid">
         
         {/* Left Column: Identitas Aplikasi (Master Web) */}
         <div className="card settings-card" style={{ padding: 18, borderRadius: 12 }}>
@@ -395,7 +395,7 @@ export default function SettingsView() {
               </button>
 
               {/* Mode Toggles */}
-              <div style={{ display: 'flex', gap: 4 }}>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                 <button
                   className={`btn btn-sm ${activeMode === 'all' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => { setActiveMode('all'); handleRandomize('all'); }}
@@ -466,7 +466,7 @@ export default function SettingsView() {
           {/* Fine-Tune Manual Color Pickers */}
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 8 }}>Fine-Tune Warna 6 Elemen UI:</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+            <div className="settings-color-pickers-grid">
               
               {/* Primary Color */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 6, borderRadius: 6, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
@@ -558,7 +558,7 @@ export default function SettingsView() {
           {/* Presets Slider / Grid */}
           <div style={{ marginBottom: 14, borderTop: '1px solid var(--neutral-200)', paddingTop: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 8 }}>Presets Terkurasi ({PRESET_THEMES.length}):</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+            <div className="settings-presets-grid">
               {PRESET_THEMES.slice(0, 10).map(preset => {
                 const isSelected = draftTheme.name === preset.name || (draftTheme.primary === preset.primary && draftTheme.background === preset.background);
                 return (
