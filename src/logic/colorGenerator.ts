@@ -400,10 +400,12 @@ export function applyThemeToDocument(palette: ThemePalette) {
   root.style.setProperty('--primary-500', palette.primary);
   root.style.setProperty('--primary-700', palette.primaryHover);
   
-  // Accent and Toast success mapping
+  // Accent and Toast success/warning mapping
   root.style.setProperty('--accent-500', palette.accent);
   root.style.setProperty('--accent-600', palette.accent);
   root.style.setProperty('--success-600', palette.primary);
+  root.style.setProperty('--warning-600', palette.accent);
+  root.style.setProperty('--warning-500', palette.accent);
 
   // Background and surface
   root.style.setProperty('--neutral-50', palette.background);

@@ -696,7 +696,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             top: 24,
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: toast.type === 'success' ? 'var(--primary-600)' : toast.type === 'error' ? 'var(--danger-600)' : 'var(--warning-600)',
+            backgroundColor: toast.type === 'error' ? 'var(--danger-600)' : toast.type === 'warning' ? 'var(--accent-500)' : 'var(--primary-600)',
             color: '#ffffff',
             padding: '12px 24px',
             borderRadius: 'var(--radius-md)',
