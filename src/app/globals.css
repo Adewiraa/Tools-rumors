@@ -1072,9 +1072,54 @@ a {
 
 .schedule-actions {
   display: inline-flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.schedule-actions .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Responsive Table Layout Adjustments for Desktop & Sidebar Expanded */
+@media (min-width: 769px) {
+  .table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .schedule-table {
+    min-width: 1060px;
+  }
+
+  .master-card-table {
+    min-width: 860px;
+  }
+
+  .schedule-match-teams {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .schedule-match-cell {
+    min-width: 220px;
+  }
+
+  .schedule-actions-cell {
+    white-space: nowrap;
+    min-width: 190px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .page-container {
+    padding: 24px 20px;
+  }
 }
 
 .schedule-confirm-delete {

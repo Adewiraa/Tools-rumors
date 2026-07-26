@@ -807,7 +807,7 @@ export default function ResultsListView() {
                     </span>
                   </td>
                   <td className="schedule-actions-cell text-right">
-                    <div className="schedule-actions" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <div className="schedule-actions" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
                       {hasPermission('Match Result', 'create_edit') && (
                         <button 
                           className="btn btn-sm btn-primary" 
