@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useApp, UserRole } from '@/logic/AppContext';
+import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Save, Upload } from 'lucide-react';
 import type { AppSettings } from '@/logic/utils';
 
@@ -13,12 +13,6 @@ export default function SettingsView() {
   const {
     appSettings,
     setAppSettings,
-    currentUserRole,
-    setCurrentUserRole,
-    hasUnsavedChanges,
-    setHasUnsavedChanges,
-    isOffline,
-    setIsOffline,
     triggerToast,
     logAction,
   } = useApp();
@@ -91,7 +85,7 @@ export default function SettingsView() {
             <span>Pengaturan</span>
           </div>
           <h1 className="page-title">Pengaturan</h1>
-          <p className="page-description">Kelola identitas master aplikasi, role akses aktif, dan status sistem.</p>
+          <p className="page-description">Kelola identitas master aplikasi.</p>
         </div>
       </div>
 
@@ -174,54 +168,7 @@ export default function SettingsView() {
           </div>
         </div>
       </div>
-
-      {/* ── Role & Status Card ── */}
-      <div className="card settings-card settings-state-card" style={{ maxWidth: 640 }}>
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary-600)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-            Akses & Simulasi
-          </div>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--neutral-950)' }}>Role Admin & Status Sistem</h3>
-          <p className="page-description" style={{ marginTop: 2 }}>Pengaturan role aktif dan simulasi status aplikasi untuk pengujian.</p>
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">Role Admin Aktif</label>
-          <select className="form-select" value={currentUserRole} onChange={event => {
-            const role = event.target.value as UserRole;
-            setCurrentUserRole(role);
-            logAction('UPDATE_ACTIVE_ROLE', 'Pengaturan', `Mengubah role aktif menjadi ${role}`);
-            triggerToast(`Role aktif: ${role}`);
-          }}>
-            <option value="Super Admin">Super Admin</option>
-            <option value="Admin Data">Admin Data</option>
-            <option value="Match Editor">Match Editor</option>
-            <option value="Rumor Editor">Rumor Editor</option>
-            <option value="Reviewer">Reviewer</option>
-          </select>
-          <span className="form-helper">Role ini memengaruhi tombol aksi dan izin publish di setiap menu.</span>
-        </div>
-
-        <div className="form-group" style={{ marginTop: 24, borderTop: '1px solid var(--neutral-200)', paddingTop: 20 }}>
-          <label className="form-label">Simulasi Status Aplikasi</label>
-          <div className="settings-toggle-stack" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--neutral-700)' }}>
-              <input type="checkbox" checked={hasUnsavedChanges} onChange={event => {
-                setHasUnsavedChanges(event.target.checked);
-                logAction('TOGGLE_SYSTEM_SIMULATION', 'Pengaturan', `Simulasi perubahan belum disimpan: ${event.target.checked ? 'aktif' : 'nonaktif'}`);
-              }} />
-              Simulasikan perubahan belum disimpan
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, color: 'var(--neutral-700)' }}>
-              <input type="checkbox" checked={isOffline} onChange={event => {
-                setIsOffline(event.target.checked);
-                logAction('TOGGLE_SYSTEM_SIMULATION', 'Pengaturan', `Simulasi mode offline: ${event.target.checked ? 'aktif' : 'nonaktif'}`);
-              }} />
-              Simulasikan mode offline
-            </label>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
+
