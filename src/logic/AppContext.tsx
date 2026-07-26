@@ -226,6 +226,37 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
+  // Dynamically update browser tab favicon/icon & document title from App Settings (Master Web Logo & Name)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    if (appSettings.appName) {
+      document.title = `${appSettings.appName} - Admin Media Sepak Bola Indonesia`;
+    }
+
+    if (appSettings.appLogoSrc) {
+      const logoUrl = appSettings.appLogoSrc;
+
+      // Update or create standard shortcut icon link tag
+      let iconLink: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+      if (!iconLink) {
+        iconLink = document.createElement('link');
+        iconLink.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(iconLink);
+      }
+      iconLink.href = logoUrl;
+
+      // Update or create apple-touch-icon link tag
+      let appleIconLink: HTMLLinkElement | null = document.querySelector("link[rel='apple-touch-icon']");
+      if (!appleIconLink) {
+        appleIconLink = document.createElement('link');
+        appleIconLink.rel = 'apple-touch-icon';
+        document.getElementsByTagName('head')[0].appendChild(appleIconLink);
+      }
+      appleIconLink.href = logoUrl;
+    }
+  }, [appSettings.appName, appSettings.appLogoSrc]);
+
   const setCustomTheme = (palette: ThemePalette) => {
     setCurrentThemeState(palette);
     applyThemeToDocument(palette);

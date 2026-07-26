@@ -691,7 +691,23 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
 
         {/* Toast Notification */}
         {toast && (
-          <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', backgroundColor: toast.type === 'success' ? 'var(--success-600)' : toast.type === 'error' ? 'var(--danger-600)' : 'var(--warning-600)', color: 'white', padding: '12px 24px', borderRadius: 'var(--radius-md)', zIndex: 2000, boxShadow: 'var(--shadow-lg)', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
+          <div style={{
+            position: 'fixed',
+            top: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: toast.type === 'success' ? 'var(--primary-600)' : toast.type === 'error' ? 'var(--danger-600)' : 'var(--warning-600)',
+            color: '#ffffff',
+            padding: '12px 24px',
+            borderRadius: 'var(--radius-md)',
+            zIndex: 2000,
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontWeight: 700,
+            transition: 'all 0.2s ease',
+          }}>
             {toast.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
             <span>{toast.message}</span>
           </div>
