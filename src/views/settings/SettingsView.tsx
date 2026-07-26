@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Save, Upload } from 'lucide-react';
 import type { AppSettings } from '@/logic/utils';
@@ -16,11 +16,17 @@ export default function SettingsView() {
     triggerToast,
     logAction,
   } = useApp();
+
+  const [formData, setFormData] = useState<AppSettings>(appSettings);
   const [isSavingIdentity, setIsSavingIdentity] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
+  useEffect(() => {
+    setFormData(appSettings);
+  }, [appSettings]);
+
   const updateIdentityDraft = (field: keyof AppSettings, value: string) => {
-    setAppSettings({ ...appSettings, [field]: value });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,19 +34,21 @@ export default function SettingsView() {
     if (!file) return;
     try {
       setIsUploadingLogo(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('bucket', 'brand-logos');
-      formData.append('folder', appSettings.appName || 'app-identity');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('bucket', 'brand-logos');
+      formDataUpload.append('folder', formData.appName || 'app-identity');
 
-      const response = await fetch('/api/uploads/logo', { method: 'POST', body: formData });
+      const response = await fetch('/api/uploads/logo', { method: 'POST', body: formDataUpload });
       const result = await response.json();
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Upload logo gagal.');
       }
 
-      updateIdentityDraft('appLogoSrc', result.data.publicUrl);
+      const updated = { ...formData, appLogoSrc: result.data.publicUrl };
+      setFormData(updated);
+      setAppSettings(updated);
       logAction('UPLOAD_APP_LOGO', 'Pengaturan', `Mengupload logo aplikasi: ${file.name}`);
       triggerToast('Logo aplikasi berhasil diupload');
     } catch (error: unknown) {
@@ -57,16 +65,18 @@ export default function SettingsView() {
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: appSettings }),
+        body: JSON.stringify({ settings: formData }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Pengaturan identitas belum tersimpan ke database.');
       }
       setAppSettings(result.data);
-      logAction('UPDATE_APP_SETTINGS', 'Pengaturan', `Menyimpan identitas aplikasi: ${result.data.appName || appSettings.appName}`);
+      setFormData(result.data);
+      logAction('UPDATE_APP_SETTINGS', 'Pengaturan', `Menyimpan identitas aplikasi: ${result.data.appName || formData.appName}`);
       triggerToast('Identitas aplikasi berhasil disimpan');
     } catch (error: unknown) {
+      setAppSettings(formData);
       triggerToast(`${getErrorMessage(error, 'Pengaturan identitas belum tersimpan ke database.')} Perubahan tetap tersimpan di browser ini.`, 'warning');
     } finally {
       setIsSavingIdentity(false);
@@ -115,8 +125,8 @@ export default function SettingsView() {
               padding: 18,
             }}>
               <img
-                src={appSettings.appLogoSrc}
-                alt={appSettings.appName}
+                src={formData.appLogoSrc}
+                alt={formData.appName}
                 style={{ maxWidth: '100%', maxHeight: 118, objectFit: 'contain', background: 'transparent' }}
               />
             </div>
@@ -134,7 +144,7 @@ export default function SettingsView() {
                 <label className="form-label">Nama Aplikasi</label>
                 <input
                   className="form-input"
-                  value={appSettings.appName}
+                  value={formData.appName}
                   onChange={event => updateIdentityDraft('appName', event.target.value)}
                   placeholder="Contoh: Gosball"
                 />
@@ -143,7 +153,7 @@ export default function SettingsView() {
                 <label className="form-label">Subtitle Sidebar</label>
                 <input
                   className="form-input"
-                  value={appSettings.appSubtitle}
+                  value={formData.appSubtitle}
                   onChange={event => updateIdentityDraft('appSubtitle', event.target.value)}
                   placeholder="Contoh: MEDIA APP"
                 />
@@ -152,7 +162,7 @@ export default function SettingsView() {
                 <label className="form-label">Handle Watermark</label>
                 <input
                   className="form-input"
-                  value={appSettings.appHandle}
+                  value={formData.appHandle}
                   onChange={event => updateIdentityDraft('appHandle', event.target.value)}
                   placeholder="Contoh: @GOSBALL"
                 />
@@ -171,4 +181,5 @@ export default function SettingsView() {
     </div>
   );
 }
+
 

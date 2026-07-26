@@ -17,10 +17,10 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 };
 
 export const normalizeAppSettings = (value?: Partial<AppSettings> | null): AppSettings => ({
-  appName: value?.appName?.trim() || DEFAULT_APP_SETTINGS.appName,
-  appHandle: value?.appHandle?.trim() || DEFAULT_APP_SETTINGS.appHandle,
-  appLogoSrc: value?.appLogoSrc?.trim() || DEFAULT_APP_SETTINGS.appLogoSrc,
-  appSubtitle: value?.appSubtitle?.trim() || DEFAULT_APP_SETTINGS.appSubtitle,
+  appName: value?.appName !== undefined && value?.appName !== null ? value.appName : DEFAULT_APP_SETTINGS.appName,
+  appHandle: value?.appHandle !== undefined && value?.appHandle !== null ? value.appHandle : DEFAULT_APP_SETTINGS.appHandle,
+  appLogoSrc: value?.appLogoSrc !== undefined && value?.appLogoSrc !== null ? value.appLogoSrc : DEFAULT_APP_SETTINGS.appLogoSrc,
+  appSubtitle: value?.appSubtitle !== undefined && value?.appSubtitle !== null ? value.appSubtitle : DEFAULT_APP_SETTINGS.appSubtitle,
 });
 
 export const APP_NAME = DEFAULT_APP_SETTINGS.appName;
