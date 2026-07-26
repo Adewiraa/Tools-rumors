@@ -8,6 +8,7 @@ import {
   PRESET_THEMES,
   generateRandomPalette,
   applyThemeToDocument,
+  exportCSSVariables,
   RandomMode,
 } from '@/logic/colorGenerator';
 import { useApp } from '@/logic/AppContext';
@@ -138,31 +139,53 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
           </div>
         </div>
 
-        {/* Live Swatch Preview */}
-        <div style={{ marginBottom: 20, padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--neutral-500)', letterSpacing: 0.5, marginBottom: 8 }}>
-            Pratinjau Komponen Palet
+        {/* Live Mini App UI Preview Card */}
+        <div style={{ marginBottom: 20, padding: 14, borderRadius: 'var(--radius-md)', background: draftTheme.background, border: `1px solid ${draftTheme.border}`, color: draftTheme.textPrimary }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.8 }}>
+              ✨ Live Mini UI Preview:
+            </div>
+            <button
+              className="btn btn-sm btn-secondary"
+              style={{ fontSize: 10, padding: '2px 8px', height: 24, gap: 4 }}
+              onClick={() => {
+                const code = exportCSSVariables(draftTheme);
+                navigator.clipboard.writeText(code);
+                triggerToast('Kode CSS berhasil disalin!', 'success');
+              }}
+              title="Salin Kode Warna CSS Variable"
+            >
+              Copy CSS Code
+            </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, textAlign: 'center' }}>
-            <div>
-              <div style={{ height: 36, borderRadius: 6, backgroundColor: draftTheme.primary, border: '1px solid rgba(0,0,0,0.1)' }} />
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-700)' }}>Primary</span>
+
+          {/* Mini App Frame */}
+          <div style={{ display: 'flex', height: 100, borderRadius: 8, overflow: 'hidden', border: `1px solid ${draftTheme.border}`, background: draftTheme.surface }}>
+            {/* Mini Sidebar */}
+            <div style={{ width: 44, background: draftTheme.sidebar, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 10, gap: 8 }}>
+              <div style={{ width: 16, height: 16, borderRadius: 4, background: draftTheme.primary }} />
+              <div style={{ width: 22, height: 4, borderRadius: 2, background: draftTheme.accent }} />
+              <div style={{ width: 22, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.3)' }} />
             </div>
-            <div>
-              <div style={{ height: 36, borderRadius: 6, backgroundColor: draftTheme.accent, border: '1px solid rgba(0,0,0,0.1)' }} />
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-700)' }}>Accent</span>
-            </div>
-            <div>
-              <div style={{ height: 36, borderRadius: 6, backgroundColor: draftTheme.surface, border: '1px solid rgba(0,0,0,0.1)' }} />
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-700)' }}>Surface</span>
-            </div>
-            <div>
-              <div style={{ height: 36, borderRadius: 6, backgroundColor: draftTheme.sidebar, border: '1px solid rgba(0,0,0,0.1)' }} />
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-700)' }}>Sidebar</span>
-            </div>
-            <div>
-              <div style={{ height: 36, borderRadius: 6, backgroundColor: draftTheme.background, border: '1px solid rgba(0,0,0,0.1)' }} />
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--neutral-700)' }}>BG</span>
+
+            {/* Mini Main Content */}
+            <div style={{ flex: 1, padding: 10, display: 'flex', flexDirection: 'column', gap: 8, background: draftTheme.background }}>
+              {/* Mini Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: draftTheme.textPrimary }}>Media Tools Demo</div>
+                <div style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: draftTheme.accent, color: '#fff', fontWeight: 700 }}>Active</div>
+              </div>
+
+              {/* Mini Card */}
+              <div style={{ padding: 8, borderRadius: 6, background: draftTheme.surface, border: `1px solid ${draftTheme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: draftTheme.textPrimary }}>Match Result #102</div>
+                  <div style={{ fontSize: 8, color: draftTheme.textSecondary }}>Persib vs Arema</div>
+                </div>
+                <div style={{ fontSize: 9, padding: '3px 8px', borderRadius: 4, background: draftTheme.primary, color: '#ffffff', fontWeight: 700 }}>
+                  Action Button
+                </div>
+              </div>
             </div>
           </div>
         </div>

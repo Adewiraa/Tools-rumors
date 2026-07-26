@@ -285,3 +285,19 @@ export function applyThemeToDocument(palette: ThemePalette) {
   document.body.style.backgroundColor = palette.background;
   document.body.style.color = palette.textPrimary;
 }
+
+export function exportCSSVariables(palette: ThemePalette): string {
+  return `:root {
+  --primary-600: ${palette.primary};
+  --primary-500: ${palette.primary};
+  --primary-700: ${palette.primaryHover};
+  --accent-500: ${palette.accent};
+  --neutral-50: ${palette.background};
+  --white: ${palette.surface};
+  --navy-950: ${palette.sidebar};
+  --neutral-950: ${palette.textPrimary};
+  --neutral-700: ${palette.textSecondary};
+  --neutral-200: ${palette.border};
+}`;
+}
+

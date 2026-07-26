@@ -26,10 +26,8 @@ import {
   Users,
   Lock,
   ShieldAlert,
-  Megaphone,
-  Palette
+  Megaphone
 } from 'lucide-react';
-import RealtimeColorStudioModal from '../shared/RealtimeColorStudioModal';
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
 import { Match } from '@/lib/mockData';
 import {
@@ -123,7 +121,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   } = useApp();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [colorStudioOpen, setColorStudioOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<{ matches: Match[], players: unknown[], clubs: unknown[] }>({ matches: [], players: [], clubs: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
@@ -582,17 +579,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           </div>
 
           <div className="flex align-center gap-16">
-            {/* Realtime Color Studio Button */}
-            <button
-              className="btn btn-sm btn-secondary"
-              style={{ padding: '6px 12px', borderRadius: 'var(--radius-md)', gap: 6, display: 'flex', alignItems: 'center' }}
-              onClick={() => setColorStudioOpen(true)}
-              title="Realtime Color Studio"
-            >
-              <Palette size={16} style={{ color: 'var(--primary-600)' }} />
-              <span style={{ fontSize: 12, fontWeight: 700 }}>Warna & Tema</span>
-            </button>
-
             {/* Notification Center */}
             <div style={{ position: 'relative' }}>
               <button className="btn btn-sm btn-secondary" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setNotificationsOpen(!notificationsOpen)}>
@@ -707,12 +693,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             <span>{toast.message}</span>
           </div>
         )}
-
-        {/* Realtime Color Studio Modal */}
-        <RealtimeColorStudioModal
-          isOpen={colorStudioOpen}
-          onClose={() => setColorStudioOpen(false)}
-        />
 
         {/* Page Content */}
         <main className="page-container">
