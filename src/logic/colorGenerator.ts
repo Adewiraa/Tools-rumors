@@ -31,6 +31,20 @@ export const DEFAULT_THEME_PALETTE: ThemePalette = {
   isDark: false,
 };
 
+export const UNIVERSAL_PORTAL_THEME: ThemePalette = {
+  name: 'Universal Portal',
+  primary: '#3b82f6',
+  primaryHover: '#2563eb',
+  accent: '#f59e0b',
+  background: '#0b0f17',
+  surface: '#151c28',
+  sidebar: '#0b0f17',
+  textPrimary: '#f8fafc',
+  textSecondary: '#94a3b8',
+  border: '#1e293b',
+  isDark: true,
+};
+
 // HSL Helper Functions
 export function hslToHex(h: number, s: number, l: number): string {
   l /= 100;

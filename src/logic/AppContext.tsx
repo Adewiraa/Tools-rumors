@@ -27,7 +27,7 @@ import {
   INITIAL_ROLE_PERMISSIONS
 } from '@/lib/types/auth';
 import { getSessionUser } from '@/logic/authSession';
-import { ThemePalette, DEFAULT_THEME_PALETTE, applyThemeToDocument } from '@/logic/colorGenerator';
+import { ThemePalette, DEFAULT_THEME_PALETTE, UNIVERSAL_PORTAL_THEME, applyThemeToDocument } from '@/logic/colorGenerator';
 
 export type { UserRole, ActiveMenu, MediaTenant };
 
@@ -280,6 +280,30 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
+    // Render universal portal title & favicon when on login page
+    if (window.location.pathname.startsWith('/login')) {
+      document.title = 'Media Tools - Multi-Media Operating System';
+      const universalLogo = '/brand/gosball-alt.png';
+
+      const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
+      existingLinks.forEach(el => el.remove());
+
+      const iconTypes = [
+        { rel: 'icon', type: 'image/png' },
+        { rel: 'shortcut icon', type: 'image/x-icon' },
+        { rel: 'apple-touch-icon', type: 'image/png' },
+      ];
+
+      iconTypes.forEach(({ rel, type }) => {
+        const link = document.createElement('link');
+        link.rel = rel;
+        link.type = type;
+        link.href = `${universalLogo}?v=portal`;
+        document.head.appendChild(link);
+      });
+      return;
+    }
+
     if (appSettings.appName) {
       document.title = `${appSettings.appName} - Admin Media Sepak Bola Indonesia`;
     }
@@ -310,11 +334,18 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         document.head.appendChild(link);
       });
     }
-  }, [appSettings.appName, appSettings.appLogoSrc]);
+  }, [appSettings.appName, appSettings.appLogoSrc, currentUser]);
 
   // Sync private user theme whenever currentUser changes (Login / Logout / Switch Account)
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Apply universal neutral portal theme when on login page
+    if (window.location.pathname.startsWith('/login')) {
+      setCurrentThemeState(UNIVERSAL_PORTAL_THEME);
+      applyThemeToDocument(UNIVERSAL_PORTAL_THEME);
+      return;
+    }
 
     const userKey = getUserThemeStorageKey(currentUser);
     const savedUserTheme = localStorage.getItem(userKey);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn, Shield, AlertCircle } from 'lucide-react';
 import { saveSession, isLoggedIn } from '@/logic/authSession';
 import type { AppUser } from '@/lib/types/auth';
+import { UNIVERSAL_PORTAL_THEME, applyThemeToDocument } from '@/logic/colorGenerator';
 
 export default function LoginView() {
   const router = useRouter();
@@ -24,18 +25,29 @@ export default function LoginView() {
     }
   }, [router]);
 
-  // Read app name & logo from localStorage settings
+  // Set universal portal document title, theme & favicon on mount
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('gosball_app_settings');
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s?.appName) setAppName(s.appName);
-        if (s?.appLogoSrc) setAppLogo(s.appLogoSrc);
-      }
-    } catch {
-      // ignore
-    }
+    if (typeof document === 'undefined') return;
+    document.title = 'Media Tools - Multi-Media Operating System';
+    applyThemeToDocument(UNIVERSAL_PORTAL_THEME);
+
+    const universalLogo = '/brand/gosball-alt.png';
+    const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
+    existingLinks.forEach(el => el.remove());
+
+    const iconTypes = [
+      { rel: 'icon', type: 'image/png' },
+      { rel: 'shortcut icon', type: 'image/x-icon' },
+      { rel: 'apple-touch-icon', type: 'image/png' },
+    ];
+
+    iconTypes.forEach(({ rel, type }) => {
+      const link = document.createElement('link');
+      link.rel = rel;
+      link.type = type;
+      link.href = `${universalLogo}?v=portal`;
+      document.head.appendChild(link);
+    });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
