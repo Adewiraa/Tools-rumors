@@ -437,21 +437,23 @@ export default function PlayersListView() {
             className="player-club-card"
             onClick={() => setSelectedClubId('Semua')}
             style={{
-              border: selectedClubId === 'Semua' ? '1px solid var(--primary-600)' : '1px solid var(--neutral-200)',
-              background: selectedClubId === 'Semua' ? 'var(--primary-50)' : 'var(--white)',
+              border: selectedClubId === 'Semua' ? '2px solid var(--primary-600)' : '1px solid var(--neutral-200)',
+              background: selectedClubId === 'Semua' ? 'var(--primary-600)' : 'var(--white)',
+              color: selectedClubId === 'Semua' ? '#ffffff' : 'var(--neutral-950)',
               borderRadius: 8,
               padding: 12,
               cursor: 'pointer',
               display: 'grid',
               gap: 8,
               textAlign: 'left',
+              transition: 'all 0.15s ease',
             }}
           >
-            <span className="player-club-logo" style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--neutral-950)', color: 'white', display: 'grid', placeItems: 'center' }}>
+            <span className="player-club-logo" style={{ width: 44, height: 44, borderRadius: 8, background: selectedClubId === 'Semua' ? 'rgba(255,255,255,0.2)' : 'var(--neutral-950)', color: 'white', display: 'grid', placeItems: 'center' }}>
               <Shield size={22} />
             </span>
-            <span className="semibold" style={{ fontSize: 13 }}>Semua Klub</span>
-            <span className="text-muted" style={{ fontSize: 11 }}>{players.length} pemain</span>
+            <span className="semibold" style={{ fontSize: 13, color: selectedClubId === 'Semua' ? '#ffffff' : 'var(--neutral-950)' }}>Semua Klub</span>
+            <span style={{ fontSize: 11, color: selectedClubId === 'Semua' ? 'rgba(255,255,255,0.85)' : 'var(--neutral-700)' }}>{players.length} pemain</span>
           </button>
 
           {clubs.map(club => {
@@ -464,8 +466,9 @@ export default function PlayersListView() {
                 className="player-club-card"
                 onClick={() => setSelectedClubId(club.id)}
                 style={{
-                  border: isActiveClub ? '1px solid var(--primary-600)' : '1px solid var(--neutral-200)',
-                  background: isActiveClub ? 'var(--primary-50)' : 'var(--white)',
+                  border: isActiveClub ? '2px solid var(--primary-600)' : '1px solid var(--neutral-200)',
+                  background: isActiveClub ? 'var(--primary-600)' : 'var(--white)',
+                  color: isActiveClub ? '#ffffff' : 'var(--neutral-950)',
                   borderRadius: 8,
                   padding: 12,
                   cursor: 'pointer',
@@ -473,17 +476,18 @@ export default function PlayersListView() {
                   gap: 8,
                   textAlign: 'left',
                   minWidth: 0,
+                  transition: 'all 0.15s ease',
                 }}
               >
                 <span className="player-club-logo" style={{ width: 48, height: 48, borderRadius: 8, background: 'var(--white)', border: '1px solid var(--neutral-200)', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
                   {club.logoUrl?.startsWith('http') ? (
                     <img src={club.logoUrl} alt={club.name} style={{ width: 38, height: 38, objectFit: 'contain' }} />
                   ) : (
-                    <span style={{ fontSize: 18 }}>{club.logoUrl || club.code}</span>
+                    <span style={{ fontSize: 18, color: 'var(--neutral-950)' }}>{club.logoUrl || club.code}</span>
                   )}
                 </span>
-                <span className="semibold" style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{club.name}</span>
-                <span className="text-muted" style={{ fontSize: 11 }}>{clubPlayersCount} pemain</span>
+                <span className="semibold" style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isActiveClub ? '#ffffff' : 'var(--neutral-950)' }}>{club.name}</span>
+                <span style={{ fontSize: 11, color: isActiveClub ? 'rgba(255,255,255,0.85)' : 'var(--neutral-700)' }}>{clubPlayersCount} pemain</span>
               </button>
             );
           })}
