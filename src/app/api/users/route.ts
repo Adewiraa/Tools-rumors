@@ -21,6 +21,17 @@ const getErrorMessage = (error: unknown) => (
   error instanceof Error ? error.message : String(error)
 );
 
+const getUserWriteErrorMessage = (message: string) => {
+  const normalized = message.toLowerCase();
+  if (normalized.includes('tenant_id')) {
+    return 'Database belum siap untuk multi-user. Jalankan supabase_multi_tenant_identity_migration.sql di Supabase SQL Editor, lalu buat ulang user.';
+  }
+  if (normalized.includes('duplicate') || normalized.includes('unique')) {
+    return 'Username sudah dipakai. Gunakan username lain.';
+  }
+  return message;
+};
+
 const slugifyTenantId = (value: string) => (
   value
     .toLowerCase()
@@ -109,7 +120,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+      return NextResponse.json({ success: false, error: getUserWriteErrorMessage(error.message) }, { status: 400 });
     }
 
     return NextResponse.json({
@@ -147,7 +158,7 @@ export async function PUT(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+      return NextResponse.json({ success: false, error: getUserWriteErrorMessage(error.message) }, { status: 400 });
     }
 
     return NextResponse.json({

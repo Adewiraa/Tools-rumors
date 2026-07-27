@@ -527,19 +527,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       triggerToast(`User ${created.username} berhasil dibuat!`, 'success');
       return true;
     } catch (err: any) {
-      console.warn('API addUser fallback to local state:', err);
-      const fallbackUser: AppUser = {
-        id: 'usr-' + Date.now(),
-        ...newUser,
-      };
-      setUsers(prev => {
-        const next = [...prev, fallbackUser];
-        if (typeof window !== 'undefined') localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
-        return next;
-      });
-      logAction('CREATE_USER', 'Manajemen User', `Menambahkan user baru ${fallbackUser.username} (${fallbackUser.role})`);
-      triggerToast(`User ${fallbackUser.username} berhasil dibuat (Lokal)!`, 'success');
-      return true;
+      console.warn('API addUser failed:', err);
+      triggerToast(err?.message || 'User belum tersimpan ke database. Jalankan migration multi-tenant jika diperlukan.', 'error');
+      return false;
     }
   };
 
