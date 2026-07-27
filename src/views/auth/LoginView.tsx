@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn, Shield, AlertCircle } from 'lucide-react';
 import { saveSession, isLoggedIn } from '@/logic/authSession';
 import type { AppUser } from '@/lib/types/auth';
-import { UNIVERSAL_PORTAL_THEME, applyThemeToDocument } from '@/logic/colorGenerator';
+import { DEFAULT_THEME_PALETTE, applyThemeToDocument } from '@/logic/colorGenerator';
 
 export default function LoginView() {
   const router = useRouter();
@@ -25,11 +25,11 @@ export default function LoginView() {
     }
   }, [router]);
 
-  // Set universal portal document title, theme & favicon on mount
+  // Set document title, main theme & favicon on mount
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.title = 'Media Tools - Multi-Media Operating System';
-    applyThemeToDocument(UNIVERSAL_PORTAL_THEME);
+    applyThemeToDocument(DEFAULT_THEME_PALETTE);
 
     const universalLogo = '/brand/gosball-alt.png';
     const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");

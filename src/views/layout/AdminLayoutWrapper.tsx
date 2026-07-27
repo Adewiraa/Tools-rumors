@@ -396,7 +396,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
     <div className="app-container">
       {/* Dynamic Header Alert for Unsaved Changes or Offline status */}
       {isOffline && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, backgroundColor: 'var(--danger-600)', color: 'white', padding: '6px 20px', textAlign: 'center', zIndex: 1100, fontSize: '13px', fontWeight: 600 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, backgroundColor: 'var(--primary-600)', color: 'white', padding: '6px 20px', textAlign: 'center', zIndex: 1100, fontSize: '13px', fontWeight: 600 }}>
           <AlertCircle size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Koneksi Internet Terputus. Aplikasi berjalan dalam mode Offline.
         </div>
       )}
@@ -593,7 +593,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                     minWidth: 18,
                     height: 18,
                     padding: '0 5px',
-                    backgroundColor: 'var(--danger-600)',
+                    backgroundColor: 'var(--primary-600)',
                     color: 'white',
                     borderRadius: 999,
                     fontSize: 10,
@@ -695,7 +695,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             top: 24,
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: toast.type === 'error' ? 'var(--danger-600)' : toast.type === 'warning' ? 'var(--accent-500)' : 'var(--primary-600)',
+            backgroundColor: 'var(--primary-600)',
             color: '#ffffff',
             padding: '12px 24px',
             borderRadius: 'var(--radius-md)',

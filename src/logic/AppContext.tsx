@@ -27,7 +27,7 @@ import {
   INITIAL_ROLE_PERMISSIONS
 } from '@/lib/types/auth';
 import { getSessionUser } from '@/logic/authSession';
-import { ThemePalette, DEFAULT_THEME_PALETTE, UNIVERSAL_PORTAL_THEME, applyThemeToDocument } from '@/logic/colorGenerator';
+import { ThemePalette, DEFAULT_THEME_PALETTE, applyThemeToDocument } from '@/logic/colorGenerator';
 
 export type { UserRole, ActiveMenu, MediaTenant };
 
@@ -321,12 +321,6 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
-  const getUserThemeStorageKey = (user?: Omit<AppUser, 'password'> | null) => {
-    if (user?.id) return `gosball_custom_theme_${user.id}`;
-    if (user?.username) return `gosball_custom_theme_${user.username}`;
-    return 'gosball_custom_theme';
-  };
-
   // Dynamically update browser tab favicon/icon & document title from App Settings (Master Web Logo & Name)
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -387,52 +381,20 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [appSettings.appName, appSettings.appLogoSrc, currentUser]);
 
-  // Sync private user theme whenever currentUser changes (Login / Logout / Switch Account)
+  // Keep one global application theme for every user and tenant.
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const timer = window.setTimeout(() => {
+      setCurrentThemeState(DEFAULT_THEME_PALETTE);
+      applyThemeToDocument(DEFAULT_THEME_PALETTE);
+    }, 0);
 
-    // Apply universal neutral portal theme when on login page
-    if (window.location.pathname.startsWith('/login')) {
-      setCurrentThemeState(UNIVERSAL_PORTAL_THEME);
-      applyThemeToDocument(UNIVERSAL_PORTAL_THEME);
-      return;
-    }
+    return () => window.clearTimeout(timer);
+  }, []);
 
-    const userKey = getUserThemeStorageKey(currentUser);
-    const savedUserTheme = localStorage.getItem(userKey);
-
-    if (savedUserTheme) {
-      try {
-        const parsed = JSON.parse(savedUserTheme);
-        setCurrentThemeState(parsed);
-        applyThemeToDocument(parsed);
-        return;
-      } catch (e) {
-        console.warn('Cache user theme error:', e);
-      }
-    }
-
-    if (currentUser?.customTheme) {
-      const parsed = currentUser.customTheme as ThemePalette;
-      setCurrentThemeState(parsed);
-      applyThemeToDocument(parsed);
-      return;
-    }
-
-    // Default theme for new users without saved preference
-    const fallbackTheme = DEFAULT_THEME_PALETTE;
-    setCurrentThemeState(fallbackTheme);
-    applyThemeToDocument(fallbackTheme);
-  }, [currentUser?.id, currentUser?.username]);
-
-  const setCustomTheme = (palette: ThemePalette) => {
-    setCurrentThemeState(palette);
-    applyThemeToDocument(palette);
-    if (typeof window !== 'undefined') {
-      const userKey = getUserThemeStorageKey(currentUser);
-      localStorage.setItem(userKey, JSON.stringify(palette));
-      localStorage.setItem('gosball_custom_theme', JSON.stringify(palette));
-    }
+  const setCustomTheme = () => {
+    setCurrentThemeState(DEFAULT_THEME_PALETTE);
+    applyThemeToDocument(DEFAULT_THEME_PALETTE);
   };
 
   const setCurrentUserRole = (role: UserRole) => {
