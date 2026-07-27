@@ -21,6 +21,27 @@ const getErrorMessage = (error: unknown) => (
   error instanceof Error ? error.message : String(error)
 );
 
+const slugifyTenantId = (value: string) => (
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+);
+
+const resolveTenantId = (row: any) => {
+  const explicitTenantId = String(row.tenant_id || row.tenantId || '').trim();
+  if (explicitTenantId && explicitTenantId !== 'default') return explicitTenantId;
+
+  const username = String(row.username || '').toLowerCase();
+  const seededUser = INITIAL_USERS.find(user => user.username.toLowerCase() === username);
+  if (seededUser?.tenantId) return seededUser.tenantId;
+
+  const usernameSlug = slugifyTenantId(username);
+  return usernameSlug && usernameSlug !== 'admin' ? `media-${usernameSlug}` : 'gosball';
+};
+
 const mapUserFromSupabase = (row: any): AppUser => ({
   id: row.id,
   username: row.username,
@@ -29,7 +50,7 @@ const mapUserFromSupabase = (row: any): AppUser => ({
   role: row.role || 'Match Editor',
   status: row.status === 'inactive' ? 'inactive' : 'active',
   avatarUrl: row.avatar_url || '',
-  tenantId: row.tenant_id || row.tenantId || 'gosball',
+  tenantId: resolveTenantId(row),
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });

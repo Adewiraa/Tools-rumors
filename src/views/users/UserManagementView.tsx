@@ -31,7 +31,7 @@ type SortField = 'fullName' | 'username' | 'role' | 'status' | 'id';
 type SortOrder = 'asc' | 'desc';
 
 export default function UserManagementView() {
-  const { users, mediaTenants, addUser, updateUser, deleteUser, triggerToast } = useApp();
+  const { users, mediaTenants, currentTenantId, addUser, updateUser, deleteUser, triggerToast } = useApp();
 
   // Search & Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +58,7 @@ export default function UserManagementView() {
     fullName: '',
     role: 'Match Editor' as UserRole,
     status: 'active' as 'active' | 'inactive',
-    tenantId: 'gosball',
+    tenantId: currentTenantId || 'gosball',
   });
 
   const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
@@ -84,7 +84,7 @@ export default function UserManagementView() {
       fullName: '',
       role: 'Match Editor',
       status: 'active',
-      tenantId: mediaTenants[0]?.id || 'gosball',
+      tenantId: currentTenantId || mediaTenants[0]?.id || 'gosball',
     });
     setIsCreateModalOpen(true);
   };

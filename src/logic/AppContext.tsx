@@ -26,7 +26,7 @@ import {
   INITIAL_USERS,
   INITIAL_ROLE_PERMISSIONS
 } from '@/lib/types/auth';
-import { getSessionUser } from '@/logic/authSession';
+import { getActiveTenantId, getSessionUser, setActiveTenantId } from '@/logic/authSession';
 import { ThemePalette, DEFAULT_THEME_PALETTE, applyThemeToDocument } from '@/logic/colorGenerator';
 
 export type { UserRole, ActiveMenu, MediaTenant };
@@ -146,7 +146,7 @@ const sanitizeAuditLogs = (logs: AuditLog[]) => (
 const getStoredActiveTenantId = () => {
   if (typeof window === 'undefined') return DEFAULT_APP_SETTINGS.tenantId || 'gosball';
   const sessionUser = getSessionUser();
-  return sessionUser?.tenantId || localStorage.getItem('gosball_active_tenant') || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
+  return sessionUser?.tenantId || getActiveTenantId() || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
 };
 
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -223,7 +223,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const nextTenantId = tenantId || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
     setCurrentTenantId(nextTenantId);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('gosball_active_tenant', nextTenantId);
+      setActiveTenantId(nextTenantId);
     }
 
     try {
@@ -289,7 +289,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       // Load session user (from login)
       const sessionUser = getSessionUser();
-      const activeTenant = sessionUser?.tenantId || localStorage.getItem('gosball_active_tenant') || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
+      const activeTenant = sessionUser?.tenantId || getActiveTenantId() || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
       setCurrentTenantId(activeTenant);
 
       if (sessionUser) {

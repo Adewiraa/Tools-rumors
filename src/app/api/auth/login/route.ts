@@ -17,6 +17,26 @@ const supabaseAdmin = createClient(
   }
 );
 
+const slugifyTenantId = (value: string) => (
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+);
+
+const resolveTenantId = (row: Record<string, unknown>, username: string) => {
+  const explicitTenantId = String(row.tenant_id || row.tenantId || '').trim();
+  if (explicitTenantId && explicitTenantId !== 'default') return explicitTenantId;
+
+  const seededUser = INITIAL_USERS.find(user => user.username.toLowerCase() === username);
+  if (seededUser?.tenantId) return seededUser.tenantId;
+
+  const usernameSlug = slugifyTenantId(username);
+  return usernameSlug && usernameSlug !== 'admin' ? `media-${usernameSlug}` : 'gosball';
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -53,7 +73,7 @@ export async function POST(request: Request) {
             role: data.role || 'Match Editor',
             status: 'active',
             avatarUrl: data.avatar_url || '',
-            tenantId: data.tenant_id || data.tenantId || 'gosball',
+            tenantId: resolveTenantId(data, usernameNormalized),
             createdAt: data.created_at,
           };
         }

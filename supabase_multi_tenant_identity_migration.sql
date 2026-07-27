@@ -28,6 +28,14 @@ UPDATE app_users
 SET tenant_id = 'bolanusantara'
 WHERE username = 'bola_admin';
 
+-- Untuk akun media lain yang sudah dibuat sebelum fitur tenant_id ada,
+-- jangan biarkan Super Admin selain admin utama otomatis memakai tenant Gosball.
+UPDATE app_users
+SET tenant_id = 'media-' || TRIM(BOTH '-' FROM regexp_replace(lower(username), '[^a-z0-9]+', '-', 'g'))
+WHERE role = 'Super Admin'
+  AND username <> 'admin'
+  AND tenant_id = 'gosball';
+
 INSERT INTO app_settings (id, app_name, app_handle, app_logo_url, app_subtitle)
 VALUES
   ('gosball', 'Gosball', '@gosball', '/brand/gosball-alt.png', 'Media Sepak Bola'),
@@ -38,6 +46,17 @@ ON CONFLICT (id) DO UPDATE SET
   app_handle = EXCLUDED.app_handle,
   app_logo_url = EXCLUDED.app_logo_url,
   app_subtitle = EXCLUDED.app_subtitle;
+
+INSERT INTO app_settings (id, app_name, app_handle, app_logo_url, app_subtitle)
+SELECT DISTINCT
+  tenant_id,
+  COALESCE(NULLIF(TRIM(regexp_replace(full_name, '^(Super Admin|Admin)[[:space:]]+', '', 'i')), ''), username),
+  '@' || regexp_replace(lower(username), '[^a-z0-9_]+', '', 'g'),
+  '/brand/gosball-alt.png',
+  'Media Sepak Bola'
+FROM app_users
+WHERE tenant_id LIKE 'media-%'
+ON CONFLICT (id) DO NOTHING;
 
 COMMIT;
 
