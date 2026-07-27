@@ -63,7 +63,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password, fullName, role, status } = body;
+    const { username, password, fullName, role, status, tenantId } = body;
 
     if (!username || !password || !fullName || !role) {
       return NextResponse.json(
@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       full_name: String(fullName).trim(),
       role: String(role),
       status: status || 'active',
+      tenant_id: String(tenantId || 'gosball').trim() || 'gosball',
     };
 
     const { data, error } = await supabaseAdmin
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, username, password, fullName, role, status } = body;
+    const { id, username, password, fullName, role, status, tenantId } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID user wajib disertakan.' }, { status: 400 });
@@ -115,6 +116,7 @@ export async function PUT(request: Request) {
     if (fullName !== undefined) updatePayload.full_name = String(fullName).trim();
     if (role !== undefined) updatePayload.role = String(role);
     if (status !== undefined) updatePayload.status = String(status);
+    if (tenantId !== undefined) updatePayload.tenant_id = String(tenantId).trim() || 'gosball';
 
     const { data, error } = await supabaseAdmin
       .from('app_users')

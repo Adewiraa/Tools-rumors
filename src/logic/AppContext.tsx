@@ -91,7 +91,7 @@ interface AppContextType {
   hasPermission: (module: string, action: 'read' | 'create_edit' | 'publish' | 'delete' | 'all') => boolean;
   hasMenuAccess: (menuId: string) => boolean;
 
-  // Realtime Color Studio Theme State
+  // Private theme state kept for stored user preferences; color controls are not exposed in the UI.
   currentTheme: ThemePalette;
   setCustomTheme: (palette: ThemePalette) => void;
 
@@ -143,6 +143,12 @@ const sanitizeAuditLogs = (logs: AuditLog[]) => (
   logs.filter(log => !SEED_AUDIT_LOG_IDS.has(log.id))
 );
 
+const getStoredActiveTenantId = () => {
+  if (typeof window === 'undefined') return DEFAULT_APP_SETTINGS.tenantId || 'gosball';
+  const sessionUser = getSessionUser();
+  return sessionUser?.tenantId || localStorage.getItem('gosball_active_tenant') || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
+};
+
 export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clubs, setClubsState] = useState<Club[]>(INITIAL_CLUBS);
   const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
@@ -191,20 +197,53 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [mediaTenants, setMediaTenants] = useState<MediaTenant[]>(DEFAULT_MEDIA_TENANTS);
   const [currentTenantId, setCurrentTenantId] = useState<string>('gosball');
 
-  const switchTenant = async (tenantId: string) => {
-    setCurrentTenantId(tenantId);
+  const applyTenantSettings = (settings: Partial<AppSettings>) => {
+    const nextSettings = normalizeAppSettings(settings);
+    const tenantId = nextSettings.tenantId || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
+    setAppSettingsState(nextSettings);
+    setMediaTenants(prev => {
+      const summary = {
+        id: tenantId,
+        name: nextSettings.appName,
+        logoSrc: nextSettings.appLogoSrc,
+        subtitle: nextSettings.appSubtitle,
+        handle: nextSettings.appHandle,
+      };
+      return prev.some(t => t.id === tenantId)
+        ? prev.map(t => t.id === tenantId ? { ...t, ...summary } : t)
+        : [...prev, summary];
+    });
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem('gosball_active_tenant', tenantId);
+      localStorage.setItem(`${APP_SETTINGS_STORAGE_KEY}_${tenantId}`, JSON.stringify(nextSettings));
+    }
+  };
+
+  const switchTenant = async (tenantId: string) => {
+    const nextTenantId = tenantId || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
+    setCurrentTenantId(nextTenantId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gosball_active_tenant', nextTenantId);
     }
 
     try {
-      const res = await fetch(`/api/settings?tenantId=${encodeURIComponent(tenantId)}`);
+      const res = await fetch(`/api/settings?tenantId=${encodeURIComponent(nextTenantId)}`);
       const json = await res.json();
       if (json.success && json.data) {
-        setAppSettingsState(normalizeAppSettings(json.data));
+        applyTenantSettings({ ...json.data, tenantId: nextTenantId });
       }
     } catch (e) {
       console.warn('Switch tenant API fetch error:', e);
+      if (typeof window !== 'undefined') {
+        const cached = localStorage.getItem(`${APP_SETTINGS_STORAGE_KEY}_${nextTenantId}`);
+        if (cached) {
+          try {
+            applyTenantSettings({ ...JSON.parse(cached), tenantId: nextTenantId });
+          } catch (cacheError) {
+            console.warn('Switch tenant cache error:', cacheError);
+          }
+        }
+      }
     }
   };
 
@@ -217,6 +256,20 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       return next;
     });
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenantId: newTenant.id,
+        settings: {
+          tenantId: newTenant.id,
+          appName: newTenant.name,
+          appHandle: newTenant.handle,
+          appLogoSrc: newTenant.logoSrc,
+          appSubtitle: newTenant.subtitle,
+        },
+      }),
+    }).catch(e => console.warn('Persist new tenant settings API error:', e));
     await switchTenant(newTenant.id);
   };
 
@@ -234,16 +287,14 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
-      // Load active tenant
-      const activeTenant = localStorage.getItem('gosball_active_tenant');
-      if (activeTenant) setCurrentTenantId(activeTenant);
-
       // Load session user (from login)
       const sessionUser = getSessionUser();
+      const activeTenant = sessionUser?.tenantId || localStorage.getItem('gosball_active_tenant') || DEFAULT_APP_SETTINGS.tenantId || 'gosball';
+      setCurrentTenantId(activeTenant);
+
       if (sessionUser) {
         setCurrentUserState(sessionUser);
         setCurrentUserRoleState(sessionUser.role as UserRole);
-        if (sessionUser.tenantId) setCurrentTenantId(sessionUser.tenantId);
       } else {
         // Fallback: legacy role from localStorage
         const savedRole = localStorage.getItem('gosball_admin_role') as UserRole;
@@ -259,10 +310,10 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setRolePermissions(readCachedArray(PERMISSIONS_STORAGE_KEY, INITIAL_ROLE_PERMISSIONS));
       setAuditLogs(readCachedArray(AUDIT_LOGS_STORAGE_KEY, []));
 
-      const savedSettings = localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
+      const savedSettings = localStorage.getItem(`${APP_SETTINGS_STORAGE_KEY}_${activeTenant}`);
       if (savedSettings) {
         try {
-          setAppSettingsState(normalizeAppSettings(JSON.parse(savedSettings)));
+          setAppSettingsState(normalizeAppSettings({ ...JSON.parse(savedSettings), tenantId: activeTenant }));
         } catch (e) {
           console.warn('Cache settings error:', e);
         }
@@ -395,9 +446,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setCurrentUserState(user);
     if (user) {
       setCurrentUserRoleState(user.role as UserRole);
-      if (user.tenantId) {
-        switchTenant(user.tenantId);
-      }
+      void switchTenant(user.tenantId || DEFAULT_APP_SETTINGS.tenantId || 'gosball');
     }
   };
 
@@ -431,7 +480,6 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(`${APP_SETTINGS_STORAGE_KEY}_${activeTenantId}`, JSON.stringify(nextSettings));
-      localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(nextSettings));
     }
 
     void fetch('/api/settings', {
@@ -712,6 +760,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     async function loadSupabaseData() {
+      const activeTenantId = getStoredActiveTenantId();
+
       const fetchJson = async (url: string) => {
         const response = await fetch(url, { cache: 'no-store' });
         return response.json();
@@ -735,7 +785,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         fetchJson('/api/rumors'),
         fetchJson('/api/users'),
         fetchJson('/api/permissions'),
-        fetchJson('/api/settings'),
+        fetchJson(`/api/settings?tenantId=${encodeURIComponent(activeTenantId)}`),
         fetchJson('/api/audit-logs'),
       ]);
 
@@ -804,7 +854,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       if (settingsResult.status === 'fulfilled' && settingsResult.value.success && settingsResult.value.data) {
-        setAppSettings(settingsResult.value.data);
+        setCurrentTenantId(activeTenantId);
+        applyTenantSettings({ ...settingsResult.value.data, tenantId: activeTenantId });
         successCount += 1;
       } else {
         console.warn('Gagal load pengaturan aplikasi, pakai cache lokal:', settingsResult);

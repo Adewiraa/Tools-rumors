@@ -19,7 +19,7 @@ const supabaseAdmin = createClient(
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get('tenantId') || 'default';
+  const tenantId = searchParams.get('tenantId') || 'gosball';
 
   let appName = DEFAULT_APP_SETTINGS.appName;
   let appLogoSrc = DEFAULT_APP_SETTINGS.appLogoSrc;

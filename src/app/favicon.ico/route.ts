@@ -22,7 +22,7 @@ export async function GET() {
     const { data } = await supabaseAdmin
       .from('app_settings')
       .select('app_logo_url')
-      .eq('id', 'default')
+      .eq('id', 'gosball')
       .maybeSingle();
 
     if (data?.app_logo_url) {

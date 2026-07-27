@@ -35,6 +35,15 @@ const mapFromSupabase = (settings: AppSettingsRow, tenantId: string) => normaliz
   appSubtitle: settings?.app_subtitle || undefined,
 });
 
+const humanizeTenantId = (tenantId: string) => (
+  tenantId
+    .replace(/^tenant-/, '')
+    .replace(/-[a-z0-9]{4,}$/i, '')
+    .replace(/[-_]+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, char => char.toUpperCase()) || 'Media Tools'
+);
+
 function getTenantFallbackSettings(tenantId: string) {
   const matched = DEFAULT_MEDIA_TENANTS.find(t => t.id === tenantId);
   if (matched) {
@@ -46,7 +55,13 @@ function getTenantFallbackSettings(tenantId: string) {
       appSubtitle: matched.subtitle,
     });
   }
-  return { ...DEFAULT_APP_SETTINGS, tenantId };
+  return normalizeAppSettings({
+    tenantId,
+    appName: humanizeTenantId(tenantId),
+    appHandle: `@${tenantId.replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'media'}`,
+    appLogoSrc: DEFAULT_APP_SETTINGS.appLogoSrc,
+    appSubtitle: 'MEDIA APP',
+  });
 }
 
 export async function GET(request: Request) {
@@ -78,7 +93,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const rawSettings = body?.settings || body;
-    const tenantId = rawSettings?.tenantId || body?.tenantId || 'default';
+    const tenantId = rawSettings?.tenantId || body?.tenantId || 'gosball';
     const settings = normalizeAppSettings({ ...rawSettings, tenantId });
 
     const { error } = await supabaseAdmin

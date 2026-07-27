@@ -23,6 +23,7 @@ CREATE TABLE app_users (
   role          TEXT NOT NULL REFERENCES role_permissions(role) ON UPDATE CASCADE ON DELETE RESTRICT,
   status        TEXT NOT NULL DEFAULT 'active',
   avatar_url    TEXT DEFAULT '',
+  tenant_id     TEXT NOT NULL DEFAULT 'gosball',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -71,11 +72,13 @@ INSERT INTO role_permissions (role, allowed_menus) VALUES
 ON CONFLICT (role) DO UPDATE SET allowed_menus = EXCLUDED.allowed_menus;
 
 -- 4. SEED DATA USERS DEFAULTS
-INSERT INTO app_users (id, username, password_hash, full_name, role, status) VALUES
-('usr-superadmin', 'admin', 'admin123', 'Super Admin Gosball', 'Super Admin', 'active'),
-('usr-editor1', 'match_editor', 'editor123', 'Ahmad Editor Match', 'Match Editor', 'active'),
-('usr-rumoreditor', 'rumor_editor', 'rumor123', 'Budi Rumor Editor', 'Rumor Editor', 'active'),
-('usr-admindata', 'data_admin', 'data123', 'Citra Data Admin', 'Admin Data', 'active')
+INSERT INTO app_users (id, username, password_hash, full_name, role, status, tenant_id) VALUES
+('usr-superadmin', 'admin', 'admin123', 'Super Admin Gosball', 'Super Admin', 'active', 'gosball'),
+('usr-garuda-admin', 'garuda_admin', 'admin123', 'Admin Garuda Goal', 'Super Admin', 'active', 'garudagoal'),
+('usr-bola-admin', 'bola_admin', 'admin123', 'Admin Bola Nusantara', 'Super Admin', 'active', 'bolanusantara'),
+('usr-editor1', 'match_editor', 'editor123', 'Ahmad Editor Match', 'Match Editor', 'active', 'gosball'),
+('usr-rumoreditor', 'rumor_editor', 'rumor123', 'Budi Rumor Editor', 'Rumor Editor', 'active', 'gosball'),
+('usr-admindata', 'data_admin', 'data123', 'Citra Data Admin', 'Admin Data', 'active', 'gosball')
 ON CONFLICT (username) DO NOTHING;
 
 -- 5. RLS POLICIES

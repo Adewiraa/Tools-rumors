@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp, UserRole } from '@/logic/AppContext';
-import { isLoggedIn, clearSession, getSession, touchSession, SESSION_IDLE_TIMEOUT_MS } from '@/logic/authSession';
+import { clearSession, getSession, touchSession, SESSION_IDLE_TIMEOUT_MS } from '@/logic/authSession';
 import {
   Search,
   Bell,
@@ -27,9 +27,7 @@ import {
   Lock,
   ShieldAlert,
   Megaphone,
-  Palette
 } from 'lucide-react';
-import RealtimeColorStudioModal from '../shared/RealtimeColorStudioModal';
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
 import { Match } from '@/lib/mockData';
 import {
@@ -123,7 +121,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   } = useApp();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [colorStudioOpen, setColorStudioOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<{ matches: Match[], players: unknown[], clubs: unknown[] }>({ matches: [], players: [], clubs: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
@@ -145,9 +142,11 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
         setAuthChecked(true);
         return;
       }
-      if (!isLoggedIn()) {
+      const session = getSession();
+      if (!session) {
         router.replace('/login');
       } else {
+        setCurrentUser(session.user);
         setAuthChecked(true);
       }
     }, 0);
@@ -582,17 +581,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           </div>
 
           <div className="flex align-center gap-16">
-            {/* Realtime Color Studio Trigger Button */}
-            <button
-              className="btn btn-sm btn-secondary"
-              onClick={() => setColorStudioOpen(true)}
-              title="Buka Realtime Color Studio"
-              style={{ gap: 6, fontSize: 12 }}
-            >
-              <Palette size={15} style={{ color: 'var(--primary-600)' }} />
-              <span className="desktop-only-inline">Color Studio</span>
-            </button>
-
             {/* Notification Center */}
             <div style={{ position: 'relative' }}>
               <button className="btn btn-sm btn-secondary" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setNotificationsOpen(!notificationsOpen)}>
@@ -812,9 +800,6 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           </div>
         </div>
       )}
-
-      {/* Realtime Color Studio Modal */}
-      <RealtimeColorStudioModal isOpen={colorStudioOpen} onClose={() => setColorStudioOpen(false)} />
     </div>
   );
 }
