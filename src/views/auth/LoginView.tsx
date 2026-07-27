@@ -31,14 +31,14 @@ export default function LoginView() {
     document.title = 'Media Tools - Multi-Media Operating System';
     applyThemeToDocument(DEFAULT_THEME_PALETTE);
 
-    const universalLogo = '/brand/gosball-alt.png';
+    const universalLogo = '/portal-icon.svg';
     const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
     existingLinks.forEach(el => el.remove());
 
     const iconTypes = [
-      { rel: 'icon', type: 'image/png' },
-      { rel: 'shortcut icon', type: 'image/x-icon' },
-      { rel: 'apple-touch-icon', type: 'image/png' },
+      { rel: 'icon', type: 'image/svg+xml' },
+      { rel: 'shortcut icon', type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', type: 'image/svg+xml' },
     ];
 
     iconTypes.forEach(({ rel, type }) => {

@@ -22,28 +22,24 @@ export async function GET(request: Request) {
   const tenantId = searchParams.get('tenantId') || 'gosball';
 
   let appName = DEFAULT_APP_SETTINGS.appName;
-  let appLogoSrc = DEFAULT_APP_SETTINGS.appLogoSrc;
-
   try {
     const { data } = await supabaseAdmin
       .from('app_settings')
-      .select('app_name, app_logo_url')
+      .select('app_name')
       .eq('id', tenantId)
       .maybeSingle();
 
     if (data) {
       const normalized = normalizeAppSettings({
         appName: data.app_name || undefined,
-        appLogoSrc: data.app_logo_url || undefined,
       });
       appName = normalized.appName;
-      appLogoSrc = normalized.appLogoSrc;
     }
   } catch (e) {
     console.warn('Dynamic manifest fetch settings error:', e);
   }
 
-  const iconUrl = appLogoSrc || '/icons/gosball-512.png';
+  const iconUrl = '/portal-icon.svg';
 
   const manifest = {
     name: appName || 'Gosball',
@@ -58,13 +54,13 @@ export async function GET(request: Request) {
       {
         src: iconUrl,
         sizes: '192x192',
-        type: 'image/png',
+        type: 'image/svg+xml',
         purpose: 'any maskable'
       },
       {
         src: iconUrl,
         sizes: '512x512',
-        type: 'image/png',
+        type: 'image/svg+xml',
         purpose: 'any maskable'
       }
     ]

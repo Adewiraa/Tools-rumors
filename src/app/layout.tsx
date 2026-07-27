@@ -2,20 +2,21 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gosball - Admin Media Sepak Bola Indonesia",
+  title: "Media Tools - Admin Media Sepak Bola Indonesia",
   description: "Dashboard operasional admin dan editor media sepak bola Indonesia. Kelola lineup, hasil pertandingan, rumor transfer, master klub, dan master pemain.",
   manifest: "/manifest.json",
   icons: {
     icon: [
+      { url: "/portal-icon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico" },
-      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/icon.png", type: "image/svg+xml", sizes: "512x512" },
     ],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/svg+xml" }],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Gosball",
+    title: "Media Tools",
   },
 };
 
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
+        <link rel="icon" href="/portal-icon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>

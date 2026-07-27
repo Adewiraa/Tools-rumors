@@ -321,65 +321,34 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
-  // Dynamically update browser tab favicon/icon & document title from App Settings (Master Web Logo & Name)
+  // Dynamically update browser tab title while keeping a universal browser icon.
   useEffect(() => {
     if (typeof document === 'undefined') return;
+    const universalLogo = '/portal-icon.svg';
 
-    // Render universal portal title & favicon when on login page
     if (window.location.pathname.startsWith('/login')) {
       document.title = 'Media Tools - Multi-Media Operating System';
-      const universalLogo = '/brand/gosball-alt.png';
-
-      const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
-      existingLinks.forEach(el => el.remove());
-
-      const iconTypes = [
-        { rel: 'icon', type: 'image/png' },
-        { rel: 'shortcut icon', type: 'image/x-icon' },
-        { rel: 'apple-touch-icon', type: 'image/png' },
-      ];
-
-      iconTypes.forEach(({ rel, type }) => {
-        const link = document.createElement('link');
-        link.rel = rel;
-        link.type = type;
-        link.href = `${universalLogo}?v=portal`;
-        document.head.appendChild(link);
-      });
-      return;
-    }
-
-    if (appSettings.appName) {
+    } else if (appSettings.appName) {
       document.title = `${appSettings.appName} - Admin Media Sepak Bola Indonesia`;
     }
 
-    if (appSettings.appLogoSrc) {
-      const logoUrl = appSettings.appLogoSrc;
+    const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
+    existingLinks.forEach(el => el.remove());
 
-      // Remove existing static icon links to force browser tab icon refresh
-      const existingLinks = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon']");
-      existingLinks.forEach(el => el.remove());
+    const iconTypes = [
+      { rel: 'icon', type: 'image/svg+xml' },
+      { rel: 'shortcut icon', type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', type: 'image/svg+xml' },
+    ];
 
-      // Inject fresh dynamic icon link tags
-      const iconTypes = [
-        { rel: 'icon', type: 'image/png' },
-        { rel: 'shortcut icon', type: 'image/x-icon' },
-        { rel: 'apple-touch-icon', type: 'image/png' },
-      ];
-
-      const cacheBustUrl = logoUrl.startsWith('data:') 
-        ? logoUrl 
-        : `${logoUrl}${logoUrl.includes('?') ? '&' : '?'}v=${encodeURIComponent(logoUrl)}`;
-
-      iconTypes.forEach(({ rel, type }) => {
-        const link = document.createElement('link');
-        link.rel = rel;
-        link.type = type;
-        link.href = cacheBustUrl;
-        document.head.appendChild(link);
-      });
-    }
-  }, [appSettings.appName, appSettings.appLogoSrc, currentUser]);
+    iconTypes.forEach(({ rel, type }) => {
+      const link = document.createElement('link');
+      link.rel = rel;
+      link.type = type;
+      link.href = `${universalLogo}?v=portal`;
+      document.head.appendChild(link);
+    });
+  }, [appSettings.appName, currentUser]);
 
   // Keep one global application theme for every user and tenant.
   useEffect(() => {
