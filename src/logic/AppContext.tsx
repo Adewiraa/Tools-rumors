@@ -395,6 +395,9 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setCurrentUserState(user);
     if (user) {
       setCurrentUserRoleState(user.role as UserRole);
+      if (user.tenantId) {
+        switchTenant(user.tenantId);
+      }
     }
   };
 

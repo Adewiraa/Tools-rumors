@@ -297,6 +297,39 @@ export default function LoginView() {
             )}
           </button>
         </form>
+
+        {/* Multi-Media Quick Demo Account Chips */}
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--navy-800)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-400)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
+            Uji Coba Multi-Media Login:
+          </div>
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => { setUsername('admin'); setPassword('admin123'); setError(''); }}
+              style={{ fontSize: 11, padding: '4px 8px', height: 28, background: 'var(--navy-950)', color: 'var(--neutral-300)', borderColor: 'var(--navy-800)' }}
+            >
+              ⚽ Gosball (admin)
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => { setUsername('garuda_admin'); setPassword('admin123'); setError(''); }}
+              style={{ fontSize: 11, padding: '4px 8px', height: 28, background: 'var(--navy-950)', color: 'var(--neutral-300)', borderColor: 'var(--navy-800)' }}
+            >
+              🦅 Garuda Goal
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => { setUsername('bola_admin'); setPassword('admin123'); setError(''); }}
+              style={{ fontSize: 11, padding: '4px 8px', height: 28, background: 'var(--navy-950)', color: 'var(--neutral-300)', borderColor: 'var(--navy-800)' }}
+            >
+              🇮🇩 Bola Nusantara
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}

@@ -33,6 +33,13 @@ export const DEFAULT_MEDIA_TENANTS = [
     subtitle: 'Media Sepak Bola Indonesia',
     handle: '@garudagoal',
   },
+  {
+    id: 'bolanusantara',
+    name: 'Bola Nusantara',
+    logoSrc: '/brand/gosball-alt.png',
+    subtitle: 'Portal Berita Sepakbola',
+    handle: '@bolanusantara',
+  },
 ];
 
 export const normalizeAppSettings = (value?: Partial<AppSettings> | null): AppSettings => ({

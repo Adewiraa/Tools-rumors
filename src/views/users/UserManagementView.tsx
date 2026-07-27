@@ -31,7 +31,7 @@ type SortField = 'fullName' | 'username' | 'role' | 'status' | 'id';
 type SortOrder = 'asc' | 'desc';
 
 export default function UserManagementView() {
-  const { users, addUser, updateUser, deleteUser, triggerToast } = useApp();
+  const { users, mediaTenants, addUser, updateUser, deleteUser, triggerToast } = useApp();
 
   // Search & Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,6 +58,7 @@ export default function UserManagementView() {
     fullName: '',
     role: 'Match Editor' as UserRole,
     status: 'active' as 'active' | 'inactive',
+    tenantId: 'gosball',
   });
 
   const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
@@ -83,6 +84,7 @@ export default function UserManagementView() {
       fullName: '',
       role: 'Match Editor',
       status: 'active',
+      tenantId: mediaTenants[0]?.id || 'gosball',
     });
     setIsCreateModalOpen(true);
   };
@@ -95,6 +97,7 @@ export default function UserManagementView() {
       fullName: user.fullName,
       role: user.role,
       status: user.status,
+      tenantId: user.tenantId || 'gosball',
     });
     setIsEditModalOpen(true);
   };
@@ -117,6 +120,7 @@ export default function UserManagementView() {
       fullName: formData.fullName.trim(),
       role: formData.role,
       status: formData.status,
+      tenantId: formData.tenantId,
     });
     setIsSubmitting(false);
     if (success) {
@@ -138,6 +142,7 @@ export default function UserManagementView() {
       fullName: formData.fullName.trim(),
       role: formData.role,
       status: formData.status,
+      tenantId: formData.tenantId,
     };
     if (formData.password.trim()) {
       payload.password = formData.password.trim();
@@ -709,6 +714,22 @@ export default function UserManagementView() {
                   </select>
                 </div>
               </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Media Tenant Workspace</label>
+                <select
+                  className="form-select"
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                  value={formData.tenantId}
+                  onChange={e => setFormData({ ...formData, tenantId: e.target.value })}
+                >
+                  {mediaTenants.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.handle})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </form>
 
             {/* Modal Footer */}
@@ -838,6 +859,22 @@ export default function UserManagementView() {
                     <option value="inactive">Non-Aktif</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Media Tenant Workspace</label>
+                <select
+                  className="form-select"
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                  value={formData.tenantId}
+                  onChange={e => setFormData({ ...formData, tenantId: e.target.value })}
+                >
+                  {mediaTenants.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.handle})
+                    </option>
+                  ))}
+                </select>
               </div>
             </form>
 

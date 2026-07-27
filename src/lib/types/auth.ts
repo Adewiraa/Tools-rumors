@@ -92,6 +92,25 @@ export const INITIAL_USERS: AppUser[] = [
     fullName: 'Super Admin Gosball',
     role: 'Super Admin',
     status: 'active',
+    tenantId: 'gosball',
+  },
+  {
+    id: 'usr-garuda-admin',
+    username: 'garuda_admin',
+    password: 'admin123',
+    fullName: 'Admin Garuda Goal',
+    role: 'Super Admin',
+    status: 'active',
+    tenantId: 'garudagoal',
+  },
+  {
+    id: 'usr-bola-admin',
+    username: 'bola_admin',
+    password: 'admin123',
+    fullName: 'Admin Bola Nusantara',
+    role: 'Super Admin',
+    status: 'active',
+    tenantId: 'bolanusantara',
   },
   {
     id: 'usr-editor1',
@@ -100,6 +119,7 @@ export const INITIAL_USERS: AppUser[] = [
     fullName: 'Ahmad Editor Match',
     role: 'Match Editor',
     status: 'active',
+    tenantId: 'gosball',
   },
   {
     id: 'usr-rumoreditor',
@@ -108,6 +128,7 @@ export const INITIAL_USERS: AppUser[] = [
     fullName: 'Budi Rumor Editor',
     role: 'Rumor Editor',
     status: 'active',
+    tenantId: 'gosball',
   },
   {
     id: 'usr-admindata',
@@ -116,5 +137,6 @@ export const INITIAL_USERS: AppUser[] = [
     fullName: 'Citra Data Admin',
     role: 'Admin Data',
     status: 'active',
+    tenantId: 'gosball',
   },
 ];

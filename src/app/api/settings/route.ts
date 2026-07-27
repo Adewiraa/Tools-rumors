@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { DEFAULT_APP_SETTINGS, normalizeAppSettings } from '@/logic/utils';
+import { DEFAULT_APP_SETTINGS, DEFAULT_MEDIA_TENANTS, normalizeAppSettings } from '@/logic/utils';
 
 export const runtime = 'nodejs';
 
@@ -35,10 +35,24 @@ const mapFromSupabase = (settings: AppSettingsRow, tenantId: string) => normaliz
   appSubtitle: settings?.app_subtitle || undefined,
 });
 
+function getTenantFallbackSettings(tenantId: string) {
+  const matched = DEFAULT_MEDIA_TENANTS.find(t => t.id === tenantId);
+  if (matched) {
+    return normalizeAppSettings({
+      tenantId: matched.id,
+      appName: matched.name,
+      appHandle: matched.handle,
+      appLogoSrc: matched.logoSrc,
+      appSubtitle: matched.subtitle,
+    });
+  }
+  return { ...DEFAULT_APP_SETTINGS, tenantId };
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const tenantId = searchParams.get('tenantId') || 'default';
+    const tenantId = searchParams.get('tenantId') || 'gosball';
 
     const { data, error } = await supabaseAdmin
       .from('app_settings')
@@ -52,7 +66,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: data ? mapFromSupabase(data, tenantId) : { ...DEFAULT_APP_SETTINGS, tenantId },
+      data: data ? mapFromSupabase(data, tenantId) : getTenantFallbackSettings(tenantId),
     });
   } catch (error: unknown) {
     console.error('Settings GET error:', error);
