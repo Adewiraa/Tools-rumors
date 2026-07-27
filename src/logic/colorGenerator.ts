@@ -88,7 +88,58 @@ export function getContrastRatio(hex1: string, hex2: string): number {
   const lum2 = getLuminance(hex2);
   const brightest = Math.max(lum1, lum2);
   const darkest = Math.min(lum1, lum2);
-  return (brightest + 0.05) / (darkest + 0.05);
+  return Number(((brightest + 0.05) / (darkest + 0.05)).toFixed(2));
+}
+
+// Rating Kepatuhan Aksesibilitas WCAG 2.1
+export function getWCAGRating(ratio: number): { text: string; pass: boolean; level: 'AAA' | 'AA' | 'Fail' } {
+  if (ratio >= 7) return { text: 'AAA (Sangat Baik)', pass: true, level: 'AAA' };
+  if (ratio >= 4.5) return { text: 'AA (Standar Bagus)', pass: true, level: 'AA' };
+  if (ratio >= 3) return { text: 'AA Large (Teks Besar)', pass: true, level: 'AA' };
+  return { text: 'Fail (Kontras Rendah)', pass: false, level: 'Fail' };
+}
+
+// Generate 10-Step Shade & Tint Scale (50 - 950)
+export function generateShades(baseHex: string): { step: number; hex: string }[] {
+  const { r, g, b } = hexToRgb(baseHex);
+  // Convert RGB to HSL
+  const rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
+  const max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
+      case gNorm: h = (bNorm - rNorm) / d + 2; break;
+      case bNorm: h = (rNorm - gNorm) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  const hue = Math.round(h * 360);
+  const sat = Math.round(s * 100);
+
+  const steps = [
+    { step: 50, lightness: 95 },
+    { step: 100, lightness: 90 },
+    { step: 200, lightness: 80 },
+    { step: 300, lightness: 70 },
+    { step: 400, lightness: 60 },
+    { step: 500, lightness: 50 },
+    { step: 600, lightness: 40 },
+    { step: 700, lightness: 30 },
+    { step: 800, lightness: 20 },
+    { step: 900, lightness: 12 },
+    { step: 950, lightness: 6 },
+  ];
+
+  return steps.map(st => ({
+    step: st.step,
+    hex: hslToHex(hue, sat, st.lightness),
+  }));
 }
 
 // Ensure high contrast text color (either dark or light)
@@ -105,8 +156,13 @@ function getBorderColor(bgHex: string, isDark: boolean): string {
   return '#e2e8f0';
 }
 
-// Infinite Algorithmic Palette Generator with Color Schemes
-export function generateRandomPalette(mode: RandomMode = 'all', scheme: ColorSchemeType = 'all'): ThemePalette {
+// Infinite Algorithmic Palette Generator with Color Schemes & Lock Pin Support
+export function generateRandomPalette(
+  mode: RandomMode = 'all',
+  scheme: ColorSchemeType = 'all',
+  locked: Record<string, boolean> = {},
+  current?: ThemePalette
+): ThemePalette {
   const forceDark = mode === 'dark' ? true : mode === 'light' ? false : Math.random() > 0.45;
   
   // Random base hue (0 - 360)
@@ -198,21 +254,29 @@ export function generateRandomPalette(mode: RandomMode = 'all', scheme: ColorSch
   }
 
   const borderHex = getBorderColor(bgHex, forceDark);
-
   const schemeLabel = selectedScheme.charAt(0).toUpperCase() + selectedScheme.slice(1);
 
+  // Apply locked color preservation if current palette exists
+  const finalPrimary = locked.primary && current ? current.primary : primaryHex;
+  const finalPrimaryHover = locked.primary && current ? current.primaryHover : primaryHoverHex;
+  const finalAccent = locked.accent && current ? current.accent : accentHex;
+  const finalBackground = locked.background && current ? current.background : bgHex;
+  const finalSurface = locked.surface && current ? current.surface : surfaceHex;
+  const finalSidebar = locked.sidebar && current ? current.sidebar : sidebarHex;
+  const finalTextPrimary = locked.textPrimary && current ? current.textPrimary : textPrimaryHex;
+
   return {
-    name: `Custom ${schemeLabel} (${primaryHex})`,
-    primary: primaryHex,
-    primaryHover: primaryHoverHex,
-    accent: accentHex,
-    background: bgHex,
-    surface: surfaceHex,
-    sidebar: sidebarHex,
-    textPrimary: textPrimaryHex,
-    textSecondary: textSecondaryHex,
-    border: borderHex,
-    isDark: forceDark,
+    name: `Custom ${schemeLabel} (${finalPrimary})`,
+    primary: finalPrimary,
+    primaryHover: finalPrimaryHover,
+    accent: finalAccent,
+    background: finalBackground,
+    surface: finalSurface,
+    sidebar: finalSidebar,
+    textPrimary: finalTextPrimary,
+    textSecondary: locked.textPrimary && current ? current.textSecondary : textSecondaryHex,
+    border: locked.background && current ? current.border : borderHex,
+    isDark: locked.background && current ? current.isDark : forceDark,
   };
 }
 

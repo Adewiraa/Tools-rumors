@@ -582,6 +582,17 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           </div>
 
           <div className="flex align-center gap-16">
+            {/* Realtime Color Studio Trigger Button */}
+            <button
+              className="btn btn-sm btn-secondary"
+              onClick={() => setColorStudioOpen(true)}
+              title="Buka Realtime Color Studio"
+              style={{ gap: 6, fontSize: 12 }}
+            >
+              <Palette size={15} style={{ color: 'var(--primary-600)' }} />
+              <span className="desktop-only-inline">Color Studio</span>
+            </button>
+
             {/* Notification Center */}
             <div style={{ position: 'relative' }}>
               <button className="btn btn-sm btn-secondary" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setNotificationsOpen(!notificationsOpen)}>
@@ -802,6 +813,8 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
         </div>
       )}
 
+      {/* Realtime Color Studio Modal */}
+      <RealtimeColorStudioModal isOpen={colorStudioOpen} onClose={() => setColorStudioOpen(false)} />
     </div>
   );
 }

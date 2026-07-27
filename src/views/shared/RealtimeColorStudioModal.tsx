@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Dices, RotateCcw, Palette, Check, Sparkles, Sun, Moon, Zap, Copy, Layers, Sliders } from 'lucide-react';
+import { X, Dices, RotateCcw, Palette, Check, Sparkles, Sun, Moon, Zap, Copy, Layers, Sliders, Lock, Unlock } from 'lucide-react';
 import {
   ThemePalette,
   DEFAULT_THEME_PALETTE,
@@ -9,6 +9,9 @@ import {
   generateRandomPalette,
   applyThemeToDocument,
   exportCSSVariables,
+  getContrastRatio,
+  getWCAGRating,
+  generateShades,
   RandomMode,
   ColorSchemeType,
 } from '@/logic/colorGenerator';
@@ -35,13 +38,18 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
   const [activeScheme, setActiveScheme] = useState<ColorSchemeType>('all');
   const [draftTheme, setDraftTheme] = useState<ThemePalette>(currentTheme || DEFAULT_THEME_PALETTE);
   const [activeTab, setActiveTab] = useState<'randomizer' | 'pickers' | 'presets'>('randomizer');
+  const [lockedColors, setLockedColors] = useState<Record<string, boolean>>({});
 
   if (!isOpen) return null;
+
+  const toggleLock = (field: string) => {
+    setLockedColors(prev => ({ ...prev, [field]: !prev[field] }));
+  };
 
   const handleRandomize = (modeOverride?: RandomMode, schemeOverride?: ColorSchemeType) => {
     const mode = modeOverride || activeMode;
     const scheme = schemeOverride || activeScheme;
-    const newPalette = generateRandomPalette(mode, scheme);
+    const newPalette = generateRandomPalette(mode, scheme, lockedColors, draftTheme);
     setDraftTheme(newPalette);
     applyThemeToDocument(newPalette);
   };
@@ -266,94 +274,88 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
 
         {/* Tab 2: Manual Fine-Tune Color Pickers */}
         {activeTab === 'pickers' && (
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)', marginBottom: 12 }}>Pilih & Kustomisasi 6 Elemen Utama UI:</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--neutral-700)' }}>Pilih & Kustomisasi 6 Elemen Utama UI (Kunci dengan Pin agar tidak teracak):</div>
+            
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               
-              {/* Primary Color */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-                <input type="color" value={draftTheme.primary} onChange={e => handleColorChange('primary', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Primary Color</div>
-                  <input
-                    type="text"
-                    value={draftTheme.primary}
-                    onChange={e => handleColorChange('primary', e.target.value)}
-                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
-                  />
-                </div>
-              </div>
+              {[
+                { key: 'primary', label: 'Primary Brand' },
+                { key: 'accent', label: 'Accent Highlight' },
+                { key: 'background', label: 'Background Page' },
+                { key: 'surface', label: 'Card Surface' },
+                { key: 'sidebar', label: 'Sidebar Nav' },
+                { key: 'textPrimary', label: 'Text Main' },
+              ].map(item => {
+                const isLocked = Boolean(lockedColors[item.key]);
+                const val = (draftTheme as any)[item.key] || '#000000';
+                return (
+                  <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: isLocked ? 'rgba(99, 102, 241, 0.06)' : 'var(--neutral-50)', border: isLocked ? '1px solid #818cf8' : '1px solid var(--neutral-200)', transition: 'all 0.15s ease' }}>
+                    <input
+                      type="color"
+                      value={val}
+                      onChange={e => handleColorChange(item.key as keyof ThemePalette, e.target.value)}
+                      style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>{item.label}</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleLock(item.key)}
+                          style={{ border: 0, background: 'transparent', cursor: 'pointer', padding: 2, color: isLocked ? '#4f46e5' : 'var(--neutral-400)' }}
+                          title={isLocked ? 'Warna dikunci saat acak' : 'Kunci warna ini agar tidak teracak'}
+                        >
+                          {isLocked ? <Lock size={13} /> : <Unlock size={13} />}
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={val}
+                        onChange={e => handleColorChange(item.key as keyof ThemePalette, e.target.value)}
+                        style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
 
-              {/* Accent Color */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-                <input type="color" value={draftTheme.accent} onChange={e => handleColorChange('accent', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Accent Highlight</div>
-                  <input
-                    type="text"
-                    value={draftTheme.accent}
-                    onChange={e => handleColorChange('accent', e.target.value)}
-                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
-                  />
-                </div>
-              </div>
+            </div>
 
-              {/* Background Color */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-                <input type="color" value={draftTheme.background} onChange={e => handleColorChange('background', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Background Page</div>
-                  <input
-                    type="text"
-                    value={draftTheme.background}
-                    onChange={e => handleColorChange('background', e.target.value)}
-                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
-                  />
+            {/* WCAG Accessibility Contrast Checker */}
+            {(() => {
+              const ratio = getContrastRatio(draftTheme.textPrimary, draftTheme.background);
+              const rating = getWCAGRating(ratio);
+              return (
+                <div style={{ padding: 12, borderRadius: 8, background: rating.pass ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)', border: rating.pass ? '1px solid #a7f3d0' : '1px solid #fca5a5', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--neutral-900)' }}>♿ WCAG 2.1 Contrast Checker</div>
+                    <div style={{ fontSize: 11, color: 'var(--neutral-600)', marginTop: 1 }}>Keterbacaan Teks Utama vs Latar Belakang Page ({draftTheme.textPrimary} / {draftTheme.background})</div>
+                  </div>
+                  <span className={`badge ${rating.pass ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: 11, fontWeight: 800 }}>
+                    {ratio}:1 — {rating.text}
+                  </span>
                 </div>
-              </div>
+              );
+            })()}
 
-              {/* Card Surface Color */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-                <input type="color" value={draftTheme.surface} onChange={e => handleColorChange('surface', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Card Surface</div>
-                  <input
-                    type="text"
-                    value={draftTheme.surface}
-                    onChange={e => handleColorChange('surface', e.target.value)}
-                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
-                  />
-                </div>
+            {/* 10-Step Shade & Tint Scale Generator */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 6 }}>
+                🎨 Skala Shade & Tint Automatis Primary ({draftTheme.primary}):
               </div>
-
-              {/* Sidebar Color */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-                <input type="color" value={draftTheme.sidebar} onChange={e => handleColorChange('sidebar', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Sidebar Nav</div>
-                  <input
-                    type="text"
-                    value={draftTheme.sidebar}
-                    onChange={e => handleColorChange('sidebar', e.target.value)}
-                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
-                  />
-                </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(11, 1fr)', gap: 3, padding: 6, background: 'var(--neutral-50)', borderRadius: 8, border: '1px solid var(--neutral-200)' }}>
+                {generateShades(draftTheme.primary).map(sh => (
+                  <div
+                    key={sh.step}
+                    title={`Shade ${sh.step}: ${sh.hex}`}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+                  >
+                    <div style={{ width: '100%', height: 26, borderRadius: 4, backgroundColor: sh.hex, border: '1px solid rgba(0,0,0,0.1)' }} />
+                    <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--neutral-600)' }}>{sh.step}</span>
+                  </div>
+                ))}
               </div>
-
-              {/* Text Color */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 'var(--radius-md)', background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-                <input type="color" value={draftTheme.textPrimary} onChange={e => handleColorChange('textPrimary', e.target.value)} style={{ width: 38, height: 38, border: 'none', borderRadius: 6, cursor: 'pointer', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--neutral-900)' }}>Text Main</div>
-                  <input
-                    type="text"
-                    value={draftTheme.textPrimary}
-                    onChange={e => handleColorChange('textPrimary', e.target.value)}
-                    style={{ width: '100%', fontSize: 11, fontFamily: 'monospace', padding: '3px 6px', border: '1px solid var(--neutral-300)', borderRadius: 4, background: 'var(--white)', color: 'var(--neutral-900)', marginTop: 2 }}
-                  />
-                </div>
-              </div>
-
             </div>
           </div>
         )}
