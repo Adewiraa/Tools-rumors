@@ -2,20 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/logic/AppContext';
-import { ChevronRight, Save, Upload, Palette, Dices, Sparkles, Moon, Sun, Zap, RotateCcw, Check, Copy, Plus, Layers, Building2, X, Lock, Unlock } from 'lucide-react';
+import { ChevronRight, Save, Upload, Palette, RotateCcw, Check, Copy, Plus, Building2, X } from 'lucide-react';
 import type { AppSettings } from '@/logic/utils';
 import {
   ThemePalette,
   DEFAULT_THEME_PALETTE,
   PRESET_THEMES,
-  generateRandomPalette,
   applyThemeToDocument,
   exportCSSVariables,
   getContrastRatio,
   getWCAGRating,
-  generateShades,
-  RandomMode,
-  ColorSchemeType,
 } from '@/logic/colorGenerator';
 
 const getErrorMessage = (error: unknown, fallback: string) => (
@@ -45,11 +41,8 @@ export default function SettingsView() {
   const [newTenantName, setNewTenantName] = useState('');
   const [newTenantHandle, setNewTenantHandle] = useState('');
 
-  // Theme Studio States
-  const [activeMode, setActiveMode] = useState<RandomMode>('all');
-  const [activeScheme, setActiveScheme] = useState<ColorSchemeType>('all');
+  // Theme Studio State
   const [draftTheme, setDraftTheme] = useState<ThemePalette>(currentTheme || DEFAULT_THEME_PALETTE);
-  const [lockedColors, setLockedColors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setFormData(appSettings);
@@ -60,10 +53,6 @@ export default function SettingsView() {
       setDraftTheme(currentTheme);
     }
   }, [currentTheme]);
-
-  const toggleLock = (field: string) => {
-    setLockedColors(prev => ({ ...prev, [field]: !prev[field] }));
-  };
 
   const updateIdentityDraft = (field: keyof AppSettings, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -124,14 +113,6 @@ export default function SettingsView() {
   };
 
   // Color Studio Handlers
-  const handleRandomize = (modeOverride?: RandomMode, schemeOverride?: ColorSchemeType) => {
-    const mode = modeOverride || activeMode;
-    const scheme = schemeOverride || activeScheme;
-    const newPalette = generateRandomPalette(mode, scheme, lockedColors, draftTheme);
-    setDraftTheme(newPalette);
-    applyThemeToDocument(newPalette);
-  };
-
   const handleColorChange = (field: keyof ThemePalette, hex: string) => {
     const updated = { ...draftTheme, [field]: hex };
     setDraftTheme(updated);
@@ -327,14 +308,14 @@ export default function SettingsView() {
           </div>
         </div>
 
-        {/* Right Column: Realtime Color Studio & Harmony Generator */}
+        {/* Right Column: Studio Warna & Tema Media */}
         <div className="card settings-card" style={{ padding: 18, borderRadius: 12 }}>
           <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div>
               <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--primary-600)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Palette size={13} /> Visualisasi Warna & Tema
               </div>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--neutral-950)' }}>Realtime Color Studio</h3>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: 'var(--neutral-950)' }}>Pengaturan Warna System</h3>
             </div>
             <button
               className="btn btn-sm btn-secondary"
@@ -349,94 +330,43 @@ export default function SettingsView() {
             </button>
           </div>
 
-          {/* Randomizer Control Box */}
-          <div style={{ marginBottom: 14, padding: 12, borderRadius: 8, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-            
-            {/* Color Scheme Harmonies Dropdown Selector */}
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 4 }}>
-                Select a Color Scheme (Harmoni Warna):
-              </label>
-              <select
-                className="form-select"
-                value={activeScheme}
-                onChange={e => {
-                  const scheme = e.target.value as ColorSchemeType;
-                  setActiveScheme(scheme);
-                  handleRandomize(activeMode, scheme);
-                }}
-                style={{ width: '100%', fontSize: 12, fontWeight: 700, padding: '6px 10px', borderRadius: 6 }}
-              >
-                <option value="all">All (Random Harmony) — Harmoni warna acak</option>
-                <option value="monochromatic">Monochromatic — Satu nada warna (variasi saturasi/terang)</option>
-                <option value="analogous">Analogous — Warna bersebelahan pada roda warna</option>
-                <option value="complementary">Complementary — Warna berseberangan 180° (kontras dinamis)</option>
-                <option value="split-complementary">Split Complementary — Kontras lembut terpisah 150°/210°</option>
-                <option value="triadic">Triadic — Tiga warna seimbang 120° (enerjik)</option>
-                <option value="tetradic">Tetradic — Empat warna berpasangan 90°/270° (kaya kontras)</option>
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button
-                onClick={() => handleRandomize()}
-                className="btn"
-                style={{
-                  flex: 1,
-                  padding: '10px 16px',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  color: '#ffffff',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%)',
-                  border: 'none',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  boxShadow: '0 4px 12px rgba(168, 85, 247, 0.35)',
-                }}
-              >
-                <Dices size={18} />
-                <span>🎲 Randomize Palette!</span>
-              </button>
-
-              {/* Mode Toggles */}
-              <div style={{ display: 'flex', gap: 4 }}>
-                <button
-                  className={`btn btn-sm ${activeMode === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => { setActiveMode('all'); handleRandomize('all'); }}
-                  style={{ fontSize: 10, padding: '4px 8px', height: 32 }}
-                  title="Bebas Acak"
-                >
-                  <Sparkles size={11} /> All
-                </button>
-                <button
-                  className={`btn btn-sm ${activeMode === 'dark' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => { setActiveMode('dark'); handleRandomize('dark'); }}
-                  style={{ fontSize: 10, padding: '4px 8px', height: 32 }}
-                  title="Dark Mode Only"
-                >
-                  <Moon size={11} /> Dark
-                </button>
-                <button
-                  className={`btn btn-sm ${activeMode === 'light' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => { setActiveMode('light'); handleRandomize('light'); }}
-                  style={{ fontSize: 10, padding: '4px 8px', height: 32 }}
-                  title="Light Mode Only"
-                >
-                  <Sun size={11} /> Light
-                </button>
-                <button
-                  className={`btn btn-sm ${activeMode === 'vibrant' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => { setActiveMode('vibrant'); handleRandomize('vibrant'); }}
-                  style={{ fontSize: 10, padding: '4px 8px', height: 32 }}
-                  title="Vibrant Neon"
-                >
-                  <Zap size={11} /> Neon
-                </button>
-              </div>
+          {/* Presets Grid */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 8 }}>Preset Tema Terkurasi Media Sepakbola ({PRESET_THEMES.length}):</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              {PRESET_THEMES.map(preset => {
+                const isSelected = draftTheme.name === preset.name || (draftTheme.primary === preset.primary && draftTheme.background === preset.background);
+                return (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => handleSelectPreset(preset)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: isSelected ? '2px solid var(--primary-600)' : '1px solid var(--neutral-200)',
+                      background: preset.background,
+                      color: preset.textPrimary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      textAlign: 'left',
+                      boxShadow: isSelected ? '0 2px 8px rgba(102,117,106,0.15)' : 'none',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 800 }}>{preset.name}</div>
+                      <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: preset.primary, border: '1px solid rgba(0,0,0,0.1)' }} />
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: preset.accent, border: '1px solid rgba(0,0,0,0.1)' }} />
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: preset.sidebar, border: '1px solid rgba(0,0,0,0.1)' }} />
+                      </div>
+                    </div>
+                    {isSelected && <Check size={14} style={{ color: preset.primary }} />}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -473,7 +403,7 @@ export default function SettingsView() {
 
           {/* Fine-Tune Manual Color Pickers */}
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 8 }}>Fine-Tune Warna 6 Elemen UI:</div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 8 }}>Penyesuaian Warna Manual:</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
               
               {[
@@ -484,10 +414,9 @@ export default function SettingsView() {
                 { key: 'sidebar', label: 'Sidebar' },
                 { key: 'textPrimary', label: 'Text Main' },
               ].map(item => {
-                const isLocked = Boolean(lockedColors[item.key]);
                 const val = (draftTheme as any)[item.key] || '#000000';
                 return (
-                  <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 6, borderRadius: 6, background: isLocked ? 'rgba(99, 102, 241, 0.08)' : 'var(--neutral-50)', border: isLocked ? '1px solid #818cf8' : '1px solid var(--neutral-200)', transition: 'all 0.15s ease' }}>
+                  <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 6, borderRadius: 6, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
                     <input
                       type="color"
                       value={val}
@@ -495,17 +424,7 @@ export default function SettingsView() {
                       style={{ width: 28, height: 28, border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0 }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-900)' }}>{item.label}</span>
-                        <button
-                          type="button"
-                          onClick={() => toggleLock(item.key)}
-                          style={{ border: 0, background: 'transparent', cursor: 'pointer', padding: 1, color: isLocked ? '#4f46e5' : 'var(--neutral-400)' }}
-                          title={isLocked ? 'Dikunci saat acak' : 'Kunci warna'}
-                        >
-                          {isLocked ? <Lock size={11} /> : <Unlock size={11} />}
-                        </button>
-                      </div>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--neutral-900)' }}>{item.label}</span>
                       <input
                         type="text"
                         value={val}
@@ -532,43 +451,6 @@ export default function SettingsView() {
                 </div>
               );
             })()}
-          </div>
-
-          {/* Presets Slider / Grid */}
-          <div style={{ marginBottom: 14, borderTop: '1px solid var(--neutral-200)', paddingTop: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--neutral-800)', marginBottom: 8 }}>Presets Terkurasi ({PRESET_THEMES.length}):</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
-              {PRESET_THEMES.slice(0, 10).map(preset => {
-                const isSelected = draftTheme.name === preset.name || (draftTheme.primary === preset.primary && draftTheme.background === preset.background);
-                return (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => handleSelectPreset(preset)}
-                    style={{
-                      padding: '6px 8px',
-                      borderRadius: 6,
-                      border: isSelected ? '2px solid var(--primary-600)' : '1px solid var(--neutral-200)',
-                      background: preset.background,
-                      color: preset.textPrimary,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 4,
-                      alignItems: 'flex-start',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <span style={{ fontSize: 10, fontWeight: 700, width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preset.name}</span>
-                    <div style={{ display: 'flex', gap: 3 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: preset.primary }} />
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: preset.accent }} />
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: preset.sidebar }} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           {/* Action Bar */}

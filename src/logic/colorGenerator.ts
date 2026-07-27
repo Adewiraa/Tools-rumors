@@ -18,21 +18,21 @@ export type RandomMode = 'all' | 'dark' | 'light' | 'vibrant';
 export type ColorSchemeType = 'all' | 'monochromatic' | 'analogous' | 'complementary' | 'split-complementary' | 'triadic' | 'tetradic';
 
 export const DEFAULT_THEME_PALETTE: ThemePalette = {
-  name: 'Default Navy',
-  primary: '#2563eb',
-  primaryHover: '#1d4ed8',
-  accent: '#eab308',
-  background: '#f8fafc',
-  surface: '#ffffff',
-  sidebar: '#0f172a',
-  textPrimary: '#0f172a',
-  textSecondary: '#64748b',
-  border: '#e2e8f0',
+  name: 'Quiet Stadium Sage',
+  primary: '#66756A',
+  primaryHover: '#536057',
+  accent: '#A98C64',
+  background: '#F6F5F1',
+  surface: '#FCFBF8',
+  sidebar: '#151A1D',
+  textPrimary: '#232729',
+  textSecondary: '#4D5558',
+  border: '#E3E1DA',
   isDark: false,
 };
 
 export const UNIVERSAL_PORTAL_THEME: ThemePalette = {
-  name: 'Universal Portal',
+  name: 'Universal Dark Portal',
   primary: '#3b82f6',
   primaryHover: '#2563eb',
   accent: '#f59e0b',
@@ -142,329 +142,88 @@ export function generateShades(baseHex: string): { step: number; hex: string }[]
   }));
 }
 
-// Ensure high contrast text color (either dark or light)
-export function getHighContrastTextColor(bgHex: string): string {
-  const lum = getLuminance(bgHex);
-  return lum > 0.4 ? '#0f172a' : '#f8fafc';
-}
-
-// Generate subtle border color based on background
-function getBorderColor(bgHex: string, isDark: boolean): string {
-  if (isDark) {
-    return '#1e293b';
-  }
-  return '#e2e8f0';
-}
-
-// Infinite Algorithmic Palette Generator with Color Schemes & Lock Pin Support
-export function generateRandomPalette(
-  mode: RandomMode = 'all',
-  scheme: ColorSchemeType = 'all',
-  locked: Record<string, boolean> = {},
-  current?: ThemePalette
-): ThemePalette {
-  const forceDark = mode === 'dark' ? true : mode === 'light' ? false : Math.random() > 0.45;
-  
-  // Random base hue (0 - 360)
-  const baseHue = Math.floor(Math.random() * 360);
-  
-  // Determine Accent Hue based on Color Harmony Scheme
-  let selectedScheme = scheme;
-  if (selectedScheme === 'all') {
-    const schemes: ColorSchemeType[] = ['monochromatic', 'analogous', 'complementary', 'split-complementary', 'triadic', 'tetradic'];
-    selectedScheme = schemes[Math.floor(Math.random() * schemes.length)];
-  }
-
-  let accentHue = baseHue;
-  let accentSatShift = 0;
-  let accentLightShift = 0;
-
-  switch (selectedScheme) {
-    case 'monochromatic':
-      accentHue = baseHue;
-      accentSatShift = -20;
-      accentLightShift = 25;
-      break;
-    case 'analogous':
-      accentHue = (baseHue + (Math.random() > 0.5 ? 30 : 330)) % 360;
-      break;
-    case 'complementary':
-      accentHue = (baseHue + 180) % 360;
-      break;
-    case 'split-complementary':
-      accentHue = (baseHue + (Math.random() > 0.5 ? 150 : 210)) % 360;
-      break;
-    case 'triadic':
-      accentHue = (baseHue + (Math.random() > 0.5 ? 120 : 240)) % 360;
-      break;
-    case 'tetradic':
-      accentHue = (baseHue + (Math.random() > 0.5 ? 90 : 270)) % 360;
-      break;
-  }
-
-  const primarySat = mode === 'vibrant' ? 85 + Math.floor(Math.random() * 15) : 60 + Math.floor(Math.random() * 30);
-  const primaryLight = forceDark ? 50 + Math.floor(Math.random() * 18) : 42 + Math.floor(Math.random() * 18);
-  const primaryHex = hslToHex(baseHue, primarySat, primaryLight);
-  const primaryHoverHex = hslToHex(baseHue, primarySat, Math.max(20, primaryLight - 8));
-
-  const accentSat = Math.min(100, Math.max(30, 75 + Math.floor(Math.random() * 25) + accentSatShift));
-  const accentLight = Math.min(85, Math.max(25, 50 + Math.floor(Math.random() * 15) + accentLightShift));
-  const accentHex = hslToHex(accentHue, accentSat, accentLight);
-
-  let bgHex = '#f8fafc';
-  let surfaceHex = '#ffffff';
-  let sidebarHex = '#0f172a';
-  let textPrimaryHex = '#0f172a';
-  let textSecondaryHex = '#64748b';
-
-  if (forceDark) {
-    // Dark background variations
-    const bgHue = (baseHue + 10) % 360;
-    const bgSat = 15 + Math.floor(Math.random() * 20);
-    const bgLight = 5 + Math.floor(Math.random() * 6); // 5% - 11%
-    bgHex = hslToHex(bgHue, bgSat, bgLight);
-    
-    // Surface is slightly lighter than background
-    surfaceHex = hslToHex(bgHue, bgSat + 5, bgLight + 4);
-    
-    // Sidebar can be either deep tone or matched
-    const sidebarLight = Math.max(3, bgLight - 2);
-    sidebarHex = hslToHex(bgHue, bgSat + 10, sidebarLight);
-    
-    textPrimaryHex = '#f8fafc';
-    textSecondaryHex = '#94a3b8';
-  } else {
-    // Light background variations
-    const bgHue = baseHue;
-    const bgSat = 10 + Math.floor(Math.random() * 20);
-    const bgLight = 96 + Math.floor(Math.random() * 3);
-    bgHex = hslToHex(bgHue, bgSat, bgLight);
-    surfaceHex = '#ffffff';
-    
-    // Light mode sidebar can be sleek dark or matching primary accent
-    const darkSidebar = Math.random() > 0.2;
-    if (darkSidebar) {
-      sidebarHex = hslToHex((baseHue + 15) % 360, 25, 10);
-    } else {
-      sidebarHex = hslToHex(baseHue, 35, 15);
-    }
-    
-    textPrimaryHex = '#0f172a';
-    textSecondaryHex = '#64748b';
-  }
-
-  const borderHex = getBorderColor(bgHex, forceDark);
-  const schemeLabel = selectedScheme.charAt(0).toUpperCase() + selectedScheme.slice(1);
-
-  // Apply locked color preservation if current palette exists
-  const finalPrimary = locked.primary && current ? current.primary : primaryHex;
-  const finalPrimaryHover = locked.primary && current ? current.primaryHover : primaryHoverHex;
-  const finalAccent = locked.accent && current ? current.accent : accentHex;
-  const finalBackground = locked.background && current ? current.background : bgHex;
-  const finalSurface = locked.surface && current ? current.surface : surfaceHex;
-  const finalSidebar = locked.sidebar && current ? current.sidebar : sidebarHex;
-  const finalTextPrimary = locked.textPrimary && current ? current.textPrimary : textPrimaryHex;
-
-  return {
-    name: `Custom ${schemeLabel} (${finalPrimary})`,
-    primary: finalPrimary,
-    primaryHover: finalPrimaryHover,
-    accent: finalAccent,
-    background: finalBackground,
-    surface: finalSurface,
-    sidebar: finalSidebar,
-    textPrimary: finalTextPrimary,
-    textSecondary: locked.textPrimary && current ? current.textSecondary : textSecondaryHex,
-    border: locked.background && current ? current.border : borderHex,
-    isDark: locked.background && current ? current.isDark : forceDark,
-  };
-}
-
-// Preset Themes Collection (15 Curated Themes)
+// Preset Themes Collection (Terkurasi Media Sepakbola Modern & Kalem)
 export const PRESET_THEMES: ThemePalette[] = [
   DEFAULT_THEME_PALETTE,
   {
-    name: 'Cyberpunk Neon',
-    primary: '#06b6d4',
-    primaryHover: '#0891b2',
-    accent: '#f43f5e',
-    background: '#090d16',
-    surface: '#0f172a',
-    sidebar: '#05070e',
-    textPrimary: '#f8fafc',
-    textSecondary: '#94a3b8',
-    border: '#1e293b',
-    isDark: true,
-  },
-  {
-    name: 'Emerald Pitch',
+    name: 'Pitch Emerald (Kalem)',
     primary: '#10b981',
     primaryHover: '#059669',
-    accent: '#f59e0b',
-    background: '#062016',
-    surface: '#0d2d20',
-    sidebar: '#04160e',
-    textPrimary: '#ecfdf5',
-    textSecondary: '#a7f3d0',
-    border: '#164e38',
+    accent: '#059669',
+    background: '#f0fdf4',
+    surface: '#ffffff',
+    sidebar: '#064e3b',
+    textPrimary: '#064e3b',
+    textSecondary: '#047857',
+    border: '#a7f3d0',
+    isDark: false,
+  },
+  {
+    name: 'Stadium Dark Navy',
+    primary: '#3b82f6',
+    primaryHover: '#2563eb',
+    accent: '#10b981',
+    background: '#0f172a',
+    surface: '#1e293b',
+    sidebar: '#090d16',
+    textPrimary: '#f8fafc',
+    textSecondary: '#94a3b8',
+    border: '#334155',
     isDark: true,
   },
   {
-    name: 'Royal Gold',
-    primary: '#d97706',
-    primaryHover: '#b45309',
-    accent: '#3b82f6',
-    background: '#12100e',
-    surface: '#1c1917',
-    sidebar: '#0a0908',
-    textPrimary: '#fafaf9',
-    textSecondary: '#a8a29e',
-    border: '#292524',
-    isDark: true,
-  },
-  {
-    name: 'Sunset Crimson',
-    primary: '#e11d48',
-    primaryHover: '#be123c',
-    accent: '#f59e0b',
-    background: '#18090c',
-    surface: '#240d12',
-    sidebar: '#0f0507',
-    textPrimary: '#fff1f2',
-    textSecondary: '#fca5a5',
-    border: '#38121a',
-    isDark: true,
-  },
-  {
-    name: 'Clean Light',
-    primary: '#4f46e5',
-    primaryHover: '#4338ca',
-    accent: '#06b6d4',
+    name: 'Editorial Slate',
+    primary: '#475569',
+    primaryHover: '#334155',
+    accent: '#2563eb',
     background: '#f8fafc',
     surface: '#ffffff',
-    sidebar: '#1e1b4b',
+    sidebar: '#0f172a',
     textPrimary: '#0f172a',
     textSecondary: '#64748b',
     border: '#e2e8f0',
     isDark: false,
   },
   {
-    name: 'Nordic Slate',
-    primary: '#0284c7',
-    primaryHover: '#0369a1',
-    accent: '#38bdf8',
-    background: '#0f172a',
-    surface: '#1e293b',
-    sidebar: '#090d16',
-    textPrimary: '#f1f5f9',
-    textSecondary: '#94a3b8',
-    border: '#334155',
-    isDark: true,
+    name: 'Modern Teal Sports',
+    primary: '#0d9488',
+    primaryHover: '#0f766e',
+    accent: '#f59e0b',
+    background: '#f0fdfa',
+    surface: '#ffffff',
+    sidebar: '#115e59',
+    textPrimary: '#134e4a',
+    textSecondary: '#0f766e',
+    border: '#99f6e4',
+    isDark: false,
   },
   {
-    name: 'Tokyo Midnight',
-    primary: '#8b5cf6',
-    primaryHover: '#7c3aed',
-    accent: '#ec4899',
-    background: '#130d24',
-    surface: '#1d1536',
-    sidebar: '#0b0716',
-    textPrimary: '#f5f3ff',
-    textSecondary: '#c4b5fd',
-    border: '#2e234e',
-    isDark: true,
-  },
-  {
-    name: 'Deep Ocean',
-    primary: '#0284c7',
-    primaryHover: '#0369a1',
-    accent: '#14b8a6',
-    background: '#041724',
-    surface: '#092538',
-    sidebar: '#020e17',
-    textPrimary: '#f0f9ff',
-    textSecondary: '#7dd3fc',
-    border: '#113a56',
-    isDark: true,
-  },
-  {
-    name: 'Volcanic Lava',
-    primary: '#ea580c',
-    primaryHover: '#c2410c',
-    accent: '#eab308',
-    background: '#1a0c06',
-    surface: '#29140b',
-    sidebar: '#0f0603',
-    textPrimary: '#fff7ed',
-    textSecondary: '#fdba74',
-    border: '#431f10',
-    isDark: true,
-  },
-  {
-    name: 'Matrix Hacker',
-    primary: '#22c55e',
-    primaryHover: '#16a34a',
-    accent: '#84cc16',
-    background: '#041408',
-    surface: '#0a2310',
-    sidebar: '#020b04',
-    textPrimary: '#f0fdf4',
-    textSecondary: '#86efac',
-    border: '#143d1c',
-    isDark: true,
-  },
-  {
-    name: 'Pastel Dream',
-    primary: '#a855f7',
-    primaryHover: '#9333ea',
+    name: 'Tactical Charcoal',
+    primary: '#64748b',
+    primaryHover: '#475569',
     accent: '#06b6d4',
-    background: '#faf5ff',
-    surface: '#ffffff',
-    sidebar: '#3b0764',
-    textPrimary: '#2e1065',
-    textSecondary: '#7e22ce',
-    border: '#f3e8ff',
-    isDark: false,
-  },
-  {
-    name: 'Golden Hour',
-    primary: '#d97706',
-    primaryHover: '#b45309',
-    accent: '#ea580c',
-    background: '#fffbeb',
-    surface: '#ffffff',
-    sidebar: '#451a03',
-    textPrimary: '#451a03',
-    textSecondary: '#b45309',
-    border: '#fef3c7',
-    isDark: false,
-  },
-  {
-    name: 'Minimal Charcoal',
-    primary: '#f8fafc',
-    primaryHover: '#e2e8f0',
-    accent: '#38bdf8',
-    background: '#09090b',
-    surface: '#18181b',
-    sidebar: '#000000',
+    background: '#18181b',
+    surface: '#27272a',
+    sidebar: '#09090b',
     textPrimary: '#f4f4f5',
     textSecondary: '#a1a1aa',
-    border: '#27272a',
+    border: '#3f3f46',
     isDark: true,
   },
   {
-    name: 'Lavender Bliss',
-    primary: '#7c3aed',
-    primaryHover: '#6d28d9',
-    accent: '#f43f5e',
-    background: '#fcf5ff',
+    name: 'Classic Match Gray',
+    primary: '#52525b',
+    primaryHover: '#3f3f46',
+    accent: '#d97706',
+    background: '#fafafa',
     surface: '#ffffff',
-    sidebar: '#2e1065',
-    textPrimary: '#1e1b4b',
-    textSecondary: '#6b21a8',
-    border: '#f3e8ff',
+    sidebar: '#18181b',
+    textPrimary: '#18181b',
+    textSecondary: '#71717a',
+    border: '#e4e4e7',
     isDark: false,
   },
+  UNIVERSAL_PORTAL_THEME,
 ];
 
 // Apply Theme Palette to document root CSS variables dynamically
