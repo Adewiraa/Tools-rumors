@@ -492,7 +492,6 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const hasMenuAccess = (menuId: string): boolean => {
-    if (menuId === 'design-system') return true;
     if (currentUserRole === 'Super Admin') return true;
     if (menuId === 'media-ads' && currentUserRole === 'Admin Data') return true;
     const perm = rolePermissions.find(p => p.role === currentUserRole);
