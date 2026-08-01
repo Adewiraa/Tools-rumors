@@ -27,6 +27,7 @@ import {
   Lock,
   ShieldAlert,
   Megaphone,
+  Palette,
 } from 'lucide-react';
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
 import { Match } from '@/lib/mockData';
@@ -74,6 +75,7 @@ const NAV_SECTIONS: NavSection[] = [
       { id: 'users', label: 'Manajemen User', icon: Users, mobileHidden: true },
       { id: 'permissions', label: 'Manajemen Hak Akses', icon: Lock, mobileHidden: true },
       { id: 'logs', label: 'Audit Log', icon: History, mobileHidden: true },
+      { id: 'design-system', label: 'Design System', icon: Palette, mobileHidden: true },
       { id: 'settings', label: 'Pengaturan', icon: Settings, mobileHidden: true },
     ],
   },
