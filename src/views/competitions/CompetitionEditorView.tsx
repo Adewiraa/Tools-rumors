@@ -30,6 +30,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     maxForeignSquad: 11,
     minLocalStarters: 0,
     minLocalMatchday: 0,
+    isInternational: false,
   });
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -107,9 +108,16 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
           <div style={{ gridColumn: 'span 8' }}><label className="form-label">Nama Kompetisi</label><input className="form-input" value={competition.name} onChange={event => { updateCompetition('name', event.target.value); if (isNew) updateCompetition('slug', slugify(event.target.value)); }} /></div>
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Kode</label><input className="form-input" value={competition.shortName} maxLength={8} onChange={event => updateCompetition('shortName', event.target.value.toUpperCase())} /></div>
           <div style={{ gridColumn: 'span 12' }}><label className="form-label">Slug</label><input className="form-input" value={competition.slug} onChange={event => updateCompetition('slug', slugify(event.target.value))} /></div>
-          <div style={{ gridColumn: 'span 4' }}><label className="form-label">Tipe</label><select className="form-select" value={competition.type} onChange={event => updateCompetition('type', event.target.value as Competition['type'])}><option value="league">Liga</option><option value="cup">Piala</option><option value="friendly">Friendly</option></select></div>
-          <div style={{ gridColumn: 'span 4' }}><label className="form-label">Negara / Zona</label><input className="form-input" value={competition.country} onChange={event => updateCompetition('country', event.target.value)} /></div>
-          <div style={{ gridColumn: 'span 4' }}><label className="form-label">Musim</label><input className="form-input" value={competition.season} onChange={event => updateCompetition('season', event.target.value)} /></div>
+          <div style={{ gridColumn: 'span 3' }}><label className="form-label">Tipe</label><select className="form-select" value={competition.type} onChange={event => updateCompetition('type', event.target.value as Competition['type'])}><option value="league">Liga</option><option value="cup">Piala</option><option value="friendly">Friendly</option></select></div>
+          <div style={{ gridColumn: 'span 3' }}>
+            <label className="form-label">Level Kompetisi</label>
+            <select className="form-select" value={competition.isInternational ? 'international' : 'club'} onChange={event => updateCompetition('isInternational', event.target.value === 'international')}>
+              <option value="club">Klub</option>
+              <option value="international">Internasional (Negara)</option>
+            </select>
+          </div>
+          <div style={{ gridColumn: 'span 3' }}><label className="form-label">Negara / Zona</label><input className="form-input" value={competition.country} onChange={event => updateCompetition('country', event.target.value)} /></div>
+          <div style={{ gridColumn: 'span 3' }}><label className="form-label">Musim</label><input className="form-input" value={competition.season} onChange={event => updateCompetition('season', event.target.value)} /></div>
           <div style={{ gridColumn: 'span 12', borderTop: '1px solid var(--neutral-200)', paddingTop: 14 }}>
             <div className="semibold" style={{ fontSize: 13, marginBottom: 10 }}>Regulasi Lineup</div>
             <label className="flex align-center gap-8" style={{ cursor: 'pointer', gridColumn: 'span 12', marginBottom: 12, padding: '10px 12px', border: '1px solid var(--neutral-200)', borderRadius: 8, background: competition.foreignRegulationFree ? '#eef7f0' : 'var(--neutral-50)' }}>

@@ -110,7 +110,12 @@ export default function CompetitionsListView() {
                       </div>
                     </td>
                     <td className="master-info-cell" data-label="Kode">{comp.shortName}</td>
-                    <td className="master-info-cell" data-label="Tipe"><span className={`badge ${comp.type === 'league' ? 'badge-info' : comp.type === 'cup' ? 'badge-warning' : 'badge-draft'}`}>{comp.type}</span></td>
+                    <td className="master-info-cell" data-label="Tipe">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                        <span className={`badge ${comp.type === 'league' ? 'badge-info' : comp.type === 'cup' ? 'badge-warning' : 'badge-draft'}`}>{comp.type}</span>
+                        {comp.isInternational && <span className="badge badge-warning" style={{ fontSize: 10 }}>Internasional</span>}
+                      </div>
+                    </td>
                     <td className="master-info-cell" data-label="Negara">{comp.country}</td>
                     <td className="master-info-cell" data-label="Musim">{comp.season}</td>
                     <td className="master-info-cell" data-label="Regulasi">

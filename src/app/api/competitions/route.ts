@@ -53,10 +53,14 @@ const getCompetitionSchemaErrorMessage = (error: { message?: string; code?: stri
       'max_foreign_squad',
       'min_local_starters',
       'min_local_matchday',
+      'is_international',
     ].some(column => message.toLowerCase().includes(`'${column}' column`))
   );
 
   if (isMissingCompetitionColumn) {
+    if (message.toLowerCase().includes("'is_international'")) {
+      return 'Schema tabel competitions Supabase belum lengkap. Jalankan supabase_competitions_is_international.sql di SQL Editor, lalu coba simpan lagi.';
+    }
     return 'Schema tabel competitions Supabase belum lengkap. Jalankan supabase_competitions_regulation_migration.sql di SQL Editor, lalu coba simpan lagi.';
   }
 
@@ -109,6 +113,7 @@ export async function POST(request: Request) {
         max_foreign_squad: toRegulationNumber(competition.maxForeignSquad ?? competition.max_foreign_squad, 11),
         min_local_starters: toRegulationNumber(competition.minLocalStarters ?? competition.min_local_starters, 0),
         min_local_matchday: toRegulationNumber(competition.minLocalMatchday ?? competition.min_local_matchday, 0),
+        is_international: competition.isInternational !== undefined ? Boolean(competition.isInternational) : Boolean(competition.is_international ?? false),
       };
 
       const { error } = await supabaseAdmin
@@ -178,7 +183,7 @@ export async function POST(request: Request) {
             id, name, short_name, slug, type, country, logo_url, season, is_active,
             foreign_regulation_free,
             max_foreign_starters, max_foreign_matchday, max_foreign_squad,
-            min_local_starters, min_local_matchday
+            min_local_starters, min_local_matchday, is_international
           )
         `)
         .eq('club_id', clubId);
