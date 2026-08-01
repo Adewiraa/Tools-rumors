@@ -678,6 +678,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       maxForeignSquad: toRegulationNumber(competition.maxForeignSquad ?? competition.max_foreign_squad, 11),
       minLocalStarters: toRegulationNumber(competition.minLocalStarters ?? competition.min_local_starters, 0),
       minLocalMatchday: toRegulationNumber(competition.minLocalMatchday ?? competition.min_local_matchday, 0),
+      isInternational: Boolean(competition.isInternational || competition.is_international),
+      primaryColor: competition.primaryColor || competition.primary_color || '#0F172A',
     });
 
     async function loadSupabaseData() {

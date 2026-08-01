@@ -31,6 +31,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     minLocalStarters: 0,
     minLocalMatchday: 0,
     isInternational: false,
+    primaryColor: '#0F172A',
   });
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -188,6 +189,32 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
                 <Upload size={14} /> {uploading ? 'Mengunggah...' : 'Upload'}
                 <input type="file" accept="image/*" hidden onChange={handleLogoUpload} />
               </label>
+            </div>
+          </div>
+          <div>
+            <label className="form-label">Warna Identitas Kompetisi</label>
+            <div className="flex align-center gap-10">
+              <input
+                type="color"
+                value={competition.primaryColor || '#0F172A'}
+                onChange={event => updateCompetition('primaryColor', event.target.value)}
+                style={{ width: 44, height: 38, border: '1px solid var(--neutral-200)', borderRadius: 6, cursor: 'pointer', padding: 2, background: 'var(--white)' }}
+              />
+              <input
+                type="text"
+                className="form-input"
+                style={{ flex: 1, fontFamily: 'monospace', textTransform: 'uppercase' }}
+                value={competition.primaryColor || '#0F172A'}
+                maxLength={7}
+                onChange={event => {
+                  const val = event.target.value;
+                  if (val.startsWith('#') && val.length <= 7) {
+                    updateCompetition('primaryColor', val);
+                  } else if (!val.startsWith('#') && val.length <= 6) {
+                    updateCompetition('primaryColor', '#' + val);
+                  }
+                }}
+              />
             </div>
           </div>
         </aside>

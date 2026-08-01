@@ -114,6 +114,7 @@ export async function POST(request: Request) {
         min_local_starters: toRegulationNumber(competition.minLocalStarters ?? competition.min_local_starters, 0),
         min_local_matchday: toRegulationNumber(competition.minLocalMatchday ?? competition.min_local_matchday, 0),
         is_international: competition.isInternational !== undefined ? Boolean(competition.isInternational) : Boolean(competition.is_international ?? false),
+        primary_color: competition.primaryColor || competition.primary_color || '#0F172A',
       };
 
       const { error } = await supabaseAdmin
@@ -195,7 +196,7 @@ export async function POST(request: Request) {
             id, name, short_name, slug, type, country, logo_url, season, is_active,
             foreign_regulation_free,
             max_foreign_starters, max_foreign_matchday, max_foreign_squad,
-            min_local_starters, min_local_matchday, is_international
+            min_local_starters, min_local_matchday, is_international, primary_color
           )
         `)
         .eq('club_id', clubId);

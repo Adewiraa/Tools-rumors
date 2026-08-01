@@ -282,31 +282,6 @@ export default function ClubEditorView({ clubId, isNationalTeam = false, onClose
               <div style={{ gridColumn: 'span 12' }}><label className="form-label">Stadion</label><input className="form-input" value={club.stadium} onChange={event => updateClub('stadium', event.target.value)} /></div>
             </>
           )}
-
-          {isNationalTeam && !isNew && (
-            <div style={{ gridColumn: 'span 12', borderTop: '1px solid var(--neutral-200)', paddingTop: 16, marginTop: 8 }}>
-              <div className="semibold" style={{ fontSize: 13, marginBottom: 12 }}>Daftar Pemain Tim Nasional ({club.name})</div>
-              {players.filter(p => p.nationality.toLowerCase() === club.name.toLowerCase()).length === 0 ? (
-                <div className="text-muted" style={{ padding: '8px 0', fontSize: 12 }}>Belum ada pemain yang terdaftar dengan kewarganegaraan ini.</div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
-                  {players
-                    .filter(p => p.nationality.toLowerCase() === club.name.toLowerCase())
-                    .map(player => (
-                      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--neutral-50)' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--neutral-200)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: 11, fontWeight: 'bold' }}>{player.displayName[0]}</span>
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div className="semibold" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</div>
-                          <div className="text-muted" style={{ fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.position} • {player.clubName}</div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         <aside className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>

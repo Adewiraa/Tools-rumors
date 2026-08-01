@@ -103,10 +103,16 @@ export default function CompetitionsListView() {
                   <tr key={comp.id}>
                     <td className="master-competition-cell" data-label="Kompetisi">
                       <div className="flex align-center gap-8">
-                        <div style={{ width: 34, height: 34, border: '1px solid var(--neutral-200)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 34, height: 34, border: `2px solid ${comp.primaryColor || 'var(--neutral-200)'}`, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {comp.logoUrl?.startsWith('http') ? <img src={comp.logoUrl} alt={comp.name} style={{ width: 30, height: 30, objectFit: 'contain' }} /> : <Trophy size={16} />}
                         </div>
-                        <div><span className="semibold">{comp.name}</span><div className="text-muted" style={{ fontSize: 11 }}>{comp.slug}</div></div>
+                        <div>
+                          <div className="flex align-center gap-6">
+                            <span className="semibold">{comp.name}</span>
+                            <span style={{ width: 10, height: 10, borderRadius: '50%', background: comp.primaryColor || '#0F172A', display: 'inline-block' }} title={`Warna Identitas: ${comp.primaryColor || '#0F172A'}`} />
+                          </div>
+                          <div className="text-muted" style={{ fontSize: 11 }}>{comp.slug}</div>
+                        </div>
                       </div>
                     </td>
                     <td className="master-info-cell" data-label="Kode">{comp.shortName}</td>

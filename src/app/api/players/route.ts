@@ -139,9 +139,19 @@ export async function POST(request: Request) {
       const resolvedCode = matched?.code?.toUpperCase() || (player.nationality === 'Indonesia' ? 'ID' : 'XX');
       const resolvedFlagUrl = matched ? `https://flagcdn.com/w40/${matched.code.toLowerCase()}.png` : player.flagUrl;
 
+      // Check if a player with same full_name + country_code already exists (avoid unique constraint violation)
+      const { data: existingPlayer } = await supabaseAdmin
+        .from('players')
+        .select('id')
+        .eq('full_name', player.fullName)
+        .eq('country_code', resolvedCode)
+        .limit(1);
+
+      const resolvedPlayerId = (existingPlayer && existingPlayer.length > 0) ? existingPlayer[0].id : player.id;
+
       // 1. Upsert player profile
       const playerPayload = {
-        id: player.id,
+        id: resolvedPlayerId,
         full_name: player.fullName,
         display_name: player.displayName,
         country_code: resolvedCode,
@@ -197,7 +207,7 @@ export async function POST(request: Request) {
           Forward: 'FW'
         };
         const rosterPayload = {
-          player_id: player.id,
+          player_id: resolvedPlayerId,
           club_season_id: resolvedClubSeasonId,
           shirt_number: player.shirtNumber,
           position: posMap[player.position] || 'MF'
@@ -206,7 +216,7 @@ export async function POST(request: Request) {
         const { data: existingRoster } = await supabaseAdmin
           .from('club_rosters')
           .select('id')
-          .eq('player_id', player.id)
+          .eq('player_id', resolvedPlayerId)
           .limit(1);
 
         if (existingRoster && existingRoster.length > 0) {

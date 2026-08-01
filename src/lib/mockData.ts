@@ -15,6 +15,7 @@ export interface Competition {
   minLocalStarters?: number;
   minLocalMatchday?: number;
   isInternational?: boolean;
+  primaryColor?: string;
 }
 
 export interface Club {
