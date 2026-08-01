@@ -6,9 +6,7 @@ import ClubsListView from '@/views/clubs/ClubsListView';
 import ClubEditorView from '@/views/clubs/ClubEditorView';
 
 function ClubsContent() {
-  const searchParams = useSearchParams();
-  const editId = searchParams.get('edit');
-  return editId ? <ClubEditorView clubId={editId} /> : <ClubsListView />;
+  return <ClubsListView />;
 }
 
 export default function ClubsPage() {

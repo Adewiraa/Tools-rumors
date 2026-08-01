@@ -42,7 +42,7 @@ const mapApiTeamToClub = (baseClub: Club, candidate: ApiTeamCandidate): Club => 
   };
 };
 
-export default function ClubEditorView({ clubId, isNationalTeam = false }: { clubId: string; isNationalTeam?: boolean }) {
+export default function ClubEditorView({ clubId, isNationalTeam = false, onClose }: { clubId: string; isNationalTeam?: boolean; onClose?: () => void }) {
   const { clubs, setClubs, competitions, players, logAction, triggerToast } = useApp();
   const isNew = clubId === 'new';
   const existing = clubs.find(item => item.id === clubId);
@@ -86,7 +86,11 @@ export default function ClubEditorView({ clubId, isNationalTeam = false }: { clu
 
   const updateClub = <K extends keyof Club>(key: K, value: Club[K]) => setClub(prev => ({ ...prev, [key]: value }));
   const goToClubsList = () => {
-    window.location.replace(isNationalTeam ? '/countries' : '/clubs');
+    if (onClose) {
+      onClose();
+    } else {
+      window.location.replace(isNationalTeam ? '/countries' : '/clubs');
+    }
   };
 
   useEffect(() => {
@@ -181,7 +185,13 @@ export default function ClubEditorView({ clubId, isNationalTeam = false }: { clu
         body: JSON.stringify({
           action: 'save_club_competitions',
           clubId: savedClub.id,
-          competitionIds: savedClub.competitionIds || [],
+          competitions: (savedClub.competitionIds || []).map(id => {
+            const comp = competitions.find(c => c.id === id);
+            return {
+              competitionId: id,
+              season: comp?.season || '2026/27',
+            };
+          }),
         }),
       });
 

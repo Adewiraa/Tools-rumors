@@ -129,31 +129,43 @@ export async function POST(request: Request) {
 
     // --- Simpan relasi club <-> competitions ---
     if (action === 'save_club_competitions') {
-      if (!clubId || !Array.isArray(competitionIds)) {
-        return NextResponse.json({ success: false, error: 'Missing clubId or competitionIds' }, { status: 400 });
+      const inputCompetitions = body.competitions; // Expecting array of { competitionId: string, season: string }
+      const inputIds = competitionIds || [];
+
+      if (!clubId) {
+        return NextResponse.json({ success: false, error: 'Missing clubId' }, { status: 400 });
       }
 
-      // Hapus relasi lama untuk club ini pada season yang sama
-      const deleteQuery = supabaseAdmin
+      // Hapus relasi lama untuk club ini
+      const { error: deleteError } = await supabaseAdmin
         .from('club_competitions')
         .delete()
         .eq('club_id', clubId);
 
-      if (season) {
-        deleteQuery.eq('season', season);
-      }
-
-      const { error: deleteError } = await deleteQuery;
       if (deleteError) {
         return NextResponse.json({ success: false, error: deleteError.message }, { status: 400 });
       }
 
       // Insert relasi baru
-      if (competitionIds.length > 0) {
-        const rows = competitionIds.map((cid: string) => ({
+      if (Array.isArray(inputCompetitions) && inputCompetitions.length > 0) {
+        const rows = inputCompetitions.map((item: any) => ({
+          club_id: clubId,
+          competition_id: item.competitionId,
+          season: item.season || '2026/27',
+        }));
+
+        const { error: insertError } = await supabaseAdmin
+          .from('club_competitions')
+          .insert(rows);
+
+        if (insertError) {
+          return NextResponse.json({ success: false, error: insertError.message }, { status: 400 });
+        }
+      } else if (Array.isArray(inputIds) && inputIds.length > 0) {
+        const rows = inputIds.map((cid: string) => ({
           club_id: clubId,
           competition_id: cid,
-          season: season || null,
+          season: season || '2026/27',
         }));
 
         const { error: insertError } = await supabaseAdmin

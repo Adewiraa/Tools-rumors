@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/logic/AppContext';
 import { Club, calculateClubCompleteness } from '@/lib/mockData';
-import { ChevronRight, Edit, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronRight, Edit, Plus, Search, Trash2, X } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
 import { generateUUID } from '@/logic/utils';
+import ClubEditorView from './ClubEditorView';
 
 type ApiTeamCandidate = {
   team?: {
@@ -94,6 +96,25 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
   const [apiTeams, setApiTeams] = useState<ApiTeamCandidate[]>([]);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
   const [addingApiTeamId, setAddingApiTeamId] = useState<number | null>(null);
+
+  const [editingClubId, setEditingClubId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
+
+  useEffect(() => {
+    if (editId) {
+      setEditingClubId(editId);
+    }
+  }, [editId]);
+
+  const handleCloseEditor = () => {
+    setEditingClubId(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('edit');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  };
 
   const displayClubs = clubs.filter(club => Boolean(club.isNationalTeam) === isNationalTeam);
 
@@ -191,7 +212,7 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
           <p className="page-description">{isNationalTeam ? 'Kelola identitas negara, pelatih, warna, bendera, dan pemain peserta.' : 'Kelola identitas klub, stadion, pelatih, warna, dan logo.'}</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={() => window.location.href = isNationalTeam ? '/countries?edit=new' : '/clubs?edit=new'}>
+          <button className="btn btn-md btn-primary" onClick={() => setEditingClubId('new')}>
             <Plus size={16} /> {isNationalTeam ? 'Tambah Negara' : 'Tambah Klub'}
           </button>
         )}
@@ -327,7 +348,7 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
                   </td>
                   <td className="master-actions-cell text-right">
                     <div className="master-actions">
-                      <button className="btn btn-sm btn-secondary" onClick={() => window.location.href = isNationalTeam ? `/countries?edit=${club.id}` : `/clubs?edit=${club.id}`}><Edit size={13} /> Edit</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => setEditingClubId(club.id)}><Edit size={13} /> Edit</button>
                       {hasPermission('Master', 'delete') && (confirmDeleteId === club.id ? (
                         <>
                           <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(club.id)} loading={deletingId === club.id} loadingLabel="Menghapus...">Ya</LoadingButton>
@@ -344,6 +365,23 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
           </tbody>
         </table>
       </div>
+
+      {editingClubId && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 960, maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', padding: 24, position: 'relative' }}>
+            <button 
+              onClick={handleCloseEditor}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, borderRadius: 4, transition: 'background-color 0.15s', zIndex: 10 }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--neutral-100)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              title="Tutup"
+            >
+              <X size={20} />
+            </button>
+            <ClubEditorView clubId={editingClubId} isNationalTeam={isNationalTeam} onClose={handleCloseEditor} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
