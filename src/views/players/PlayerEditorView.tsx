@@ -41,7 +41,7 @@ const mapApiPosition = (position?: string): Player['position'] => {
   return 'Midfielder';
 };
 
-export default function PlayerEditorView({ playerId }: { playerId: string }) {
+export default function PlayerEditorView({ playerId, onClose }: { playerId: string; onClose: () => void }) {
   const { players, setPlayers, clubs, logAction, triggerToast } = useApp();
   const isNew = playerId === 'new';
   const existing = players.find(item => item.id === playerId);
@@ -53,7 +53,7 @@ export default function PlayerEditorView({ playerId }: { playerId: string }) {
   const [apiPlayers, setApiPlayers] = useState<ApiPlayerCandidate[]>([]);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
   const goToPlayersList = () => {
-    window.location.replace('/players');
+    onClose();
   };
   const [player, setPlayer] = useState<Player>(existing || {
     id: generateUUID(),

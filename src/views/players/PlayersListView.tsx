@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import PlayerEditorView from './PlayerEditorView';
 import { useApp } from '@/logic/AppContext';
 import { Club, Player, calculatePlayerCompleteness } from '@/lib/mockData';
 import { countriesList, findCountry, getCountryFlagUrl } from '@/lib/countriesData';
-import { Activity, ChevronRight, Edit, Flag, Hash, Plus, Search, Shield, Trash2, UserRound, Users } from 'lucide-react';
+import { Activity, ChevronRight, Edit, Flag, Hash, Plus, Search, Shield, Trash2, UserRound, Users, X } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
 import { generateUUID } from '@/logic/utils';
@@ -127,6 +128,21 @@ const getErrorMessage = (error: unknown, fallback: string) => (
 
 export default function PlayersListView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlEditId = searchParams?.get('edit');
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(urlEditId);
+
+  useEffect(() => {
+    if (urlEditId) {
+      setEditingPlayerId(urlEditId);
+    }
+  }, [urlEditId]);
+
+  const handleCloseEditor = () => {
+    setEditingPlayerId(null);
+    window.history.replaceState(null, '', '/players');
+  };
+
   const { players, setPlayers, clubs, hasPermission, logAction, triggerToast } = useApp();
   const [selectedClubId, setSelectedClubId] = useState('Semua');
   const [selectedPosition, setSelectedPosition] = useState('Semua');
@@ -299,7 +315,7 @@ export default function PlayersListView() {
           <p className="page-description">Kelola profil pemain, klub aktif, posisi, nomor punggung, negara, dan availability.</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={() => router.push('/players?edit=new')}><Plus size={16} /> Tambah Pemain</button>
+          <button className="btn btn-md btn-primary" onClick={() => setEditingPlayerId('new')}><Plus size={16} /> Tambah Pemain</button>
         )}
       </div>
 
@@ -616,7 +632,7 @@ export default function PlayersListView() {
                       {playerClub?.name || player.clubName || 'Free Agent'}
                     </span>
                     <div style={{ display: 'inline-flex', gap: 6, flexShrink: 0 }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/players?edit=${player.id}`)}><Edit size={13} /> Edit</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => setEditingPlayerId(player.id)}><Edit size={13} /> Edit</button>
                       {hasPermission('Master', 'delete') && (confirmDeleteId === player.id ? (
                         <>
                           <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(player.id)} loading={deletingId === player.id} loadingLabel="Menghapus...">Ya</LoadingButton>
@@ -639,6 +655,23 @@ export default function PlayersListView() {
           </div>
         )}
       </div>
+
+      {editingPlayerId && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 960, maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--neutral-200)', boxShadow: 'var(--shadow-lg)', padding: 24, position: 'relative' }}>
+            <button 
+              onClick={handleCloseEditor}
+              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4, borderRadius: 4, transition: 'background-color 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--neutral-100)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              title="Tutup"
+            >
+              <X size={20} />
+            </button>
+            <PlayerEditorView playerId={editingPlayerId} onClose={handleCloseEditor} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
