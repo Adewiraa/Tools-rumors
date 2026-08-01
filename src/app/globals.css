@@ -3598,4 +3598,15 @@ a {
   }
 }
 
+@media (min-width: 769px) {
+  .app-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+  .main-wrapper {
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
 
