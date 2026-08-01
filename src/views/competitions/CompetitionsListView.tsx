@@ -119,14 +119,18 @@ export default function CompetitionsListView() {
                     <td className="master-info-cell" data-label="Negara">{comp.country}</td>
                     <td className="master-info-cell" data-label="Musim">{comp.season}</td>
                     <td className="master-info-cell" data-label="Regulasi">
-                      <div style={{ display: 'grid', gap: 3, fontSize: 11 }}>
-                        <span>
-                          {comp.foreignRegulationFree
-                            ? 'Asing: Bebas tanpa batas'
-                            : `Asing: ${comp.maxForeignStarters ?? 7} XI / ${comp.maxForeignMatchday ?? 9} dibawa / ${comp.maxForeignSquad ?? 11} DSP`}
-                        </span>
-                        <span className="text-muted">Lokal min: {comp.minLocalStarters ?? 0} XI / {comp.minLocalMatchday ?? 0} dibawa</span>
-                      </div>
+                      {comp.isInternational ? (
+                        <span className="text-muted">-</span>
+                      ) : (
+                        <div style={{ display: 'grid', gap: 3, fontSize: 11 }}>
+                          <span>
+                            {comp.foreignRegulationFree
+                              ? 'Asing: Bebas tanpa batas'
+                              : `Asing: ${comp.maxForeignStarters ?? 7} XI / ${comp.maxForeignMatchday ?? 9} dibawa / ${comp.maxForeignSquad ?? 11} DSP`}
+                          </span>
+                          <span className="text-muted">Lokal min: {comp.minLocalStarters ?? 0} XI / {comp.minLocalMatchday ?? 0} dibawa</span>
+                        </div>
+                      )}
                     </td>
                     <td className="master-info-cell" data-label="Klub Peserta">{participants.length || '-'}</td>
                     <td className="master-info-cell" data-label="Status"><span className={`badge ${comp.isActive ? 'badge-success' : 'badge-draft'}`}>{comp.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
