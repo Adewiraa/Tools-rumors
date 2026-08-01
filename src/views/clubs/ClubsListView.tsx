@@ -57,7 +57,7 @@ const getErrorMessage = (error: unknown, fallback: string) => (
   error instanceof Error ? error.message : fallback
 );
 
-const createClubFromApiTeam = (candidate: ApiTeamCandidate): Club => {
+const createClubFromApiTeam = (candidate: ApiTeamCandidate, isNationalTeam: boolean): Club => {
   const teamName = candidate.team?.name || 'Klub API';
   const club: Club = {
     id: generateUUID(),
@@ -77,6 +77,7 @@ const createClubFromApiTeam = (candidate: ApiTeamCandidate): Club => {
     completeness: 0,
     status: 'active',
     competitionIds: [],
+    isNationalTeam,
   };
 
   return {
@@ -85,14 +86,16 @@ const createClubFromApiTeam = (candidate: ApiTeamCandidate): Club => {
   };
 };
 
-export default function ClubsListView() {
-  const { clubs, setClubs, hasPermission, logAction, triggerToast } = useApp();
+export default function ClubsListView({ isNationalTeam = false }: { isNationalTeam?: boolean }) {
+  const { clubs, setClubs, players, hasPermission, logAction, triggerToast } = useApp();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [apiSearch, setApiSearch] = useState('');
   const [apiTeams, setApiTeams] = useState<ApiTeamCandidate[]>([]);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
   const [addingApiTeamId, setAddingApiTeamId] = useState<number | null>(null);
+
+  const displayClubs = clubs.filter(club => Boolean(club.isNationalTeam) === isNationalTeam);
 
   const searchTeamsFromApi = async () => {
     const query = apiSearch.trim();
@@ -118,13 +121,13 @@ export default function ClubsListView() {
   };
 
   const addApiTeamToMaster = async (candidate: ApiTeamCandidate) => {
-    const apiClub = createClubFromApiTeam(candidate);
+    const apiClub = createClubFromApiTeam(candidate, isNationalTeam);
     const duplicateByName = clubs.find(club =>
       normalizeClubName(club.name) === normalizeClubName(apiClub.name)
     );
 
     if (duplicateByName) {
-      triggerToast(`${apiClub.name} sudah ada di Master Klub.`, 'warning');
+      triggerToast(`${apiClub.name} sudah ada di ${isNationalTeam ? 'Master Negara' : 'Master Klub'}.`, 'warning');
       return;
     }
 
@@ -142,16 +145,16 @@ export default function ClubsListView() {
       });
 
       if (!result.success) {
-        triggerToast(`Gagal menambahkan klub API: ${result.error}`, 'error');
+        triggerToast(`Gagal menambahkan API: ${result.error}`, 'error');
         return;
       }
 
       setClubs(prev => [...prev, newClub]);
-      logAction('CREATE_CLUB_FROM_API', 'Master Klub', `Menambahkan klub dari API-Football: ${newClub.name}`);
-      triggerToast(`${newClub.name} berhasil ditambahkan ke Master Klub.`);
+      logAction('CREATE_CLUB_FROM_API', isNationalTeam ? 'Master Negara' : 'Master Klub', `Menambahkan dari API-Football: ${newClub.name}`);
+      triggerToast(`${newClub.name} berhasil ditambahkan.`);
       setApiTeams(prev => prev.filter(item => item.team?.id !== candidate.team?.id));
     } catch (error: unknown) {
-      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menambahkan klub API.'), 'error');
+      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menambahkan data API.'), 'error');
     } finally {
       setAddingApiTeamId(null);
     }
@@ -164,16 +167,16 @@ export default function ClubsListView() {
     try {
       const result = await apiRequest(`/api/clubs?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       if (!result.success) {
-        triggerToast(`Gagal menghapus klub: ${result.error}`, 'error');
+        triggerToast(`Gagal menghapus: ${result.error}`, 'error');
         return;
       }
 
       setClubs(prev => prev.filter(item => item.id !== id));
-      logAction('DELETE_CLUB', 'Master Klub', club?.name || id);
-      triggerToast('Klub berhasil dihapus.');
+      logAction('DELETE_CLUB', isNationalTeam ? 'Master Negara' : 'Master Klub', club?.name || id);
+      triggerToast(isNationalTeam ? 'Negara berhasil dihapus.' : 'Klub berhasil dihapus.');
       setConfirmDeleteId(null);
     } catch (error: unknown) {
-      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menghapus klub.'), 'error');
+      triggerToast(getErrorMessage(error, 'Terjadi kesalahan saat menghapus data.'), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -183,18 +186,18 @@ export default function ClubsListView() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="page-header">
         <div>
-          <div className="breadcrumb"><span>Dashboard</span> <ChevronRight size={10} /> <span>Master Klub</span></div>
-          <h1 className="page-title">Master Klub</h1>
-          <p className="page-description">Kelola identitas klub, stadion, pelatih, warna, dan logo.</p>
+          <div className="breadcrumb"><span>Dashboard</span> <ChevronRight size={10} /> <span>{isNationalTeam ? 'Master Negara' : 'Master Klub'}</span></div>
+          <h1 className="page-title">{isNationalTeam ? 'Master Negara' : 'Master Klub'}</h1>
+          <p className="page-description">{isNationalTeam ? 'Kelola identitas negara, pelatih, warna, bendera, dan pemain peserta.' : 'Kelola identitas klub, stadion, pelatih, warna, dan logo.'}</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={() => window.location.href = '/clubs?edit=new'}>
-            <Plus size={16} /> Tambah Klub
+          <button className="btn btn-md btn-primary" onClick={() => window.location.href = isNationalTeam ? '/countries?edit=new' : '/clubs?edit=new'}>
+            <Plus size={16} /> {isNationalTeam ? 'Tambah Negara' : 'Tambah Klub'}
           </button>
         )}
       </div>
 
-      {hasPermission('Master', 'create_edit') && (
+      {!isNationalTeam && hasPermission('Master', 'create_edit') && (
         <div className="card api-import-card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
           <div className="api-import-header" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
             <div className="api-import-copy" style={{ minWidth: 0 }}>
@@ -268,50 +271,76 @@ export default function ClubsListView() {
         <table className="data-table master-card-table">
           <thead>
             <tr>
-              <th>Logo</th>
-              <th>Nama Klub</th>
+              <th>{isNationalTeam ? 'Bendera' : 'Logo'}</th>
+              <th>{isNationalTeam ? 'Nama Negara' : 'Nama Klub'}</th>
               <th>Kode</th>
-              <th>Negara</th>
-              <th>Kota</th>
-              <th>Stadion</th>
+              {isNationalTeam ? (
+                <>
+                  <th>Jumlah Pemain</th>
+                  <th>Pelatih</th>
+                </>
+              ) : (
+                <>
+                  <th>Negara</th>
+                  <th>Kota</th>
+                  <th>Stadion</th>
+                </>
+              )}
               <th>Kelengkapan</th>
               <th className="text-right">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {clubs.map(club => (
-              <tr key={club.id}>
-                <td className="master-logo-cell" data-label="Logo">
-                  {club.logoUrl?.startsWith('http') ? <img src={club.logoUrl} alt={club.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 22 }}>{club.logoUrl || '-'}</span>}
-                </td>
-                <td className="master-title-cell" data-label="Klub"><span className="semibold">{club.name}</span><div className="text-muted" style={{ fontSize: 11 }}>{club.shortName}</div></td>
-                <td className="master-info-cell" data-label="Kode">{club.code}</td>
-                <td className="master-info-cell" data-label="Negara">{club.country || 'Indonesia'}</td>
-                <td className="master-info-cell" data-label="Kota">{club.city}</td>
-                <td className="master-info-cell" data-label="Stadion">{club.stadium}</td>
-                <td className="master-info-cell" data-label="Kelengkapan">
-                  <div className="flex align-center gap-8">
-                    <div style={{ width: 70, height: 6, background: 'var(--neutral-200)', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ width: `${club.completeness}%`, height: '100%', background: 'var(--primary-600)' }} />
+            {displayClubs.map(club => {
+              const playerCount = isNationalTeam 
+                ? players.filter(p => p.nationality.toLowerCase() === club.name.toLowerCase()).length
+                : players.filter(p => p.clubId === club.id).length;
+
+              return (
+                <tr key={club.id}>
+                  <td className="master-logo-cell" data-label={isNationalTeam ? 'Bendera' : 'Logo'}>
+                    {club.logoUrl?.startsWith('http') ? <img src={club.logoUrl} alt={club.name} style={{ width: 32, height: 32, objectFit: 'contain' }} /> : <span style={{ fontSize: 22 }}>{club.logoUrl || '-'}</span>}
+                  </td>
+                  <td className="master-title-cell" data-label={isNationalTeam ? 'Negara' : 'Klub'}><span className="semibold">{club.name}</span><div className="text-muted" style={{ fontSize: 11 }}>{club.shortName}</div></td>
+                  <td className="master-info-cell" data-label="Kode">{club.code}</td>
+                  {isNationalTeam ? (
+                    <>
+                      <td className="master-info-cell" data-label="Jumlah Pemain">
+                        <span className="semibold" style={{ color: 'var(--primary-600)' }}>{playerCount} pemain</span>
+                      </td>
+                      <td className="master-info-cell" data-label="Pelatih">{club.coach || '-'}</td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="master-info-cell" data-label="Negara">{club.country || 'Indonesia'}</td>
+                      <td className="master-info-cell" data-label="Kota">{club.city}</td>
+                      <td className="master-info-cell" data-label="Stadion">{club.stadium}</td>
+                    </>
+                  )}
+                  <td className="master-info-cell" data-label="Kelengkapan">
+                    <div className="flex align-center gap-8">
+                      <div style={{ width: 70, height: 6, background: 'var(--neutral-200)', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ width: `${club.completeness}%`, height: '100%', background: 'var(--primary-600)' }} />
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>{club.completeness}%</span>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700 }}>{club.completeness}%</span>
-                  </div>
-                </td>
-                <td className="master-actions-cell text-right">
-                  <div className="master-actions">
-                    <button className="btn btn-sm btn-secondary" onClick={() => window.location.href = `/clubs?edit=${club.id}`}><Edit size={13} /> Edit</button>
-                    {hasPermission('Master', 'delete') && (confirmDeleteId === club.id ? (
-                      <>
-                        <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(club.id)} loading={deletingId === club.id} loadingLabel="Menghapus...">Ya</LoadingButton>
-                        <button className="btn btn-sm btn-secondary" disabled={deletingId === club.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
-                      </>
-                    ) : (
-                      <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(club.id)}><Trash2 size={13} /></button>
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="master-actions-cell text-right">
+                    <div className="master-actions">
+                      <button className="btn btn-sm btn-secondary" onClick={() => window.location.href = isNationalTeam ? `/countries?edit=${club.id}` : `/clubs?edit=${club.id}`}><Edit size={13} /> Edit</button>
+                      {hasPermission('Master', 'delete') && (confirmDeleteId === club.id ? (
+                        <>
+                          <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(club.id)} loading={deletingId === club.id} loadingLabel="Menghapus...">Ya</LoadingButton>
+                          <button className="btn btn-sm btn-secondary" disabled={deletingId === club.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                        </>
+                      ) : (
+                        <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(club.id)}><Trash2 size={13} /></button>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

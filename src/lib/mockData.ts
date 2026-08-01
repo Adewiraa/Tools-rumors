@@ -35,6 +35,7 @@ export interface Club {
   completeness: number; // 0 - 100
   status: 'active' | 'inactive';
   competitionIds?: string[]; // relasi ke kompetisi yang diikuti
+  isNationalTeam?: boolean;
 }
 
 // Calculate club completeness based on which fields are filled

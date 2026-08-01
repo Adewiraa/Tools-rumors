@@ -502,7 +502,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     ) {
       return true;
     }
-    return perm.allowedMenus.includes(menuId as ActiveMenu);
+    const checkId = menuId === 'countries' ? 'clubs' : menuId;
+    return perm.allowedMenus.includes(checkId as ActiveMenu);
   };
 
   // User CRUD Operations
@@ -634,6 +635,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    let relations: any[] = [];
+
     const mapClubFromSupabase = (club: any): Club => {
       const mappedClub: Club = {
         id: club.id,
@@ -652,11 +655,8 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         activePlayersCount: Number(club.activePlayersCount || club.active_players_count) || 0,
         completeness: 0,
         status: club.status || 'active',
-        competitionIds: Array.isArray(club.competitionIds)
-          ? club.competitionIds
-          : Array.isArray(club.competition_ids)
-            ? club.competition_ids
-            : [],
+        competitionIds: relations.filter((r: any) => r.club_id === club.id).map((r: any) => r.competition_id),
+        isNationalTeam: Boolean(club.isNationalTeam || club.is_national_team),
       };
       mappedClub.completeness = Number(club.completeness) || calculateClubCompleteness(mappedClub);
       return mappedClub;
@@ -691,6 +691,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const [
         clubsResult,
         compResult,
+        relationsResult,
         playerResult,
         matchResult,
         rumorResult,
@@ -701,6 +702,7 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ] = await Promise.allSettled([
         supabase.from('clubs').select('*'),
         supabase.from('competitions').select('*'),
+        supabase.from('club_competitions').select('club_id, competition_id'),
         fetchJson('/api/players'),
         fetchJson('/api/matches'),
         fetchJson('/api/rumors'),
@@ -711,6 +713,10 @@ export const AppContextProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ]);
 
       let successCount = 0;
+
+      if (relationsResult.status === 'fulfilled' && !relationsResult.value.error && relationsResult.value.data) {
+        relations = relationsResult.value.data;
+      }
 
       if (clubsResult.status === 'fulfilled' && !clubsResult.value.error && clubsResult.value.data) {
         const sortedClubs = clubsResult.value.data

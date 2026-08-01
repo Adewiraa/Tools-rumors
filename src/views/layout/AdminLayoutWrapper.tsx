@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   Megaphone,
   Palette,
+  Flag,
 } from 'lucide-react';
 import { DatabaseIcon, SkeletonLoading, ErrorState } from '../shared/StateComponents';
 import { Match } from '@/lib/mockData';
@@ -64,6 +65,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Master Data',
     items: [
       { id: 'clubs', label: 'Master Klub', icon: Shield, mobileHidden: true },
+      { id: 'countries', label: 'Master Negara', icon: Flag, mobileHidden: true },
       { id: 'players', label: 'Master Pemain', icon: User, mobileHidden: true },
       { id: 'competitions', label: 'Master Kompetisi', icon: Trophy, mobileHidden: true },
       { id: 'media-ads', label: 'Master Iklan', icon: Megaphone, mobileHidden: true },

@@ -42,8 +42,8 @@ const mapApiTeamToClub = (baseClub: Club, candidate: ApiTeamCandidate): Club => 
   };
 };
 
-export default function ClubEditorView({ clubId }: { clubId: string }) {
-  const { clubs, setClubs, competitions, logAction, triggerToast } = useApp();
+export default function ClubEditorView({ clubId, isNationalTeam = false }: { clubId: string; isNationalTeam?: boolean }) {
+  const { clubs, setClubs, competitions, players, logAction, triggerToast } = useApp();
   const isNew = clubId === 'new';
   const existing = clubs.find(item => item.id === clubId);
   const [club, setClub] = useState<Club>(existing || {
@@ -64,6 +64,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
     completeness: 0,
     status: 'active',
     competitionIds: [],
+    isNationalTeam,
   });
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -71,9 +72,21 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
   const [apiTeams, setApiTeams] = useState<ApiTeamCandidate[]>([]);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
 
+  const handleCountryChange = (name: string) => {
+    const selected = countriesList.find(c => c.name === name);
+    setClub(prev => ({
+      ...prev,
+      name: name,
+      shortName: name,
+      country: name,
+      code: selected?.code?.toUpperCase() || prev.code,
+      logoUrl: selected?.flagUrl || prev.logoUrl,
+    }));
+  };
+
   const updateClub = <K extends keyof Club>(key: K, value: Club[K]) => setClub(prev => ({ ...prev, [key]: value }));
   const goToClubsList = () => {
-    window.location.replace('/clubs');
+    window.location.replace(isNationalTeam ? '/countries' : '/clubs');
   };
 
   useEffect(() => {
@@ -158,7 +171,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
       });
 
       if (!saveClubResult.success) {
-        triggerToast(`Gagal menyimpan klub: ${saveClubResult.error}`, 'error');
+        triggerToast(`Gagal menyimpan: ${saveClubResult.error}`, 'error');
         return;
       }
 
@@ -173,12 +186,12 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
       });
 
       if (!saveCompetitionsResult.success) {
-        triggerToast(`Klub tersimpan, tapi relasi kompetisi gagal: ${saveCompetitionsResult.error}`, 'warning');
+        triggerToast(`Data tersimpan, tapi relasi kompetisi gagal: ${saveCompetitionsResult.error}`, 'warning');
       }
 
       setClubs(prev => isNew ? [...prev, savedClub] : prev.map(item => item.id === savedClub.id ? savedClub : item));
-      logAction(isNew ? 'CREATE_CLUB' : 'UPDATE_CLUB', 'Master Klub', savedClub.name);
-      triggerToast('Klub berhasil disimpan.');
+      logAction(isNew ? 'CREATE_CLUB' : 'UPDATE_CLUB', isNationalTeam ? 'Master Negara' : 'Master Klub', savedClub.name);
+      triggerToast(isNationalTeam ? 'Negara berhasil disimpan.' : 'Klub berhasil disimpan.');
       goToClubsList();
     } catch (error: any) {
       triggerToast(error.message || 'Terjadi kesalahan saat menyimpan klub.', 'error');
@@ -189,61 +202,106 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
+      <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16, paddingRight: 40 }}>
         <div className="flex align-center gap-12">
           <button type="button" className="btn btn-sm btn-secondary" onClick={goToClubsList}><ArrowLeft size={16} /> Kembali</button>
-          <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Klub' : 'Edit Klub'}</h1>
+          <h1 className="page-title" style={{ margin: 0 }}>
+            {isNew ? (isNationalTeam ? 'Tambah Negara' : 'Tambah Klub') : (isNationalTeam ? 'Edit Negara' : 'Edit Klub')}
+          </h1>
         </div>
-        <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan..."><Save size={16} /> Simpan Klub</LoadingButton>
+        <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan...">
+          <Save size={16} /> Simpan {isNationalTeam ? 'Negara' : 'Klub'}
+        </LoadingButton>
       </div>
 
       <div className="grid-12">
         <div className="card" style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
-          <div style={{ gridColumn: 'span 12', padding: 14, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--neutral-50)' }}>
-            <label className="form-label">Cari Data Klub dari API-Football</label>
-            <div className="flex gap-8" style={{ alignItems: 'center' }}>
-              <input className="form-input" placeholder="Cari nama klub..." value={apiSearch} onChange={event => setApiSearch(event.target.value)} />
-              <LoadingButton className="btn btn-sm btn-secondary" onClick={searchTeamsFromApi} loading={isSearchingApi} loadingLabel="Mencari...">Cari API</LoadingButton>
-            </div>
-            {apiTeams.length > 0 && (
-              <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
-                {apiTeams.map(candidate => (
-                  <button
-                    key={`${candidate.team?.id}-${candidate.team?.name}`}
-                    type="button"
-                    onClick={() => applyApiTeam(candidate)}
-                    style={{ width: '100%', border: '1px solid var(--neutral-200)', background: 'var(--white)', borderRadius: 8, padding: 10, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left' }}
-                  >
-                    {candidate.team?.logo && <img src={candidate.team.logo} alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />}
-                    <span style={{ flex: 1 }}>
-                      <span className="semibold" style={{ display: 'block', fontSize: 13 }}>{candidate.team?.name}</span>
-                      <span className="text-muted" style={{ fontSize: 11 }}>{candidate.team?.country || '-'}{candidate.venue?.name ? ` - ${candidate.venue.name}` : ''}</span>
-                    </span>
-                    <span className="badge badge-info">Terapkan</span>
-                  </button>
-                ))}
+          {isNationalTeam ? (
+            <>
+              <div style={{ gridColumn: 'span 8' }}>
+                <label className="form-label">Pilih Negara</label>
+                <select className="form-select" value={club.name} onChange={event => handleCountryChange(event.target.value)}>
+                  <option value="">-- Pilih Negara --</option>
+                  {countriesList.map(country => <option key={country.name} value={country.name}>{country.name}</option>)}
+                </select>
               </div>
-            )}
-            <span className="form-helper">API hanya membantu mengisi logo/nama/stadion. Data final tetap dari tombol Simpan Klub.</span>
-          </div>
-          <div style={{ gridColumn: 'span 8' }}><label className="form-label">Nama Klub</label><input className="form-input" value={club.name} onChange={event => updateClub('name', event.target.value)} /></div>
-          <div style={{ gridColumn: 'span 4' }}><label className="form-label">Kode</label><input className="form-input" value={club.code} maxLength={3} onChange={event => updateClub('code', event.target.value.toUpperCase())} /></div>
-          <div style={{ gridColumn: 'span 6' }}><label className="form-label">Short Name</label><input className="form-input" value={club.shortName} onChange={event => updateClub('shortName', event.target.value)} /></div>
-          <div style={{ gridColumn: 'span 6' }}>
-            <label className="form-label">Negara Asal Klub</label>
-            <select className="form-select" value={club.country || 'Indonesia'} onChange={event => updateClub('country', event.target.value)}>
-              {club.country && !countriesList.some(country => country.name === club.country) && <option value={club.country}>{club.country}</option>}
-              {countriesList.map(country => <option key={country.name} value={country.name}>{country.name}</option>)}
-            </select>
-          </div>
-          <div style={{ gridColumn: 'span 6' }}><label className="form-label">Pelatih</label><input className="form-input" value={club.coach} onChange={event => updateClub('coach', event.target.value)} /></div>
-          <div style={{ gridColumn: 'span 6' }}><label className="form-label">Kota</label><input className="form-input" value={club.city} onChange={event => updateClub('city', event.target.value)} /></div>
-          <div style={{ gridColumn: 'span 12' }}><label className="form-label">Stadion</label><input className="form-input" value={club.stadium} onChange={event => updateClub('stadium', event.target.value)} /></div>
+              <div style={{ gridColumn: 'span 4' }}><label className="form-label">Kode (Singkatan)</label><input className="form-input" value={club.code} maxLength={3} onChange={event => updateClub('code', event.target.value.toUpperCase())} /></div>
+              <div style={{ gridColumn: 'span 12' }}><label className="form-label">Pelatih Tim Nasional</label><input className="form-input" value={club.coach} onChange={event => updateClub('coach', event.target.value)} /></div>
+            </>
+          ) : (
+            <>
+              <div style={{ gridColumn: 'span 12', padding: 14, border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--neutral-50)' }}>
+                <label className="form-label">Cari Data Klub dari API-Football</label>
+                <div className="flex gap-8" style={{ alignItems: 'center' }}>
+                  <input className="form-input" placeholder="Cari nama klub..." value={apiSearch} onChange={event => setApiSearch(event.target.value)} />
+                  <LoadingButton className="btn btn-sm btn-secondary" onClick={searchTeamsFromApi} loading={isSearchingApi} loadingLabel="Mencari...">Cari API</LoadingButton>
+                </div>
+                {apiTeams.length > 0 && (
+                  <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+                    {apiTeams.map(candidate => (
+                      <button
+                        key={`${candidate.team?.id}-${candidate.team?.name}`}
+                        type="button"
+                        onClick={() => applyApiTeam(candidate)}
+                        style={{ width: '100%', border: '1px solid var(--neutral-200)', background: 'var(--white)', borderRadius: 8, padding: 10, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left' }}
+                      >
+                        {candidate.team?.logo && <img src={candidate.team.logo} alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />}
+                        <span style={{ flex: 1 }}>
+                          <span className="semibold" style={{ display: 'block', fontSize: 13 }}>{candidate.team?.name}</span>
+                          <span className="text-muted" style={{ fontSize: 11 }}>{candidate.team?.country || '-'}{candidate.venue?.name ? ` - ${candidate.venue.name}` : ''}</span>
+                        </span>
+                        <span className="badge badge-info">Terapkan</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <span className="form-helper">API hanya membantu mengisi logo/nama/stadion. Data final tetap dari tombol Simpan Klub.</span>
+              </div>
+              <div style={{ gridColumn: 'span 8' }}><label className="form-label">Nama Klub</label><input className="form-input" value={club.name} onChange={event => updateClub('name', event.target.value)} /></div>
+              <div style={{ gridColumn: 'span 4' }}><label className="form-label">Kode</label><input className="form-input" value={club.code} maxLength={3} onChange={event => updateClub('code', event.target.value.toUpperCase())} /></div>
+              <div style={{ gridColumn: 'span 6' }}><label className="form-label">Short Name</label><input className="form-input" value={club.shortName} onChange={event => updateClub('shortName', event.target.value)} /></div>
+              <div style={{ gridColumn: 'span 6' }}>
+                <label className="form-label">Negara Asal Klub</label>
+                <select className="form-select" value={club.country || 'Indonesia'} onChange={event => updateClub('country', event.target.value)}>
+                  {club.country && !countriesList.some(country => country.name === club.country) && <option value={club.country}>{club.country}</option>}
+                  {countriesList.map(country => <option key={country.name} value={country.name}>{country.name}</option>)}
+                </select>
+              </div>
+              <div style={{ gridColumn: 'span 6' }}><label className="form-label">Pelatih</label><input className="form-input" value={club.coach} onChange={event => updateClub('coach', event.target.value)} /></div>
+              <div style={{ gridColumn: 'span 6' }}><label className="form-label">Kota</label><input className="form-input" value={club.city} onChange={event => updateClub('city', event.target.value)} /></div>
+              <div style={{ gridColumn: 'span 12' }}><label className="form-label">Stadion</label><input className="form-input" value={club.stadium} onChange={event => updateClub('stadium', event.target.value)} /></div>
+            </>
+          )}
+
+          {isNationalTeam && !isNew && (
+            <div style={{ gridColumn: 'span 12', borderTop: '1px solid var(--neutral-200)', paddingTop: 16, marginTop: 8 }}>
+              <div className="semibold" style={{ fontSize: 13, marginBottom: 12 }}>Daftar Pemain Tim Nasional ({club.name})</div>
+              {players.filter(p => p.nationality.toLowerCase() === club.name.toLowerCase()).length === 0 ? (
+                <div className="text-muted" style={{ padding: '8px 0', fontSize: 12 }}>Belum ada pemain yang terdaftar dengan kewarganegaraan ini.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                  {players
+                    .filter(p => p.nationality.toLowerCase() === club.name.toLowerCase())
+                    .map(player => (
+                      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--neutral-200)', borderRadius: 8, background: 'var(--neutral-50)' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--neutral-200)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: 11, fontWeight: 'bold' }}>{player.displayName[0]}</span>
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="semibold" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</div>
+                          <div className="text-muted" style={{ fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.position} • {player.clubName}</div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <aside className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="form-label">Logo Klub</label>
+            <label className="form-label">{isNationalTeam ? 'Bendera Negara' : 'Logo Klub'}</label>
             <div className="flex align-center gap-12">
               <div style={{ width: 58, height: 58, border: '1px solid var(--neutral-200)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {club.logoUrl?.startsWith('http') ? <img src={club.logoUrl} alt={club.name} style={{ width: 50, height: 50, objectFit: 'contain' }} /> : <span>{club.logoUrl || '-'}</span>}
@@ -255,7 +313,7 @@ export default function ClubEditorView({ clubId }: { clubId: string }) {
             </div>
           </div>
           <div>
-            <label className="form-label">Kompetisi</label>
+            <label className="form-label">{isNationalTeam ? 'Partisipasi Turnamen' : 'Kompetisi'}</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {competitions.map(comp => (
                 <label key={comp.id} className="flex align-center gap-8" style={{ fontSize: 13 }}>

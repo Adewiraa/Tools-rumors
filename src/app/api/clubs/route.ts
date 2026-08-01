@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       away_color: club.awayColor,
       third_color: club.thirdColor,
       logo_public_url: club.logoUrl,
+      is_national_team: Boolean(club.isNationalTeam),
     };
 
     const { error } = await supabaseAdmin

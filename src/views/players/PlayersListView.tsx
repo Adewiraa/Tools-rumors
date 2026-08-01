@@ -381,10 +381,15 @@ export default function PlayersListView() {
                   <div className="text-muted" style={{ fontSize: 12 }}>Pemain akan disimpan ke klub lokal yang dipilih di kanan.</div>
                 </div>
                 <div>
-                  <label className="form-label">Klub Master Tujuan</label>
+                  <label className="form-label">Tujuan (Klub / Negara)</label>
                   <select className="form-select" value={selectedMasterClubId} onChange={event => setSelectedMasterClubId(event.target.value)}>
-                    <option value="">Pilih klub lokal</option>
-                    {clubs.map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
+                    <option value="">Pilih klub/negara lokal</option>
+                    <optgroup label="Klub">
+                      {clubs.filter(c => !c.isNationalTeam).map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
+                    </optgroup>
+                    <optgroup label="Negara (Tim Nasional)">
+                      {clubs.filter(c => c.isNationalTeam).map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
+                    </optgroup>
                   </select>
                 </div>
               </div>
@@ -434,8 +439,13 @@ export default function PlayersListView() {
           </div>
           <div className="player-mobile-filter-controls">
             <select className="form-select" value={selectedClubId} onChange={event => setSelectedClubId(event.target.value)}>
-              <option value="Semua">Semua Klub</option>
-              {clubs.map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
+              <option value="Semua">Semua Klub & Negara</option>
+              <optgroup label="Klub">
+                {clubs.filter(c => !c.isNationalTeam).map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
+              </optgroup>
+              <optgroup label="Negara (Tim Nasional)">
+                {clubs.filter(c => c.isNationalTeam).map(club => <option key={club.id} value={club.id}>{club.name}</option>)}
+              </optgroup>
             </select>
             <select className="form-select" value={selectedPosition} onChange={event => setSelectedPosition(event.target.value)}>
               <option value="Semua">Semua Posisi</option>
