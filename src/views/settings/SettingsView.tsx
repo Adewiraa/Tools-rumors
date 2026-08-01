@@ -132,52 +132,8 @@ export default function SettingsView() {
           </div>
           <h1 className="page-title" style={{ fontSize: 24 }}>Pengaturan Sistem</h1>
           <p className="page-description" style={{ fontSize: 13, marginTop: 2 }}>
-            Kelola identitas aplikasi untuk setiap media tenant.
+            Kelola identitas aplikasi untuk media aktif.
           </p>
-        </div>
-      </div>
-
-      <div className="card" style={{ padding: 14, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: 'var(--neutral-50)', border: '1px solid var(--neutral-200)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Building2 size={18} style={{ color: 'var(--primary-600)' }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--neutral-950)' }}>Media Tenant Workspace</div>
-            <div style={{ fontSize: 11, color: 'var(--neutral-500)' }}>Pilih media aktif untuk mengelola identitas web.</div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {mediaTenants.map(tenant => {
-            const isActive = tenant.id === currentTenantId;
-            return (
-              <button
-                key={tenant.id}
-                onClick={() => switchTenant(tenant.id)}
-                className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'}`}
-                style={{
-                  fontSize: 12,
-                  padding: '5px 12px',
-                  borderRadius: 20,
-                  fontWeight: isActive ? 700 : 500,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                {isActive && <Check size={13} />}
-                <span>{tenant.name}</span>
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => setShowAddTenantModal(true)}
-            className="btn btn-sm btn-secondary"
-            style={{ fontSize: 12, padding: '5px 12px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 6, borderStyle: 'dashed' }}
-          >
-            <Plus size={13} />
-            <span>Tambah Media</span>
-          </button>
         </div>
       </div>
 
@@ -261,56 +217,6 @@ export default function SettingsView() {
           </div>
         </div>
       </div>
-
-      {showAddTenantModal && (
-        <div className="modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div className="modal-content" style={{ background: 'var(--white)', color: 'var(--neutral-950)', borderRadius: 12, padding: 24, maxWidth: 440, width: '100%', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid var(--neutral-200)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Building2 size={20} style={{ color: 'var(--primary-600)' }} />
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Tambah Media Tenant Baru</h3>
-              </div>
-              <button className="btn btn-sm btn-secondary" onClick={() => setShowAddTenantModal(false)} style={{ padding: 4, borderRadius: '50%' }}>
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddTenantSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: 12, fontWeight: 700 }}>Nama Media / Aplikasi *</label>
-                <input
-                  className="form-input"
-                  required
-                  value={newTenantName}
-                  onChange={event => setNewTenantName(event.target.value)}
-                  placeholder="Contoh: Garuda Goal / Bola Nusantara"
-                  style={{ fontSize: 13, padding: '8px 12px' }}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: 12, fontWeight: 700 }}>Handle Watermark</label>
-                <input
-                  className="form-input"
-                  value={newTenantHandle}
-                  onChange={event => setNewTenantHandle(event.target.value)}
-                  placeholder="Contoh: @garudagoal"
-                  style={{ fontSize: 13, padding: '8px 12px' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-                <button type="button" className="btn btn-sm btn-secondary" onClick={() => setShowAddTenantModal(false)}>
-                  Batal
-                </button>
-                <button type="submit" className="btn btn-sm btn-primary" style={{ gap: 6 }}>
-                  <Plus size={14} /> Buat Media Tenant
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

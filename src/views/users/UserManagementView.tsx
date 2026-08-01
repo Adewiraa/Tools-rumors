@@ -845,22 +845,6 @@ export default function UserManagementView() {
                   </select>
                 </div>
               </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Media Tenant Workspace</label>
-                <select
-                  className="form-select"
-                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
-                  value={formData.tenantId}
-                  onChange={e => setFormData({ ...formData, tenantId: e.target.value })}
-                >
-                  {mediaTenants.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.handle})
-                    </option>
-                  ))}
-                </select>
-              </div>
             </form>
 
             {/* Modal Footer */}
