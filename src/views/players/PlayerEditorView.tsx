@@ -163,7 +163,7 @@ export default function PlayerEditorView({ playerId, onClose }: { playerId: stri
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
+      <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16, paddingRight: 40 }}>
         <div className="flex align-center gap-12">
           <button type="button" className="btn btn-sm btn-secondary" onClick={goToPlayersList}><ArrowLeft size={16} /> Kembali</button>
           <div>
