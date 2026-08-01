@@ -70,10 +70,14 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
     }
   }, [selectedHomeClub]);
 
-  const homeSquad = players.filter(p => p.clubId === selectedHomeClub);
-  const awaySquad = players.filter(p => p.clubId === selectedAwayClub);
   const homeClub = clubs.find(c => c.id === selectedHomeClub);
   const awayClub = clubs.find(c => c.id === selectedAwayClub);
+  const homeSquad = homeClub?.isNationalTeam
+    ? players.filter(p => p.nationality.toLowerCase() === homeClub.name.toLowerCase())
+    : players.filter(p => p.clubId === selectedHomeClub);
+  const awaySquad = awayClub?.isNationalTeam
+    ? players.filter(p => p.nationality.toLowerCase() === awayClub.name.toLowerCase())
+    : players.filter(p => p.clubId === selectedAwayClub);
   const selectedCompetition = competitions.find(c => c.name === (existingMatch?.competition || selectedCompetitionName));
   const lineupRegulation = {
     foreignRegulationFree: selectedCompetition?.foreignRegulationFree ?? DEFAULT_LINEUP_REGULATION.foreignRegulationFree,
@@ -468,26 +472,37 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
           onClick={() => pickPlayer(player.id, club, squad, starters, setStarters, subs, setSubs)}
           title={isUnavail ? player.availability : 'Klik untuk tambah ke lineup'}
           style={{
-            flex: 1, display: 'flex', alignItems: 'center', gap: 6,
-            padding: '6px 10px', borderRadius: 8, border: border,
+            flex: 1, display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 10px', borderRadius: 8, border: border,
             cursor: 'pointer', textAlign: 'left',
             background: bg, color: 'var(--neutral-800)',
-            fontSize: 12, fontWeight: isForeign ? 600 : 400,
             opacity: isUnavail ? 0.55 : 1,
             transition: 'background 0.1s, opacity 0.1s',
+            minWidth: 0,
           }}>
+          <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--neutral-200)', display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 'bold', flexShrink: 0 }}>
+            {player.displayName[0]}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 10, color: 'var(--neutral-500)', fontWeight: 700 }}>#{player.shirtNumber}</span>
+              <span style={{ fontWeight: 600, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.displayName}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--neutral-500)' }}>
+              <span>{posLabel[player.position] || 'MF'}</span>
+              <span>•</span>
+              <span>{player.age} thn</span>
+              {club?.isNationalTeam && (
+                <>
+                  <span>•</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{player.clubName}</span>
+                </>
+              )}
+            </div>
+          </div>
           {renderFlag(player)}
-          <span style={{ fontSize: 10, minWidth: 20, color: 'var(--neutral-500)', fontWeight: 700, flexShrink: 0 }}>
-            #{player.shirtNumber}
-          </span>
-          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {player.displayName}
-          </span>
-          <span style={{ fontSize: 9, color: 'var(--neutral-400)', flexShrink: 0, letterSpacing: 0.3 }}>
-            {posLabel[player.position] || 'MF'}
-          </span>
           {isUnavail && (
-            <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 800, flexShrink: 0 }}>
+            <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 800, flexShrink: 0, marginLeft: 4 }}>
               {player.availability === 'injured' ? 'CED' : 'SUS'}
             </span>
           )}

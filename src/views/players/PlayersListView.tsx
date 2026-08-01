@@ -157,6 +157,7 @@ export default function PlayersListView() {
   const [isSearchingApiClubs, setIsSearchingApiClubs] = useState(false);
   const [isLoadingSquad, setIsLoadingSquad] = useState(false);
   const [addingApiPlayerId, setAddingApiPlayerId] = useState<number | null>(null);
+  const [apiSquadSearchTerm, setApiSquadSearchTerm] = useState('');
 
   const filteredPlayers = players.filter(player => {
     const search = playerSearchTerm.trim().toLowerCase();
@@ -211,6 +212,7 @@ export default function PlayersListView() {
 
     const matchedClub = findMatchingLocalClub(candidate, clubs);
     setSelectedApiTeam(candidate);
+    setApiSquadSearchTerm('');
     setSelectedMasterClubId(matchedClub?.id || (selectedClubId !== 'Semua' ? selectedClubId : ''));
     setIsLoadingSquad(true);
     try {
@@ -397,32 +399,58 @@ export default function PlayersListView() {
               {isLoadingSquad ? (
                 <div className="text-muted" style={{ padding: '18px 0', fontSize: 13 }}>Mengambil data pemain klub...</div>
               ) : apiSquadPlayers.length > 0 ? (
-                <div className="api-import-squad-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10 }}>
-                  {apiSquadPlayers.map(apiPlayer => (
-                    <div key={`${apiPlayer.id}-${apiPlayer.name}`} style={{ border: '1px solid var(--neutral-200)', borderRadius: 8, padding: 12, display: 'grid', gap: 10, background: 'var(--white)' }}>
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0 }}>
-                        {apiPlayer.photo ? (
-                          <img src={apiPlayer.photo} alt="" style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }} />
-                        ) : (
-                          <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--neutral-100)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>-</div>
-                        )}
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div className="semibold" style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apiPlayer.name}</div>
-                          <div className="text-muted" style={{ fontSize: 11 }}>#{apiPlayer.number || 0} - {mapApiPosition(apiPlayer.position)} - {apiPlayer.age || '-'} tahun</div>
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 12, alignItems: 'center', marginTop: 4 }}>
+                    <label className="search-input-wrapper" style={{ maxWidth: 'none', margin: 0 }}>
+                      <Search className="search-icon" size={16} />
+                      <input
+                        className="form-input"
+                        placeholder="Filter nama, nomor, atau posisi pemain skuad API..."
+                        value={apiSquadSearchTerm}
+                        onChange={event => setApiSquadSearchTerm(event.target.value)}
+                      />
+                    </label>
+                    {apiSquadSearchTerm && (
+                      <button className="btn btn-sm btn-secondary" onClick={() => setApiSquadSearchTerm('')}>Reset</button>
+                    )}
+                  </div>
+                  <div className="api-import-squad-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10 }}>
+                    {apiSquadPlayers
+                      .filter(apiPlayer => {
+                        const q = apiSquadSearchTerm.trim().toLowerCase();
+                        if (!q) return true;
+                        return (
+                          (apiPlayer.name || '').toLowerCase().includes(q) ||
+                          String(apiPlayer.number || '').includes(q) ||
+                          (apiPlayer.position || '').toLowerCase().includes(q)
+                        );
+                      })
+                      .map(apiPlayer => (
+                        <div key={`${apiPlayer.id}-${apiPlayer.name}`} style={{ border: '1px solid var(--neutral-200)', borderRadius: 8, padding: 12, display: 'grid', gap: 10, background: 'var(--white)' }}>
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0 }}>
+                            {apiPlayer.photo ? (
+                              <img src={apiPlayer.photo} alt="" style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--neutral-100)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>-</div>
+                            )}
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div className="semibold" style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{apiPlayer.name}</div>
+                              <div className="text-muted" style={{ fontSize: 11 }}>#{apiPlayer.number || 0} - {mapApiPosition(apiPlayer.position)} - {apiPlayer.age || '-'} tahun</div>
+                            </div>
+                          </div>
+                          <LoadingButton
+                            className="btn btn-sm btn-primary"
+                            onClick={() => addApiPlayerToMaster(apiPlayer)}
+                            loading={addingApiPlayerId === apiPlayer.id}
+                            loadingLabel="Menambahkan..."
+                            disabled={!selectedMasterClubId}
+                          >
+                            <Plus size={13} /> Tambahkan ke Master Pemain
+                          </LoadingButton>
                         </div>
-                      </div>
-                      <LoadingButton
-                        className="btn btn-sm btn-primary"
-                        onClick={() => addApiPlayerToMaster(apiPlayer)}
-                        loading={addingApiPlayerId === apiPlayer.id}
-                        loadingLabel="Menambahkan..."
-                        disabled={!selectedMasterClubId}
-                      >
-                        <Plus size={13} /> Tambahkan ke Master Pemain
-                      </LoadingButton>
-                    </div>
-                  ))}
-                </div>
+                      ))}
+                  </div>
+                </>
               ) : (
                 <div className="text-muted" style={{ padding: '18px 0', fontSize: 13 }}>Belum ada data pemain dari klub API ini.</div>
               )}

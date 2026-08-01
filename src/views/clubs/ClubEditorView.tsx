@@ -325,16 +325,18 @@ export default function ClubEditorView({ clubId, isNationalTeam = false, onClose
           <div>
             <label className="form-label">{isNationalTeam ? 'Partisipasi Turnamen' : 'Kompetisi'}</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {competitions.map(comp => (
-                <label key={comp.id} className="flex align-center gap-8" style={{ fontSize: 13 }}>
-                  <input
-                    type="checkbox"
-                    checked={(club.competitionIds || []).includes(comp.id)}
-                    onChange={() => updateClub('competitionIds', (club.competitionIds || []).includes(comp.id) ? (club.competitionIds || []).filter(id => id !== comp.id) : [...(club.competitionIds || []), comp.id])}
-                  />
-                  {comp.name}
-                </label>
-              ))}
+              {competitions
+                .filter(comp => isNationalTeam ? Boolean(comp.isInternational) : !comp.isInternational)
+                .map(comp => (
+                  <label key={comp.id} className="flex align-center gap-8" style={{ fontSize: 13 }}>
+                    <input
+                      type="checkbox"
+                      checked={(club.competitionIds || []).includes(comp.id)}
+                      onChange={() => updateClub('competitionIds', (club.competitionIds || []).includes(comp.id) ? (club.competitionIds || []).filter(id => id !== comp.id) : [...(club.competitionIds || []), comp.id])}
+                    />
+                    {comp.name}
+                  </label>
+                ))}
             </div>
           </div>
         </aside>
