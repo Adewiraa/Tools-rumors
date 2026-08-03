@@ -609,7 +609,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
               </button>
 
               {notificationsOpen && (
-                <div style={{ position: 'absolute', right: 0, top: 40, width: 380, maxWidth: 'calc(100vw - 24px)', backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 120, padding: 16 }}>
+                <div style={{ position: 'fixed', right: 12, top: 64, width: 360, maxWidth: 'calc(100vw - 24px)', backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 200, padding: 16 }}>
                   <div className="flex justify-between align-center" style={{ marginBottom: 12, borderBottom: '1px solid var(--neutral-100)', paddingBottom: 8 }}>
                     <div>
                       <span className="semibold" style={{ fontSize: 14 }}>Notifikasi Jadwal</span>
