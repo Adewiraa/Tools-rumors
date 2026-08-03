@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { Player, calculatePlayerCompleteness } from '@/lib/mockData';
 import { countriesList } from '@/lib/countriesData';
-import { ArrowLeft, CheckCircle, Save, Search } from 'lucide-react';
+import { CheckCircle, Save, Search } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
