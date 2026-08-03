@@ -136,17 +136,11 @@ export default function PlayerEditorView({ playerId, onClose }: { playerId: stri
 
       {/* ── HEADER mobile-friendly ── */}
       <div style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 14, paddingRight: 40 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <button type="button" className="btn btn-sm btn-secondary" onClick={onClose}>
-            <ArrowLeft size={16} />
-            <span style={{ marginLeft: 4 }}>Kembali</span>
-          </button>
-          <div style={{ minWidth: 0 }}>
-            <h1 className="page-title" style={{ margin: 0, fontSize: 18, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {isNew ? 'Tambah Pemain' : 'Edit Pemain'}
-            </h1>
-            <div className="text-muted" style={{ fontSize: 11 }}>Kelengkapan: {liveCompleteness}%</div>
-          </div>
+        <div style={{ marginBottom: 10 }}>
+          <h1 className="page-title" style={{ margin: 0, fontSize: 18 }}>
+            {isNew ? 'Tambah Pemain' : 'Edit Pemain'}
+          </h1>
+          <div className="text-muted" style={{ fontSize: 11 }}>Kelengkapan: {liveCompleteness}%</div>
         </div>
         <LoadingButton
           className="btn btn-md btn-primary"
