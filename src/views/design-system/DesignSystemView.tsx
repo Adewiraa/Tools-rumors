@@ -487,10 +487,10 @@ export default function DesignSystemView() {
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-bold text-neutral-700 uppercase">Multi-Select / Tag Input Mockup</label>
                     <div className="flex flex-wrap items-center gap-1.5 p-1.5 border border-neutral-300 rounded-md bg-white min-h-[36px]">
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge className="gap-1 badge-draft">
                         ⚽ Persib <X size={10} className="cursor-pointer" />
                       </Badge>
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge className="gap-1 badge-draft">
                         ⚽ Bali United <X size={10} className="cursor-pointer" />
                       </Badge>
                       <input type="text" placeholder="Tambah..." className="flex-1 min-w-[60px] text-xs focus:outline-none px-1" />
