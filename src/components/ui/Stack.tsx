@@ -49,7 +49,7 @@ interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Grid — CSS grid layout dengan kolom yang responsif.
+ * Grid — CSS grid layout.
  * @example <Grid cols={2} gap={16}><Input /><Select /></Grid>
  */
 export const Grid: React.FC<GridProps> = ({ cols = 2, gap = 16, className, style, children, ...props }) => (
@@ -63,10 +63,14 @@ export const Grid: React.FC<GridProps> = ({ cols = 2, gap = 16, className, style
 );
 
 // ── Divider ───────────────────────────────────────────────────────────────────
-export const Divider: React.FC<{ label?: string }> = ({ label }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0' }}>
+export const Divider: React.FC<{ label?: string; className?: string }> = ({ label, className }) => (
+  <div className={cn('flex items-center gap-3 my-2', className)}>
     <div style={{ flex: 1, height: 1, background: 'var(--neutral-200)' }} />
-    {label && <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{label}</span>}
+    {label && (
+      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+        {label}
+      </span>
+    )}
     {label && <div style={{ flex: 1, height: 1, background: 'var(--neutral-200)' }} />}
   </div>
 );
@@ -77,13 +81,14 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  className?: string;
 }
 
 /**
  * EmptyState — tampilan kosong yang konsisten.
  */
-export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description, action }) => (
-  <div style={{ textAlign: 'center', padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description, action, className }) => (
+  <div className={cn('text-center', className)} style={{ padding: '48px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
     {icon && <div style={{ color: 'var(--neutral-400)', marginBottom: 4 }}>{icon}</div>}
     <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--neutral-800)' }}>{title}</h3>
     {description && <p style={{ fontSize: 13, color: 'var(--neutral-500)', margin: 0, maxWidth: 360, lineHeight: 1.5 }}>{description}</p>}
@@ -97,13 +102,14 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  className?: string;
 }
 
 /**
  * PageHeader — header halaman yang konsisten di semua view.
  */
-export const PageHeader: React.FC<PageHeaderProps> = ({ breadcrumb, title, description, action }) => (
-  <div className="page-header">
+export const PageHeader: React.FC<PageHeaderProps> = ({ breadcrumb, title, description, action, className }) => (
+  <div className={cn('page-header', className)}>
     <div>
       {breadcrumb && <div className="breadcrumb">{breadcrumb}</div>}
       <h1 className="page-title">{title}</h1>
