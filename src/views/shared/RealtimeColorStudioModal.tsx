@@ -13,6 +13,7 @@ import {
   generateShades,
 } from '@/logic/colorGenerator';
 import { useApp } from '@/logic/AppContext';
+import { Badge, Button, Card } from '@/components/ui';
 
 interface RealtimeColorStudioModalProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(5, 8, 15, 0.75)', backdropFilter: 'blur(8px)' }}>
-      <div className="card" style={{ width: '100%', maxWidth: 680, maxHeight: '92vh', overflowY: 'auto', padding: 24, borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', border: '1px solid var(--neutral-200)', background: 'var(--white)', color: 'var(--neutral-950)' }}>
+      <Card style={{ width: '100%', maxWidth: 680, maxHeight: '92vh', overflowY: 'auto', padding: 24, borderRadius: 16, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', border: '1px solid var(--neutral-200)', background: 'var(--white)', color: 'var(--neutral-950)' }}>
         
         {/* Modal Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
@@ -72,9 +73,9 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
               <p style={{ margin: 0, fontSize: 12, color: 'var(--neutral-500)', marginTop: 2 }}>Pilihan Tema Media Sepakbola Terkurasi & Kustomisasi Warna Kalem</p>
             </div>
           </div>
-          <button onClick={onClose} className="btn btn-sm btn-secondary" style={{ padding: 6, borderRadius: '50%' }}>
+          <Button size="sm" variant="secondary" onClick={onClose} style={{ padding: 6, borderRadius: '50%' }}>
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
         {/* Live Mini App UI Preview */}
@@ -83,8 +84,9 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.85 }}>
               ✨ Pratinjau Tampilan Realtime:
             </div>
-            <button
-              className="btn btn-sm btn-secondary"
+            <Button
+              size="sm"
+              variant="secondary"
               style={{ fontSize: 10, padding: '2px 8px', height: 24, gap: 4 }}
               onClick={() => {
                 const code = exportCSSVariables(draftTheme);
@@ -94,7 +96,7 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
               title="Salin Kode Warna CSS Variable"
             >
               <Copy size={11} /> Copy CSS Code
-            </button>
+            </Button>
           </div>
 
           {/* Mini App Frame */}
@@ -128,20 +130,22 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
 
         {/* Modal Navigation Tabs */}
         <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--neutral-200)', paddingBottom: 12, marginBottom: 20 }}>
-          <button
-            className={`btn btn-sm ${activeTab === 'presets' ? 'btn-primary' : 'btn-secondary'}`}
+          <Button
+            size="sm"
+            variant={activeTab === 'presets' ? 'primary' : 'secondary'}
             onClick={() => setActiveTab('presets')}
             style={{ fontSize: 12, gap: 6 }}
           >
             <Layers size={14} /> Preset Tema Terkurasi ({PRESET_THEMES.length})
-          </button>
-          <button
-            className={`btn btn-sm ${activeTab === 'pickers' ? 'btn-primary' : 'btn-secondary'}`}
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'pickers' ? 'primary' : 'secondary'}
             onClick={() => setActiveTab('pickers')}
             style={{ fontSize: 12, gap: 6 }}
           >
             <Sliders size={14} /> Kustomisasi Warna Manual
-          </button>
+          </Button>
         </div>
 
         {/* Tab 1: Curated Presets Grid */}
@@ -237,9 +241,9 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
                     <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--neutral-900)' }}>♿ WCAG 2.1 Contrast Checker</div>
                     <div style={{ fontSize: 11, color: 'var(--neutral-600)', marginTop: 1 }}>Keterbacaan Teks Utama vs Latar Belakang Page ({draftTheme.textPrimary} / {draftTheme.background})</div>
                   </div>
-                  <span className={`badge ${rating.pass ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: 11, fontWeight: 800 }}>
+                  <Badge status={rating.pass ? 'success' : 'danger'} style={{ fontSize: 11, fontWeight: 800 }}>
                     {ratio}:1 — {rating.text}
-                  </span>
+                  </Badge>
                 </div>
               );
             })()}
@@ -267,21 +271,21 @@ export default function RealtimeColorStudioModal({ isOpen, onClose }: RealtimeCo
 
         {/* Footer Actions */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--neutral-200)', paddingTop: 18, marginTop: 20 }}>
-          <button className="btn btn-sm btn-secondary" onClick={handleReset} style={{ gap: 6 }}>
+          <Button size="sm" variant="secondary" onClick={handleReset} style={{ gap: 6 }}>
             <RotateCcw size={14} /> Reset Default (Quiet Stadium Sage)
-          </button>
+          </Button>
 
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-sm btn-secondary" onClick={onClose}>
+            <Button size="sm" variant="secondary" onClick={onClose}>
               Batal
-            </button>
-            <button className="btn btn-sm btn-primary" onClick={handleSaveTheme} style={{ gap: 6 }}>
+            </Button>
+            <Button size="sm" onClick={handleSaveTheme} style={{ gap: 6 }}>
               <Check size={14} /> Simpan Skema Warna
-            </button>
+            </Button>
           </div>
         </div>
 
-      </div>
+      </Card>
     </div>
   );
 }

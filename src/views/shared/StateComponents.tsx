@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { Button, Card } from '@/components/ui';
 
 export const DatabaseIcon = ({ size }: { size: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -14,18 +15,18 @@ export const SkeletonLoading = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ height: 40, width: 300, backgroundColor: 'var(--neutral-200)', borderRadius: 4 }}></div>
       <div className="grid-12">
-        <div className="card" style={{ gridColumn: 'span 4', height: 120, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <Card style={{ gridColumn: 'span 4', height: 120, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ height: 16, width: '40%', backgroundColor: 'var(--neutral-200)' }}></div>
           <div style={{ height: 32, width: '80%', backgroundColor: 'var(--neutral-200)' }}></div>
-        </div>
-        <div className="card" style={{ gridColumn: 'span 4', height: 120, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        </Card>
+        <Card style={{ gridColumn: 'span 4', height: 120, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ height: 16, width: '40%', backgroundColor: 'var(--neutral-200)' }}></div>
           <div style={{ height: 32, width: '80%', backgroundColor: 'var(--neutral-200)' }}></div>
-        </div>
-        <div className="card" style={{ gridColumn: 'span 4', height: 120, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        </Card>
+        <Card style={{ gridColumn: 'span 4', height: 120, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ height: 16, width: '40%', backgroundColor: 'var(--neutral-200)' }}></div>
           <div style={{ height: 32, width: '80%', backgroundColor: 'var(--neutral-200)' }}></div>
-        </div>
+        </Card>
       </div>
       <div className="table-wrapper" style={{ height: 300, backgroundColor: 'var(--neutral-100)' }}>
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -47,9 +48,9 @@ export const ErrorState = ({ onRetry }: { onRetry: () => void }) => {
       <p style={{ color: 'var(--neutral-700)', maxWidth: 400, marginBottom: 24 }}>
         Terjadi masalah koneksi ke server atau database Supabase. Silakan periksa jaringan Anda atau coba lagi beberapa saat.
       </p>
-      <button className="btn btn-md btn-primary" onClick={onRetry}>
+      <Button onClick={onRetry}>
         Coba Lagi
-      </button>
+      </Button>
     </div>
   );
 };

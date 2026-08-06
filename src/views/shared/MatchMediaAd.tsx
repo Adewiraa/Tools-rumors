@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ImagePlus, Megaphone, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui';
 import type { AppSettings, MatchMediaAdItem, MatchMediaSettings } from '@/logic/utils';
 import { DEFAULT_MATCH_MEDIA_SETTINGS, getMatchMediaAds, hasMatchMediaAds } from '@/logic/utils';
 
@@ -151,13 +152,15 @@ export function MatchMediaControls({
                   <option value="cover">Isi area</option>
                 </select>
               </div>
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-secondary match-media-remove-btn"
+                size="sm"
+                variant="secondary"
+                className="match-media-remove-btn"
                 onClick={() => updateAds(value.ads.filter(item => item.id !== ad.id))}
               >
                 <Trash2 size={13} /> Hapus
-              </button>
+              </Button>
             </div>
           ))}
         </div>

@@ -6,6 +6,7 @@ import { Eye, EyeOff, LogIn, Shield, AlertCircle } from 'lucide-react';
 import { saveSession, isLoggedIn } from '@/logic/authSession';
 import type { AppUser } from '@/lib/types/auth';
 import { DEFAULT_THEME_PALETTE, applyThemeToDocument } from '@/logic/colorGenerator';
+import { Button } from '@/components/ui';
 
 export default function LoginView() {
   const router = useRouter();
@@ -264,10 +265,12 @@ export default function LoginView() {
           </div>
 
           {/* Submit Button */}
-          <button
+          <Button
             type="submit"
+            size="lg"
             disabled={isLoading || !username.trim() || !password.trim()}
-            className="btn btn-primary btn-lg"
+            loading={isLoading}
+            loadingLabel="Memverifikasi..."
             style={{
               width: '100%',
               height: 46,
@@ -278,24 +281,9 @@ export default function LoginView() {
               opacity: !username.trim() || !password.trim() ? 0.5 : 1,
             }}
           >
-            {isLoading ? (
-              <>
-                <div style={{
-                  width: 18, height: 18, borderRadius: '50%',
-                  border: '2px solid rgba(255,255,255,0.3)',
-                  borderTopColor: 'white',
-                  animation: 'spin 0.75s linear infinite',
-                  flexShrink: 0,
-                }} />
-                Memverifikasi...
-              </>
-            ) : (
-              <>
-                <LogIn size={18} />
-                Masuk
-              </>
-            )}
-          </button>
+            <LogIn size={18} />
+            Masuk
+          </Button>
         </form>
 
       </div>
