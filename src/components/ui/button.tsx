@@ -1,44 +1,64 @@
-import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { cn, type Size, type Variant } from '@/lib/ui';
+import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  asChild?: boolean;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?: Variant;
+  size?: Size;
+  loading?: boolean;
+  loadingLabel?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  fullWidth?: boolean;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
+const variantClass: Record<Variant, string> = {
+  primary:   'btn btn-primary',
+  secondary: 'btn btn-secondary',
+  danger:    'btn btn-danger',
+  ghost:     'btn btn-ghost',
+  outline:   'btn btn-outline',
+};
 
-    const baseStyle = 'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer';
+const sizeClass: Record<Size, string> = {
+  xs: 'btn-xs',
+  sm: 'btn-sm',
+  md: 'btn-md',
+  lg: 'btn-lg',
+};
 
-    const variants = {
-      default: 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm',
-      destructive: 'bg-danger-600 text-white hover:bg-red-700 shadow-sm',
-      outline: 'border border-neutral-300 bg-transparent text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900',
-      secondary: 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300 shadow-sm',
-      ghost: 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900',
-      link: 'text-primary-600 underline-offset-4 hover:underline',
-    };
-
-    const sizes = {
-      default: 'h-9 px-4 py-2',
-      sm: 'h-8 rounded-md px-3 text-xs',
-      lg: 'h-10 rounded-md px-8',
-      icon: 'h-9 w-9',
-    };
-
+/**
+ * Button — komponen tombol standar Media Tools.
+ *
+ * @example
+ * <Button variant="primary" size="md" onClick={handleSave}>Simpan</Button>
+ * <Button variant="secondary" loading={isSaving} loadingLabel="Menyimpan...">Simpan</Button>
+ * <Button variant="danger" size="sm" leftIcon={<Trash2 size={14} />}>Hapus</Button>
+ */
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = 'primary', size = 'md', loading, loadingLabel, leftIcon, rightIcon, fullWidth, className, children, disabled, ...props }, ref) => {
+    const isDisabled = disabled || loading;
     return (
-      <Comp
-        className={cn(baseStyle, variants[variant], sizes[size], className)}
+      <button
         ref={ref}
+        className={cn(variantClass[variant], sizeClass[size], fullWidth && 'w-full', className)}
+        disabled={isDisabled}
         {...props}
-      />
+      >
+        {loading ? (
+          <>
+            <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+            {loadingLabel || children}
+          </>
+        ) : (
+          <>
+            {leftIcon}
+            {children}
+            {rightIcon}
+          </>
+        )}
+      </button>
     );
   }
 );
 Button.displayName = 'Button';
-
-export { Button };
