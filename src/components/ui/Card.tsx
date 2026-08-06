@@ -17,13 +17,23 @@ export const Card: React.FC<CardProps> = ({ variant = 'default', padding, classN
 );
 
 export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...props }) => (
-  <div className={cn('card-header', className)} {...props}>{children}</div>
+  <div className={cn('card-header flex flex-col gap-1 pb-4', className)} {...props}>{children}</div>
 );
 
 export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ className, children, ...props }) => (
-  <h3 className={cn('card-title', className)} style={{ fontSize: 16, fontWeight: 700, margin: 0 }} {...props}>{children}</h3>
+  <h3 className={cn('card-title font-bold leading-snug', className)} style={{ fontSize: 16, margin: 0 }} {...props}>{children}</h3>
 );
 
-export const CardBody: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...props }) => (
+export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({ className, children, ...props }) => (
+  <p className={cn('text-sm text-neutral-500', className)} style={{ margin: 0 }} {...props}>{children}</p>
+);
+
+export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...props }) => (
   <div className={cn('card-body', className)} {...props}>{children}</div>
+);
+
+export const CardBody = CardContent;
+
+export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...props }) => (
+  <div className={cn('flex items-center pt-4 border-t border-neutral-100 mt-4 gap-2', className)} {...props}>{children}</div>
 );
