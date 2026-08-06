@@ -22,6 +22,7 @@ import {
   hasHalfTimeScoreValues
 } from '@/logic/utils';
 import { Rumor } from '@/lib/mockData';
+import { Badge, Button, Card } from '@/components/ui';
 
 export default function DashboardView() {
   const router = useRouter();
@@ -97,7 +98,7 @@ export default function DashboardView() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Top Header & Operational Banner */}
-      <div className="card" style={{
+      <Card style={{
         background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
         color: 'white',
         padding: '24px 28px',
@@ -141,33 +142,30 @@ export default function DashboardView() {
 
         {/* Quick Action Button Hub */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-md"
+          <Button
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.2)' }}
             onClick={() => router.push('/schedule')}
           >
             <Calendar size={15} /> Kelola Jadwal
-          </button>
-          <button
-            className="btn btn-md"
+          </Button>
+          <Button
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.2)' }}
             onClick={() => router.push('/lineups')}
           >
             <Users size={15} /> Cek Lineup
-          </button>
-          <button
-            className="btn btn-md btn-primary"
+          </Button>
+          <Button
             onClick={() => router.push('/rumors')}
           >
             <Flame size={15} /> Rumor Transfer ({draftRumorsCount} Pending)
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Row 1 — Executive Module KPIs */}
       <div className="grid-12" style={{ gap: 16 }}>
         {/* KPI 1: Jadwal */}
-        <div className="card" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
+        <Card style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
           <div>
             <div className="flex justify-between align-center" style={{ marginBottom: 8 }}>
               <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -188,10 +186,10 @@ export default function DashboardView() {
           >
             Kelola Jadwal <ChevronRight size={13} />
           </button>
-        </div>
+        </Card>
 
         {/* KPI 2: Lineup */}
-        <div className="card" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
+        <Card style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
           <div>
             <div className="flex justify-between align-center" style={{ marginBottom: 8 }}>
               <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -214,10 +212,10 @@ export default function DashboardView() {
           >
             Lengkapi Lineup <ChevronRight size={13} />
           </button>
-        </div>
+        </Card>
 
         {/* KPI 3: Hasil Pertandingan */}
-        <div className="card" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
+        <Card style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
           <div>
             <div className="flex justify-between align-center" style={{ marginBottom: 8 }}>
               <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -240,10 +238,10 @@ export default function DashboardView() {
           >
             Input / Review Skor <ChevronRight size={13} />
           </button>
-        </div>
+        </Card>
 
         {/* KPI 4: Rumor Transfer */}
-        <div className="card" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
+        <Card style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 20 }}>
           <div>
             <div className="flex justify-between align-center" style={{ marginBottom: 8 }}>
               <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -266,40 +264,43 @@ export default function DashboardView() {
           >
             Kelola Rumor <ChevronRight size={13} />
           </button>
-        </div>
+        </Card>
       </div>
 
       {/* Row 2 — Operational Hub: Modul Pertandingan (Jadwal, Lineup, Hasil) */}
       <div className="grid-12" style={{ gap: 20 }}>
         {/* Main Matches Operational Center */}
-        <div className="card" style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column' }}>
+        <Card style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column' }}>
           <div className="flex justify-between align-center" style={{ marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
             <div>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Monitor Pertandingan & Lineup</h3>
               <p style={{ fontSize: 12, color: 'var(--neutral-500)', margin: '2px 0 0 0' }}>Jadwal, status formasi pemain, dan skor pertandingan.</p>
             </div>
             <div className="flex gap-8">
-              <button
-                className={`btn btn-sm ${matchFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+              <Button
+                size="sm"
+                variant={matchFilter === 'all' ? 'primary' : 'secondary'}
                 style={{ fontSize: 11, padding: '4px 10px' }}
                 onClick={() => setMatchFilter('all')}
               >
                 Semua ({matches.length})
-              </button>
-              <button
-                className={`btn btn-sm ${matchFilter === 'needs_action' ? 'btn-primary' : 'btn-secondary'}`}
+              </Button>
+              <Button
+                size="sm"
+                variant={matchFilter === 'needs_action' ? 'primary' : 'secondary'}
                 style={{ fontSize: 11, padding: '4px 10px' }}
                 onClick={() => setMatchFilter('needs_action')}
               >
                 Butuh Akses ({matches.filter(m => getEffectiveLineupStatus(m) !== 'Complete' || m.publicationStatus !== 'Published').length})
-              </button>
-              <button
-                className={`btn btn-sm ${matchFilter === 'finished' ? 'btn-primary' : 'btn-secondary'}`}
+              </Button>
+              <Button
+                size="sm"
+                variant={matchFilter === 'finished' ? 'primary' : 'secondary'}
                 style={{ fontSize: 11, padding: '4px 10px' }}
                 onClick={() => setMatchFilter('finished')}
               >
                 Selesai ({matches.filter(m => getEffectiveMatchStatus(m) === 'Finished').length})
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -341,12 +342,12 @@ export default function DashboardView() {
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span className={`badge ${effectiveStatus === 'Finished' ? 'badge-success' : effectiveStatus === 'Live' ? 'badge-danger' : 'badge-info'}`} style={{ fontSize: 10 }}>
+                        <Badge status={effectiveStatus === 'Finished' ? 'success' : effectiveStatus === 'Live' ? 'danger' : 'info'} style={{ fontSize: 10 }}>
                           {effectiveStatus === 'Finished' ? 'Selesai' : effectiveStatus === 'Live' ? '● LIVE' : 'Scheduled'}
-                        </span>
-                        <span className={`badge ${lineupStatus === 'Complete' ? 'badge-success' : lineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft'}`} style={{ fontSize: 10 }}>
+                        </Badge>
+                        <Badge status={lineupStatus === 'Complete' ? 'success' : lineupStatus === 'Needs Review' ? 'warning' : 'draft'} style={{ fontSize: 10 }}>
                           Lineup: {lineupStatus === 'Complete' ? 'Siap' : lineupStatus === 'Needs Review' ? 'Review' : 'Belum'}
-                        </span>
+                        </Badge>
                       </div>
                     </div>
 
@@ -419,22 +420,23 @@ export default function DashboardView() {
                       </div>
 
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button
-                          className="btn btn-sm btn-secondary"
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           style={{ padding: '4px 10px', fontSize: 11 }}
                           title="Kelola Lineup Pertandingan"
                           onClick={() => router.push(`/lineups?edit=${match.id}`)}
                         >
                           Lineup
-                        </button>
-                        <button
-                          className="btn btn-sm btn-primary"
+                        </Button>
+                        <Button
+                          size="sm"
                           style={{ padding: '4px 10px', fontSize: 11 }}
                           title="Input Skor & Timeline Hasil"
                           onClick={() => router.push(`/results?edit=${match.id}`)}
                         >
                           Hasil
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -442,22 +444,23 @@ export default function DashboardView() {
               })
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Modul Rumor Transfer Radar */}
-        <div className="card" style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column' }}>
+        <Card style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column' }}>
           <div className="flex justify-between align-center" style={{ marginBottom: 16 }}>
             <div>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Radar Rumor & Transfer Hot</h3>
               <p style={{ fontSize: 12, color: 'var(--neutral-500)', margin: '2px 0 0 0' }}>Update transfer terkini & status verifikasi.</p>
             </div>
-            <button
-              className="btn btn-sm btn-secondary"
+            <Button
+              size="sm"
+              variant="secondary"
               style={{ fontSize: 11, padding: '4px 10px' }}
               onClick={() => router.push('/rumors')}
             >
               Lihat Semua
-            </button>
+            </Button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
@@ -527,25 +530,26 @@ export default function DashboardView() {
                       </div>
                     </div>
 
-                    <button
-                      className="btn btn-sm btn-secondary"
+                    <Button
+                      size="sm"
+                      variant="secondary"
                       style={{ fontSize: 11, padding: '4px 10px', flexShrink: 0 }}
                       onClick={() => router.push(`/rumors?edit=${rumor.id}`)}
                     >
                       Detail ➔
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Row 3 — Quality Warnings & System Activity Log */}
       <div className="grid-12" style={{ gap: 20 }}>
         {/* Peringatan Kualitas Data */}
-        <div className="card" style={{ gridColumn: 'span 5' }}>
+        <Card style={{ gridColumn: 'span 5' }}>
           <div className="flex align-center gap-8" style={{ marginBottom: 16 }}>
             <ShieldCheck size={18} color="var(--primary-600)" />
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Audit Kualitas Data</h3>
@@ -673,10 +677,10 @@ export default function DashboardView() {
               </span>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Audit Log Aktivitas */}
-        <div className="card" style={{ gridColumn: 'span 7' }}>
+        <Card style={{ gridColumn: 'span 7' }}>
           <div className="flex justify-between align-center" style={{ marginBottom: 16 }}>
             <div className="flex align-center gap-8">
               <Activity size={18} color="var(--primary-600)" />
@@ -698,13 +702,13 @@ export default function DashboardView() {
                   <span className="text-muted" style={{ fontSize: 10 }}>{log.timestamp}</span>
                 </div>
                 <div style={{ color: 'var(--neutral-700)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span className="badge badge-info" style={{ fontSize: 9, padding: '1px 6px' }}>{log.module}</span>
+                  <Badge status="info" style={{ fontSize: 9, padding: '1px 6px' }}>{log.module}</Badge>
                   <span>{log.details}</span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

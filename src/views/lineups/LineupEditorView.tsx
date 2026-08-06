@@ -23,6 +23,7 @@ import {
 } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
 import SearchableClubSelect from '@/views/shared/SearchableClubSelect';
+import { Button, Card } from '@/components/ui';
 
 interface AsingEntry { id: string; name: string; no: number; pos: string; }
 
@@ -745,10 +746,10 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
       {/* HEADER */}
       <div className="lineup-editor-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <button type="button" className="btn btn-sm btn-secondary" onClick={goToLineupsList} style={{ flexShrink: 0 }}>
+          <Button type="button" size="sm" variant="secondary" onClick={goToLineupsList} style={{ flexShrink: 0 }}>
             <ArrowLeft size={16} />
             <span className="hide-mobile"> Kembali</span>
-          </button>
+          </Button>
           <div style={{ minWidth: 0 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {isNew ? 'Buat Lineup' : `Edit: ${existingMatch?.homeClubName} vs ${existingMatch?.awayClubName}`}
@@ -762,7 +763,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-          <button className="btn btn-sm btn-secondary" onClick={() => setShowPreviewModal(true)}>Preview</button>
+          <Button size="sm" variant="secondary" onClick={() => setShowPreviewModal(true)}>Preview</Button>
           <LoadingButton className="btn btn-sm btn-secondary" onClick={() => handleSave(false)} loading={savingAction === 'draft'} loadingLabel="Menyimpan...">Draft</LoadingButton>
           <LoadingButton className="btn btn-sm btn-primary" onClick={() => handleSave(true)} loading={savingAction === 'publish'} loadingLabel="Menerbitkan...">
             <Upload size={13} /><span className="hide-mobile"> Terbitkan</span>
@@ -771,7 +772,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
       </div>
 
       {/* INFO BAR */}
-      <div className="card lineup-info-bar">
+      <Card className="lineup-info-bar">
         <div className="lineup-info-grid">
           <div>
             <label className="lineup-field-label">Kompetisi</label>
@@ -808,7 +809,7 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
             <input type="text" className="form-input" style={{ fontSize: 12 }} placeholder="Nama stadion..." value={venueName} onChange={e => setVenueName(e.target.value)} />
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* TEAM PANELS */}
       <div className="lineup-teams-grid">
@@ -829,21 +830,21 @@ export default function LineupEditorView({ matchId }: { matchId: string }) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
               {isPublishedLineup ? (
                 <>
-                  <button className="btn btn-md btn-primary" onClick={shareLineupStory} disabled={isExportingStory}>
+                  <Button onClick={shareLineupStory} disabled={isExportingStory}>
                     <Share2 size={14} /> Bagikan Story
-                  </button>
-                  <button className="btn btn-md btn-secondary" onClick={downloadLineupStory} disabled={isExportingStory}>
+                  </Button>
+                  <Button variant="secondary" onClick={downloadLineupStory} disabled={isExportingStory}>
                     <Download size={14} /> Unduh PNG
-                  </button>
+                  </Button>
                 </>
               ) : (
-                <button className="btn btn-md btn-secondary" disabled title="Publish lineup dulu untuk membuka share dan download story.">
+                <Button variant="secondary" disabled title="Publish lineup dulu untuk membuka share dan download story.">
                   <Lock size={14} /> Publish Dulu
-                </button>
+                </Button>
               )}
-              <button className="btn btn-md btn-secondary" onClick={() => setShowPreviewModal(false)}>
+              <Button variant="secondary" onClick={() => setShowPreviewModal(false)}>
                 <X size={14} /> Tutup
-              </button>
+              </Button>
             </div>
 
             <div id="lineup-story-card" style={{

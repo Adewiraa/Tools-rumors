@@ -6,6 +6,7 @@ import { useApp } from '@/logic/AppContext';
 import { Rumor } from '@/lib/mockData';
 import { ChevronRight, Download, Edit3, Eye, Image as ImageIcon, Plus, Share2, Trash2, X } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
+import { Button, Card } from '@/components/ui';
 
 export default function RumorsListView() {
   const router = useRouter();
@@ -235,29 +236,28 @@ export default function RumorsListView() {
           <p className="page-description">Pantau dan perbarui rumor transfer dari kabar awal sampai ada kepastian done deal.</p>
         </div>
         {hasPermission('Rumor', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={handleCreateNew}>
+          <Button onClick={handleCreateNew}>
             <Plus size={16} /> Tambah Rumor
-          </button>
+          </Button>
         )}
       </div>
 
-      <div className="card" style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+      <Card style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800 }}>{rumors.length}</div>
           <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>Rumor aktif untuk terus diperbarui</div>
         </div>
         <div style={{ border: '1px solid var(--neutral-300)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-          <button className={`btn btn-sm ${viewMode === 'board' ? 'btn-primary' : 'btn-secondary'}`} style={{ borderRadius: 0 }} onClick={() => setViewMode('board')}>Board View</button>
-          <button className={`btn btn-sm ${viewMode === 'table' ? 'btn-primary' : 'btn-secondary'}`} style={{ borderRadius: 0 }} onClick={() => setViewMode('table')}>Table View</button>
+          <Button size="sm" variant={viewMode === 'board' ? 'primary' : 'secondary'} style={{ borderRadius: 0 }} onClick={() => setViewMode('board')}>Board View</Button>
+          <Button size="sm" variant={viewMode === 'table' ? 'primary' : 'secondary'} style={{ borderRadius: 0 }} onClick={() => setViewMode('table')}>Table View</Button>
         </div>
-      </div>
+      </Card>
 
       {viewMode === 'board' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
           {rumors.map(rumor => (
-            <div
+            <Card
               key={rumor.id}
-              className="card"
               role="button"
               tabIndex={0}
               style={{
@@ -367,7 +367,7 @@ export default function RumorsListView() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : (
@@ -392,25 +392,25 @@ export default function RumorsListView() {
                   <td>{rumor.destinationClub}</td>
                   <td>{rumor.author}</td>
                   <td className="text-right">
-                    <button className="btn btn-sm btn-secondary" onClick={(event) => { event.stopPropagation(); setSelectedRumor(rumor); }}>
+                    <Button size="sm" variant="secondary" onClick={(event) => { event.stopPropagation(); setSelectedRumor(rumor); }}>
                       <Eye size={13} /> Lihat
-                    </button>
-                    <button className="btn btn-sm btn-secondary" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); handleEdit(rumor.id); }}>
+                    </Button>
+                    <Button size="sm" variant="secondary" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); handleEdit(rumor.id); }}>
                       <Edit3 size={13} /> Edit
-                    </button>
+                    </Button>
                     {confirmDeleteId === rumor.id ? (
                       <>
-                        <button className="btn btn-sm btn-danger" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); handleDelete(rumor); }}>
+                        <Button size="sm" variant="danger" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); handleDelete(rumor); }}>
                           Ya
-                        </button>
-                        <button className="btn btn-sm btn-secondary" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(null); }}>
+                        </Button>
+                        <Button size="sm" variant="secondary" style={{ marginLeft: 8 }} onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(null); }}>
                           Batal
-                        </button>
+                        </Button>
                       </>
                     ) : (
-                      <button className="btn btn-sm btn-secondary" style={{ marginLeft: 8, color: 'var(--danger-600)' }} onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(rumor.id); }}>
+                      <Button size="sm" variant="secondary" style={{ marginLeft: 8, color: 'var(--danger-600)' }} onClick={(event) => { event.stopPropagation(); setConfirmDeleteId(rumor.id); }}>
                         <Trash2 size={13} /> Hapus
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -432,13 +432,15 @@ export default function RumorsListView() {
             </div>
 
             <div className="rumor-modal-panel">
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-secondary rumor-modal-close"
+                size="sm"
+                variant="secondary"
+                className="rumor-modal-close"
                 onClick={() => setSelectedRumor(null)}
               >
                 <X size={14} /> Tutup
-              </button>
+              </Button>
 
               <div className="rumor-modal-copy">
                 <div className="rumor-modal-eyebrow">Preview Gambar Rumor</div>
@@ -450,46 +452,47 @@ export default function RumorsListView() {
               <div className="rumor-modal-section">
                 <div className="rumor-modal-section-title">Ekspor Gambar</div>
                 <div className="rumor-modal-actions-row">
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn-md btn-primary"
                     disabled={isExporting}
                     onClick={() => handleShareRumor(selectedRumor)}
                   >
                     <Share2 size={15} /> Bagikan
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="btn btn-md btn-secondary rumor-modal-secondary"
+                    variant="secondary"
+                    className="rumor-modal-secondary"
                     disabled={isExporting}
                     onClick={() => handleDownloadRumor(selectedRumor)}
                   >
                     <Download size={15} /> Unduh PNG (9:16)
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               <div className="rumor-modal-manage">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-md btn-secondary rumor-modal-secondary"
+                  variant="secondary"
+                  className="rumor-modal-secondary"
                   onClick={() => handleEdit(selectedRumor.id)}
                 >
                   <Edit3 size={15} /> Edit Rumor
-                </button>
+                </Button>
                 {confirmDeleteId === selectedRumor.id ? (
                   <div className="rumor-modal-confirm">
-                    <button type="button" className="btn btn-md btn-danger" onClick={() => handleDelete(selectedRumor)}>
+                    <Button type="button" variant="danger" onClick={() => handleDelete(selectedRumor)}>
                       Ya, Hapus
-                    </button>
-                    <button type="button" className="btn btn-md btn-secondary rumor-modal-secondary" onClick={() => setConfirmDeleteId(null)}>
+                    </Button>
+                    <Button type="button" variant="secondary" className="rumor-modal-secondary" onClick={() => setConfirmDeleteId(null)}>
                       Batal
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button type="button" className="btn btn-md btn-secondary rumor-modal-danger" onClick={() => setConfirmDeleteId(selectedRumor.id)}>
+                  <Button type="button" variant="secondary" className="rumor-modal-danger" onClick={() => setConfirmDeleteId(selectedRumor.id)}>
                     <Trash2 size={15} /> Hapus Rumor
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>

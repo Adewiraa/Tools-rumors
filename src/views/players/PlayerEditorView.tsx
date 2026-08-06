@@ -8,6 +8,7 @@ import { CheckCircle, Save, Search } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { Badge, Card, Input, Select } from '@/components/ui';
 
 type ApiPlayerCandidate = {
   player?: {
@@ -154,7 +155,7 @@ export default function PlayerEditorView({ playerId, onClose }: { playerId: stri
       </div>
 
       {/* ── API SEARCH ── */}
-      <div className="card" style={{ padding: 16 }}>
+      <Card style={{ padding: 16 }}>
         <label className="form-label">Cari Data Pemain dari API-Football</label>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
@@ -206,7 +207,7 @@ export default function PlayerEditorView({ playerId, onClose }: { playerId: stri
                       {candidate.player?.nationality || '-'}{stats?.team?.name ? ` · ${stats.team.name}` : ''}
                     </span>
                   </span>
-                  <span className="badge badge-info" style={{ flexShrink: 0 }}>Terapkan</span>
+                  <Badge status="info" style={{ flexShrink: 0 }}>Terapkan</Badge>
                 </button>
               );
             })}
@@ -215,94 +216,70 @@ export default function PlayerEditorView({ playerId, onClose }: { playerId: stri
         <span className="form-helper" style={{ marginTop: 8, display: 'block' }}>
           API membantu isi profil dasar. Klub tetap dipilih manual.
         </span>
-      </div>
+      </Card>
 
       {/* ── FORM UTAMA ── */}
-      <div className="card" style={{ padding: 16 }}>
+      <Card style={{ padding: 16 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Nama Lengkap + Display Name */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Nama Lengkap</label>
-              <input className="form-input" value={player.fullName} onChange={e => updatePlayer('fullName', e.target.value)} />
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Display Name</label>
-              <input className="form-input" value={player.displayName} onChange={e => updatePlayer('displayName', e.target.value)} />
-            </div>
+            <Input label="Nama Lengkap" value={player.fullName} onChange={e => updatePlayer('fullName', e.target.value)} />
+            <Input label="Display Name" value={player.displayName} onChange={e => updatePlayer('displayName', e.target.value)} />
           </div>
 
           {/* Klub — full width */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">Klub</label>
-            <select className="form-select" value={player.clubId} onChange={e => updatePlayer('clubId', e.target.value)}>
-              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
+          <Select label="Klub" value={player.clubId} onChange={e => updatePlayer('clubId', e.target.value)}>
+            {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </Select>
 
           {/* Posisi + No Punggung */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Posisi</label>
-              <select className="form-select" value={player.position} onChange={e => updatePlayer('position', e.target.value as Player['position'])}>
-                <option value="Goalkeeper">Goalkeeper</option>
-                <option value="Defender">Defender</option>
-                <option value="Midfielder">Midfielder</option>
-                <option value="Forward">Forward</option>
-              </select>
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">No Punggung</label>
-              <input
-                type="number"
-                className="form-input"
-                placeholder="0"
-                value={player.shirtNumber === 0 ? '' : player.shirtNumber}
-                onChange={e => {
-                  const v = e.target.value;
-                  updatePlayer('shirtNumber', v === '' ? 0 : Math.max(0, parseInt(v, 10) || 0));
-                }}
-              />
-            </div>
+            <Select label="Posisi" value={player.position} onChange={e => updatePlayer('position', e.target.value as Player['position'])}>
+              <option value="Goalkeeper">Goalkeeper</option>
+              <option value="Defender">Defender</option>
+              <option value="Midfielder">Midfielder</option>
+              <option value="Forward">Forward</option>
+            </Select>
+            <Input
+              label="No Punggung"
+              type="number"
+              placeholder="0"
+              value={player.shirtNumber === 0 ? '' : player.shirtNumber}
+              onChange={e => {
+                const v = e.target.value;
+                updatePlayer('shirtNumber', v === '' ? 0 : Math.max(0, parseInt(v, 10) || 0));
+              }}
+            />
           </div>
 
           {/* Umur + Status */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Umur</label>
-              <input
-                type="number"
-                className="form-input"
-                placeholder="0"
-                value={player.age === 0 ? '' : player.age}
-                onChange={e => {
-                  const v = e.target.value;
-                  updatePlayer('age', v === '' ? 0 : Math.max(0, parseInt(v, 10) || 0));
-                }}
-              />
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Status</label>
-              <select className="form-select" value={player.status} onChange={e => updatePlayer('status', e.target.value as Player['status'])}>
-                <option value="active">Aktif</option>
-                <option value="free_agent">Free Agent</option>
-                <option value="retired">Pensiun</option>
-              </select>
-            </div>
+            <Input
+              label="Umur"
+              type="number"
+              placeholder="0"
+              value={player.age === 0 ? '' : player.age}
+              onChange={e => {
+                const v = e.target.value;
+                updatePlayer('age', v === '' ? 0 : Math.max(0, parseInt(v, 10) || 0));
+              }}
+            />
+            <Select label="Status" value={player.status} onChange={e => updatePlayer('status', e.target.value as Player['status'])}>
+              <option value="active">Aktif</option>
+              <option value="free_agent">Free Agent</option>
+              <option value="retired">Pensiun</option>
+            </Select>
           </div>
 
           {/* Availability — full width */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">Availability</label>
-            <select className="form-select" value={player.availability} onChange={e => updatePlayer('availability', e.target.value as Player['availability'])}>
-              <option value="available">Tersedia</option>
-              <option value="injured">Cedera</option>
-              <option value="suspended">Skorsing</option>
-              <option value="international_duty">Tim Nasional</option>
-              <option value="doubtful">Diragukan</option>
-            </select>
-          </div>
+          <Select label="Availability" value={player.availability} onChange={e => updatePlayer('availability', e.target.value as Player['availability'])}>
+            <option value="available">Tersedia</option>
+            <option value="injured">Cedera</option>
+            <option value="suspended">Skorsing</option>
+            <option value="international_duty">Tim Nasional</option>
+            <option value="doubtful">Diragukan</option>
+          </Select>
 
           {/* Negara / Kewarganegaraan */}
           <div className="form-group" style={{ margin: 0, position: 'relative' }}>
@@ -366,7 +343,7 @@ export default function PlayerEditorView({ playerId, onClose }: { playerId: stri
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
     </div>
   );

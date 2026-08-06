@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp, UserRole } from '@/logic/AppContext';
 import { clearSession, getSession, touchSession, SESSION_IDLE_TIMEOUT_MS } from '@/logic/authSession';
+import { Badge, Button, Card } from '@/components/ui';
 import {
   Search,
   Bell,
@@ -354,11 +355,11 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
   // Renders role permissions label badge
   const renderRoleBadge = (role: UserRole) => {
     switch (role) {
-      case 'Super Admin': return <span className="badge badge-danger"><Shield size={12} /> Super Admin</span>;
-      case 'Admin Data': return <span className="badge badge-success"><DatabaseIcon size={12} /> Admin Data</span>;
-      case 'Match Editor': return <span className="badge badge-info"><Trophy size={12} /> Match Editor</span>;
-      case 'Rumor Editor': return <span className="badge badge-warning"><Radio size={12} /> Rumor Editor</span>;
-      case 'Reviewer': return <span className="badge badge-draft"><CheckCircle size={12} /> Reviewer</span>;
+      case 'Super Admin': return <Badge status="danger"><Shield size={12} /> Super Admin</Badge>;
+      case 'Admin Data': return <Badge status="success"><DatabaseIcon size={12} /> Admin Data</Badge>;
+      case 'Match Editor': return <Badge status="info"><Trophy size={12} /> Match Editor</Badge>;
+      case 'Rumor Editor': return <Badge status="warning"><Radio size={12} /> Rumor Editor</Badge>;
+      case 'Reviewer': return <Badge status="draft"><CheckCircle size={12} /> Reviewer</Badge>;
     }
   };
 
@@ -407,7 +408,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
         <div style={{ position: 'fixed', bottom: 16, right: 16, backgroundColor: 'var(--navy-950)', color: 'white', padding: '12px 20px', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 1100, display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--primary-600)' }}>
           <div className="pulse-dot" style={{ backgroundColor: 'var(--accent-500)' }}></div>
           <span style={{ fontSize: '13px' }}>Perubahan belum disimpan.</span>
-          <button className="btn btn-sm btn-primary" onClick={() => { setHasUnsavedChanges(false); triggerToast('Draft otomatis berhasil disimpan!', 'success'); }}>Simpan Draft</button>
+          <Button size="sm" onClick={() => { setHasUnsavedChanges(false); triggerToast('Draft otomatis berhasil disimpan!', 'success'); }}>Simpan Draft</Button>
         </div>
       )}
 
@@ -461,9 +462,9 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser?.fullName || `Admin ${appSettings.appName}`}</div>
                   <div style={{ fontSize: 10, color: 'var(--neutral-500)' }}>{currentUserRole}</div>
                 </div>
-                <button className="btn btn-sm btn-secondary mobile-drawer-logout" onClick={() => handleLogout()} title="Logout">
+                <Button size="sm" variant="secondary" className="mobile-drawer-logout" onClick={() => handleLogout()} title="Logout">
                   <LogOut size={15} /> Logout
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -565,12 +566,12 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
         {/* Top Header */}
         <header className="top-header">
           <div className="flex align-center gap-16">
-            <button className="btn btn-sm btn-secondary desktop-sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title="Toggle Sidebar">
+            <Button size="sm" variant="secondary" className="desktop-sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} title="Toggle Sidebar">
               <Menu size={18} />
-            </button>
-            <button className="btn btn-sm btn-secondary mobile-hamburger" onClick={() => setMobileDrawerOpen(true)} title="Menu">
+            </Button>
+            <Button size="sm" variant="secondary" className="mobile-hamburger" onClick={() => setMobileDrawerOpen(true)} title="Menu">
               <Menu size={18} />
-            </button>
+            </Button>
             <div className="search-input-wrapper">
               <Search size={16} className="search-icon" />
               <input
@@ -586,7 +587,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           <div className="flex align-center gap-16">
             {/* Notification Center */}
             <div style={{ position: 'relative' }}>
-              <button className="btn btn-sm btn-secondary" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setNotificationsOpen(!notificationsOpen)}>
+              <Button size="sm" variant="secondary" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setNotificationsOpen(!notificationsOpen)}>
                 <Bell size={16} />
                 {unreadNotifications.length > 0 && (
                   <span style={{
@@ -606,7 +607,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                     border: '2px solid var(--white)',
                   }}>{unreadNotifications.length}</span>
                 )}
-              </button>
+              </Button>
 
               {notificationsOpen && (
                 <div style={{ position: 'fixed', right: 12, top: 64, width: 360, maxWidth: 'calc(100vw - 24px)', backgroundColor: 'var(--white)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 200, padding: 16 }}>
@@ -617,13 +618,14 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                     </div>
                     <div className="flex align-center gap-8">
                       {unreadNotifications.length > 0 && (
-                        <button
-                          className="btn btn-sm btn-secondary"
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           style={{ height: 30, fontSize: 11, padding: '0 10px' }}
                           onClick={() => markAllNotificationsRead(unreadNotifications.map(item => item.id))}
                         >
                           Tandai semua
-                        </button>
+                        </Button>
                       )}
                       <button style={{ background: 'none', border: 'none', color: 'var(--neutral-500)', cursor: 'pointer' }} onClick={() => setNotificationsOpen(false)}><X size={14} /></button>
                     </div>
@@ -654,8 +656,9 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                           <div className="semibold" style={{ fontSize: 12, color: 'var(--neutral-950)' }}>{item.title}</div>
                           <p style={{ fontSize: 12, color: 'var(--neutral-700)', margin: 0, lineHeight: 1.45 }}>{item.description}</p>
                           <div className="flex align-center gap-8" style={{ justifyContent: 'space-between', marginTop: 2 }}>
-                            <button
-                              className="btn btn-sm btn-secondary"
+                            <Button
+                              size="sm"
+                              variant="secondary"
                               style={{ height: 28, fontSize: 11, padding: '0 9px' }}
                               onClick={() => {
                                 markNotificationRead(item.id);
@@ -664,7 +667,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                               }}
                             >
                               Lihat
-                            </button>
+                            </Button>
                             <button
                               style={{ border: 'none', background: 'transparent', color: 'var(--primary-700)', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
                               onClick={() => markNotificationRead(item.id)}
@@ -684,10 +687,10 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
             <div className="flex align-center gap-8">
               {renderRoleBadge(currentUserRole)}
             </div>
-            <button className="btn btn-sm btn-secondary header-logout-button" onClick={() => handleLogout()} title="Logout">
+            <Button size="sm" variant="secondary" className="header-logout-button" onClick={() => handleLogout()} title="Logout">
               <LogOut size={15} />
               <span>Logout</span>
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -722,7 +725,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
           ) : uiState === 'error' ? (
             <ErrorState onRetry={() => setUiState('default')} />
           ) : !isCurrentMenuAllowed ? (
-            <div className="card" style={{ padding: 48, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 540, margin: '40px auto' }}>
+            <Card style={{ padding: 48, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 540, margin: '40px auto' }}>
               <div style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger-500)' }}>
                 <ShieldAlert size={36} />
               </div>
@@ -730,10 +733,10 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
               <p style={{ color: 'var(--neutral-400)', fontSize: 14, margin: 0 }}>
                 Role Anda saat ini (<strong style={{ color: 'white' }}>{currentUserRole}</strong>) tidak memiliki izin untuk mengakses menu ini. Silakan hubungi Super Admin untuk mengubah hak akses Anda.
               </p>
-              <button className="btn btn-primary" onClick={() => router.replace('/dashboard')} style={{ marginTop: 8 }}>
+              <Button onClick={() => router.replace('/dashboard')} style={{ marginTop: 8 }}>
                 Kembali ke Dashboard
-              </button>
-            </div>
+              </Button>
+            </Card>
           ) : (
             children
           )}
@@ -793,7 +796,7 @@ export default function AdminLayoutWrapper({ children }: { children: React.React
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>{m.homeClubName} vs {m.awayClubName}</div>
                           <div style={{ fontSize: 11, color: 'var(--neutral-500)' }}>{m.competition} • {m.kickoff}</div>
                         </div>
-                        <span className="badge badge-success" style={{ fontSize: 10 }}>Lihat</span>
+                        <Badge status="success" style={{ fontSize: 10 }}>Lihat</Badge>
                       </div>
                     ))}
                   </div>

@@ -7,6 +7,7 @@ import { Match } from '@/lib/mockData';
 import { Search, ChevronRight, AlertCircle, Edit, Info, X, Share2, Download } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import PublishedLineupStoryCard from '../schedule/PublishedLineupStoryCard';
+import { Badge, Button, Card } from '@/components/ui';
 import {
   getEffectiveMatchStatus,
   getEffectiveLineupStatus
@@ -35,10 +36,10 @@ export default function LineupsListView() {
     return effectiveLineupStatus === 'Complete' ? 'Siap' : effectiveLineupStatus === 'Needs Review' ? 'Review' : 'Belum';
   };
 
-  const lineupStatusClass = (match: Match) => {
-    if (getEffectiveMatchStatus(match) === 'Finished') return 'badge-success';
+  const lineupStatusClass = (match: Match): 'success' | 'warning' | 'draft' => {
+    if (getEffectiveMatchStatus(match) === 'Finished') return 'success';
     const effectiveLineupStatus = getEffectiveLineupStatus(match);
-    return effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+    return effectiveLineupStatus === 'Complete' ? 'success' : effectiveLineupStatus === 'Needs Review' ? 'warning' : 'draft';
   };
 
   const renderMatchLogo = (logo?: string) => (
@@ -138,7 +139,7 @@ export default function LineupsListView() {
       </div>
 
       {/* Filter Bar */}
-      <div className="card schedule-filter-card">
+      <Card className="schedule-filter-card">
         <div className="schedule-filter-group">
           <div className="search-input-wrapper schedule-filter-search">
             <Search size={16} className="search-icon" />
@@ -156,19 +157,19 @@ export default function LineupsListView() {
           </select>
         </div>
         {(searchTerm || selectedComp !== 'Semua') && (
-          <button className="btn btn-sm btn-secondary" onClick={() => { setSearchTerm(''); setSelectedComp('Semua'); }}>
+          <Button size="sm" variant="secondary" onClick={() => { setSearchTerm(''); setSelectedComp('Semua'); }}>
             Reset Filter
-          </button>
+          </Button>
         )}
-      </div>
+      </Card>
 
       {/* Data Table */}
       {filteredMatches.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+        <Card style={{ padding: 48, textAlign: 'center' }}>
           <AlertCircle size={32} color="var(--neutral-500)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Belum ada lineup</h3>
           <p className="text-muted" style={{ marginBottom: 16 }}>Buat jadwal pertandingan terlebih dahulu, lalu kelola lineup dari ID jadwal tersebut.</p>
-        </div>
+        </Card>
       ) : (
         <div className="table-wrapper schedule-table-wrapper">
           <table className="data-table schedule-table">
@@ -216,25 +217,25 @@ export default function LineupsListView() {
                       <span className="schedule-kickoff-value">{kickoffDateLabel}, {kickoffTimeLabel} WIB</span>
                     </td>
                     <td className="schedule-info-cell" data-label="Status">
-                      <span className={`badge ${lineupStatusClass(match)}`}>
+                      <Badge status={lineupStatusClass(match)}>
                         {lineupStatusLabel(match)}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="schedule-info-cell" data-label="Publikasi">
-                      <span className={`badge ${match.publicationStatus === 'Published' ? 'badge-success' : 'badge-warning'}`}>
+                      <Badge status={match.publicationStatus === 'Published' ? 'success' : 'warning'}>
                         {match.publicationStatus}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="schedule-actions-cell text-right">
                       <div className="schedule-actions">
                         {canViewPublishedLineup ? (
-                          <button className="btn btn-sm btn-secondary" onClick={() => setPreviewMatch(match)}>
+                          <Button size="sm" variant="secondary" onClick={() => setPreviewMatch(match)}>
                             <Info size={13} /> Lihat Lineup
-                          </button>
+                          </Button>
                         ) : checkPermission('Lineup Pertandingan', 'create_edit') && (
-                          <button className="btn btn-sm btn-primary" onClick={() => router.push(`/lineups?edit=${match.id}`)}>
+                          <Button size="sm" onClick={() => router.push(`/lineups?edit=${match.id}`)}>
                             <Edit size={13} /> Edit
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </td>
@@ -254,15 +255,15 @@ export default function LineupsListView() {
                 <h3 className="output-preview-title">Gambar Lineup</h3>
                 <div className="output-preview-meta">{previewMatch.homeClubName} vs {previewMatch.awayClubName}</div>
               </div>
-              <button className="btn btn-sm btn-secondary" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></button>
+              <Button size="sm" variant="secondary" title="Tutup" onClick={() => setPreviewMatch(null)}><X size={16} /></Button>
             </div>
             <div className="output-preview-toolbar">
-              <button className="btn btn-sm btn-primary" onClick={() => shareLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
+              <Button size="sm" onClick={() => shareLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
                 <Share2 size={14} /> Bagikan Lineup
-              </button>
-              <button className="btn btn-sm btn-secondary" onClick={() => downloadLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => downloadLineupOutput(previewMatch)} disabled={isExportingLineupStory}>
                 <Download size={14} /> Unduh Lineup
-              </button>
+              </Button>
             </div>
             <div className="output-preview-stage">
               <PublishedLineupStoryCard

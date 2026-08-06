@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Upload } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { Button, Card } from '@/components/ui';
 
 const slugify = (value: string) => value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
@@ -116,14 +117,14 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button type="button" className="btn btn-sm btn-secondary" onClick={goToCompetitionsList}><ArrowLeft size={16} /> Kembali</button>
+          <Button type="button" size="sm" variant="secondary" onClick={goToCompetitionsList}><ArrowLeft size={16} /> Kembali</Button>
           <h1 className="page-title" style={{ margin: 0 }}>{isNew ? 'Tambah Kompetisi' : 'Edit Kompetisi'}</h1>
         </div>
         <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan..."><Save size={16} /> Simpan Kompetisi</LoadingButton>
       </div>
 
       <div className="grid-12">
-        <div className="card" style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
+        <Card style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
           <div style={{ gridColumn: 'span 8' }}><label className="form-label">Nama Kompetisi</label><input className="form-input" value={competition.name} onChange={event => { updateCompetition('name', event.target.value); if (isNew) updateCompetition('slug', slugify(event.target.value)); }} /></div>
           <div style={{ gridColumn: 'span 4' }}><label className="form-label">Kode <span style={{ fontSize: 10, color: 'var(--neutral-400)', fontWeight: 400 }}>(Opsional)</span></label><input className="form-input" value={competition.shortName} maxLength={8} onChange={event => updateCompetition('shortName', event.target.value.toUpperCase())} /></div>
           <div style={{ gridColumn: 'span 12' }}><label className="form-label">Slug</label><input className="form-input" value={competition.slug} onChange={event => updateCompetition('slug', slugify(event.target.value))} /></div>
@@ -172,7 +173,7 @@ export default function CompetitionEditorView({ competitionId }: { competitionId
               </div>
             </div>
           )}
-        </div>
+        </Card>
 
         <aside className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <label className="flex align-center gap-8" style={{ cursor: 'pointer' }}>

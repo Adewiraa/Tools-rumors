@@ -6,6 +6,7 @@ import { useApp } from '@/logic/AppContext';
 import { AlertCircle, ChevronRight, Edit, Plus, Trash2, Trophy } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { Badge, Button, Card } from '@/components/ui';
 
 const getErrorMessage = (error: unknown, fallback: string) => (
   error instanceof Error ? error.message : fallback
@@ -56,11 +57,11 @@ export default function CompetitionsListView() {
           <p className="page-description">Kelola liga, piala, turnamen, musim, dan status aktif kompetisi.</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={() => router.push('/competitions?edit=new')}><Plus size={16} /> Tambah Kompetisi</button>
+          <Button onClick={() => router.push('/competitions?edit=new')}><Plus size={16} /> Tambah Kompetisi</Button>
         )}
       </div>
 
-      <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Card style={{ padding: '16px 24px', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <select className="form-select" style={{ maxWidth: 180 }} value={filterType} onChange={event => setFilterType(event.target.value)}>
           <option value="Semua">Semua Tipe</option>
           <option value="league">Liga</option>
@@ -73,13 +74,13 @@ export default function CompetitionsListView() {
           <option value="Nonaktif">Nonaktif</option>
         </select>
         <span className="text-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>{filtered.length} kompetisi</span>
-      </div>
+      </Card>
 
       {filtered.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+        <Card style={{ padding: 48, textAlign: 'center' }}>
           <AlertCircle size={32} color="var(--neutral-500)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>Belum ada kompetisi</h3>
-        </div>
+        </Card>
       ) : (
         <div className="table-wrapper master-table-wrapper">
           <table className="data-table master-card-table">
@@ -118,8 +119,8 @@ export default function CompetitionsListView() {
                     <td className="master-info-cell" data-label="Kode">{comp.shortName}</td>
                     <td className="master-info-cell" data-label="Tipe">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
-                        <span className={`badge ${comp.type === 'league' ? 'badge-info' : comp.type === 'cup' ? 'badge-warning' : 'badge-draft'}`}>{comp.type}</span>
-                        {comp.isInternational && <span className="badge badge-warning" style={{ fontSize: 10 }}>Internasional</span>}
+                        <Badge status={comp.type === 'league' ? 'info' : comp.type === 'cup' ? 'warning' : 'draft'}>{comp.type}</Badge>
+                        {comp.isInternational && <Badge status="warning" style={{ fontSize: 10 }}>Internasional</Badge>}
                       </div>
                     </td>
                     <td className="master-info-cell" data-label="Negara">{comp.country}</td>
@@ -139,17 +140,17 @@ export default function CompetitionsListView() {
                       )}
                     </td>
                     <td className="master-info-cell" data-label="Klub Peserta">{participants.length || '-'}</td>
-                    <td className="master-info-cell" data-label="Status"><span className={`badge ${comp.isActive ? 'badge-success' : 'badge-draft'}`}>{comp.isActive ? 'Aktif' : 'Nonaktif'}</span></td>
+                    <td className="master-info-cell" data-label="Status"><Badge status={comp.isActive ? 'success' : 'draft'}>{comp.isActive ? 'Aktif' : 'Nonaktif'}</Badge></td>
                     <td className="master-actions-cell text-right">
                       <div className="master-actions">
-                        <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/competitions?edit=${comp.id}`)}><Edit size={13} /> Edit</button>
+                        <Button size="sm" variant="secondary" onClick={() => router.push(`/competitions?edit=${comp.id}`)}><Edit size={13} /> Edit</Button>
                         {hasPermission('Master', 'delete') && (confirmDeleteId === comp.id ? (
                           <>
                             <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(comp.id)} loading={deletingId === comp.id} loadingLabel="Menghapus...">Ya</LoadingButton>
-                            <button className="btn btn-sm btn-secondary" disabled={deletingId === comp.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                            <Button size="sm" variant="secondary" disabled={deletingId === comp.id} onClick={() => setConfirmDeleteId(null)}>Batal</Button>
                           </>
                         ) : (
-                          <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(comp.id)}><Trash2 size={13} /></button>
+                          <Button size="sm" variant="secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(comp.id)}><Trash2 size={13} /></Button>
                         ))}
                       </div>
                     </td>

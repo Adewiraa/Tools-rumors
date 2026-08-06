@@ -27,6 +27,8 @@ import {
 } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { Badge, Button, Card } from '@/components/ui';
+import type { Status } from '@/lib/ui';
 
 export default function ScheduleListView() {
   const router = useRouter();
@@ -69,8 +71,8 @@ export default function ScheduleListView() {
     .filter(item => item.count > 0 || item.comp.isActive);
 
   const statusLabel = (s: string) => ({ Scheduled: 'Dijadwalkan', Live: 'Live', Finished: 'Selesai', Postponed: 'Ditunda', Cancelled: 'Dibatalkan' }[s] || s);
-  const statusClass = (s: string) => ({ Scheduled: 'badge-info', Live: 'badge-danger', Finished: 'badge-success', Postponed: 'badge-warning', Cancelled: 'badge-draft' }[s] || 'badge-info');
-  const lineupClass = (s: string) => s === 'Complete' ? 'badge-success' : s === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+  const statusClass = (s: string): Status => ({ Scheduled: 'info', Live: 'danger', Finished: 'success', Postponed: 'warning', Cancelled: 'draft' }[s] as Status || 'info');
+  const lineupClass = (s: string): Status => s === 'Complete' ? 'success' : s === 'Needs Review' ? 'warning' : 'draft';
   const lineupLabel = (s: string) => s === 'Complete' ? 'Siap' : s === 'Needs Review' ? 'Review' : 'Belum';
   const getPublishedStoryElementId = (matchId: string) => `published-lineup-story-card-${matchId}`;
   const getPublishedStoryFileName = (match: Match) => `Lineup_${match.homeClubName || 'HOME'}_vs_${match.awayClubName || 'AWAY'}.png`.replace(/[^\w.-]+/g, '_');
@@ -216,8 +218,8 @@ export default function ScheduleListView() {
         <td className="schedule-info-cell schedule-kickoff-cell" data-label="Kickoff">
           <span className="schedule-kickoff-value">{kickoffDateLabel}, {kickoffTimeLabel} WIB</span>
         </td>
-        <td className="schedule-info-cell" data-label="Status"><span className={`badge ${statusClass(effectiveStatus)}`}>{statusLabel(effectiveStatus)}</span></td>
-        <td className="schedule-info-cell" data-label="Lineup"><span className={`badge ${lineupClass(effectiveLineupStatus)}`}>{lineupLabel(effectiveLineupStatus)}</span></td>
+        <td className="schedule-info-cell" data-label="Status"><Badge status={statusClass(effectiveStatus)}>{statusLabel(effectiveStatus)}</Badge></td>
+        <td className="schedule-info-cell" data-label="Lineup"><Badge status={lineupClass(effectiveLineupStatus)}>{lineupLabel(effectiveLineupStatus)}</Badge></td>
         <td className="schedule-info-cell" data-label="HT">
           {m.halfTimeHomeScore !== undefined && m.halfTimeHomeScore !== null && m.halfTimeAwayScore !== undefined && m.halfTimeAwayScore !== null ? (
             <span className="schedule-score schedule-score-half">{m.halfTimeHomeScore} - {m.halfTimeAwayScore}</span>
@@ -235,23 +237,23 @@ export default function ScheduleListView() {
         <td className="schedule-actions-cell text-right">
           <div className="schedule-actions">
             {canLineup && hasPermission('Lineup Pertandingan', 'create_edit') && (
-              <button className="btn btn-sm btn-primary" onClick={handleLineupAction} style={{ fontSize: 11 }}>
+              <Button size="sm" onClick={handleLineupAction} style={{ fontSize: 11 }}>
                 {canOpenPublishedLineup ? 'Lihat Lineup' : hasLineupData ? 'Edit Lineup' : 'Buat Lineup'}
-              </button>
+              </Button>
             )}
             {effectiveStatus === 'Live' && hasPermission('Match Result', 'create_edit') && (
-              <button className="btn btn-sm btn-secondary" disabled={!canResult} title={canResult ? 'Input hasil pertandingan' : 'Lengkapi lineup dulu'} onClick={() => router.push(`/results?edit=${m.id}`)} style={{ fontSize: 11 }}>Hasil</button>
+              <Button size="sm" variant="secondary" disabled={!canResult} title={canResult ? 'Input hasil pertandingan' : 'Lengkapi lineup dulu'} onClick={() => router.push(`/results?edit=${m.id}`)} style={{ fontSize: 11 }}>Hasil</Button>
             )}
-            <button className="btn btn-sm btn-secondary" onClick={() => router.push(`/schedule?edit=${m.id}`)} style={{ fontSize: 11 }}><Edit size={12} /></button>
+            <Button size="sm" variant="secondary" onClick={() => router.push(`/schedule?edit=${m.id}`)} style={{ fontSize: 11 }}><Edit size={12} /></Button>
             {hasPermission('Lineup Pertandingan', 'delete') && (
               confirmDeleteId === m.id ? (
                 <span className="schedule-confirm-delete">
                   <span>Yakin?</span>
                   <LoadingButton className="btn btn-sm btn-danger" style={{ fontSize: 11 }} onClick={() => handleDelete(m.id)} loading={deletingId === m.id} loadingLabel="Menghapus...">Ya</LoadingButton>
-                  <button className="btn btn-sm btn-secondary" disabled={deletingId === m.id} style={{ fontSize: 11 }} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                  <Button size="sm" variant="secondary" disabled={deletingId === m.id} style={{ fontSize: 11 }} onClick={() => setConfirmDeleteId(null)}>Batal</Button>
                 </span>
               ) : (
-                <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(m.id)}><Trash2 size={12} /></button>
+                <Button size="sm" variant="secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(m.id)}><Trash2 size={12} /></Button>
               )
             )}
           </div>
@@ -294,7 +296,7 @@ export default function ScheduleListView() {
           <p className="page-description">Kelola jadwal semua kompetisi sebagai pintu awal flow: jadwal, lineup hari H, lalu hasil HT/FT.</p>
         </div>
         {hasPermission('Lineup Pertandingan', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={() => router.push('/schedule?edit=new')}><Plus size={16} /> Tambah Jadwal</button>
+          <Button onClick={() => router.push('/schedule?edit=new')}><Plus size={16} /> Tambah Jadwal</Button>
         )}
       </div>
 
@@ -336,7 +338,7 @@ export default function ScheduleListView() {
         ))}
       </div>
 
-      <div className="card schedule-filter-card">
+      <Card className="schedule-filter-card">
         <div className="search-input-wrapper schedule-filter-search">
           <Search size={14} className="search-icon" />
           <input type="text" className="form-input" placeholder="Cari klub atau stadion..."
@@ -355,20 +357,20 @@ export default function ScheduleListView() {
           <option value="Cancelled">Dibatalkan</option>
         </select>
         {(searchTerm || selectedComp !== 'Semua' || selectedStatus !== 'Semua') && (
-          <button className="btn btn-sm btn-secondary" onClick={() => { setSearchTerm(''); setSelectedComp('Semua'); setSelectedStatus('Semua'); }}>Reset</button>
+          <Button size="sm" variant="secondary" onClick={() => { setSearchTerm(''); setSelectedComp('Semua'); setSelectedStatus('Semua'); }}>Reset</Button>
         )}
         <span className="text-muted schedule-filter-count">{filtered.length} pertandingan</span>
-      </div>
+      </Card>
 
       {filtered.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+        <Card style={{ padding: 48, textAlign: 'center' }}>
           <Calendar size={36} color="var(--neutral-400)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Belum ada jadwal</h3>
           <p className="text-muted" style={{ marginBottom: 16 }}>Tambahkan jadwal pertandingan untuk semua kompetisi.</p>
           {hasPermission('Lineup Pertandingan', 'create_edit') && (
-            <button className="btn btn-sm btn-primary" onClick={() => router.push('/schedule?edit=new')}>Tambah Jadwal</button>
+            <Button size="sm" onClick={() => router.push('/schedule?edit=new')}>Tambah Jadwal</Button>
           )}
-        </div>
+        </Card>
       ) : (
         <>
           {upcoming.length > 0 && renderTable(upcoming, 'Mendatang')}
@@ -382,15 +384,15 @@ export default function ScheduleListView() {
           onClick={() => setPreviewMatch(null)}>
           <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, maxHeight: '95vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button className="btn btn-md btn-primary" onClick={() => sharePublishedLineupStory(previewMatch)} disabled={isExportingPublishedStory}>
+              <Button onClick={() => sharePublishedLineupStory(previewMatch)} disabled={isExportingPublishedStory}>
                 <Share2 size={14} /> Bagikan Story
-              </button>
-              <button className="btn btn-md btn-secondary" onClick={() => downloadPublishedLineupStory(previewMatch)} disabled={isExportingPublishedStory}>
+              </Button>
+              <Button variant="secondary" onClick={() => downloadPublishedLineupStory(previewMatch)} disabled={isExportingPublishedStory}>
                 <Download size={14} /> Unduh PNG
-              </button>
-              <button className="btn btn-md btn-secondary" onClick={() => setPreviewMatch(null)}>
+              </Button>
+              <Button variant="secondary" onClick={() => setPreviewMatch(null)}>
                 <X size={14} /> Tutup
-              </button>
+              </Button>
             </div>
             <PublishedLineupStoryCard
               match={previewMatch}

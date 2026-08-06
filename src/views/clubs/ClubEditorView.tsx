@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Upload } from 'lucide-react';
 import { generateUUID } from '@/logic/utils';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { Badge, Button, Card } from '@/components/ui';
 import { countriesList } from '@/lib/countriesData';
 
 type ApiTeamCandidate = {
@@ -214,7 +215,7 @@ export default function ClubEditorView({ clubId, isNationalTeam = false, onClose
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16, paddingRight: 40 }}>
         <div className="flex align-center gap-12">
-          <button type="button" className="btn btn-sm btn-secondary" onClick={goToClubsList}><ArrowLeft size={16} /> Kembali</button>
+          <Button type="button" size="sm" variant="secondary" onClick={goToClubsList}><ArrowLeft size={16} /> Kembali</Button>
           <h1 className="page-title" style={{ margin: 0 }}>
             {isNew ? (isNationalTeam ? 'Tambah Negara' : 'Tambah Klub') : (isNationalTeam ? 'Edit Negara' : 'Edit Klub')}
           </h1>
@@ -225,7 +226,7 @@ export default function ClubEditorView({ clubId, isNationalTeam = false, onClose
       </div>
 
       <div className="grid-12">
-        <div className="card" style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
+        <Card style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 16 }}>
           {isNationalTeam ? (
             <>
               <div style={{ gridColumn: 'span 8' }}>
@@ -260,7 +261,7 @@ export default function ClubEditorView({ clubId, isNationalTeam = false, onClose
                           <span className="semibold" style={{ display: 'block', fontSize: 13 }}>{candidate.team?.name}</span>
                           <span className="text-muted" style={{ fontSize: 11 }}>{candidate.team?.country || '-'}{candidate.venue?.name ? ` - ${candidate.venue.name}` : ''}</span>
                         </span>
-                        <span className="badge badge-info">Terapkan</span>
+                        <Badge status="info">Terapkan</Badge>
                       </button>
                     ))}
                   </div>
@@ -282,7 +283,7 @@ export default function ClubEditorView({ clubId, isNationalTeam = false, onClose
               <div style={{ gridColumn: 'span 12' }}><label className="form-label">Stadion</label><input className="form-input" value={club.stadium} onChange={event => updateClub('stadium', event.target.value)} /></div>
             </>
           )}
-        </div>
+        </Card>
 
         <aside className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>

@@ -9,6 +9,7 @@ import { countriesList, findCountry, getCountryFlagUrl } from '@/lib/countriesDa
 import { Activity, ChevronRight, Edit, Flag, Hash, Plus, Search, Shield, Trash2, UserRound, Users, X } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { Badge, Button, Card } from '@/components/ui';
 import { generateUUID } from '@/logic/utils';
 
 type ApiTeamCandidate = {
@@ -317,12 +318,12 @@ export default function PlayersListView() {
           <p className="page-description">Kelola profil pemain, klub aktif, posisi, nomor punggung, negara, dan availability.</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={() => setEditingPlayerId('new')}><Plus size={16} /> Tambah Pemain</button>
+          <Button onClick={() => setEditingPlayerId('new')}><Plus size={16} /> Tambah Pemain</Button>
         )}
       </div>
 
       {hasPermission('Master', 'create_edit') && (
-        <div className="card api-import-card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
+        <Card className="api-import-card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
           <div className="api-import-header" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
             <div className="api-import-copy" style={{ minWidth: 0 }}>
               <div className="semibold" style={{ fontSize: 14 }}>Ambil Pemain dari API-Football</div>
@@ -368,7 +369,7 @@ export default function PlayersListView() {
                       <span className="semibold" style={{ display: 'block', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{candidate.team?.name}</span>
                       <span className="text-muted" style={{ display: 'block', fontSize: 11 }}>{candidate.venue?.city || candidate.team?.country || '-'}{matchedClub ? ` - cocok: ${matchedClub.name}` : ' - pilih klub tujuan'}</span>
                     </span>
-                    <span className="badge badge-info"><Users size={12} /> Skuad</span>
+                    <Badge status="info"><Users size={12} /> Skuad</Badge>
                   </button>
                 );
               })}
@@ -411,7 +412,7 @@ export default function PlayersListView() {
                       />
                     </label>
                     {apiSquadSearchTerm && (
-                      <button className="btn btn-sm btn-secondary" onClick={() => setApiSquadSearchTerm('')}>Reset</button>
+                      <Button size="sm" variant="secondary" onClick={() => setApiSquadSearchTerm('')}>Reset</Button>
                     )}
                   </div>
                   <div className="api-import-squad-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10 }}>
@@ -456,10 +457,10 @@ export default function PlayersListView() {
               )}
             </div>
           )}
-        </div>
+        </Card>
       )}
 
-      <div className="card player-mobile-filter-card" style={{ padding: 18, display: 'grid', gap: 14 }}>
+      <Card className="player-mobile-filter-card" style={{ padding: 18, display: 'grid', gap: 14 }}>
         <div className="flex justify-between align-center" style={{ gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div className="semibold" style={{ fontSize: 14 }}>Pilih Klub</div>
@@ -546,9 +547,9 @@ export default function PlayersListView() {
             );
           })}
         </div>
-      </div>
+      </Card>
 
-      <div className="card player-roster-section" style={{ padding: 18, display: 'grid', gap: 16 }}>
+      <Card className="player-roster-section" style={{ padding: 18, display: 'grid', gap: 16 }}>
         <div className="flex justify-between align-center" style={{ gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div className="breadcrumb" style={{ marginBottom: 6 }}>
@@ -561,9 +562,9 @@ export default function PlayersListView() {
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {positionSummary.map(item => (
-              <span key={item.position} className="badge badge-info" style={{ minHeight: 28 }}>
+              <Badge key={item.position} status="info" style={{ minHeight: 28 }}>
                 {item.position}: {item.count}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
@@ -579,9 +580,9 @@ export default function PlayersListView() {
             />
           </div>
           {(playerSearchTerm || selectedPosition !== 'Semua' || selectedClubId !== 'Semua') && (
-            <button className="btn btn-sm btn-secondary" onClick={() => { setPlayerSearchTerm(''); setSelectedPosition('Semua'); setSelectedClubId('Semua'); }}>
+            <Button size="sm" variant="secondary" onClick={() => { setPlayerSearchTerm(''); setSelectedPosition('Semua'); setSelectedClubId('Semua'); }}>
               Reset
-            </button>
+            </Button>
           )}
         </div>
 
@@ -636,7 +637,7 @@ export default function PlayersListView() {
                         const flagUrl = matchedCountry ? `https://flagcdn.com/w40/${matchedCountry.code.toLowerCase()}.png` : getCountryFlagUrl(player.nationality);
 
                         return (
-                          <span className={`badge ${isForeign ? 'badge-warning' : 'badge-draft'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Badge status={isForeign ? 'warning' : 'draft'} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                             <img
                               src={flagUrl}
                               alt={player.nationality}
@@ -649,7 +650,7 @@ export default function PlayersListView() {
                                 INT
                               </span>
                             )}
-                          </span>
+                          </Badge>
                         );
                       })()}
                     </div>
@@ -670,14 +671,14 @@ export default function PlayersListView() {
                       {playerClub?.name || player.clubName || 'Free Agent'}
                     </span>
                     <div style={{ display: 'inline-flex', gap: 6, flexShrink: 0 }}>
-                      <button className="btn btn-sm btn-secondary" onClick={() => setEditingPlayerId(player.id)}><Edit size={13} /> Edit</button>
+                      <Button size="sm" variant="secondary" onClick={() => setEditingPlayerId(player.id)}><Edit size={13} /> Edit</Button>
                       {hasPermission('Master', 'delete') && (confirmDeleteId === player.id ? (
                         <>
                           <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(player.id)} loading={deletingId === player.id} loadingLabel="Menghapus...">Ya</LoadingButton>
-                          <button className="btn btn-sm btn-secondary" disabled={deletingId === player.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                          <Button size="sm" variant="secondary" disabled={deletingId === player.id} onClick={() => setConfirmDeleteId(null)}>Batal</Button>
                         </>
                       ) : (
-                        <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(player.id)}><Trash2 size={13} /></button>
+                        <Button size="sm" variant="secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(player.id)}><Trash2 size={13} /></Button>
                       ))}
                     </div>
                   </div>
@@ -692,7 +693,7 @@ export default function PlayersListView() {
             <div style={{ fontSize: 13, marginTop: 4 }}>Pilih klub lain, ubah filter posisi, atau tambahkan pemain baru.</div>
           </div>
         )}
-      </div>
+      </Card>
 
       {editingPlayerId && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: 16 }}>

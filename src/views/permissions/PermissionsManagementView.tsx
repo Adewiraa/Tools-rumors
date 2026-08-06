@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { UserRole, ActiveMenu, ALL_MENUS, RolePermission, INITIAL_ROLE_PERMISSIONS } from '@/lib/types/auth';
 import { Shield, Save, RefreshCw, ChevronRight, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Button, Card } from '@/components/ui';
 
 const DEFAULT_ROLE_ORDER = INITIAL_ROLE_PERMISSIONS.map(permission => permission.role);
 
@@ -104,23 +105,23 @@ export default function PermissionsManagementView() {
           <p className="page-description">Atur dan batasi menu aplikasi yang boleh dibuka oleh masing-masing Role Admin.</p>
         </div>
         <div className="permissions-header-actions" style={{ display: 'flex', gap: 10, flexShrink: 0, alignItems: 'flex-start' }}>
-          <button className="btn btn-md btn-secondary" onClick={handleResetDefault}>
+          <Button variant="secondary" onClick={handleResetDefault}>
             <RefreshCw size={15} /> Reset Default
-          </button>
-          <button className="btn btn-md btn-primary" onClick={handleSave} disabled={isSaving || !hasChanges}>
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
             <Save size={15} /> {isSaving ? 'Menyimpan...' : 'Simpan Hak Akses'}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* ── Unsaved Changes Alert ── */}
       {hasChanges && (
-        <div className="card permissions-alert" style={{ padding: '12px 20px', backgroundColor: '#fffbeb', borderColor: '#fde68a', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Card className="permissions-alert" style={{ padding: '12px 20px', backgroundColor: '#fffbeb', borderColor: '#fde68a', display: 'flex', alignItems: 'center', gap: 10 }}>
           <AlertCircle size={16} style={{ color: '#d97706', flexShrink: 0 }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>
             Ada perubahan hak akses yang belum disimpan. Klik <strong>&quot;Simpan Hak Akses&quot;</strong> untuk menerapkan.
           </span>
-        </div>
+        </Card>
       )}
 
       {/* ── Permissions Matrix Table ── */}
@@ -283,7 +284,7 @@ export default function PermissionsManagementView() {
       </div>
 
       {/* ── Info Card ── */}
-      <div className="card permissions-info-card">
+      <Card className="permissions-info-card">
         <h4 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700, color: 'var(--neutral-950)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Shield size={16} style={{ color: 'var(--primary-600)' }} /> Penjelasan Hak Akses Role
         </h4>
@@ -292,7 +293,7 @@ export default function PermissionsManagementView() {
           <li><strong style={{ color: 'var(--neutral-950)' }}>Matriks Menu:</strong> Menyesuaikan navigasi sidebar dan akses route per role secara real-time.</li>
           <li><strong style={{ color: 'var(--neutral-950)' }}>Auto-Filter Navigasi:</strong> Menu yang dicentang di sini yang akan muncul di Sidebar untuk role tersebut.</li>
         </ul>
-      </div>
+      </Card>
     </div>
   );
 }

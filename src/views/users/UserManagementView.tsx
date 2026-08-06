@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { UserRole, AppUser } from '@/lib/types/auth';
+import { Button, Card, Input, Select } from '@/components/ui';
 import {
   Users,
   UserPlus,
@@ -223,9 +224,9 @@ export default function UserManagementView() {
           <h1 className="page-title">Manajemen User & Password</h1>
           <p className="page-description">Kelola akun admin, username, password, dan status hak akses pengguna Gosball.</p>
         </div>
-        <button className="btn btn-md btn-primary" onClick={handleOpenCreate}>
+        <Button onClick={handleOpenCreate}>
           <UserPlus size={16} /> Tambah User Baru
-        </button>
+        </Button>
       </div>
 
       {/* ── Summary Stats — schedule-flow-grid pattern ── */}
@@ -255,7 +256,7 @@ export default function UserManagementView() {
 
 
       {/* ── Filter Bar ── */}
-      <div className="card" style={{ padding: '12px 20px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+      <Card style={{ padding: '12px 20px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {/* Search Input */}
         <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 320 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)' }} />
@@ -305,12 +306,12 @@ export default function UserManagementView() {
         </select>
 
         {isFilterActive && (
-          <button className="btn btn-sm btn-secondary" onClick={resetFilters}>
+          <Button size="sm" variant="secondary" onClick={resetFilters}>
             <RotateCcw size={14} /> Reset
-          </button>
+          </Button>
         )}
         <span className="text-muted" style={{ fontSize: 12, marginLeft: 'auto' }}>{totalEntries} user</span>
-      </div>
+      </Card>
 
       {/* ── Datatable ── */}
 
@@ -384,9 +385,9 @@ export default function UserManagementView() {
                       <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--neutral-700)' }}>Tidak ada data user</div>
                       <div style={{ fontSize: 12, color: 'var(--neutral-500)' }}>Tidak ditemukan user yang sesuai dengan pencarian atau filter Anda.</div>
                       {isFilterActive && (
-                        <button className="btn btn-sm btn-secondary" onClick={resetFilters} style={{ marginTop: 8 }}>
+                        <Button size="sm" variant="secondary" onClick={resetFilters} style={{ marginTop: 8 }}>
                           <RotateCcw size={14} /> Reset Filter
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </td>
@@ -531,16 +532,17 @@ export default function UserManagementView() {
                       {/* Action Buttons */}
                       <td className="master-actions-cell text-right" data-label="Aksi" style={{ padding: '14px 20px', textAlign: 'right' }}>
                         <div className="master-actions" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
-                          <button
-                            className="btn btn-sm btn-secondary"
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={() => handleOpenEdit(u)}
                             style={{ height: 32, padding: '0 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
                             title="Edit User & Password"
                           >
                             <Edit2 size={13} /> Edit
-                          </button>
-                          <button
-                            className="btn btn-sm"
+                          </Button>
+                          <Button
+                            size="sm"
                             onClick={() => handleOpenDelete(u)}
                             style={{
                               height: 32,
@@ -558,7 +560,7 @@ export default function UserManagementView() {
                             title="Hapus User"
                           >
                             <Trash2 size={13} /> Hapus
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -592,23 +594,23 @@ export default function UserManagementView() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>
+          <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>
             <ChevronsLeft size={15} />
-          </button>
-          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
+          </Button>
+          <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
             <ChevronLeft size={15} />
-          </button>
+          </Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).slice(Math.max(0, currentPage - 3), currentPage + 2).map(page => (
-            <button key={page} className={`btn btn-sm ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`} style={{ minWidth: 32, padding: '0 8px', fontSize: 13 }} onClick={() => setCurrentPage(page)}>
+            <Button key={page} size="sm" variant={currentPage === page ? 'primary' : 'secondary'} style={{ minWidth: 32, padding: '0 8px', fontSize: 13 }} onClick={() => setCurrentPage(page)}>
               {page}
-            </button>
+            </Button>
           ))}
-          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
+          <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
             <ChevronRight size={15} />
-          </button>
-          <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)}>
+          </Button>
+          <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)}>
             <ChevronsRight size={15} />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -635,31 +637,25 @@ export default function UserManagementView() {
 
             {/* Modal Body */}
             <form id="form-create-user" onSubmit={handleCreateSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Nama Lengkap</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Ahmad Subagja"
-                  className="form-input"
-                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
-                  value={formData.fullName}
-                  onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                />
-              </div>
+              <Input
+                label="Nama Lengkap"
+                type="text"
+                required
+                placeholder="Contoh: Ahmad Subagja"
+                style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
+                value={formData.fullName}
+                onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+              />
 
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Username</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: ahmad_editor"
-                  className="form-input"
-                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
-                  value={formData.username}
-                  onChange={e => setFormData({ ...formData, username: e.target.value })}
-                />
-              </div>
+              <Input
+                label="Username"
+                type="text"
+                required
+                placeholder="Contoh: ahmad_editor"
+                style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
+                value={formData.username}
+                onChange={e => setFormData({ ...formData, username: e.target.value })}
+              />
 
               <div className="form-group">
                 <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Password</label>
@@ -685,59 +681,52 @@ export default function UserManagementView() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Role Akses</label>
-                  <select
-                    className="form-select"
-                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
-                    value={formData.role}
-                    onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  >
-                    <option value="Super Admin">Super Admin</option>
-                    <option value="Admin Data">Admin Data</option>
-                    <option value="Match Editor">Match Editor</option>
-                    <option value="Rumor Editor">Rumor Editor</option>
-                    <option value="Reviewer">Reviewer</option>
-                  </select>
-                </div>
+                <Select
+                  label="Role Akses"
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                  value={formData.role}
+                  onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
+                >
+                  <option value="Super Admin">Super Admin</option>
+                  <option value="Admin Data">Admin Data</option>
+                  <option value="Match Editor">Match Editor</option>
+                  <option value="Rumor Editor">Rumor Editor</option>
+                  <option value="Reviewer">Reviewer</option>
+                </Select>
 
-                <div className="form-group">
-                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Status Akun</label>
-                  <select
-                    className="form-select"
-                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
-                    value={formData.status}
-                    onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                  >
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Non-Aktif</option>
-                  </select>
-                </div>
+                <Select
+                  label="Status Akun"
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                  value={formData.status}
+                  onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                >
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Non-Aktif</option>
+                </Select>
               </div>
 
             </form>
 
             {/* Modal Footer */}
             <div style={{ padding: '14px 20px', borderTop: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0 }}>
-              <button
+              <Button
                 type="button"
-                className="btn btn-secondary"
+                variant="secondary"
                 onClick={() => setIsCreateModalOpen(false)}
                 disabled={isSubmitting}
                 style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600 }}
               >
                 Batal
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 form="form-create-user"
-                className="btn btn-primary"
                 disabled={isSubmitting}
                 style={{ padding: '8px 18px', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
                 <UserPlus size={15} />
                 {isSubmitting ? 'Menyimpan...' : 'Simpan User'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -766,29 +755,23 @@ export default function UserManagementView() {
 
             {/* Modal Body */}
             <form id="form-edit-user" onSubmit={handleEditSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Nama Lengkap</label>
-                <input
-                  type="text"
-                  required
-                  className="form-input"
-                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
-                  value={formData.fullName}
-                  onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                />
-              </div>
+              <Input
+                label="Nama Lengkap"
+                type="text"
+                required
+                style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
+                value={formData.fullName}
+                onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+              />
 
-              <div className="form-group">
-                <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Username</label>
-                <input
-                  type="text"
-                  required
-                  className="form-input"
-                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
-                  value={formData.username}
-                  onChange={e => setFormData({ ...formData, username: e.target.value })}
-                />
-              </div>
+              <Input
+                label="Username"
+                type="text"
+                required
+                style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 12px' }}
+                value={formData.username}
+                onChange={e => setFormData({ ...formData, username: e.target.value })}
+              />
 
               <div className="form-group">
                 <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>
@@ -816,58 +799,51 @@ export default function UserManagementView() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Role Akses</label>
-                  <select
-                    className="form-select"
-                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
-                    value={formData.role}
-                    onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  >
-                    <option value="Super Admin">Super Admin</option>
-                    <option value="Admin Data">Admin Data</option>
-                    <option value="Match Editor">Match Editor</option>
-                    <option value="Rumor Editor">Rumor Editor</option>
-                    <option value="Reviewer">Reviewer</option>
-                  </select>
-                </div>
+                <Select
+                  label="Role Akses"
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                  value={formData.role}
+                  onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
+                >
+                  <option value="Super Admin">Super Admin</option>
+                  <option value="Admin Data">Admin Data</option>
+                  <option value="Match Editor">Match Editor</option>
+                  <option value="Rumor Editor">Rumor Editor</option>
+                  <option value="Reviewer">Reviewer</option>
+                </Select>
 
-                <div className="form-group">
-                  <label className="form-label" style={{ color: '#334155', fontWeight: 700, fontSize: 13 }}>Status Akun</label>
-                  <select
-                    className="form-select"
-                    style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
-                    value={formData.status}
-                    onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                  >
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Non-Aktif</option>
-                  </select>
-                </div>
+                <Select
+                  label="Status Akun"
+                  style={{ backgroundColor: '#fff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 8, height: 40, fontSize: 14, padding: '0 28px 0 10px', width: '100%', boxSizing: 'border-box' }}
+                  value={formData.status}
+                  onChange={e => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                >
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Non-Aktif</option>
+                </Select>
               </div>
             </form>
 
             {/* Modal Footer */}
             <div style={{ padding: '14px 20px', borderTop: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0 }}>
-              <button
+              <Button
                 type="button"
-                className="btn btn-secondary"
+                variant="secondary"
                 onClick={() => setIsEditModalOpen(false)}
                 disabled={isSubmitting}
                 style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600 }}
               >
                 Batal
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 form="form-edit-user"
-                className="btn btn-primary"
                 disabled={isSubmitting}
                 style={{ padding: '8px 18px', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
                 <Edit2 size={15} />
                 {isSubmitting ? 'Menyimpan...' : 'Perbarui Data User'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -908,16 +884,15 @@ export default function UserManagementView() {
 
             {/* Footer Actions */}
             <div style={{ padding: '14px 20px', borderTop: '1px solid var(--neutral-200)', backgroundColor: '#fafaf9', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button
-                className="btn btn-secondary"
+              <Button
+                variant="secondary"
                 onClick={() => setIsDeleteModalOpen(false)}
                 disabled={isSubmitting}
                 style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600 }}
               >
                 Batal
-              </button>
-              <button
-                className="btn"
+              </Button>
+              <Button
                 onClick={handleDeleteSubmit}
                 disabled={isSubmitting}
                 style={{
@@ -935,7 +910,7 @@ export default function UserManagementView() {
               >
                 <Trash2 size={15} />
                 {isSubmitting ? 'Menghapus...' : 'Ya, Hapus User'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

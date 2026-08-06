@@ -19,6 +19,7 @@ import {
 } from '@/logic/utils';
 import type { AppSettings, MatchMediaAdItem } from '@/logic/utils';
 import { getMatchMediaPages, hasMatchMediaPage, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
+import { Badge, Button, Card } from '@/components/ui';
 
 type ResultOutputType = 'HT' | 'FT' | 'AD';
 type ResultPreviewTarget = { type: ResultOutputType; adIndex: number };
@@ -62,10 +63,10 @@ export default function ResultsListView() {
     return effectiveLineupStatus === 'Complete' ? 'Siap' : effectiveLineupStatus === 'Needs Review' ? 'Review' : 'Belum';
   };
 
-  const lineupStatusClass = (match: Match) => {
-    if (getEffectiveMatchStatus(match) === 'Finished') return 'badge-success';
+  const lineupStatusClass = (match: Match): 'success' | 'warning' | 'draft' => {
+    if (getEffectiveMatchStatus(match) === 'Finished') return 'success';
     const effectiveLineupStatus = getEffectiveLineupStatus(match);
-    return effectiveLineupStatus === 'Complete' ? 'badge-success' : effectiveLineupStatus === 'Needs Review' ? 'badge-warning' : 'badge-draft';
+    return effectiveLineupStatus === 'Complete' ? 'success' : effectiveLineupStatus === 'Needs Review' ? 'warning' : 'draft';
   };
 
   const renderMatchLogo = (logo?: string) => (
@@ -719,14 +720,14 @@ export default function ResultsListView() {
       </div>
 
       {/* Filter */}
-      <div className="card schedule-filter-card">
+      <Card className="schedule-filter-card">
         <select className="form-select schedule-filter-competition" value={selectedComp} onChange={(e) => setSelectedComp(e.target.value)}>
           <option value="Semua">Semua Kompetisi</option>
           {competitions.map(comp => (
             <option key={comp.id} value={comp.name}>{comp.name}</option>
           ))}
         </select>
-      </div>
+      </Card>
 
       {/* Data Table */}
       <div className="table-wrapper schedule-table-wrapper">
@@ -792,37 +793,37 @@ export default function ResultsListView() {
                     )}
                   </td>
                   <td className="schedule-info-cell" data-label="Status">
-                    <span className={`badge ${effectiveStatus === 'Finished' ? 'badge-success' : effectiveStatus === 'Live' ? 'badge-danger' : 'badge-warning'}`}>
+                    <Badge status={effectiveStatus === 'Finished' ? 'success' : effectiveStatus === 'Live' ? 'danger' : 'warning'}>
                       {statusLabel(effectiveStatus)}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="schedule-info-cell" data-label="Lineup">
-                    <span className={`badge ${lineupStatusClass(match)}`}>
+                    <Badge status={lineupStatusClass(match)}>
                       {lineupStatusLabel(match)}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="schedule-info-cell" data-label="Publikasi">
-                    <span className={`badge ${match.publicationStatus === 'Published' ? 'badge-success' : 'badge-warning'}`}>
+                    <Badge status={match.publicationStatus === 'Published' ? 'success' : 'warning'}>
                       {match.publicationStatus}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="schedule-actions-cell text-right">
                     <div className="schedule-actions" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
                       {hasPermission('Match Result', 'create_edit') && (
-                        <button 
-                          className="btn btn-sm btn-primary" 
+                        <Button 
+                          size="sm" 
                           disabled={!canInputResult} 
                           title={canInputResult ? 'Input / Edit Hasil Pertandingan' : 'Input hasil tersedia saat pertandingan Live dan lineup lengkap'} 
                           onClick={() => handleEdit(match.id)}
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                         >
                           <Edit size={13} /> {hasResultProgress(match) ? (match.homeScore !== undefined && match.homeScore !== null ? 'Edit Skor' : 'Input FT') : 'Input HT/FT'}
-                        </button>
+                        </Button>
                       )}
                       {hasResultProgress(match) && (
-                        <button className="btn btn-sm btn-secondary" onClick={() => openResultPreview(match)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <Button size="sm" variant="secondary" onClick={() => openResultPreview(match)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                           <Info size={13} /> Lihat Gambar
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </td>
@@ -840,7 +841,7 @@ export default function ResultsListView() {
                 <h3 className="output-preview-title">Gambar Hasil Pertandingan</h3>
                 <div className="output-preview-meta">{timelineMatch.homeClubName} vs {timelineMatch.awayClubName}</div>
               </div>
-              <button className="btn btn-sm btn-secondary output-preview-close" title="Tutup" onClick={() => setTimelineMatch(null)}><X size={16} /></button>
+              <Button size="sm" variant="secondary" className="output-preview-close" title="Tutup" onClick={() => setTimelineMatch(null)}><X size={16} /></Button>
             </div>
             <div className="output-preview-tabs" role="tablist" aria-label="Pilihan gambar hasil">
               {canShowHalfTimeOutput(timelineMatch) && (
@@ -905,21 +906,22 @@ export default function ResultsListView() {
                       />
                     )}
                     <div className="output-preview-actions">
-                      <button
-                        className="btn btn-sm btn-primary"
+                      <Button
+                        size="sm"
                         onClick={() => shareResultOutput(timelineMatch, activeType, activeResultPreview.adIndex)}
                         disabled={isExportingResultOutput || !activeOutputReady}
                         title={activeOutputReady ? `Bagikan ${activeType}` : 'File share sedang disiapkan'}
                       >
                         <Share2 size={14} /> {activeOutputReady ? `Bagikan ${activeType === 'AD' ? 'Iklan' : activeType}` : 'Menyiapkan file...'}
-                      </button>
-                      <button
-                        className="btn btn-sm btn-secondary"
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
                         onClick={() => downloadResultOutput(timelineMatch, activeType, activeResultPreview.adIndex)}
                         disabled={isExportingResultOutput}
                       >
                         <Download size={14} /> Unduh {activeType === 'AD' ? 'Iklan' : activeType}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 );

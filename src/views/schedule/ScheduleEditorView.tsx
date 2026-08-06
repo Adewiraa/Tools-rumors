@@ -7,6 +7,7 @@ import { ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { getEditableScheduleStatus } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
 import SearchableClubSelect from '@/views/shared/SearchableClubSelect';
+import { Button, Card, Input, Select } from '@/components/ui';
 
 export default function ScheduleEditorView({ matchId }: { matchId: string }) {
   const {
@@ -120,9 +121,9 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
     <div className="schedule-editor-container">
       <div className="schedule-editor-header">
         <div className="schedule-editor-header-left">
-          <button type="button" className="btn btn-sm btn-secondary schedule-editor-back-btn" onClick={goToScheduleList}>
+          <Button type="button" size="sm" variant="secondary" className="schedule-editor-back-btn" onClick={goToScheduleList}>
             <ArrowLeft size={16} /> Kembali
-          </button>
+          </Button>
           <div>
             <div className="breadcrumb"><span>Jadwal</span> <ChevronRight size={10} /> <span>{isNew ? 'Tambah Jadwal' : 'Edit Jadwal'}</span></div>
             <h2 className="schedule-editor-title">{isNew ? 'Tambah Jadwal Baru' : `Edit: ${existing?.homeClubName} vs ${existing?.awayClubName}`}</h2>
@@ -133,17 +134,11 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
         </LoadingButton>
       </div>
 
-      <div className="card schedule-editor-card">
-        <div className="form-group schedule-editor-competition-field">
-          <label className="form-label">Kompetisi <span className="required">*</span></label>
-          <select className="form-select" value={competition} onChange={e => handleCompetitionChange(e.target.value)}>
-            {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} ({c.season})</option>)}
-            {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} (nonaktif)</option>)}
-          </select>
-          <span className="form-helper">
-            {eligibleClubs.length >= 2 ? `${eligibleClubs.length} klub peserta tersedia untuk kompetisi ini.` : 'Belum ada relasi peserta, semua klub ditampilkan.'}
-          </span>
-        </div>
+      <Card className="schedule-editor-card">
+        <Select label="Kompetisi" required value={competition} onChange={e => handleCompetitionChange(e.target.value)} helper={eligibleClubs.length >= 2 ? `${eligibleClubs.length} klub peserta tersedia untuk kompetisi ini.` : 'Belum ada relasi peserta, semua klub ditampilkan.'}>
+          {competitions.filter(c => c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} ({c.season})</option>)}
+          {competitions.filter(c => !c.isActive).map(c => <option key={c.id} value={c.name}>{c.name} (nonaktif)</option>)}
+        </Select>
 
         <div className="schedule-editor-form-grid">
           <div className="form-row-2col schedule-editor-team-fields">
@@ -185,28 +180,18 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
             </div>
           )}
 
-          <div className="form-group schedule-editor-kickoff-field">
-            <label className="form-label">Tanggal & Waktu Kickoff <span className="required">*</span></label>
-            <input type="datetime-local" className="form-input" value={kickoff} onChange={e => setKickoff(e.target.value)} />
-          </div>
-          <div className="form-group schedule-editor-status-field">
-            <label className="form-label">Status Pertandingan</label>
-            {status === 'Finished' ? (
-              <input className="form-input" value="Selesai" disabled readOnly />
-            ) : (
-              <select className="form-select" value={status} onChange={e => setStatus(e.target.value as Match['status'])}>
-                <option value="Scheduled">Dijadwalkan</option>
-                <option value="Postponed">Ditunda</option>
-                <option value="Cancelled">Dibatalkan</option>
-              </select>
-            )}
-            <span className="form-helper">Live otomatis saat tanggal kickoff masuk hari pertandingan.</span>
-          </div>
+          <Input label="Tanggal & Waktu Kickoff" required type="datetime-local" value={kickoff} onChange={e => setKickoff(e.target.value)} />
+          {status === 'Finished' ? (
+            <Input label="Status Pertandingan" value="Selesai" disabled readOnly helper="Live otomatis saat tanggal kickoff masuk hari pertandingan." />
+          ) : (
+            <Select label="Status Pertandingan" value={status} onChange={e => setStatus(e.target.value as Match['status'])} helper="Live otomatis saat tanggal kickoff masuk hari pertandingan.">
+              <option value="Scheduled">Dijadwalkan</option>
+              <option value="Postponed">Ditunda</option>
+              <option value="Cancelled">Dibatalkan</option>
+            </Select>
+          )}
 
-          <div className="form-group schedule-editor-venue-field">
-            <label className="form-label">Venue / Stadion <span style={{ fontSize: 11, color: 'var(--neutral-400)', fontWeight: 400 }}>(auto dari home club)</span></label>
-            <input type="text" className="form-input" placeholder="Nama stadion..." value={venue} onChange={e => setVenue(e.target.value)} />
-          </div>
+          <Input label="Venue / Stadion" helper="(auto dari home club)" type="text" placeholder="Nama stadion..." value={venue} onChange={e => setVenue(e.target.value)} />
 
           <div className="schedule-editor-summary">
             <span>Flow Jadwal</span>
@@ -214,7 +199,7 @@ export default function ScheduleEditorView({ matchId }: { matchId: string }) {
             <p>{competition || 'Kompetisi'} - {venue || 'Venue belum diisi'}</p>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

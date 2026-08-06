@@ -21,6 +21,7 @@ import {
 import type { MatchMediaAdItem, MatchMediaSettings } from '@/logic/utils';
 import LoadingButton from '@/views/shared/LoadingButton';
 import { getMatchMediaPages, hasMatchMediaPage, MatchMediaControls, MatchMediaPageCard } from '@/views/shared/MatchMediaAd';
+import { Button, Card, Textarea } from '@/components/ui';
 
 interface MatchEvent {
   id: string;
@@ -582,11 +583,11 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
   if (matchMissing) {
     return (
-      <div className="card" style={{ maxWidth: 560 }}>
+      <Card style={{ maxWidth: 560 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Pertandingan tidak ditemukan</h2>
         <p className="text-muted" style={{ marginBottom: 16 }}>Pilih pertandingan dari jadwal atau lineup yang sudah lengkap.</p>
-        <button type="button" className="btn btn-sm btn-secondary" onClick={goToResultsList}><ArrowLeft size={16} /> Kembali</button>
-      </div>
+        <Button type="button" size="sm" variant="secondary" onClick={goToResultsList}><ArrowLeft size={16} /> Kembali</Button>
+      </Card>
     );
   }
 
@@ -794,9 +795,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
       {/* Editor Header */}
       <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--neutral-200)', paddingBottom: 16 }}>
         <div className="flex align-center gap-12">
-          <button type="button" className="btn btn-sm btn-secondary" onClick={goToResultsList}>
+          <Button type="button" size="sm" variant="secondary" onClick={goToResultsList}>
             <ArrowLeft size={16} /> Kembali
-          </button>
+          </Button>
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700 }}>Input Hasil & Timeline Pertandingan</h2>
             <div style={{ fontSize: 12, color: 'var(--neutral-50)' }}>{match.competition} · {match.venue}</div>
@@ -812,7 +813,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
 
       <div className="grid-12">
         {/* Left Side: Scores and Status */}
-        <div className="card" style={{ gridColumn: 'span 7' }}>
+        <Card style={{ gridColumn: 'span 7' }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Skor Half Time, Full Time & Status</h3>
 
           <div className="flex align-center justify-between" style={{ padding: '20px 0', borderBottom: '1px solid var(--neutral-100)' }}>
@@ -953,10 +954,10 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
             </select>
           </div>
 
-        </div>
+        </Card>
 
         {/* Right Side: Timeline event input */}
-        <div className="card" style={{ gridColumn: 'span 5' }}>
+        <Card style={{ gridColumn: 'span 5' }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Timeline Gol / Kartu</h3>
 
           <div style={{ border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-md)', padding: 16, marginBottom: 16 }}>
@@ -1071,9 +1072,9 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               </div>
             </div>
 
-            <button className="btn btn-sm btn-primary w-full" style={{ marginTop: 12 }} onClick={addEvent}>
+            <Button size="sm" className="w-full" style={{ marginTop: 12 }} onClick={addEvent}>
               Tambahkan Event
-            </button>
+            </Button>
           </div>
 
           {/* Events List */}
@@ -1095,11 +1096,11 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Instagram Graphic Export Row */}
-      <div className="card" style={{ marginTop: 24, padding: 24 }}>
+      <Card style={{ marginTop: 24, padding: 24 }}>
         <div style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Instagram Feed Graphic</h3>
           <p className="page-description" style={{ margin: 0 }}>Gunakan template premium ini untuk mempublikasikan hasil pertandingan ke feeds Instagram resmi.</p>
@@ -1269,9 +1270,10 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                       />
                     </label>
                     {backgroundImage && !pendingBackgroundImage && (
-                      <button
+                      <Button
                         type="button"
-                        className="btn btn-sm btn-secondary"
+                        size="sm"
+                        variant="secondary"
                         title="Atur Posisi Background"
                         style={{ padding: '6px 8px', fontSize: 11 }}
                         onClick={() => {
@@ -1283,12 +1285,13 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                         }}
                       >
                         ⚙️
-                      </button>
+                      </Button>
                     )}
                     {backgroundImage && (
-                      <button
+                      <Button
                         type="button"
-                        className="btn btn-sm btn-danger"
+                        size="sm"
+                        variant="danger"
                         title="Hapus Background"
                         style={{ padding: '6px 8px', fontSize: 11 }}
                         onClick={() => {
@@ -1298,7 +1301,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                         }}
                       >
                         🗑️
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -1309,12 +1312,12 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                     <label className="form-label" style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Preview & Atur Background</label>
                     <div className="flex gap-8">
-                      <button type="button" className="btn btn-sm btn-primary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={applyPendingBackgroundImage}>
+                      <Button type="button" size="sm" style={{ padding: '6px 12px', fontSize: 11 }} onClick={applyPendingBackgroundImage}>
                         Terapkan
-                      </button>
-                      <button type="button" className="btn btn-sm btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={resetBackgroundImageDraft}>
+                      </Button>
+                      <Button type="button" size="sm" variant="secondary" style={{ padding: '6px 12px', fontSize: 11 }} onClick={resetBackgroundImageDraft}>
                         Batal
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div style={{ position: 'relative', height: 160, overflow: 'hidden', borderRadius: 8, backgroundColor: '#111', marginBottom: 12 }}>
@@ -1385,43 +1388,45 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
               <div style={{ width: '100%', display: 'grid', gap: 8, boxSizing: 'border-box' }}>
                 {/* Graphic Output Actions */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <button
-                    className="btn btn-md btn-primary flex align-center justify-center gap-6"
+                  <Button
+                    className="flex align-center justify-center gap-6"
                     style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
                     onClick={shareResultGraphic}
                     disabled={isExportingGraphic}
                   >
                     <Share2 size={15} /> Bagikan ({effectiveGraphicType})
-                  </button>
-                  <button
-                    className="btn btn-md btn-secondary flex align-center justify-center gap-6"
+                  </Button>
+                  <Button
+                    className="flex align-center justify-center gap-6"
+                    variant="secondary"
                     style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
                     onClick={downloadResultGraphic}
                     disabled={isExportingGraphic}
                   >
                     <Download size={15} /> Unduh PNG ({graphicRatio})
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Master Ad Package Actions (if ads exist) */}
                 {hasMediaAdPage && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 8, borderTop: '1px dashed var(--neutral-300)' }}>
-                    <button
-                      className="btn btn-md btn-primary flex align-center justify-center gap-6"
+                    <Button
+                      className="flex align-center justify-center gap-6"
                       style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, background: 'var(--neutral-900)', width: '100%', boxSizing: 'border-box' }}
                       onClick={shareMatchMediaAd}
                       disabled={isExportingGraphic}
                     >
                       <Share2 size={15} /> Semua Iklan ({mediaAdPages.length})
-                    </button>
-                    <button
-                      className="btn btn-md btn-secondary flex align-center justify-center gap-6"
+                    </Button>
+                    <Button
+                      className="flex align-center justify-center gap-6"
+                      variant="secondary"
                       style={{ padding: '10px 8px', fontWeight: 600, fontSize: 12, width: '100%', boxSizing: 'border-box' }}
                       onClick={downloadMatchMediaAd}
                       disabled={isExportingGraphic}
                     >
                       <Download size={15} /> Unduh Semua ({mediaAdPages.length})
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -1653,7 +1658,7 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
             </div>
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Safety Rules Reason Dialog Modal */}
       {showReasonModal && (
@@ -1663,18 +1668,16 @@ export default function ResultEditorView({ matchId }: { matchId: string }) {
             <p style={{ fontSize: 13, color: 'var(--neutral-700)', marginBottom: 16 }}>
               Hasil pertandingan ini sebelumnya telah dipublikasikan. Mengubah skor akhir akan mencatat audit trail khusus.
             </p>
-            <div className="form-group">
-              <label className="form-label">Alasan Perubahan Skor <span className="required">*</span></label>
-              <textarea
-                className="form-textarea"
-                rows={3}
-                placeholder="Contoh: Kesalahan input skor oleh petugas lapangan iLeague."
-                value={safetyReason}
-                onChange={(e) => setSafetyReason(e.target.value)}
-              />
-            </div>
+            <Textarea
+              label="Alasan Perubahan Skor"
+              required
+              rows={3}
+              placeholder="Contoh: Kesalahan input skor oleh petugas lapangan iLeague."
+              value={safetyReason}
+              onChange={(e) => setSafetyReason(e.target.value)}
+            />
             <div className="flex gap-12 justify-between" style={{ marginTop: 16 }}>
-              <button className="btn btn-md btn-secondary" onClick={() => setShowReasonModal(false)}>Batal</button>
+              <Button variant="secondary" onClick={() => setShowReasonModal(false)}>Batal</Button>
               <LoadingButton className="btn btn-md btn-danger" disabled={!safetyReason} loading={isSaving} loadingLabel="Menyimpan..." onClick={() => {
                 setShowReasonModal(false);
                 submitUpdate();

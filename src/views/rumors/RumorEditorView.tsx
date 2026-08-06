@@ -6,6 +6,7 @@ import { Rumor } from '@/lib/mockData';
 import { ArrowLeft, Download, Image as ImageIcon, Save, Share2, Upload } from 'lucide-react';
 import LoadingButton from '@/views/shared/LoadingButton';
 import * as htmlToImage from 'html-to-image';
+import { Badge, Button, Card, Input, Select } from '@/components/ui';
 
 const GRAPHIC_ID = 'rumor-transfer-graphic';
 
@@ -349,18 +350,18 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Upload foto */}
-          <div className="card" style={{ padding: 20 }}>
+          <Card style={{ padding: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Foto Pemain</div>
             {form.playerImageUrl ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <img src={form.playerImageUrl} alt="" style={{ width: 60, height: 76, objectFit: 'cover', borderRadius: 8, objectPosition: `${posX}% ${posY}%` }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span className="badge badge-success">Foto sudah dipilih</span>
+                  <Badge status="success">Foto sudah dipilih</Badge>
                   <label className="btn btn-sm btn-secondary" style={{ cursor: 'pointer' }}>
                     <Upload size={13} /> Ganti Foto
                     <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
                   </label>
-                  <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => update('playerImageUrl', '')}>Hapus</button>
+                  <Button size="sm" variant="secondary" style={{ color: 'var(--danger-600)' }} onClick={() => update('playerImageUrl', '')}>Hapus</Button>
                 </div>
               </div>
             ) : (
@@ -371,11 +372,11 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
                 <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
               </label>
             )}
-          </div>
+          </Card>
 
           {/* ── KONTROL POSISI FOTO (seperti match result) ── */}
           {form.playerImageUrl && (
-            <div className="card" style={{ padding: 20 }}>
+            <Card style={{ padding: 20 }}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Atur Posisi Foto</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
@@ -424,50 +425,58 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
                   </div>
                 </div>
 
-                <button
-                  className="btn btn-sm btn-secondary"
+                <Button
+                  size="sm"
+                  variant="secondary"
                   onClick={() => { setPosX(50); setPosY(20); setZoom(100); }}
                   style={{ alignSelf: 'flex-start', fontSize: 11 }}
                 >
                   Reset Posisi
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* Info transfer */}
-          <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Card style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>Informasi Transfer</div>
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Nama Pemain <span className="required">*</span></label>
-              <input className="form-input" placeholder="Contoh: Eliano Reijnders" value={form.player} onChange={e => update('player', e.target.value)} />
-            </div>
+            <Input
+              label="Nama Pemain"
+              required
+              placeholder="Contoh: Eliano Reijnders"
+              value={form.player}
+              onChange={e => update('player', e.target.value)}
+            />
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Klub Peminat <span className="required">*</span></label>
-              <select className="form-select" value={form.destinationClub} onChange={e => update('destinationClub', e.target.value)}>
-                <option value="">Pilih dari Master Klub</option>
-                {clubs.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-              {destClub && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                  {destClub.logoUrl && destClub.logoUrl.startsWith('http') && (
-                    <img src={destClub.logoUrl} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                  )}
-                  <span style={{ fontSize: 12, color: 'var(--primary-600)', fontWeight: 600 }}>{destClub.name}</span>
-                </div>
-              )}
-            </div>
+            <Select
+              label="Klub Peminat"
+              required
+              value={form.destinationClub}
+              onChange={e => update('destinationClub', e.target.value)}
+            >
+              <option value="">Pilih dari Master Klub</option>
+              {clubs.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </Select>
+            {destClub && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                {destClub.logoUrl && destClub.logoUrl.startsWith('http') && (
+                  <img src={destClub.logoUrl} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+                )}
+                <span style={{ fontSize: 12, color: 'var(--primary-600)', fontWeight: 600 }}>{destClub.name}</span>
+              </div>
+            )}
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Klub Asal</label>
-              <input className="form-input" placeholder="Contoh: Persib Bandung" value={form.fromClub} onChange={e => update('fromClub', e.target.value)} />
-            </div>
-          </div>
+            <Input
+              label="Klub Asal"
+              placeholder="Contoh: Persib Bandung"
+              value={form.fromClub}
+              onChange={e => update('fromClub', e.target.value)}
+            />
+          </Card>
 
           {/* Caption */}
-          <div className="card" style={{ padding: 20 }}>
+          <Card style={{ padding: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Caption</div>
             <div style={{ fontSize: 12, color: 'var(--neutral-500)', marginBottom: 10 }}>
               Tampil di section bawah, terpisah dari foto pemain.
@@ -479,10 +488,10 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
               value={form.shortSummary || form.graphicCaption || ''}
               onChange={e => { update('shortSummary', e.target.value); update('graphicCaption', e.target.value); }}
             />
-          </div>
+          </Card>
 
           {/* Ekspor */}
-          <div className="card" style={{ padding: 20 }}>
+          <Card style={{ padding: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Ekspor Gambar</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <LoadingButton className="btn btn-md btn-primary" onClick={handleShare} loading={isExporting} loadingLabel="Membuat...">
@@ -492,7 +501,7 @@ export default function RumorEditorView({ rumorId }: { rumorId: string }) {
                 <Download size={14} /> Unduh PNG (9:16)
               </LoadingButton>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* ── PREVIEW ── */}

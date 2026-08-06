@@ -7,6 +7,7 @@ import { Club, calculateClubCompleteness } from '@/lib/mockData';
 import { ChevronRight, Edit, Plus, Search, Trash2, X } from 'lucide-react';
 import { apiRequest } from '@/logic/apiClient';
 import LoadingButton from '@/views/shared/LoadingButton';
+import { Badge, Button, Card } from '@/components/ui';
 import { generateUUID } from '@/logic/utils';
 import ClubEditorView from './ClubEditorView';
 
@@ -212,14 +213,14 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
           <p className="page-description">{isNationalTeam ? 'Kelola identitas negara, pelatih, warna, bendera, dan pemain peserta.' : 'Kelola identitas klub, stadion, pelatih, warna, dan logo.'}</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={() => setEditingClubId('new')}>
+          <Button onClick={() => setEditingClubId('new')}>
             <Plus size={16} /> {isNationalTeam ? 'Tambah Negara' : 'Tambah Klub'}
-          </button>
+          </Button>
         )}
       </div>
 
       {!isNationalTeam && hasPermission('Master', 'create_edit') && (
-        <div className="card api-import-card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
+        <Card className="api-import-card" style={{ padding: '18px 24px', display: 'grid', gap: 14 }}>
           <div className="api-import-header" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) minmax(320px, 560px)', gap: 16, alignItems: 'end' }}>
             <div className="api-import-copy" style={{ minWidth: 0 }}>
               <div className="semibold" style={{ fontSize: 14 }}>Ambil Data Klub dari API-Football</div>
@@ -262,7 +263,7 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
                       <div className="semibold" style={{ fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{candidate.team?.name}</div>
                       <div className="text-muted" style={{ fontSize: 11 }}>ID API: {candidate.team?.id || '-'}</div>
                     </div>
-                    <span className="badge badge-info" style={{ flexShrink: 0 }}>{candidate.team?.country || '-'}</span>
+                    <Badge status="info" style={{ flexShrink: 0 }}>{candidate.team?.country || '-'}</Badge>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, fontSize: 12 }}>
                     <div><span className="text-muted">Kode</span><div className="semibold">{candidate.team?.code || buildClubCode(candidate.team?.name)}</div></div>
@@ -285,7 +286,7 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
               ))}
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       <div className="table-wrapper master-table-wrapper">
@@ -348,14 +349,14 @@ export default function ClubsListView({ isNationalTeam = false }: { isNationalTe
                   </td>
                   <td className="master-actions-cell text-right">
                     <div className="master-actions">
-                      <button className="btn btn-sm btn-secondary" onClick={() => setEditingClubId(club.id)}><Edit size={13} /> Edit</button>
+                      <Button size="sm" variant="secondary" onClick={() => setEditingClubId(club.id)}><Edit size={13} /> Edit</Button>
                       {hasPermission('Master', 'delete') && (confirmDeleteId === club.id ? (
                         <>
                           <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(club.id)} loading={deletingId === club.id} loadingLabel="Menghapus...">Ya</LoadingButton>
-                          <button className="btn btn-sm btn-secondary" disabled={deletingId === club.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                          <Button size="sm" variant="secondary" disabled={deletingId === club.id} onClick={() => setConfirmDeleteId(null)}>Batal</Button>
                         </>
                       ) : (
-                        <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(club.id)}><Trash2 size={13} /></button>
+                        <Button size="sm" variant="secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(club.id)}><Trash2 size={13} /></Button>
                       ))}
                     </div>
                   </td>

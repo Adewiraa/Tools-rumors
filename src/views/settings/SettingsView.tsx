@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { Building2, Check, ChevronRight, Plus, Save, Upload, X } from 'lucide-react';
 import type { AppSettings } from '@/logic/utils';
+import { Button, Card, Input } from '@/components/ui';
 
 const getErrorMessage = (error: unknown, fallback: string) => (
   error instanceof Error && error.message ? error.message : fallback
@@ -138,7 +139,7 @@ export default function SettingsView() {
       </div>
 
       <div style={{ maxWidth: 520 }}>
-        <div className="card settings-card" style={{ padding: 18, borderRadius: 12 }}>
+        <Card className="settings-card" style={{ padding: 18, borderRadius: 12 }}>
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--primary-600)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
               Identitas Aplikasi ({appSettings.appName})
@@ -177,45 +178,36 @@ export default function SettingsView() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: 12, fontWeight: 700 }}>Nama Aplikasi</label>
-              <input
-                className="form-input"
-                value={formData.appName}
-                onChange={event => updateIdentityDraft('appName', event.target.value)}
-                placeholder="Contoh: Gosball"
-                style={{ padding: '6px 10px', fontSize: 13 }}
-              />
-            </div>
+            <Input
+              label="Nama Aplikasi"
+              value={formData.appName}
+              onChange={event => updateIdentityDraft('appName', event.target.value)}
+              placeholder="Contoh: Gosball"
+              style={{ padding: '6px 10px', fontSize: 13 }}
+            />
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: 12, fontWeight: 700 }}>Subtitle Sidebar</label>
-              <input
-                className="form-input"
-                value={formData.appSubtitle}
-                onChange={event => updateIdentityDraft('appSubtitle', event.target.value)}
-                placeholder="Contoh: MEDIA APP"
-                style={{ padding: '6px 10px', fontSize: 13 }}
-              />
-            </div>
+            <Input
+              label="Subtitle Sidebar"
+              value={formData.appSubtitle}
+              onChange={event => updateIdentityDraft('appSubtitle', event.target.value)}
+              placeholder="Contoh: MEDIA APP"
+              style={{ padding: '6px 10px', fontSize: 13 }}
+            />
 
-            <div className="form-group">
-              <label className="form-label" style={{ fontSize: 12, fontWeight: 700 }}>Handle Watermark</label>
-              <input
-                className="form-input"
-                value={formData.appHandle}
-                onChange={event => updateIdentityDraft('appHandle', event.target.value)}
-                placeholder="Contoh: @GOSBALL"
-                style={{ padding: '6px 10px', fontSize: 13 }}
-              />
-            </div>
+            <Input
+              label="Handle Watermark"
+              value={formData.appHandle}
+              onChange={event => updateIdentityDraft('appHandle', event.target.value)}
+              placeholder="Contoh: @GOSBALL"
+              style={{ padding: '6px 10px', fontSize: 13 }}
+            />
 
-            <button className="btn btn-sm btn-primary" type="button" onClick={handleSaveIdentity} disabled={isSavingIdentity} style={{ width: '100%', marginTop: 4 }}>
+            <Button size="sm" type="button" onClick={handleSaveIdentity} disabled={isSavingIdentity} style={{ width: '100%', marginTop: 4 }}>
               <Save size={14} />
               {isSavingIdentity ? 'Menyimpan...' : 'Simpan Identitas'}
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

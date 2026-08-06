@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/logic/AppContext';
 import { ChevronRight, Search, ClipboardList, RotateCcw, ChevronLeft, ChevronRight as ChevronRightIcon, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Badge, Button, Card } from '@/components/ui';
 
 const ACTION_LABEL: Record<string, string> = {
   PUBLISH_RUMOR:         'Publikasi Rumor',
@@ -124,7 +125,7 @@ export default function AuditLogsView() {
       </div>
 
       {/* ── Filter Bar ── */}
-      <div className="card" style={{ padding: '14px 20px' }}>
+      <Card style={{ padding: '14px 20px' }}>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--neutral-400)' }} />
@@ -157,9 +158,9 @@ export default function AuditLogsView() {
             ))}
           </select>
           {isFilterActive && (
-            <button className="btn btn-sm btn-secondary" onClick={handleResetFilters} style={{ height: 38, gap: 6, fontSize: 13 }}>
+            <Button size="sm" variant="secondary" onClick={handleResetFilters} style={{ height: 38, gap: 6, fontSize: 13 }}>
               <RotateCcw size={14} /> Reset
-            </button>
+            </Button>
           )}
           <span style={{ fontSize: 12, color: 'var(--neutral-500)', marginLeft: 'auto' }}>
             {totalEntries} dari {auditLogs.length} entri
@@ -189,7 +190,7 @@ export default function AuditLogsView() {
             </button>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* ── Data Table ── */}
       <div className="table-wrapper master-table-wrapper">
@@ -212,9 +213,9 @@ export default function AuditLogsView() {
                     <ClipboardList size={32} color="var(--neutral-400)" style={{ margin: '0 auto 4px' }} />
                     <p style={{ fontWeight: 600, color: 'var(--neutral-700)' }}>Tidak ada log yang sesuai filter</p>
                     {isFilterActive && (
-                      <button className="btn btn-sm btn-secondary" onClick={handleResetFilters} style={{ marginTop: 4, gap: 6 }}>
+                      <Button size="sm" variant="secondary" onClick={handleResetFilters} style={{ marginTop: 4, gap: 6 }}>
                         <RotateCcw size={13} /> Reset Filter
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </td>
@@ -228,11 +229,11 @@ export default function AuditLogsView() {
                 <tr key={log.id}>
                   <td className="master-info-cell text-muted" data-label="Waktu" style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{log.timestamp}</td>
                   <td className="master-info-cell" data-label="User"><span className="semibold" style={{ fontSize: 13 }}>{log.user}</span></td>
-                  <td className="master-info-cell" data-label="Modul"><span className="badge badge-info" style={{ fontSize: 11 }}>{log.module}</span></td>
+                  <td className="master-info-cell" data-label="Modul"><Badge status="info" style={{ fontSize: 11 }}>{log.module}</Badge></td>
                   <td className="master-info-cell" data-label="Kategori">
-                    <span className={`badge ${badge.cssClass}`} style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
+                    <Badge className={badge.cssClass} style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
                       {badge.label}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="master-info-cell" data-label="Aksi" style={{ fontSize: 13, fontWeight: 600 }}>{humanAction}</td>
                   <td className="master-info-cell" data-label="Detail" style={{ fontSize: 12, maxWidth: 320 }}><span className="text-muted">{log.details}</span></td>
@@ -250,23 +251,23 @@ export default function AuditLogsView() {
             Menampilkan <strong>{startIndex + 1}</strong>–<strong>{Math.min(startIndex + PAGE_SIZE, totalEntries)}</strong> dari <strong>{totalEntries}</strong> entri
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === 1} onClick={() => setCurrentPage(1)}>
+            <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === 1} onClick={() => setCurrentPage(1)}>
               <ChevronsLeft size={15} />
-            </button>
-            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+            </Button>
+            <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === 1} onClick={() => setCurrentPage(p => p - 1)}>
               <ChevronLeft size={15} />
-            </button>
+            </Button>
             {pageWindow.map(page => (
-              <button key={page} className={`btn btn-sm ${safePage === page ? 'btn-primary' : 'btn-secondary'}`} style={{ minWidth: 32, padding: '0 8px', fontSize: 13 }} onClick={() => setCurrentPage(page)}>
+              <Button key={page} size="sm" variant={safePage === page ? 'primary' : 'secondary'} style={{ minWidth: 32, padding: '0 8px', fontSize: 13 }} onClick={() => setCurrentPage(page)}>
                 {page}
-              </button>
+              </Button>
             ))}
-            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+            <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
               <ChevronRightIcon size={15} />
-            </button>
-            <button className="btn btn-sm btn-secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === totalPages} onClick={() => setCurrentPage(totalPages)}>
+            </Button>
+            <Button size="sm" variant="secondary" style={{ width: 32, padding: 0, justifyContent: 'center' }} disabled={safePage === totalPages} onClick={() => setCurrentPage(totalPages)}>
               <ChevronsRight size={15} />
-            </button>
+            </Button>
           </div>
         </div>
       )}
