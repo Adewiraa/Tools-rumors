@@ -1,38 +1,23 @@
 /**
  * Media Tools — UI Component Library
- *
- * Import semua komponen UI dari sini:
- * @example
- * import { Button, Card, Input, Select, Badge, Stack, Row, Grid } from '@/components/ui';
+ * Import semua dari sini: import { Button, Card, Input, Badge, Stack } from '@/components/ui';
  */
 
-// ── Primitives ────────────────────────────────────────────────────────────────
-export { Button } from './button';
-export type { ButtonProps } from './button';
+export { Button } from './Button';
+export type { ButtonProps } from './Button';
 
-export { Card, CardHeader, CardTitle, CardBody } from './card';
-export type { CardProps } from './card';
+export { Card, CardHeader, CardTitle, CardBody } from './Card';
+export type { CardProps } from './Card';
 
-export { Badge, StatusBadge } from './badge';
-export type { BadgeProps } from './badge';
+export { Badge, StatusBadge } from './Badge';
+export type { BadgeProps } from './Badge';
 
-// ── Form inputs ───────────────────────────────────────────────────────────────
 export { Input, Select, Textarea } from './Input';
 export type { InputProps, SelectProps, TextareaProps } from './Input';
 
-// ── Layout helpers ────────────────────────────────────────────────────────────
-export { Stack, Row, Grid, Divider, EmptyState, PageHeader } from './stack';
+export { Stack, Row, Grid, Divider, EmptyState, PageHeader } from './Stack';
 
-// ── Dialog (Radix) ────────────────────────────────────────────────────────────
 export {
-  Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogTrigger,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
+  Dialog, DialogPortal, DialogOverlay, DialogTrigger, DialogClose,
+  DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription,
 } from './dialog';
