@@ -48,7 +48,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       {...props}
     >
       {loading ? (
-        <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />{loadingLabel || children}</>
+        <><Loader2 size={14} className="animate-spin" />{loadingLabel || children}</>
       ) : (
         <>{leftIcon}{children}{rightIcon}</>
       )}

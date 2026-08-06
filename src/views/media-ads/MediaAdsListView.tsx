@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronRight, Edit, Image as ImageIcon, Megaphone, Plus, Trash2, Upload, Video } from 'lucide-react';
 import { useApp } from '@/logic/AppContext';
+import { Badge, Button, Card, Input, Select } from '@/components/ui';
 import LoadingButton from '@/views/shared/LoadingButton';
 
 type MediaAd = {
@@ -205,27 +206,27 @@ export default function MediaAdsListView() {
           <p className="page-description">Kelola aset partner berupa gambar atau video untuk paket share halftime, fulltime, dan lineup.</p>
         </div>
         {hasPermission('Master', 'create_edit') && (
-          <button className="btn btn-md btn-primary" onClick={openCreate}><Plus size={16} /> Tambah Iklan</button>
+          <Button onClick={openCreate}><Plus size={16} /> Tambah Iklan</Button>
         )}
       </div>
 
-      <div className="card" style={{ padding: '16px 24px', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span className="badge badge-success">{mediaAds.filter(item => item.status === 'active').length} Aktif</span>
-        <span className="badge badge-draft">{mediaAds.filter(item => item.status !== 'active').length} Nonaktif/Arsip</span>
+      <Card style={{ padding: '16px 24px', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Badge status="success">{mediaAds.filter(item => item.status === 'active').length} Aktif</Badge>
+        <Badge status="draft">{mediaAds.filter(item => item.status !== 'active').length} Nonaktif/Arsip</Badge>
         <span className="text-muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{mediaAds.length} total master iklan</span>
-      </div>
+      </Card>
 
       {isLoading ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>Memuat master iklan...</div>
+        <Card style={{ padding: 48, textAlign: 'center' }}>Memuat master iklan...</Card>
       ) : mediaAds.length === 0 ? (
-        <div className="card" style={{ padding: 48, textAlign: 'center' }}>
+        <Card style={{ padding: 48, textAlign: 'center' }}>
           <Megaphone size={34} color="var(--neutral-500)" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>Belum ada master iklan</h3>
           <p className="text-muted" style={{ marginBottom: 18 }}>Tambahkan gambar atau video partner terlebih dahulu.</p>
           {hasPermission('Master', 'create_edit') && (
-            <button className="btn btn-sm btn-primary" onClick={openCreate}><Plus size={14} /> Tambah Iklan</button>
+            <Button size="sm" onClick={openCreate}><Plus size={14} /> Tambah Iklan</Button>
           )}
-        </div>
+        </Card>
       ) : (
         <div className="table-wrapper master-table-wrapper">
           <table className="data-table master-card-table">
@@ -257,9 +258,9 @@ export default function MediaAdsListView() {
                     </div>
                   </td>
                   <td className="master-info-cell" data-label="Media">
-                    <span className={`badge ${item.mediaType === 'video' ? 'badge-info' : 'badge-success'}`}>
+                    <Badge status={item.mediaType === 'video' ? 'info' : 'success'}>
                       {item.mediaType === 'video' ? 'Video' : 'Gambar'}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="master-info-cell" data-label="Placement">{placementLabel(item.placement)}</td>
                   <td className="master-info-cell" data-label="Kompetisi">{item.competition || 'Semua'}</td>
@@ -270,20 +271,20 @@ export default function MediaAdsListView() {
                     </div>
                   </td>
                   <td className="master-info-cell" data-label="Status">
-                    <span className={`badge ${item.status === 'active' ? 'badge-success' : item.status === 'inactive' ? 'badge-warning' : 'badge-draft'}`}>
+                    <Badge status={item.status === 'active' ? 'success' : item.status === 'inactive' ? 'warning' : 'draft'}>
                       {item.status}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="master-actions-cell text-right">
                     <div className="master-actions">
-                      <button className="btn btn-sm btn-secondary" onClick={() => openEdit(item)}><Edit size={13} /> Edit</button>
+                      <Button size="sm" variant="secondary" onClick={() => openEdit(item)}><Edit size={13} /> Edit</Button>
                       {hasPermission('Master', 'delete') && (confirmDeleteId === item.id ? (
                         <>
                           <LoadingButton className="btn btn-sm btn-danger" onClick={() => handleDelete(item.id)} loading={isDeleting === item.id} loadingLabel="Menghapus...">Ya</LoadingButton>
-                          <button className="btn btn-sm btn-secondary" disabled={isDeleting === item.id} onClick={() => setConfirmDeleteId(null)}>Batal</button>
+                          <Button size="sm" variant="secondary" disabled={isDeleting === item.id} onClick={() => setConfirmDeleteId(null)}>Batal</Button>
                         </>
                       ) : (
-                        <button className="btn btn-sm btn-secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(item.id)}><Trash2 size={13} /></button>
+                        <Button size="sm" variant="secondary" style={{ color: 'var(--danger-600)' }} onClick={() => setConfirmDeleteId(item.id)}><Trash2 size={13} /></Button>
                       ))}
                     </div>
                   </td>
@@ -302,64 +303,37 @@ export default function MediaAdsListView() {
             </div>
             <div className="modal-body" style={{ display: 'grid', gap: 16 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 16 }}>
-                <div className="form-group">
-                  <label className="form-label">Nama Iklan</label>
-                  <input className="form-input" value={draft.title} onChange={event => setDraft(prev => ({ ...prev, title: event.target.value }))} placeholder="Contoh: DIPA Healthcare Campaign" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Status</label>
-                  <select className="form-select" value={draft.status} onChange={event => setDraft(prev => ({ ...prev, status: event.target.value as MediaAd['status'] }))}>
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Nonaktif</option>
-                    <option value="archived">Arsip</option>
-                  </select>
-                </div>
+                <Input label="Nama Iklan" value={draft.title} onChange={event => setDraft(prev => ({ ...prev, title: event.target.value }))} placeholder="Contoh: DIPA Healthcare Campaign" />
+                <Select label="Status" value={draft.status} onChange={event => setDraft(prev => ({ ...prev, status: event.target.value as MediaAd['status'] }))}>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Nonaktif</option>
+                  <option value="archived">Arsip</option>
+                </Select>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Label di Template</label>
-                <input className="form-input" value={draft.label} onChange={event => setDraft(prev => ({ ...prev, label: event.target.value }))} placeholder="Contoh: MEDIA PARTNER" />
-              </div>
+              <Input label="Label di Template" value={draft.label} onChange={event => setDraft(prev => ({ ...prev, label: event.target.value }))} placeholder="Contoh: MEDIA PARTNER" />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
-                <div className="form-group">
-                  <label className="form-label">Placement</label>
-                  <select className="form-select" value={draft.placement} onChange={event => setDraft(prev => ({ ...prev, placement: event.target.value as MediaAd['placement'] }))}>
-                    <option value="result_package">Hasil HT/FT</option>
-                    <option value="lineup_package">Lineup</option>
-                    <option value="all">Semua Paket</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fit</label>
-                  <select className="form-select" value={draft.fit} onChange={event => setDraft(prev => ({ ...prev, fit: event.target.value as MediaAd['fit'] }))}>
-                    <option value="contain">Logo utuh</option>
-                    <option value="cover">Isi area</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Urutan</label>
-                  <input className="form-input" type="number" value={draft.sortOrder} onChange={event => setDraft(prev => ({ ...prev, sortOrder: Number(event.target.value) || 0 }))} />
-                </div>
+                <Select label="Placement" value={draft.placement} onChange={event => setDraft(prev => ({ ...prev, placement: event.target.value as MediaAd['placement'] }))}>
+                  <option value="result_package">Hasil HT/FT</option>
+                  <option value="lineup_package">Lineup</option>
+                  <option value="all">Semua Paket</option>
+                </Select>
+                <Select label="Fit" value={draft.fit} onChange={event => setDraft(prev => ({ ...prev, fit: event.target.value as MediaAd['fit'] }))}>
+                  <option value="contain">Logo utuh</option>
+                  <option value="cover">Isi area</option>
+                </Select>
+                <Input label="Urutan" type="number" value={draft.sortOrder} onChange={event => setDraft(prev => ({ ...prev, sortOrder: Number(event.target.value) || 0 }))} />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Kompetisi</label>
-                <select className="form-select" value={draft.competition} onChange={event => setDraft(prev => ({ ...prev, competition: event.target.value }))}>
-                  <option value="">Semua Kompetisi</option>
-                  {competitions.map(comp => <option key={comp.id} value={comp.name}>{comp.name}</option>)}
-                </select>
-              </div>
+              <Select label="Kompetisi" value={draft.competition} onChange={event => setDraft(prev => ({ ...prev, competition: event.target.value }))}>
+                <option value="">Semua Kompetisi</option>
+                {competitions.map(comp => <option key={comp.id} value={comp.name}>{comp.name}</option>)}
+              </Select>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div className="form-group">
-                  <label className="form-label">Mulai Tayang</label>
-                  <input className="form-input" type="datetime-local" value={draft.startsAt} onChange={event => setDraft(prev => ({ ...prev, startsAt: event.target.value }))} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Akhir Tayang</label>
-                  <input className="form-input" type="datetime-local" value={draft.endsAt} onChange={event => setDraft(prev => ({ ...prev, endsAt: event.target.value }))} />
-                </div>
+                <Input label="Mulai Tayang" type="datetime-local" value={draft.startsAt} onChange={event => setDraft(prev => ({ ...prev, startsAt: event.target.value }))} />
+                <Input label="Akhir Tayang" type="datetime-local" value={draft.endsAt} onChange={event => setDraft(prev => ({ ...prev, endsAt: event.target.value }))} />
               </div>
 
               <div className="form-group">
@@ -385,7 +359,7 @@ export default function MediaAdsListView() {
               </div>
             </div>
             <div className="modal-actions">
-              <button className="btn btn-md btn-secondary" disabled={isSaving} onClick={() => setModalOpen(false)}>Batal</button>
+              <Button variant="secondary" disabled={isSaving} onClick={() => setModalOpen(false)}>Batal</Button>
               <LoadingButton className="btn btn-md btn-primary" onClick={handleSave} loading={isSaving} loadingLabel="Menyimpan...">Simpan Iklan</LoadingButton>
             </div>
           </div>
