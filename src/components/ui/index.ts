@@ -1,12 +1,12 @@
 /**
  * Media Tools — UI Component Library
- * Import semua dari sini: import { Button, Card, Input, Badge, Stack } from '@/components/ui';
+ * Import dari sini: import { Button, Card, Input, Badge, Stack } from '@/components/ui';
  */
 
 export { Button } from './Button';
 export type { ButtonProps } from './Button';
 
-export { Card, CardHeader, CardTitle, CardBody } from './Card';
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardBody, CardFooter } from './Card';
 export type { CardProps } from './Card';
 
 export { Badge, StatusBadge } from './Badge';
