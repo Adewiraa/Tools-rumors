@@ -1,26 +1,38 @@
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { cn, type Status, statusBadgeClass } from '@/lib/ui';
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info';
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  status?: Status;
+  dot?: boolean;
 }
 
-function Badge({ className, variant = 'default', ...props }: BadgeProps) {
-  const baseStyle = 'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
-
-  const variants = {
-    default: 'border-transparent bg-primary-600 text-white shadow hover:bg-primary-700',
-    secondary: 'border-transparent bg-neutral-200 text-neutral-800 hover:bg-neutral-300',
-    destructive: 'border-transparent bg-danger-600 text-white shadow hover:bg-red-700',
-    outline: 'text-neutral-700 border-neutral-300 hover:bg-neutral-100',
-    success: 'border-transparent bg-success-600 text-white shadow hover:bg-green-700',
-    warning: 'border-transparent bg-warning-600 text-white shadow hover:bg-amber-700',
-    info: 'border-transparent bg-info-600 text-white shadow hover:bg-slate-700',
-  };
-
+/**
+ * Badge — label status standar.
+ *
+ * @example
+ * <Badge status="success">Published</Badge>
+ * <Badge status="warning">Review</Badge>
+ * <Badge status="live" dot>LIVE</Badge>
+ */
+export const Badge: React.FC<BadgeProps> = ({ status, dot, className, children, ...props }) => {
   return (
-    <div className={cn(baseStyle, variants[variant], className)} {...props} />
+    <span
+      className={cn('badge', status && statusBadgeClass[status], className)}
+      {...props}
+    >
+      {dot && <span className="pulse-dot" style={{ marginRight: 4 }} />}
+      {children}
+    </span>
   );
-}
+};
 
-export { Badge };
+// ── Preset badges yang sering dipakai ──────────────────────────────────────────
+export const StatusBadge = {
+  Published: () => <Badge status="success">Published</Badge>,
+  Draft:     () => <Badge status="draft">Draft</Badge>,
+  Review:    () => <Badge status="warning">Needs Review</Badge>,
+  Live:      () => <Badge status="live" dot>LIVE</Badge>,
+  Complete:  () => <Badge status="success">Complete</Badge>,
+  Scheduled: () => <Badge status="info">Scheduled</Badge>,
+  Cancelled: () => <Badge status="danger">Cancelled</Badge>,
+};
